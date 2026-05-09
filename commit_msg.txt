@@ -1,1 +1,1 @@
-feat: initialize project scaffold with fastapi, sqlalchemy models, and base app structure
+Initialize alembic environment and configure metadata for autogeneration
