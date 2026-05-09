@@ -54,13 +54,28 @@ def c7_get_docs(library_id: str, query: str, tokens: int = 4000) -> str:
             params={"libraryId": library_id, "query": query, "tokens": tokens, "type": "json"},
             timeout=15,
         )
-        if r.status_code == 200:
-            data = r.json()
-            parts = [f"### {s['codeTitle']}\n```{c['lang']}\n{c['code']}\n
-```" 
-                     for s in data.get("codeSnippets", []) for c in s.get("codeList", [])]
-            parts += [i.get("content", "") for i in data.get("infoSnippets", []) if i.get("content")]
-            return "\n\n".join(parts)
+        if r.status_code != 200:
+            return ""
+            
+        data = r.json()
+        parts = []
+        
+        # Process code snippets with triple quotes for safety
+        for snippet in data.get("codeSnippets", []):
+            title = snippet.get("codeTitle", "Untitled")
+            for code_item in snippet.get("codeList", []):
+                lang = code_item.get("lang", "python")
+                code = code_item.get("code", "")
+                parts.append(f"""### {title}\n```{lang}\n{code}\n
+```""")
+
+        # Process info snippets
+        for info in data.get("infoSnippets", []):
+            content = info.get("content", "")
+            if content:
+                parts.append(content)
+                
+        return "\n\n".join(parts)
     except Exception as e:
         print(f"[Context7] Docs error: {e}")
     return ""
@@ -95,10 +110,12 @@ def read_src_files(max_chars: int = 8000) -> dict[str, str]:
     total = 0
     for path in sorted(SRC_DIR.rglob("*")):
         if path.is_file() and path.suffix in {".py", ".html", ".js", ".css", ".json"}:
-            content = path.read_text(errors="ignore")
-            if total + len(content) > max_chars: break
-            files[str(path)] = content
-            total += len(content)
+            try:
+                content = path.read_text(errors="ignore")
+                if total + len(content) > max_chars: break
+                files[str(path)] = content
+                total += len(content)
+            except: continue
     return files
 
 # ── Gemini call ────────────────────────────────────────────────────────────────
@@ -111,7 +128,6 @@ def call_gemini(prompt: str, retries: int = 3) -> str:
                 config=types.GenerateContentConfig(
                     max_output_tokens=8192,
                     temperature=0.7,
-                    # FORCES Gemini to output valid JSON
                     response_mime_type="application/json"
                 ),
             )
@@ -124,20 +140,18 @@ def call_gemini(prompt: str, retries: int = 3) -> str:
 
 # ── Response parser ────────────────────────────────────────────────────────────
 def parse_response(text: str) -> dict:
-    """Robust parser that finds the outermost JSON object."""
     try:
-        # Find the first '{' and the last '}' to handle greedy matching correctly
         start = text.find('{')
         end = text.rfind('}') + 1
         if start == -1 or end == 0:
-            raise ValueError("No JSON object found in response.")
+            raise ValueError("No JSON object found.")
         
         raw = text[start:end]
-        # Remove common trailing comma issues before loading
+        # Clean up any problematic trailing commas before parsing
         raw = re.sub(r",\s*([\}\]])", r"\1", raw)
         return json.loads(raw)
     except Exception as e:
-        print(f"FAILED TO PARSE: {text}")
+        print(f"DEBUG: Raw response from Gemini: {text}")
         raise ValueError(f"JSON Parse Error: {e}")
 
 # ── Main agent loop ────────────────────────────────────────────────────────────
@@ -147,12 +161,15 @@ def run():
     memory["iteration"] = memory.get("iteration", 0) + 1
     iteration = memory["iteration"]
 
-    live_docs = fetch_docs_for_task(memory.get("next_task", ""), memory.get("libraries_in_use", []))
+    task = memory.get("next_task", "Continue building BookSlot")
+    libs = memory.get("libraries_in_use", [])
+    
+    live_docs = fetch_docs_for_task(task, libs)
     src_files = read_src_files()
 
     prompt = f"""You are an autonomous software agent. 
 BUSINESS IDEA: {memory.get('business_idea', 'N/A')}
-CURRENT TASK: {memory.get('next_task', 'N/A')}
+CURRENT TASK: {task}
 
 === LIVE DOCUMENTATION ===
 {live_docs}
@@ -168,12 +185,11 @@ Output a JSON object with these exact keys:
     raw_response = call_gemini(prompt)
     parsed = parse_response(raw_response)
 
-    files_written = []
+    # Save generated files
     for filepath, content in parsed.get("files", {}).items():
         p = Path(filepath)
         p.parent.mkdir(parents=True, exist_ok=True)
         p.write_text(str(content))
-        files_written.append(str(p))
 
     # Update state
     memory["next_task"] = parsed.get("next_task", "Continue")
@@ -182,7 +198,7 @@ Output a JSON object with these exact keys:
     memory["notes"] = parsed.get("notes", "")
     save_memory(memory)
 
-    update_progress(parsed.get("progress_note", "Update."), iteration)
+    update_progress(parsed.get("progress_note", "No note provided."), iteration)
     COMMIT_MSG_FILE.write_text(parsed.get("commit_message", f"chore: iteration {iteration}"))
     print(f"✅ Run {iteration} complete.")
 
