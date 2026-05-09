@@ -1,3 +1,8 @@
+## Iteration 13
+_2026-05-09 20:45 UTC_
+
+Successfully added the '/register' endpoint. The implementation uses schema validation to ensure services and availability are correctly serialized as JSON in the database.
+
 ## Iteration 12
 _2026-05-09 17:54 UTC_
 

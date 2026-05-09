@@ -1,1 +1,1 @@
-Implement /availability endpoint to calculate free time slots
+Implement owner registration endpoint with Pydantic validation for services and availability

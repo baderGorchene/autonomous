@@ -1,8 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
-from datetime import datetime, timedelta, time, date
+from datetime import datetime, timedelta, time
 from . import models, schemas, database, notifications
-from typing import List
 
 app = FastAPI()
 
@@ -14,6 +13,24 @@ def get_db():
         yield db
     finally:
         db.close()
+
+@app.post('/register', response_model=dict)
+def register_owner(owner_data: schemas.OwnerCreate, db: Session = Depends(get_db)):
+    if db.query(models.Owner).filter(models.Owner.slug == owner_data.slug).first():
+        raise HTTPException(status_code=400, detail="Slug already registered")
+        
+    new_owner = models.Owner(
+        name=owner_data.name,
+        email=owner_data.email,
+        business_name=owner_data.business_name,
+        slug=owner_data.slug,
+        services_json=[s.model_dump() for s in owner_data.services],
+        availability_json=[a.model_dump(mode='json') for a in owner_data.availability]
+    )
+    db.add(new_owner)
+    db.commit()
+    db.refresh(new_owner)
+    return {"message": "Owner registered successfully", "slug": new_owner.slug}
 
 @app.get('/{slug}/availability')
 def get_availability(slug: str, date_str: str, duration: int, db: Session = Depends(get_db)):
