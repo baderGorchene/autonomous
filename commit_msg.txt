@@ -1,1 +1,1 @@
-Add unit tests for owner registration and availability calculation using FastAPI TestClient
+Add initial test scaffolding for notification verification using httpx mock transport
