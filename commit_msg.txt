@@ -1,1 +1,1 @@
-Add async booking notification service using BackgroundTasks and httpx
+Implement Twilio WhatsApp integration and configure environment variables

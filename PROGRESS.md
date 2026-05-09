@@ -1,3 +1,8 @@
+## Iteration 11
+_2026-05-09 16:57 UTC_
+
+Integrated Twilio API for WhatsApp notifications and added .env configuration support. Updated notifications.py to handle both email and WhatsApp triggers.
+
 ## Iteration 10
 _2026-05-09 15:54 UTC_
 
