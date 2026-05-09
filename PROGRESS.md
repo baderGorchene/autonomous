@@ -1,3 +1,8 @@
+## Iteration 6
+_2026-05-09 10:58 UTC_
+
+Added a new GET endpoint /{slug}/availability that filters owner availability rules by day of the week.
+
 ## Iteration 5
 _2026-05-09 09:20 UTC_
 

@@ -1,1 +1,1 @@
-Add validation for availability slots and implement CRUD for services/availability
+Add public availability endpoint with basic filtering
