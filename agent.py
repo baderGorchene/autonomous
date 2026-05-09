@@ -10,13 +10,14 @@ import os
 import re
 import time
 import requests
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from pathlib import Path
 
 # ── Config ────────────────────────────────────────────────────────────────────
 GEMINI_API_KEY   = os.environ["GEMINI_API_KEY"]
 CONTEXT7_API_KEY = os.environ.get("CONTEXT7_API_KEY", "")   # optional, raises rate limits
-GEMINI_MODEL     = "gemini-2.5-flash-lite-preview-06-17"    # best free-tier RPD
+GEMINI_MODEL     = "gemini-3.1-flash-lite-preview"    # best free-tier RPD
 
 MEMORY_FILE      = Path("memory.json")
 PROGRESS_FILE    = Path("PROGRESS.md")
@@ -26,7 +27,7 @@ SRC_DIR          = Path("src")
 SRC_DIR.mkdir(exist_ok=True)
 
 # ── Gemini setup ──────────────────────────────────────────────────────────────
-genai.configure(api_key=GEMINI_API_KEY)
+client = genai.Client(api_key=GEMINI_API_KEY)
 model = genai.GenerativeModel(GEMINI_MODEL)
 
 
@@ -164,11 +165,18 @@ def read_src_files(max_chars: int = 8000) -> dict[str, str]:
 def call_gemini(prompt: str, retries: int = 3) -> str:
     for attempt in range(retries):
         try:
-            response = model.generate_content(prompt)
+            response = client.models.generate_content(
+                model=GEMINI_MODEL,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    max_output_tokens=8192,
+                    temperature=0.7,
+                ),
+            )
             return response.text
         except Exception as e:
             wait = 2 ** attempt * 5
-            print(f"[Gemini] Error (attempt {attempt+1}): {e} — retrying in {wait}s")
+            print(f"[Gemini] Error (attempt {attempt + 1}): {e} — retrying in {wait}s")
             time.sleep(wait)
     raise RuntimeError("Gemini failed after all retries.")
 
