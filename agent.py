@@ -1,3 +1,8 @@
+"""
+Autonomous AI Agent — powered by Gemini + Context7
+Runs every 30 minutes via GitHub Actions.
+"""
+
 import json
 import os
 import re
@@ -27,7 +32,6 @@ C7_HEADERS = {"Authorization": f"Bearer {CONTEXT7_API_KEY}"} if CONTEXT7_API_KEY
 C7_BASE     = "https://context7.com/api/v2"
 
 def c7_search_library(library_name: str) -> str | None:
-    """Search Context7 for a library and return its ID."""
     try:
         r = requests.get(
             f"{C7_BASE}/libs/search",
@@ -37,104 +41,62 @@ def c7_search_library(library_name: str) -> str | None:
         )
         if r.status_code == 200:
             results = r.json().get("results", [])
-            if results:
-                lib_id = results[0]["id"]
-                print(f"[Context7] Found library: {results[0]['title']} → {lib_id}")
-                return lib_id
-        print(f"[Context7] No library found for '{library_name}' (status {r.status_code})")
+            if results: return results[0]["id"]
     except Exception as e:
         print(f"[Context7] Search error: {e}")
     return None
 
 def c7_get_docs(library_id: str, query: str, tokens: int = 4000) -> str:
-    """Fetch up-to-date documentation snippets from Context7."""
     try:
         r = requests.get(
             f"{C7_BASE}/context",
             headers=C7_HEADERS,
-            params={
-                "libraryId": library_id,
-                "query": query,
-                "tokens": tokens,
-                "type": "json",
-            },
+            params={"libraryId": library_id, "query": query, "tokens": tokens, "type": "json"},
             timeout=15,
         )
         if r.status_code == 200:
             data = r.json()
-            parts = []
-
-            for snippet in data.get("codeSnippets", []):
-                title = snippet.get("codeTitle", "")
-                for code in snippet.get("codeList", []):
-                    lang = code.get("lang", "")
-                    content = f"""### {title}\n```{lang}\n{code.get('code', '')}\n```"""
-                    parts.append(content)
-
-            for info in data.get("infoSnippets", []):
-                content = info.get("content", "")
-                if content:
-                    parts.append(content)
-
-            result = "\n\n".join(parts)
-            print(f"[Context7] Fetched {len(parts)} snippets for '{query}'")
-            return result
-        else:
-            print(f"[Context7] Context fetch failed: {r.status_code}")
+            parts = [f"### {s['codeTitle']}\n```{c['lang']}\n{c['code']}\n
+```" 
+                     for s in data.get("codeSnippets", []) for c in s.get("codeList", [])]
+            parts += [i.get("content", "") for i in data.get("infoSnippets", []) if i.get("content")]
+            return "\n\n".join(parts)
     except Exception as e:
         print(f"[Context7] Docs error: {e}")
     return ""
 
 def fetch_docs_for_task(task: str, libraries: list[str]) -> str:
-    if not libraries:
-        return ""
+    if not libraries: return ""
     all_docs = []
     for lib_name in libraries:
         lib_id = c7_search_library(lib_name)
         if lib_id:
             docs = c7_get_docs(lib_id, query=task, tokens=3000)
-            if docs:
-                all_docs.append(f"## 📚 {lib_name} (live docs via Context7)\n\n{docs}")
+            if docs: all_docs.append(f"## 📚 {lib_name}\n\n{docs}")
         time.sleep(0.5)
     return "\n\n---\n\n".join(all_docs)
 
 # ── Memory helpers ─────────────────────────────────────────────────────────────
-DEFAULT_MEMORY = {
-    "business_idea": "A SaaS tool that helps solo founders track their MRR, churn, and growth metrics.",
-    "current_phase": "project_setup",
-    "completed_steps": [],
-    "next_task": "Create the project structure: a FastAPI backend with a health endpoint.",
-    "libraries_in_use": ["fastapi", "uvicorn"],
-    "iteration": 0,
-    "last_run": "",
-    "notes": ""
-}
-
 def load_memory() -> dict:
     if MEMORY_FILE.exists():
-        with open(MEMORY_FILE) as f:
-            return json.load(f)
-    return DEFAULT_MEMORY.copy()
+        with open(MEMORY_FILE) as f: return json.load(f)
+    return {"iteration": 0, "next_task": "Initial setup", "libraries_in_use": []}
 
 def save_memory(memory: dict):
-    with open(MEMORY_FILE, "w") as f:
-        json.dump(memory, f, indent=2)
+    with open(MEMORY_FILE, "w") as f: json.dump(memory, f, indent=2)
 
 def update_progress(note: str, iteration: int):
     header = f"## Iteration {iteration}\n_{time.strftime('%Y-%m-%d %H:%M UTC')}_\n\n{note}\n\n"
     existing = PROGRESS_FILE.read_text() if PROGRESS_FILE.exists() else ""
     PROGRESS_FILE.write_text(header + existing)
 
-# ── Source code reader ────────────────────────────────────────────────────────
 def read_src_files(max_chars: int = 8000) -> dict[str, str]:
     files = {}
     total = 0
     for path in sorted(SRC_DIR.rglob("*")):
-        if path.is_file() and path.suffix in {".py", ".html", ".js", ".ts", ".css", ".json", ".md", ".yaml", ".yml", ".txt", ".toml"}:
+        if path.is_file() and path.suffix in {".py", ".html", ".js", ".css", ".json"}:
             content = path.read_text(errors="ignore")
-            if total + len(content) > max_chars:
-                files[str(path)] = content[: max_chars - total] + "\n... [truncated]"
-                break
+            if total + len(content) > max_chars: break
             files[str(path)] = content
             total += len(content)
     return files
@@ -149,6 +111,8 @@ def call_gemini(prompt: str, retries: int = 3) -> str:
                 config=types.GenerateContentConfig(
                     max_output_tokens=8192,
                     temperature=0.7,
+                    # FORCES Gemini to output valid JSON
+                    response_mime_type="application/json"
                 ),
             )
             return response.text
@@ -160,47 +124,45 @@ def call_gemini(prompt: str, retries: int = 3) -> str:
 
 # ── Response parser ────────────────────────────────────────────────────────────
 def parse_response(text: str) -> dict:
-    # Fixed the unterminated string literal here by keeping it on one line
-    match = re.search(r"```json\s*(\{.*?\})\s*```", text, re.DOTALL)
-    if match:
-        raw = match.group(1)
-    else:
-        # Made this regex non-greedy to avoid swallowing trailing text
-        match = re.search(r"\{.*?\}", text, re.DOTALL)
-        if match:
-            raw = match.group(0)
-        else:
-            raise ValueError("No JSON found in response.")
-            
-    raw = re.sub(r",\s*([\}\]])", r"\1", raw)
-    return json.loads(raw)
+    """Robust parser that finds the outermost JSON object."""
+    try:
+        # Find the first '{' and the last '}' to handle greedy matching correctly
+        start = text.find('{')
+        end = text.rfind('}') + 1
+        if start == -1 or end == 0:
+            raise ValueError("No JSON object found in response.")
+        
+        raw = text[start:end]
+        # Remove common trailing comma issues before loading
+        raw = re.sub(r",\s*([\}\]])", r"\1", raw)
+        return json.loads(raw)
+    except Exception as e:
+        print(f"FAILED TO PARSE: {text}")
+        raise ValueError(f"JSON Parse Error: {e}")
 
 # ── Main agent loop ────────────────────────────────────────────────────────────
 def run():
     print("🤖 Agent starting...")
     memory = load_memory()
-    memory["iteration"] += 1
+    memory["iteration"] = memory.get("iteration", 0) + 1
     iteration = memory["iteration"]
 
-    live_docs = fetch_docs_for_task(memory["next_task"], memory.get("libraries_in_use", []))
+    live_docs = fetch_docs_for_task(memory.get("next_task", ""), memory.get("libraries_in_use", []))
     src_files = read_src_files()
 
-    docs_section = f"=== LIVE DOCS ===\n{live_docs}\n" if live_docs else ""
-    
-    prompt = f"""You are an autonomous agent. 
-BUSINESS: {memory['business_idea']}
-TASK: {memory['next_task']}
-{docs_section}
-FILES: {json.dumps(src_files)}
+    prompt = f"""You are an autonomous software agent. 
+BUSINESS IDEA: {memory.get('business_idea', 'N/A')}
+CURRENT TASK: {memory.get('next_task', 'N/A')}
 
-Return ONLY a valid JSON object with the following keys:
-- "files": a dictionary mapping file paths to their string content.
-- "next_task": a string.
-- "current_phase": a string.
-- "libraries_for_next_task": a list of strings.
-- "commit_message": a string.
-- "progress_note": a string.
-- "notes": a string.
+=== LIVE DOCUMENTATION ===
+{live_docs}
+
+=== CURRENT FILES ===
+{json.dumps(src_files)}
+
+Output a JSON object with these exact keys:
+"files" (dict of path: content), "next_task" (string), "current_phase" (string), 
+"libraries_for_next_task" (list), "commit_message" (string), "progress_note" (string), "notes" (string).
 """
 
     raw_response = call_gemini(prompt)
@@ -213,19 +175,15 @@ Return ONLY a valid JSON object with the following keys:
         p.write_text(str(content))
         files_written.append(str(p))
 
-    memory["next_task"] = parsed.get("next_task", "Continue building")
-    memory["current_phase"] = parsed.get("current_phase", memory.get("current_phase", "project_setup"))
+    # Update state
+    memory["next_task"] = parsed.get("next_task", "Continue")
+    memory["current_phase"] = parsed.get("current_phase", "development")
     memory["libraries_in_use"] = parsed.get("libraries_for_next_task", [])
-    memory["notes"] = parsed.get("notes", memory.get("notes", ""))
-    
-    completed = memory.get("completed_steps", [])
-    completed.append(f"[#{iteration}] {memory['next_task']}")
-    memory["completed_steps"] = completed[-20:] # keep last 20
-
+    memory["notes"] = parsed.get("notes", "")
     save_memory(memory)
 
-    update_progress(parsed.get("progress_note", "Ran successfully."), iteration)
-    COMMIT_MSG_FILE.write_text(parsed.get("commit_message", "chore: iteration"))
+    update_progress(parsed.get("progress_note", "Update."), iteration)
+    COMMIT_MSG_FILE.write_text(parsed.get("commit_message", f"chore: iteration {iteration}"))
     print(f"✅ Run {iteration} complete.")
 
 if __name__ == "__main__":
