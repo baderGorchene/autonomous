@@ -1,1 +1,1 @@
-Add initial test scaffolding for notification verification using httpx mock transport
+feat: add double-booking prevention in create_booking endpoint

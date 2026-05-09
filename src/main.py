@@ -71,6 +71,22 @@ async def create_booking(slug: str, booking: schemas.BookingCreate, background_t
     owner = db.query(models.Owner).filter(models.Owner.slug == slug).first()
     if not owner: raise HTTPException(status_code=404, detail="Owner not found")
     
+    service = next((s for s in owner.services_json if s['name'] == booking.service_name), None)
+    if not service:
+        raise HTTPException(status_code=400, detail="Service not found")
+    
+    duration = service['duration_minutes']
+    booking_end = booking.datetime + timedelta(minutes=duration)
+    
+    overlapping = db.query(models.Booking).filter(
+        models.Booking.owner_id == owner.id,
+        models.Booking.datetime < booking_end,
+        models.Booking.datetime + timedelta(minutes=duration) > booking.datetime
+    ).first()
+    
+    if overlapping:
+        raise HTTPException(status_code=400, detail="Time slot already booked")
+    
     db_booking = models.Booking(
         owner_id=owner.id, 
         customer_name=booking.customer_name,

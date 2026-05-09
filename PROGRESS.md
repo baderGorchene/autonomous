@@ -1,3 +1,8 @@
+## Iteration 16
+_2026-05-09 23:52 UTC_
+
+Implemented conflict detection logic in create_booking by checking for overlapping time ranges in the database based on service duration.
+
 ## Iteration 15
 _2026-05-09 22:47 UTC_
 
