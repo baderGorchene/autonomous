@@ -1,3 +1,8 @@
+## Iteration 14
+_2026-05-09 21:45 UTC_
+
+Implemented basic unit testing suite using an in-memory SQLite database to validate the registration flow and availability slot generation.
+
 ## Iteration 13
 _2026-05-09 20:45 UTC_
 

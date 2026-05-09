@@ -1,1 +1,1 @@
-Implement owner registration endpoint with Pydantic validation for services and availability
+Add unit tests for owner registration and availability calculation using FastAPI TestClient
