@@ -1,1 +1,1 @@
-Add public availability endpoint with basic filtering
+Implement slot generation algorithm with duration and overlap checks
