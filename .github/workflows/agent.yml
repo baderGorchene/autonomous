@@ -2,7 +2,7 @@ name: 🤖 AI Agent
 
 on:
   schedule:
-    - cron: '*/30 * * * *'   # every 30 minutes
+    - cron: '*/90 * * * *'   # every 30 minutes
   workflow_dispatch:           # manual trigger anytime
 
 permissions:
