@@ -1,14 +1,14 @@
 {
   "business_idea": "BookSlot \u2014 a dead-simple $19/month booking page for local service businesses (salons, clinics, tutors, mechanics, coaches) who currently manage appointments via WhatsApp chaos. The owner gets a shareable link (bookslot.app/their-name), customers book themselves, and the owner gets a WhatsApp/email notification with the booking details. No accounts needed for customers. Bilingual (English + Arabic/French) from day one to target the underserved MENA and North Africa market. MVP has: (1) owner signup + service setup page, (2) public booking page, (3) time slot availability, (4) email confirmation to both parties, (5) a simple dashboard showing upcoming bookings. Monetization: free for up to 20 bookings/month, $19/month for unlimited. Target: solo service providers who have 10-50 clients/week and are drowning in WhatsApp messages.",
-  "current_phase": "Database Initialization",
+  "current_phase": "Backend MVP Development",
   "completed_steps": [],
-  "next_task": "Implement Pydantic schemas for request validation in src/schemas.py and integrate with main.py endpoints.",
+  "next_task": "Implement CRUD operations for services and availability management, and add validation for booking time slots.",
   "libraries_in_use": [
-    "pydantic"
+    "pydantic[email]"
   ],
-  "iteration": 3,
+  "iteration": 4,
   "last_run": "",
-  "notes": "The database file 'bookslot.db' has been created via alembic upgrade head.",
+  "notes": "Ensured EmailStr is used for email validation. Added placeholder CRUD logic in main.py; will need to move to service layer in future iterations.",
   "product_name": "BookSlot",
   "target_price": "$19/month",
   "target_market": "MENA + North Africa local service businesses",

@@ -1,1 +1,1 @@
-feat: initialize database schema with alembic migrations
+feat: add pydantic schemas and integrate with FastAPI endpoints

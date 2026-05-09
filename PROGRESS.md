@@ -1,3 +1,8 @@
+## Iteration 4
+_2026-05-09 07:08 UTC_
+
+Implemented Pydantic schemas for data validation and integrated them into existing FastAPI routes. Database models are now linked to request schemas.
+
 ## Iteration 3
 _2026-05-09 04:42 UTC_
 

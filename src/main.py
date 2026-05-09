@@ -1,16 +1,30 @@
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import FastAPI, Depends, HTTPException
+from sqlalchemy.orm import Session
+from . import models, schemas, database
 
 app = FastAPI()
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=['*'],
-    allow_credentials=True,
-    allow_methods=['*'],
-    allow_headers=['*'],
-)
+models.Base.metadata.create_all(bind=database.engine)
 
-@app.get('/health')
-def health_check():
-    return {'status': 'ok', 'version': '0.1.0'}
+def get_db():
+    db = database.SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+@app.post('/owners', response_model=schemas.OwnerCreate)
+def create_owner(owner: schemas.OwnerCreate, db: Session = Depends(get_db)):
+    db_owner = models.Owner(**owner.model_dump())
+    db.add(db_owner)
+    db.commit()
+    db.refresh(db_owner)
+    return db_owner
+
+@app.post('/bookings', response_model=schemas.BookingResponse)
+def create_booking(booking: schemas.BookingCreate, db: Session = Depends(get_db)):
+    db_booking = models.Booking(**booking.model_dump())
+    db.add(db_booking)
+    db.commit()
+    db.refresh(db_booking)
+    return db_booking
