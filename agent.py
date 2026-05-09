@@ -17,7 +17,8 @@ from pathlib import Path
 # ── Config ────────────────────────────────────────────────────────────────────
 GEMINI_API_KEY   = os.environ["GEMINI_API_KEY"]
 CONTEXT7_API_KEY = os.environ.get("CONTEXT7_API_KEY", "")   # optional, raises rate limits
-GEMINI_MODEL     = "gemini-3.1-flash-lite-preview"    # best free-tier RPD
+# Updated to GA version to avoid May 25 shutdown
+GEMINI_MODEL     = "gemini-3.1-flash-lite" 
 
 MEMORY_FILE      = Path("memory.json")
 PROGRESS_FILE    = Path("PROGRESS.md")
@@ -27,8 +28,8 @@ SRC_DIR          = Path("src")
 SRC_DIR.mkdir(exist_ok=True)
 
 # ── Gemini setup ──────────────────────────────────────────────────────────────
+# In google-genai, the client handles model interaction directly.
 client = genai.Client(api_key=GEMINI_API_KEY)
-model = genai.GenerativeModel(GEMINI_MODEL)
 
 
 # ── Context7 helpers ──────────────────────────────────────────────────────────
@@ -79,7 +80,8 @@ def c7_get_docs(library_id: str, query: str, tokens: int = 4000) -> str:
                 title = snippet.get("codeTitle", "")
                 for code in snippet.get("codeList", []):
                     lang = code.get("lang", "")
-                    parts.append(f"### {title}\n```{lang}\n{code['code']}\n```")
+                    parts.append(f"### {title}\n```{lang}\n{code['code']}\n
+```")
 
             for info in data.get("infoSnippets", []):
                 content = info.get("content", "")
@@ -165,7 +167,7 @@ def read_src_files(max_chars: int = 8000) -> dict[str, str]:
 def call_gemini(prompt: str, retries: int = 3) -> str:
     for attempt in range(retries):
         try:
-            # Note: client is already defined globally in your script
+            # Correct call structure for google-genai SDK
             response = client.models.generate_content(
                 model=GEMINI_MODEL,
                 contents=prompt,
@@ -185,19 +187,16 @@ def call_gemini(prompt: str, retries: int = 3) -> str:
 # ── Response parser ────────────────────────────────────────────────────────────
 def parse_response(text: str) -> dict:
     """Extract JSON block from Gemini's response."""
-    # Try to find ```json ... ``` block
     match = re.search(r"```json\s*(\{.*?\})\s*```", text, re.DOTALL)
     if match:
         raw = match.group(1)
     else:
-        # Fallback: find first { ... } in response
         match = re.search(r"\{.*\}", text, re.DOTALL)
         if match:
             raw = match.group(0)
         else:
             raise ValueError("No JSON found in Gemini response.")
 
-    # Strip trailing commas (common LLM mistake)
     raw = re.sub(r",\s*([\}\]])", r"\1", raw)
     return json.loads(raw)
 
@@ -259,7 +258,6 @@ YOUR JOB THIS RUN:
 3. Decide what libraries you'll need in the NEXT task and list them.
 
 Respond ONLY with a valid JSON object (no extra text, no markdown except the code block):
-
 ```json
 {{
   "files": {{
@@ -272,63 +270,3 @@ Respond ONLY with a valid JSON object (no extra text, no markdown except the cod
   "progress_note": "Built the login endpoint using FastAPI and python-jose.",
   "notes": "Any important context or decisions to remember for next run."
 }}
-```
-
-Rules:
-- "files" must contain COMPLETE file contents (not diffs, not fragments).
-- File paths must start with "src/".
-- Keep each file under 200 lines where possible — split into modules.
-- commit_message must follow conventional commits format (feat/fix/chore/docs/refactor).
-- "libraries_for_next_task" are the Python/JS packages needed NEXT run (for Context7 lookup).
-"""
-
-    # ── Step 4: Call Gemini ────────────────────────────────────────────────────
-    print("[Gemini] Sending prompt...")
-    raw_response = call_gemini(prompt)
-    print("[Gemini] Response received.")
-
-    # ── Step 5: Parse and apply changes ───────────────────────────────────────
-    parsed = parse_response(raw_response)
-
-    # Write source files
-    files_written = []
-    for filepath, content in parsed.get("files", {}).items():
-        p = Path(filepath)
-        p.parent.mkdir(parents=True, exist_ok=True)
-        p.write_text(content)
-        files_written.append(str(p))
-        print(f"[Agent] Wrote: {p}")
-
-    # ── Step 6: Update memory ─────────────────────────────────────────────────
-    completed = memory.get("completed_steps", [])
-    completed.append(f"[#{iteration}] {memory['next_task']}")
-    memory["completed_steps"] = completed[-20:]   # keep last 20 to avoid bloat
-
-    memory["next_task"]         = parsed.get("next_task", "Continue building")
-    memory["current_phase"]     = parsed.get("current_phase", memory["current_phase"])
-    memory["libraries_in_use"]  = parsed.get("libraries_for_next_task", libraries)
-    memory["notes"]             = parsed.get("notes", "")
-
-    save_memory(memory)
-
-    # ── Step 7: Update PROGRESS.md ────────────────────────────────────────────
-    note = parsed.get("progress_note", "Agent ran successfully.")
-    update_progress(
-        f"**Task completed:** {memory['completed_steps'][-1]}\n\n"
-        f"**Progress note:** {note}\n\n"
-        f"**Files changed:** {', '.join(files_written) or 'none'}\n\n"
-        f"**Next task:** {memory['next_task']}",
-        iteration
-    )
-
-    # ── Step 8: Write commit message ──────────────────────────────────────────
-    commit_msg = parsed.get("commit_message", f"chore: agent iteration #{iteration}")
-    COMMIT_MSG_FILE.write_text(commit_msg)
-    print(f"[Agent] Commit message: {commit_msg}")
-    print("=" * 60)
-    print("✅ Agent run complete.")
-    print("=" * 60)
-
-
-if __name__ == "__main__":
-    run()
