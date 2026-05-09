@@ -1,1 +1,1 @@
-Implement Twilio WhatsApp integration and configure environment variables
+Implement /availability endpoint to calculate free time slots

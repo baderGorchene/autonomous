@@ -1,3 +1,8 @@
+## Iteration 12
+_2026-05-09 17:54 UTC_
+
+Successfully implemented the logic to filter busy slots from the owner's availability configuration on a per-day basis.
+
 ## Iteration 11
 _2026-05-09 16:57 UTC_
 
