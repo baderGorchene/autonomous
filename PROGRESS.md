@@ -1,3 +1,8 @@
+## Iteration 5
+_2026-05-09 09:20 UTC_
+
+Added Pydantic field validators to ensure business hours are logically sound and updated models to support JSON serialization for services/availability.
+
 ## Iteration 4
 _2026-05-09 07:08 UTC_
 

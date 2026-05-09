@@ -1,1 +1,1 @@
-feat: add pydantic schemas and integrate with FastAPI endpoints
+Add validation for availability slots and implement CRUD for services/availability

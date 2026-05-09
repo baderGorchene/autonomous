@@ -13,13 +13,21 @@ def get_db():
     finally:
         db.close()
 
-@app.post('/owners', response_model=schemas.OwnerCreate)
-def create_owner(owner: schemas.OwnerCreate, db: Session = Depends(get_db)):
-    db_owner = models.Owner(**owner.model_dump())
-    db.add(db_owner)
+@app.put('/owners/{owner_id}/services')
+def update_services(owner_id: int, services: list[schemas.Service], db: Session = Depends(get_db)):
+    owner = db.query(models.Owner).filter(models.Owner.id == owner_id).first()
+    if not owner: raise HTTPException(status_code=404)
+    owner.services_json = [s.model_dump() for s in services]
     db.commit()
-    db.refresh(db_owner)
-    return db_owner
+    return {"status": "updated"}
+
+@app.put('/owners/{owner_id}/availability')
+def update_availability(owner_id: int, availability: list[schemas.Availability], db: Session = Depends(get_db)):
+    owner = db.query(models.Owner).filter(models.Owner.id == owner_id).first()
+    if not owner: raise HTTPException(status_code=404)
+    owner.availability_json = [a.model_dump(mode='json') for a in availability]
+    db.commit()
+    return {"status": "updated"}
 
 @app.post('/bookings', response_model=schemas.BookingResponse)
 def create_booking(booking: schemas.BookingCreate, db: Session = Depends(get_db)):
