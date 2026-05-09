@@ -1,3 +1,8 @@
+## Iteration 8
+_2026-05-09 13:25 UTC_
+
+Created a responsive booking template that dynamically fetches available slots based on the selected date using the existing FastAPI endpoint.
+
 ## Iteration 7
 _2026-05-09 11:56 UTC_
 

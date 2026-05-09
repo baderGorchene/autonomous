@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Your Appointment</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body class="bg-surface-50 min-h-screen p-4 md:p-8">
+    <div x-data="{
+        slots: [],
+        date: new Date().toISOString().split('T')[0],
+        duration: 30,
+        slug: window.location.pathname.split('/')[1],
+        async fetchSlots() {
+            this.slots = (await (await fetch(`/${this.slug}/availability?date_str=${this.date}&duration=${this.duration}`)).json()).slots;
+        }
+    }" x-init="fetchSlots()" class="max-w-md mx-auto card">
+        <h1 class="text-2xl font-bold mb-4">Book an Appointment</h1>
+        <input type="date" x-model="date" @change="fetchSlots()" class="w-full p-2 border rounded mb-4">
+        
+        <div class="grid grid-cols-2 gap-2">
+            <template x-for="slot in slots" :key="slot.start">
+                <button class="btn-primary text-sm p-2 bg-primary text-white rounded hover:opacity-90">
+                    <span x-text="slot.start.split('T')[1].substring(0, 5)"></span>
+                </button>
+            </template>
+        </div>
+        <div x-show="slots.length === 0" class="text-center py-4 text-surface-500">No slots available for this day.</div>
+    </div>
+</body>
+</html>
