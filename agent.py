@@ -1,10 +1,3 @@
-"""
-Autonomous AI Agent — powered by Gemini + Context7
-Runs every 30 minutes via GitHub Actions.
-Memory is persisted in memory.json inside the repo.
-Context7 fetches live, up-to-date library docs before each code generation step.
-"""
-
 import json
 import os
 import re
