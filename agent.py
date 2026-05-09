@@ -165,6 +165,7 @@ def read_src_files(max_chars: int = 8000) -> dict[str, str]:
 def call_gemini(prompt: str, retries: int = 3) -> str:
     for attempt in range(retries):
         try:
+            # Note: client is already defined globally in your script
             response = client.models.generate_content(
                 model=GEMINI_MODEL,
                 contents=prompt,
