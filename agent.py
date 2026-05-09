@@ -75,11 +75,7 @@ def c7_get_docs(library_id: str, query: str, tokens: int = 4000) -> str:
                 title = snippet.get("codeTitle", "")
                 for code in snippet.get("codeList", []):
                     lang = code.get("lang", "")
-                    # Using triple quotes here to prevent "unterminated string literal" errors
-                    content = f"""### {title}
-```{lang}
-{code.get('code', '')}
-```"""
+                    content = f"""### {title}\n```{lang}\n{code.get('code', '')}\n```"""
                     parts.append(content)
 
             for info in data.get("infoSnippets", []):
@@ -171,16 +167,18 @@ def call_gemini(prompt: str, retries: int = 3) -> str:
 
 # ── Response parser ────────────────────────────────────────────────────────────
 def parse_response(text: str) -> dict:
-    match = re.search(r"```json\s*(\{.*?\})\s*
-```", text, re.DOTALL)
+    # Fixed the unterminated string literal here by keeping it on one line
+    match = re.search(r"```json\s*(\{.*?\})\s*```", text, re.DOTALL)
     if match:
         raw = match.group(1)
     else:
-        match = re.search(r"\{.*\}", text, re.DOTALL)
+        # Made this regex non-greedy to avoid swallowing trailing text
+        match = re.search(r"\{.*?\}", text, re.DOTALL)
         if match:
             raw = match.group(0)
         else:
             raise ValueError("No JSON found in response.")
+            
     raw = re.sub(r",\s*([\}\]])", r"\1", raw)
     return json.loads(raw)
 
@@ -202,7 +200,14 @@ TASK: {memory['next_task']}
 {docs_section}
 FILES: {json.dumps(src_files)}
 
-Return JSON with: files (dict), next_task, current_phase, libraries_for_next_task, commit_message, progress_note, notes.
+Return ONLY a valid JSON object with the following keys:
+- "files": a dictionary mapping file paths to their string content.
+- "next_task": a string.
+- "current_phase": a string.
+- "libraries_for_next_task": a list of strings.
+- "commit_message": a string.
+- "progress_note": a string.
+- "notes": a string.
 """
 
     raw_response = call_gemini(prompt)
@@ -212,14 +217,21 @@ Return JSON with: files (dict), next_task, current_phase, libraries_for_next_tas
     for filepath, content in parsed.get("files", {}).items():
         p = Path(filepath)
         p.parent.mkdir(parents=True, exist_ok=True)
-        p.write_text(content)
+        p.write_text(str(content))
         files_written.append(str(p))
 
     memory["next_task"] = parsed.get("next_task", "Continue building")
+    memory["current_phase"] = parsed.get("current_phase", memory.get("current_phase", "project_setup"))
     memory["libraries_in_use"] = parsed.get("libraries_for_next_task", [])
+    memory["notes"] = parsed.get("notes", memory.get("notes", ""))
+    
+    completed = memory.get("completed_steps", [])
+    completed.append(f"[#{iteration}] {memory['next_task']}")
+    memory["completed_steps"] = completed[-20:] # keep last 20
+
     save_memory(memory)
 
-    update_progress(parsed.get("progress_note", "Ran."), iteration)
+    update_progress(parsed.get("progress_note", "Ran successfully."), iteration)
     COMMIT_MSG_FILE.write_text(parsed.get("commit_message", "chore: iteration"))
     print(f"✅ Run {iteration} complete.")
 
