@@ -1,1 +1,1 @@
-feat: implemented initial public booking page with dynamic availability fetching using Alpine.js and Tailwind CSS
+Add booking submission endpoint and frontend form integration

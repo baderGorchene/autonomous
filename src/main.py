@@ -53,3 +53,21 @@ def get_availability(slug: str, date_str: str, duration: int, db: Session = Depe
             curr += timedelta(minutes=15)
             
     return {"date": date_str, "slots": available_slots}
+
+@app.post('/{slug}/book', response_model=schemas.BookingResponse)
+def create_booking(slug: str, booking: schemas.BookingCreate, db: Session = Depends(get_db)):
+    owner = db.query(models.Owner).filter(models.Owner.slug == slug).first()
+    if not owner: raise HTTPException(status_code=404, detail="Owner not found")
+    
+    db_booking = models.Booking(
+        owner_id=owner.id, 
+        customer_name=booking.customer_name,
+        customer_email=booking.customer_email,
+        customer_phone=booking.customer_phone,
+        service=booking.service_name,
+        datetime=booking.datetime
+    )
+    db.add(db_booking)
+    db.commit()
+    db.refresh(db_booking)
+    return db_booking
