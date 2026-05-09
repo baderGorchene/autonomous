@@ -1,1 +1,1 @@
-Initialize alembic environment and configure metadata for autogeneration
+feat: initialize database schema with alembic migrations
