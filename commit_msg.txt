@@ -1,1 +1,1 @@
-Add booking submission endpoint and frontend form integration
+Add async booking notification service using BackgroundTasks and httpx

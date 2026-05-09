@@ -1,3 +1,8 @@
+## Iteration 10
+_2026-05-09 15:54 UTC_
+
+Implemented a modular notification service using httpx. Integrated it into the booking flow via FastAPI BackgroundTasks to ensure the user doesn't wait for email/WhatsApp delivery.
+
 ## Iteration 9
 _2026-05-09 14:52 UTC_
 
