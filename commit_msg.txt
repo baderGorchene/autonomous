@@ -1,1 +1,1 @@
-Implement POST /book/{owner_slug} endpoint with background notification support
+Implement frontend booking form submission with Axios and basic validation states.

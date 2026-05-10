@@ -1,3 +1,8 @@
+## Iteration 22
+_2026-05-10 13:21 UTC_
+
+Successfully connected the frontend booking form to the FastAPI backend using Axios and FormData, including basic success/error messaging.
+
 ## Iteration 21
 _2026-05-10 11:53 UTC_
 

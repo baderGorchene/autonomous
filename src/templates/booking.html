@@ -2,12 +2,48 @@
 {% block content %}
 <h1>{{ _('Book your appointment') }}</h1>
 <form id="booking-form">
-  <label>{{ _('Name') }}: <input type="text" name="name" required></label>
+  <input type="hidden" id="owner_slug" value="{{ owner_slug }}">
+  <label>{{ _('Name') }}: <input type="text" name="customer_name" id="customer_name" required></label>
+  <label>{{ _('Email') }}: <input type="email" name="customer_email" id="customer_email" required></label>
+  <label>{{ _('Phone') }}: <input type="tel" name="customer_phone" id="customer_phone" required></label>
   <label>{{ _('Service') }}: 
-    <select name="service">
+    <select name="service_name" id="service_name">
       {% for s in services %}<option value="{{ s.name }}">{{ s.name }}</option>{% endfor %}
     </select>
   </label>
-  <button type="submit">{{ _('Confirm Booking') }}</button>
+  <label>{{ _('Date/Time') }}: <input type="datetime-local" name="booking_datetime" id="booking_datetime" required></label>
+  <button type="submit" id="submit-btn">{{ _('Confirm Booking') }}</button>
 </form>
+<div id="message" style="display:none;"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script>
+  document.getElementById('booking-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('submit-btn');
+    const msg = document.getElementById('message');
+    btn.disabled = true;
+    msg.style.display = 'none';
+    
+    const formData = new FormData();
+    formData.append('customer_name', document.getElementById('customer_name').value);
+    formData.append('customer_email', document.getElementById('customer_email').value);
+    formData.append('customer_phone', document.getElementById('customer_phone').value);
+    formData.append('service_name', document.getElementById('service_name').value);
+    formData.append('booking_datetime', document.getElementById('booking_datetime').value);
+
+    try {
+      const slug = document.getElementById('owner_slug').value;
+      await axios.post(`/book/${slug}`, formData);
+      msg.textContent = '{{ _("Booking successful!") }}';
+      msg.style.color = 'green';
+    } catch (err) {
+      msg.textContent = '{{ _("Error submitting booking.") }}';
+      msg.style.color = 'red';
+    } finally {
+      msg.style.display = 'block';
+      btn.disabled = false;
+    }
+  });
+</script>
 {% endblock %}
