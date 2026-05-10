@@ -1,1 +1,1 @@
-Add pytest suite covering conflict logic and notification integration
+Add base templates with i18n support and Jinja2 environment configuration
