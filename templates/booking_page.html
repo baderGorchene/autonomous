@@ -2,25 +2,43 @@
 <html lang="{{ lang }}" dir="{{ 'rtl' if lang == 'ar' else 'ltr' }}">
 <head>
     <meta charset="UTF-8">
-    <title>Book with {{ owner.business_name }}</title>
-    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>{{ _('Book with') }} {{ owner.business_name }}</title>
+    <style>
+        body { font-family: sans-serif; max-width: 500px; margin: 2rem auto; padding: 0 1rem; }
+        .form-group { margin-bottom: 1rem; }
+        label { display: block; margin-bottom: 0.25rem; }
+        input, select { width: 100%; padding: 0.5rem; box-sizing: border-box; }
+        button { width: 100%; padding: 0.75rem; background: #007bff; color: white; border: none; cursor: pointer; }
+    </style>
 </head>
-<body class="bg-gray-50 p-6">
-    <div class="max-w-md mx-auto bg-white p-8 rounded shadow">
-        <h1 class="text-2xl font-bold mb-4">{{ owner.business_name }}</h1>
-        <form id="booking-form">
-            <div class="mb-4">
-                <label class="block mb-2">Select Date</label>
-                <input type="date" name="date" class="w-full border p-2 rounded"
-                       hx-get="/book/{{ owner.slug }}/availability"
-                       hx-target="#slots-container"
-                       hx-trigger="change">
-            </div>
-            <div id="slots-container" class="grid grid-cols-3 gap-2 mt-4">
-                <!-- Available slots will appear here -->
-            </div>
-        </form>
-    </div>
+<body>
+    <h1>{{ _('Book an appointment') }}</h1>
+    <form action="/book/{{ owner.slug }}/submit" method="POST">
+        <div class="form-group">
+            <label>{{ _('Full Name') }}</label>
+            <input type="text" name="customer_name" required>
+        </div>
+        <div class="form-group">
+            <label>{{ _('Email') }}</label>
+            <input type="email" name="customer_email" required>
+        </div>
+        <div class="form-group">
+            <label>{{ _('Phone') }}</label>
+            <input type="tel" name="customer_phone" required>
+        </div>
+        <div class="form-group">
+            <label>{{ _('Service') }}</label>
+            <select name="service" required>
+                {% for s in owner.services_json %}
+                <option value="{{ s }}">{{ s }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label>{{ _('Date & Time') }}</label>
+            <input type="datetime-local" name="booking_datetime" required>
+        </div>
+        <button type="submit">{{ _('Confirm Booking') }}</button>
+    </form>
 </body>
 </html>

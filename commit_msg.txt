@@ -1,1 +1,1 @@
-Add POST endpoint for booking creation with background notifications
+Create booking submission frontend form with i18n support
