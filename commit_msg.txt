@@ -1,1 +1,1 @@
-feat: add double-booking prevention in create_booking endpoint
+Add pytest suite covering conflict logic and notification integration

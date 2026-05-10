@@ -1,3 +1,8 @@
+## Iteration 17
+_2026-05-10 03:26 UTC_
+
+Created full test suite using pytest, FastAPI TestClient, and pytest-httpx. Conflict logic is verified against the in-memory SQLite database, and notification side-effects are mocked.
+
 ## Iteration 16
 _2026-05-09 23:52 UTC_
 
