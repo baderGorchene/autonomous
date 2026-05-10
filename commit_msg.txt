@@ -1,1 +1,1 @@
-Integrated booking router and implemented availability filtering logic
+Add booking_page.html with HTMX integration for dynamic availability fetching

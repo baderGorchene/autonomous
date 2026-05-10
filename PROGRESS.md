@@ -1,3 +1,8 @@
+## Iteration 27
+_2026-05-10 19:17 UTC_
+
+Created the base booking page template. It now successfully triggers an HTMX request to the /availability endpoint when the date input changes, which will dynamically update the #slots-container.
+
 ## Iteration 26
 _2026-05-10 17:58 UTC_
 
