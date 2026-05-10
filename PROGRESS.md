@@ -1,3 +1,8 @@
+## Iteration 25
+_2026-05-10 16:59 UTC_
+
+Created the booking page template and the booking route to fetch owner details. The page currently lists services and accepts basic customer info.
+
 ## Iteration 24
 _2026-05-10 15:55 UTC_
 

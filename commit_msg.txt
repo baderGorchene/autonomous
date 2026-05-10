@@ -1,1 +1,1 @@
-Add owner signup route and initial configuration template
+Add public booking page view and router
