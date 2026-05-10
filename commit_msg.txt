@@ -1,1 +1,1 @@
-Implement frontend booking form submission with Axios and basic validation states.
+Implement owner dashboard view with booking list.

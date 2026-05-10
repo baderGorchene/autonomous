@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Upcoming Bookings</h1>
+<table>
+  <thead>
+    <tr><th>Customer</th><th>Service</th><th>Date/Time</th><th>Status</th></tr>
+  </thead>
+  <tbody>
+    {% for booking in bookings %}
+      <tr>
+        <td>{{ booking.customer_name }}</td>
+        <td>{{ booking.service }}</td>
+        <td>{{ booking.datetime.strftime('%Y-%m-%d %H:%M') }}</td>
+        <td>{{ booking.status }}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="4">No bookings found yet.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

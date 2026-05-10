@@ -1,3 +1,8 @@
+## Iteration 23
+_2026-05-10 14:54 UTC_
+
+Added a dashboard endpoint that queries the database for bookings filtered by owner_id and rendered them using a Jinja2 template with an empty state handler.
+
 ## Iteration 22
 _2026-05-10 13:21 UTC_
 
