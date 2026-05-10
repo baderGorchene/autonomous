@@ -1,1 +1,1 @@
-Add base templates with i18n support and Jinja2 environment configuration
+feat: implement locale switching middleware for FastAPI

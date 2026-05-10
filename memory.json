@@ -1,15 +1,14 @@
 {
   "business_idea": "BookSlot \u2014 a dead-simple $19/month booking page for local service businesses (salons, clinics, tutors, mechanics, coaches) who currently manage appointments via WhatsApp chaos. The owner gets a shareable link (bookslot.app/their-name), customers book themselves, and the owner gets a WhatsApp/email notification with the booking details. No accounts needed for customers. Bilingual (English + Arabic/French) from day one to target the underserved MENA and North Africa market. MVP has: (1) owner signup + service setup page, (2) public booking page, (3) time slot availability, (4) email confirmation to both parties, (5) a simple dashboard showing upcoming bookings. Monetization: free for up to 20 bookings/month, $19/month for unlimited. Target: solo service providers who have 10-50 clients/week and are drowning in WhatsApp messages.",
-  "current_phase": "i18n_integration",
+  "current_phase": "i18n_implementation",
   "completed_steps": [],
-  "next_task": "Implement the locale-switching middleware in FastAPI to update the Jinja2 environment based on the URL parameter or user preferences.",
+  "next_task": "Create the basic directory structure for locales and write the first translation catalog (PO/MO files) for English and Arabic.",
   "libraries_in_use": [
-    "babel",
-    "python-gettext"
+    "gettext"
   ],
-  "iteration": 18,
+  "iteration": 19,
   "last_run": "",
-  "notes": "The templates use the _() function for translation. RTL support is handled via the 'dir' attribute in the HTML tag based on the language code.",
+  "notes": "The middleware now attaches a configured template environment to request.state, allowing routes to render templates with appropriate translations.",
   "product_name": "BookSlot",
   "target_price": "$19/month",
   "target_market": "MENA + North Africa local service businesses",

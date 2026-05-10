@@ -1,3 +1,8 @@
+## Iteration 19
+_2026-05-10 08:55 UTC_
+
+Added locale-switching middleware that dynamically updates the Jinja2 translation environment based on the 'lang' query parameter.
+
 ## Iteration 18
 _2026-05-10 06:34 UTC_
 
