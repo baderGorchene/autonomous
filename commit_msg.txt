@@ -1,1 +1,1 @@
-Add public booking page view and router
+Integrated booking router and implemented availability filtering logic

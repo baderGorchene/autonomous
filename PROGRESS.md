@@ -1,3 +1,8 @@
+## Iteration 26
+_2026-05-10 17:58 UTC_
+
+Successfully moved the booking logic into a dedicated router and added a JSON-based availability filter that cross-references booked slots from the database.
+
 ## Iteration 25
 _2026-05-10 16:59 UTC_
 
