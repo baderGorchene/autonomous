@@ -1,1 +1,1 @@
-feat: implement locale switching middleware for FastAPI
+Setup i18n directory structure and initial English/Arabic translation catalogs

@@ -1,0 +1,11 @@
+msgid "Book your appointment"
+msgstr "Book your appointment"
+
+msgid "Name"
+msgstr "Name"
+
+msgid "Service"
+msgstr "Service"
+
+msgid "Confirm Booking"
+msgstr "Confirm Booking"

@@ -1,0 +1,11 @@
+msgid "Book your appointment"
+msgstr "احجز موعدك"
+
+msgid "Name"
+msgstr "الاسم"
+
+msgid "Service"
+msgstr "الخدمة"
+
+msgid "Confirm Booking"
+msgstr "تأكيد الحجز"
