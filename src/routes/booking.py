@@ -5,6 +5,18 @@ from datetime import datetime, timedelta
 
 router = APIRouter()
 
+@router.get("/{owner_slug}")
+async def get_booking_page(owner_slug: str, request: Request, db: Session = Depends(lambda: database.SessionLocal())):
+    owner = db.query(models.Owner).filter(models.Owner.slug == owner_slug).first()
+    if not owner:
+        raise HTTPException(status_code=404, detail="Booking page not found")
+    
+    return request.state.templates.TemplateResponse("booking_page.html", {
+        "request": request, 
+        "owner": owner, 
+        "lang": request.state.locale
+    })
+
 @router.post("/{owner_slug}/submit")
 async def submit_booking(
     owner_slug: str,

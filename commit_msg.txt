@@ -1,1 +1,1 @@
-Create booking submission frontend form with i18n support
+Implement GET route for rendering owner-specific booking pages

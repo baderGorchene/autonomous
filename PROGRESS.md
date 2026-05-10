@@ -1,3 +1,8 @@
+## Iteration 30
+_2026-05-10 22:51 UTC_
+
+Added the GET route to src/routes/booking.py which fetches owner data by slug and renders the booking_page.html template using the shared request state templates.
+
 ## Iteration 29
 _2026-05-10 21:50 UTC_
 
