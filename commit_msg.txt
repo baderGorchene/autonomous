@@ -1,1 +1,1 @@
-Implement GET route for rendering owner-specific booking pages
+Add booking_page.html template with i18n support

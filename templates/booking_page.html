@@ -1,21 +1,10 @@
-<!DOCTYPE html>
-<html lang="{{ lang }}" dir="{{ 'rtl' if lang == 'ar' else 'ltr' }}">
-<head>
-    <meta charset="UTF-8">
-    <title>{{ _('Book with') }} {{ owner.business_name }}</title>
-    <style>
-        body { font-family: sans-serif; max-width: 500px; margin: 2rem auto; padding: 0 1rem; }
-        .form-group { margin-bottom: 1rem; }
-        label { display: block; margin-bottom: 0.25rem; }
-        input, select { width: 100%; padding: 0.5rem; box-sizing: border-box; }
-        button { width: 100%; padding: 0.75rem; background: #007bff; color: white; border: none; cursor: pointer; }
-    </style>
-</head>
-<body>
-    <h1>{{ _('Book an appointment') }}</h1>
+{% extends "base.html" %}
+{% block content %}
+<div class="booking-container">
+    <h1>{{ _('Book with') }} {{ owner.business_name }}</h1>
     <form action="/book/{{ owner.slug }}/submit" method="POST">
         <div class="form-group">
-            <label>{{ _('Full Name') }}</label>
+            <label>{{ _('Your Name') }}</label>
             <input type="text" name="customer_name" required>
         </div>
         <div class="form-group">
@@ -27,10 +16,10 @@
             <input type="tel" name="customer_phone" required>
         </div>
         <div class="form-group">
-            <label>{{ _('Service') }}</label>
+            <label>{{ _('Select Service') }}</label>
             <select name="service" required>
-                {% for s in owner.services_json %}
-                <option value="{{ s }}">{{ s }}</option>
+                {% for service in owner.services_json %}
+                <option value="{{ service }}">{{ service }}</option>
                 {% endfor %}
             </select>
         </div>
@@ -40,5 +29,5 @@
         </div>
         <button type="submit">{{ _('Confirm Booking') }}</button>
     </form>
-</body>
-</html>
+</div>
+{% endblock %}
