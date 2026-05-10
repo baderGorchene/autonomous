@@ -1,1 +1,1 @@
-Add booking_page.html with HTMX integration for dynamic availability fetching
+Add POST endpoint for booking creation with background notifications

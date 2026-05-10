@@ -1,3 +1,8 @@
+## Iteration 28
+_2026-05-10 20:51 UTC_
+
+Implemented the booking creation logic in the booking route, including database persistence and asynchronous notification triggering via background tasks.
+
 ## Iteration 27
 _2026-05-10 19:17 UTC_
 
