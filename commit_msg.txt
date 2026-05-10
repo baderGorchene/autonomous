@@ -1,1 +1,1 @@
-Setup i18n directory structure and initial English/Arabic translation catalogs
+Implement POST /book/{owner_slug} endpoint with background notification support

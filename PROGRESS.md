@@ -1,3 +1,8 @@
+## Iteration 21
+_2026-05-10 11:53 UTC_
+
+Booking submission logic is now integrated with the database and background notification task. Added necessary dependencies to the FastAPI route.
+
 ## Iteration 20
 _2026-05-10 10:16 UTC_
 
