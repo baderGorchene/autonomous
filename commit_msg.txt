@@ -1,1 +1,1 @@
-Implement owner dashboard view with booking list.
+Add owner signup route and initial configuration template

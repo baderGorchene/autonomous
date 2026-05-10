@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>{{ _('Create your booking page') }}</h1>
+<form action="/signup" method="POST">
+  <input type="text" name="name" placeholder="{{ _('Your Name') }}" required>
+  <input type="email" name="email" placeholder="{{ _('Email') }}" required>
+  <input type="text" name="business_name" placeholder="{{ _('Business Name') }}" required>
+  <input type="text" name="slug" placeholder="{{ _('Choose your link: bookslot.app/') }}" required>
+  <button type="submit">{{ _('Create Page') }}</button>
+</form>
+{% endblock %}

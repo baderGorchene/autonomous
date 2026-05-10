@@ -1,3 +1,8 @@
+## Iteration 24
+_2026-05-10 15:55 UTC_
+
+Created the base signup page and the corresponding backend route to handle owner registration and slug reservation.
+
 ## Iteration 23
 _2026-05-10 14:54 UTC_
 
