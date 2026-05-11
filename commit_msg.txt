@@ -1,1 +1,1 @@
-Add base.html template with Tailwind CSS and i18n support
+Added booking_page.html template for service providers.

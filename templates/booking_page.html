@@ -1,33 +1,33 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 {% block content %}
-<div class="booking-container">
-    <h1>{{ _('Book with') }} {{ owner.business_name }}</h1>
-    <form action="/book/{{ owner.slug }}/submit" method="POST">
-        <div class="form-group">
-            <label>{{ _('Your Name') }}</label>
-            <input type="text" name="customer_name" required>
-        </div>
-        <div class="form-group">
-            <label>{{ _('Email') }}</label>
-            <input type="email" name="customer_email" required>
-        </div>
-        <div class="form-group">
-            <label>{{ _('Phone') }}</label>
-            <input type="tel" name="customer_phone" required>
-        </div>
-        <div class="form-group">
-            <label>{{ _('Select Service') }}</label>
-            <select name="service" required>
+<div class="container mx-auto p-4 max-w-lg">
+    <h1 class="text-2xl font-bold mb-4">{{ _('Book an appointment with') }} {{ owner.business_name }}</h1>
+    <form action="/book/{{ owner.slug }}/submit" method="POST" class="space-y-4">
+        <div>
+            <label class="block font-medium">{{ _('Service') }}</label>
+            <select name="service" class="w-full p-2 border rounded" required>
                 {% for service in owner.services_json %}
-                <option value="{{ service }}">{{ service }}</option>
+                    <option value="{{ service }}">{{ service }}</option>
                 {% endfor %}
             </select>
         </div>
-        <div class="form-group">
-            <label>{{ _('Date & Time') }}</label>
-            <input type="datetime-local" name="booking_datetime" required>
+        <div>
+            <label class="block font-medium">{{ _('Your Name') }}</label>
+            <input type="text" name="customer_name" class="w-full p-2 border rounded" required>
         </div>
-        <button type="submit">{{ _('Confirm Booking') }}</button>
+        <div>
+            <label class="block font-medium">{{ _('Email') }}</label>
+            <input type="email" name="customer_email" class="w-full p-2 border rounded" required>
+        </div>
+        <div>
+            <label class="block font-medium">{{ _('Phone Number') }}</label>
+            <input type="tel" name="customer_phone" class="w-full p-2 border rounded" required>
+        </div>
+        <div>
+            <label class="block font-medium">{{ _('Date and Time') }}</label>
+            <input type="datetime-local" name="booking_datetime" class="w-full p-2 border rounded" required>
+        </div>
+        <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded font-bold">{{ _('Confirm Booking') }}</button>
     </form>
 </div>
 {% endblock %}
