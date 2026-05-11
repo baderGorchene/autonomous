@@ -1,1 +1,1 @@
-Implement public booking form template with i18n support
+Add client-side form validation and submission handling using Alpine.js

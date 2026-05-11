@@ -1,42 +1,38 @@
-<!DOCTYPE html>
-<html lang="{{ lang }}" {% if lang == 'ar' %}dir="rtl"{% endif %}>
-<head>
-    <meta charset="UTF-8">
-    <title>Book {{ owner.business_name }}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-slate-50 p-6">
-    <div class="max-w-md mx-auto bg-white p-8 rounded-xl shadow-sm border border-slate-200">
-        <h1 class="text-2xl font-bold mb-6">{{ _('Book an appointment with') }} {{ owner.business_name }}</h1>
-        <form action="/book/{{ owner.slug }}/submit" method="POST" class="space-y-4">
-            <div>
-                <label class="block text-sm font-medium">{{ _('Name') }}</label>
-                <input type="text" name="customer_name" required class="w-full p-2 border rounded-lg">
-            </div>
-            <div>
-                <label class="block text-sm font-medium">{{ _('Email') }}</label>
-                <input type="email" name="customer_email" required class="w-full p-2 border rounded-lg">
-            </div>
-            <div>
-                <label class="block text-sm font-medium">{{ _('Phone') }}</label>
-                <input type="tel" name="customer_phone" required class="w-full p-2 border rounded-lg">
-            </div>
-            <div>
-                <label class="block text-sm font-medium">{{ _('Service') }}</label>
-                <select name="service" class="w-full p-2 border rounded-lg">
-                    {% for service in owner.services_json %}
-                        <option value="{{ service }}">{{ service }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div>
-                <label class="block text-sm font-medium">{{ _('Date & Time') }}</label>
-                <input type="datetime-local" name="booking_datetime" required class="w-full p-2 border rounded-lg">
-            </div>
-            <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700">
-                {{ _('Confirm Booking') }}
-            </button>
-        </form>
-    </div>
-</body>
-</html>
+<div x-data="bookingForm()">
+    <form @submit.prevent="submitBooking" class="space-y-4">
+        <input type="text" x-model="form.name" placeholder="Name" required class="w-full border p-2">
+        <p x-show="submitted && !form.name" class="text-red-500">Name is required</p>
+        
+        <input type="email" x-model="form.email" placeholder="Email" required class="w-full border p-2">
+        <p x-show="submitted && !form.email" class="text-red-500">Valid email required</p>
+
+        <input type="tel" x-model="form.phone" placeholder="Phone" required class="w-full border p-2">
+        
+        <button type="submit" :disabled="loading" class="bg-blue-600 text-white p-2">Book Now</button>
+    </form>
+
+    <div x-show="success" class="p-4 bg-green-100">Booking successful!</div>
+    <div x-show="error" class="p-4 bg-red-100" x-text="error"></div>
+</div>
+
+<script>
+function bookingForm() {
+    return {
+        form: { name: '', email: '', phone: '' },
+        submitted: false, loading: false, success: false, error: '',
+        async submitBooking() {
+            this.submitted = true;
+            if (!this.form.name || !this.form.email) return;
+            this.loading = true;
+            try {
+                let response = await fetch('/book/{{ owner.slug }}/submit', {
+                    method: 'POST',
+                    body: new URLSearchParams(this.form)
+                });
+                if (response.ok) { this.success = true; } else { this.error = 'Failed to book'; }
+            } catch (e) { this.error = 'Network error'; }
+            this.loading = false;
+        }
+    }
+}
+</script>
