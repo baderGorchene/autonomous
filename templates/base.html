@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}" dir="{{ 'rtl' if lang == 'ar' else 'ltr' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}BookSlot{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 text-gray-900">
+    <nav class="bg-white border-b border-gray-200 p-4">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="/" class="text-xl font-bold text-blue-600">BookSlot</a>
+            <div class="space-x-4">
+                <a href="?lang=en">EN</a>
+                <a href="?lang=ar">AR</a>
+            </div>
+        </div>
+    </nav>
+    <main class="container mx-auto p-4">
+        {% block content %}{% endblock %}
+    </main>
+    <footer class="text-center p-6 text-gray-500 text-sm">
+        &copy; {{ now().year }} BookSlot. All rights reserved.
+    </footer>
+</body>
+</html>

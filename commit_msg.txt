@@ -1,1 +1,1 @@
-Add booking_page.html template with i18n support
+Add base.html template with Tailwind CSS and i18n support
