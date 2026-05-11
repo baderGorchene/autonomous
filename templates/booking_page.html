@@ -1,39 +1,41 @@
 <!DOCTYPE html>
-<html lang="{{ lang }}" dir="{{ 'rtl' if lang == 'ar' else 'ltr' }}">
+<html lang="{{ lang }}" {% if lang == 'ar' %}dir="rtl"{% endif %}>
 <head>
     <meta charset="UTF-8">
-    <title>{{ owner.business_name }} | BookSlot</title>
+    <title>Book {{ owner.business_name }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-50 p-6">
-    <div class="max-w-md mx-auto bg-white p-8 rounded-lg shadow-sm">
-        <h1 class="text-2xl font-bold mb-6">{{ owner.business_name }}</h1>
-        <form action="/book/{{ owner.slug }}/submit" method="POST">
-            <div class="mb-4">
-                <label class="block text-sm font-medium mb-1">{{ _('Service') }}</label>
-                <select name="service" class="w-full border rounded p-2" required>
+<body class="bg-slate-50 p-6">
+    <div class="max-w-md mx-auto bg-white p-8 rounded-xl shadow-sm border border-slate-200">
+        <h1 class="text-2xl font-bold mb-6">{{ _('Book an appointment with') }} {{ owner.business_name }}</h1>
+        <form action="/book/{{ owner.slug }}/submit" method="POST" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium">{{ _('Name') }}</label>
+                <input type="text" name="customer_name" required class="w-full p-2 border rounded-lg">
+            </div>
+            <div>
+                <label class="block text-sm font-medium">{{ _('Email') }}</label>
+                <input type="email" name="customer_email" required class="w-full p-2 border rounded-lg">
+            </div>
+            <div>
+                <label class="block text-sm font-medium">{{ _('Phone') }}</label>
+                <input type="tel" name="customer_phone" required class="w-full p-2 border rounded-lg">
+            </div>
+            <div>
+                <label class="block text-sm font-medium">{{ _('Service') }}</label>
+                <select name="service" class="w-full p-2 border rounded-lg">
                     {% for service in owner.services_json %}
-                    <option value="{{ service }}">{{ service }}</option>
+                        <option value="{{ service }}">{{ service }}</option>
                     {% endfor %}
                 </select>
             </div>
-            <div class="mb-4">
-                <label class="block text-sm font-medium mb-1">{{ _('Date & Time') }}</label>
-                <input type="datetime-local" name="booking_datetime" class="w-full border rounded p-2" required>
+            <div>
+                <label class="block text-sm font-medium">{{ _('Date & Time') }}</label>
+                <input type="datetime-local" name="booking_datetime" required class="w-full p-2 border rounded-lg">
             </div>
-            <div class="mb-4">
-                <label class="block text-sm font-medium mb-1">{{ _('Full Name') }}</label>
-                <input type="text" name="customer_name" class="w-full border rounded p-2" required>
-            </div>
-            <div class="mb-4">
-                <label class="block text-sm font-medium mb-1">{{ _('Email') }}</label>
-                <input type="email" name="customer_email" class="w-full border rounded p-2" required>
-            </div>
-            <div class="mb-6">
-                <label class="block text-sm font-medium mb-1">{{ _('WhatsApp Number') }}</label>
-                <input type="tel" name="customer_phone" class="w-full border rounded p-2" required>
-            </div>
-            <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded font-bold">{{ _('Confirm Booking') }}</button>
+            <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700">
+                {{ _('Confirm Booking') }}
+            </button>
         </form>
     </div>
 </body>

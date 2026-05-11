@@ -1,1 +1,1 @@
-Add responsive owner dashboard UI with Jinja2 loop and TailwindCSS
+Implement public booking form template with i18n support

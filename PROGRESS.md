@@ -1,3 +1,8 @@
+## Iteration 37
+_2026-05-11 19:49 UTC_
+
+Created the booking_page.html template. It uses the owner slug to route submissions and includes i18n support for RTL/LTR layouts.
+
 ## Iteration 36
 _2026-05-11 17:27 UTC_
 
