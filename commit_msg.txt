@@ -1,1 +1,1 @@
-Added booking_page.html template for service providers.
+Add base.html with Tailwind CSS and RTL support for multilingual support
