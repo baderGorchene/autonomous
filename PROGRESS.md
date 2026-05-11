@@ -1,3 +1,8 @@
+## Iteration 36
+_2026-05-11 17:27 UTC_
+
+Created the dashboard template to display bookings, incorporating RTL support for Arabic and conditional styling for status badges.
+
 ## Iteration 35
 _2026-05-11 14:55 UTC_
 

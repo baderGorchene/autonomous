@@ -1,1 +1,1 @@
-Added booking_page.html with i18n support and RTL handling.
+Add responsive owner dashboard UI with Jinja2 loop and TailwindCSS
