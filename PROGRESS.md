@@ -1,3 +1,8 @@
+## Iteration 39
+_2026-05-11 22:56 UTC_
+
+Added a dynamic booking UI to the booking_page.html template. The UI filters availability slots based on the selection, though logic currently assumes availability is a flat list. Next step is to integrate these selections into the POST submission form.
+
 ## Iteration 38
 _2026-05-11 21:18 UTC_
 

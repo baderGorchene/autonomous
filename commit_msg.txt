@@ -1,1 +1,1 @@
-Add client-side form validation and submission handling using Alpine.js
+Implement service and time selection UI using Alpine.js

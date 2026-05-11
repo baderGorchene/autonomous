@@ -1,38 +1,29 @@
-<div x-data="bookingForm()">
-    <form @submit.prevent="submitBooking" class="space-y-4">
-        <input type="text" x-model="form.name" placeholder="Name" required class="w-full border p-2">
-        <p x-show="submitted && !form.name" class="text-red-500">Name is required</p>
-        
-        <input type="email" x-model="form.email" placeholder="Email" required class="w-full border p-2">
-        <p x-show="submitted && !form.email" class="text-red-500">Valid email required</p>
+<div x-data="{ 
+    selectedService: '', 
+    selectedTime: '', 
+    services: {{ owner.services_json | tojson }}, 
+    availability: {{ owner.availability_json | tojson }}
+}">
+    <label>Select Service</label>
+    <select x-model="selectedService">
+        <option value="" disabled>Choose a service...</option>
+        <template x-for="service in services" :key="service.name">
+            <option :value="service.name" x-text="service.name"></option>
+        </template>
+    </select>
 
-        <input type="tel" x-model="form.phone" placeholder="Phone" required class="w-full border p-2">
-        
-        <button type="submit" :disabled="loading" class="bg-blue-600 text-white p-2">Book Now</button>
-    </form>
+    <div x-show="selectedService">
+        <label>Select Time Slot</label>
+        <select x-model="selectedTime">
+            <option value="" disabled>Choose a time...</option>
+            <template x-for="slot in availability" :key="slot">
+                <option :value="slot" x-text="slot"></option>
+            </template>
+        </select>
+    </div>
 
-    <div x-show="success" class="p-4 bg-green-100">Booking successful!</div>
-    <div x-show="error" class="p-4 bg-red-100" x-text="error"></div>
+    <div x-show="selectedService && selectedTime">
+        <p>Selected <span x-text="selectedService"></span> at <span x-text="selectedTime"></span></p>
+        <button>Confirm Booking</button>
+    </div>
 </div>
-
-<script>
-function bookingForm() {
-    return {
-        form: { name: '', email: '', phone: '' },
-        submitted: false, loading: false, success: false, error: '',
-        async submitBooking() {
-            this.submitted = true;
-            if (!this.form.name || !this.form.email) return;
-            this.loading = true;
-            try {
-                let response = await fetch('/book/{{ owner.slug }}/submit', {
-                    method: 'POST',
-                    body: new URLSearchParams(this.form)
-                });
-                if (response.ok) { this.success = true; } else { this.error = 'Failed to book'; }
-            } catch (e) { this.error = 'Network error'; }
-            this.loading = false;
-        }
-    }
-}
-</script>
