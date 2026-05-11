@@ -1,1 +1,1 @@
-Add base.html with Tailwind CSS and RTL support for multilingual support
+Added booking_page.html with i18n support and RTL handling.

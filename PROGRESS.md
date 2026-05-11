@@ -1,3 +1,8 @@
+## Iteration 35
+_2026-05-11 14:55 UTC_
+
+The booking page is now functional and supports dynamic service lists from the database.
+
 ## Iteration 34
 _2026-05-11 11:23 UTC_
 
