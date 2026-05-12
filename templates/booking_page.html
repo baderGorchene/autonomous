@@ -1,29 +1,31 @@
 <div x-data="{ 
-    selectedService: '', 
-    selectedTime: '', 
-    services: {{ owner.services_json | tojson }}, 
-    availability: {{ owner.availability_json | tojson }}
+    service: '', 
+    booking_datetime: '', 
+    customer_name: '', 
+    customer_email: '', 
+    customer_phone: '',
+    submit() {
+        const formData = new FormData();
+        formData.append('customer_name', this.customer_name);
+        formData.append('customer_email', this.customer_email);
+        formData.append('customer_phone', this.customer_phone);
+        formData.append('service', this.service);
+        formData.append('booking_datetime', this.booking_datetime);
+        
+        fetch('/book/{{ owner.slug }}/submit', { method: 'POST', body: formData })
+            .then(res => res.json())
+            .then(data => alert('Booking confirmed!'));
+    }
 }">
-    <label>Select Service</label>
-    <select x-model="selectedService">
-        <option value="" disabled>Choose a service...</option>
-        <template x-for="service in services" :key="service.name">
-            <option :value="service.name" x-text="service.name"></option>
-        </template>
-    </select>
-
-    <div x-show="selectedService">
-        <label>Select Time Slot</label>
-        <select x-model="selectedTime">
-            <option value="" disabled>Choose a time...</option>
-            <template x-for="slot in availability" :key="slot">
-                <option :value="slot" x-text="slot"></option>
-            </template>
+    <form @submit.prevent="submit">
+        <select x-model="service" required>
+            <option value="" disabled>Select Service</option>
+            {% for s in owner.services_json %}<option value="{{ s }}">{{ s }}</option>{% endfor %}
         </select>
-    </div>
-
-    <div x-show="selectedService && selectedTime">
-        <p>Selected <span x-text="selectedService"></span> at <span x-text="selectedTime"></span></p>
-        <button>Confirm Booking</button>
-    </div>
+        <input type="datetime-local" x-model="booking_datetime" required>
+        <input type="text" x-model="customer_name" placeholder="Name" required>
+        <input type="email" x-model="customer_email" placeholder="Email" required>
+        <input type="tel" x-model="customer_phone" placeholder="Phone" required>
+        <button type="submit">Book Now</button>
+    </form>
 </div>

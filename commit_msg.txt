@@ -1,1 +1,1 @@
-Implement service and time selection UI using Alpine.js
+feat: add booking form with Alpine.js submission integration
