@@ -1,1 +1,1 @@
-Add client-side date and time selection grid with Alpine.js
+feat: implement booking submission modal using Alpine.js teleport
