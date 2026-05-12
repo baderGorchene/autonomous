@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Request
 from sqlalchemy.orm import Session
-from .. import models, database, schemas, notifications
+from .. import models, database, notifications
 from pydantic import BaseModel
 from datetime import datetime
 
@@ -13,6 +13,18 @@ class BookingCreate(BaseModel):
     customer_phone: str
     service: str
     datetime: datetime
+
+@router.get("/{slug}")
+def get_booking_page(slug: str, request: Request, db: Session = Depends(lambda: database.SessionLocal())):
+    owner = db.query(models.Owner).filter(models.Owner.slug == slug).first()
+    if not owner:
+        raise HTTPException(status_code=404, detail="Booking page not found")
+    
+    return request.state.templates.TemplateResponse("booking_page.html", {
+        "request": request, 
+        "owner": owner, 
+        "lang": request.state.locale
+    })
 
 @router.post("/submit")
 async def submit_booking(booking_data: BookingCreate, background_tasks: BackgroundTasks, db: Session = Depends(lambda: database.SessionLocal())):
@@ -32,7 +44,6 @@ async def submit_booking(booking_data: BookingCreate, background_tasks: Backgrou
     db.commit()
     db.refresh(new_booking)
 
-    # Trigger notifications in background
     details = {
         "customer": booking_data.customer_name,
         "time": booking_data.datetime.strftime("%Y-%m-%d %H:%M"),

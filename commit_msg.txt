@@ -1,1 +1,1 @@
-Add public booking form template with HTMX integration
+Implement GET endpoint for public booking page slug

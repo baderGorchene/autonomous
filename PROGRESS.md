@@ -1,3 +1,8 @@
+## Iteration 47
+_2026-05-12 22:13 UTC_
+
+Added /{slug} endpoint to booking router to fetch owner info and render the public booking template.
+
 ## Iteration 46
 _2026-05-12 20:43 UTC_
 
