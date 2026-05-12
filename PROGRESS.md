@@ -1,3 +1,8 @@
+## Iteration 45
+_2026-05-12 18:56 UTC_
+
+Backend logic for processing bookings is now in place, including database persistence and background task triggering for notifications.
+
 ## Iteration 44
 _2026-05-12 16:19 UTC_
 

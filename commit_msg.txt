@@ -1,1 +1,1 @@
-feat: add Alpine.js form validation and submission logic to booking template
+Implement /book/submit endpoint with background notifications

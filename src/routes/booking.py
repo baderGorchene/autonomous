@@ -1,71 +1,43 @@
-from fastapi import APIRouter, Depends, Request, HTTPException, BackgroundTasks, Form
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
-from .. import models, database, notifications
-from datetime import datetime, timedelta
+from .. import models, database, schemas, notifications
+from pydantic import BaseModel
+from datetime import datetime
 
 router = APIRouter()
 
-@router.get("/{owner_slug}/availability")
-async def get_availability(owner_slug: str, date: str, db: Session = Depends(lambda: database.SessionLocal())):
-    owner = db.query(models.Owner).filter(models.Owner.slug == owner_slug).first()
+class BookingCreate(BaseModel):
+    owner_id: int
+    customer_name: str
+    customer_email: str
+    customer_phone: str
+    service: str
+    datetime: datetime
+
+@router.post("/submit")
+async def submit_booking(booking_data: BookingCreate, background_tasks: BackgroundTasks, db: Session = Depends(lambda: database.SessionLocal())):
+    owner = db.query(models.Owner).filter(models.Owner.id == booking_data.owner_id).first()
     if not owner:
         raise HTTPException(status_code=404, detail="Owner not found")
-    # Logic to filter booked slots based on owner's availability_json
-    booked = db.query(models.Booking).filter(models.Booking.owner_id == owner.id).all()
-    booked_times = [b.datetime.strftime('%H:%M') for b in booked if b.datetime.date().isoformat() == date]
-    return {"available_slots": ["09:00", "10:00", "11:00", "14:00", "15:00"], "booked_slots": booked_times}
 
-@router.get("/{owner_slug}")
-async def get_booking_page(owner_slug: str, request: Request, db: Session = Depends(lambda: database.SessionLocal())):
-    owner = db.query(models.Owner).filter(models.Owner.slug == owner_slug).first()
-    if not owner:
-        raise HTTPException(status_code=404, detail="Booking page not found")
-    
-    return request.state.templates.TemplateResponse("booking_page.html", {
-        "request": request, 
-        "owner": owner, 
-        "lang": request.state.locale
-    })
-
-@router.post("/{owner_slug}/submit")
-async def submit_booking(
-    owner_slug: str,
-    background_tasks: BackgroundTasks,
-    customer_name: str = Form(...),
-    customer_email: str = Form(...),
-    customer_phone: str = Form(...),
-    service: str = Form(...),
-    booking_datetime: str = Form(...),
-    db: Session = Depends(lambda: database.SessionLocal())
-):
-    owner = db.query(models.Owner).filter(models.Owner.slug == owner_slug).first()
-    if not owner:
-        raise HTTPException(status_code=404, detail="Owner not found")
-    
-    dt = datetime.fromisoformat(booking_datetime)
     new_booking = models.Booking(
-        owner_id=owner.id, 
-        customer_name=customer_name,
-        customer_email=customer_email,
-        customer_phone=customer_phone,
-        service=service,
-        datetime=dt
+        owner_id=booking_data.owner_id,
+        customer_name=booking_data.customer_name,
+        customer_email=booking_data.customer_email,
+        customer_phone=booking_data.customer_phone,
+        service=booking_data.service,
+        datetime=booking_data.datetime
     )
     db.add(new_booking)
     db.commit()
     db.refresh(new_booking)
 
-    booking_details = {
-        "customer": customer_name,
-        "time": dt.strftime('%Y-%m-%d %H:%M'),
-        "service": service
+    # Trigger notifications in background
+    details = {
+        "customer": booking_data.customer_name,
+        "time": booking_data.datetime.strftime("%Y-%m-%d %H:%M"),
+        "service": booking_data.service
     }
-    
-    background_tasks.add_task(
-        notifications.send_booking_notification, 
-        owner.email, 
-        getattr(owner, 'phone', None), 
-        booking_details
-    )
-    
+    background_tasks.add_task(notifications.send_booking_notification, owner.email, "+1234567890", details)
+
     return {"status": "success", "booking_id": new_booking.id}
