@@ -1,32 +1,33 @@
-<div x-data="{ showModal: false, selectedTime: null, service: '' }">
-    <!-- Time slot selection logic would be here, setting selectedTime -->
-    <div class="grid grid-cols-3 gap-2">
-        <button @click="selectedTime = '2023-10-27T10:00:00'; showModal = true">10:00 AM</button>
+<div x-data="bookingManager('{{ owner.slug }}')" class="p-6">
+    <h1 class="text-2xl">Book with {{ owner.name }}</h1>
+    <div class="mt-4">
+        <input type="date" x-model="selectedDate" @change="fetchSlots()">
     </div>
-
-    <template x-teleport="body">
-        <div x-show="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center" @click.outside="showModal = false">
-            <div class="bg-white p-6 rounded-lg w-full max-w-md" @click.stop>
-                <h2 class="text-xl font-bold mb-4">Confirm Booking</h2>
-                <form action="/book/{{ owner.slug }}/submit" method="POST">
-                    <input type="hidden" name="booking_datetime" x-model="selectedTime">
-                    <input type="hidden" name="service" value="Default Service">
-                    <div class="mb-4">
-                        <label>Name</label>
-                        <input type="text" name="customer_name" required class="w-full border p-2">
-                    </div>
-                    <div class="mb-4">
-                        <label>Email</label>
-                        <input type="email" name="customer_email" required class="w-full border p-2">
-                    </div>
-                    <div class="mb-4">
-                        <label>WhatsApp Number</label>
-                        <input type="tel" name="customer_phone" required class="w-full border p-2">
-                    </div>
-                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Confirm</button>
-                    <button type="button" @click="showModal = false" class="ml-2">Cancel</button>
-                </form>
-            </div>
-        </div>
-    </template>
+    <div class="mt-4 grid grid-cols-3 gap-2">
+        <template x-for="slot in availableSlots" :key="slot">
+            <button 
+                :disabled="bookedSlots.includes(slot)" 
+                @click="selectSlot(slot)"
+                x-text="slot"
+                class="p-2 border rounded disabled:opacity-50">
+            </button>
+        </template>
+    </div>
 </div>
+
+<script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('bookingManager', (slug) => ({
+            selectedDate: new Date().toISOString().split('T')[0],
+            availableSlots: [],
+            bookedSlots: [],
+            async fetchSlots() {
+                const res = await fetch(`/book/${slug}/availability?date=${this.selectedDate}`);
+                const data = await res.json();
+                this.availableSlots = data.available_slots;
+                this.bookedSlots = data.booked_slots;
+            },
+            init() { this.fetchSlots() }
+        }))
+    })
+</script>

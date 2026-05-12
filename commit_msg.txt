@@ -1,1 +1,1 @@
-feat: implement booking submission modal using Alpine.js teleport
+Implement availability API endpoint and dynamic slot loading in booking page

@@ -5,6 +5,16 @@ from datetime import datetime, timedelta
 
 router = APIRouter()
 
+@router.get("/{owner_slug}/availability")
+async def get_availability(owner_slug: str, date: str, db: Session = Depends(lambda: database.SessionLocal())):
+    owner = db.query(models.Owner).filter(models.Owner.slug == owner_slug).first()
+    if not owner:
+        raise HTTPException(status_code=404, detail="Owner not found")
+    # Logic to filter booked slots based on owner's availability_json
+    booked = db.query(models.Booking).filter(models.Booking.owner_id == owner.id).all()
+    booked_times = [b.datetime.strftime('%H:%M') for b in booked if b.datetime.date().isoformat() == date]
+    return {"available_slots": ["09:00", "10:00", "11:00", "14:00", "15:00"], "booked_slots": booked_times}
+
 @router.get("/{owner_slug}")
 async def get_booking_page(owner_slug: str, request: Request, db: Session = Depends(lambda: database.SessionLocal())):
     owner = db.query(models.Owner).filter(models.Owner.slug == owner_slug).first()

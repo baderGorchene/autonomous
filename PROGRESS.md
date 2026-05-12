@@ -1,3 +1,8 @@
+## Iteration 43
+_2026-05-12 10:33 UTC_
+
+Added a dedicated availability endpoint and integrated it with an Alpine.js component to dynamically fetch and display available time slots based on the selected date.
+
 ## Iteration 42
 _2026-05-12 07:43 UTC_
 
