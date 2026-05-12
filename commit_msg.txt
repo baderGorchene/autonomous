@@ -1,1 +1,1 @@
-feat: add booking form with Alpine.js submission integration
+Add client-side date and time selection grid with Alpine.js

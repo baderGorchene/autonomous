@@ -1,31 +1,29 @@
-<div x-data="{ 
-    service: '', 
-    booking_datetime: '', 
-    customer_name: '', 
-    customer_email: '', 
-    customer_phone: '',
-    submit() {
-        const formData = new FormData();
-        formData.append('customer_name', this.customer_name);
-        formData.append('customer_email', this.customer_email);
-        formData.append('customer_phone', this.customer_phone);
-        formData.append('service', this.service);
-        formData.append('booking_datetime', this.booking_datetime);
-        
-        fetch('/book/{{ owner.slug }}/submit', { method: 'POST', body: formData })
-            .then(res => res.json())
-            .then(data => alert('Booking confirmed!'));
-    }
-}">
-    <form @submit.prevent="submit">
-        <select x-model="service" required>
-            <option value="" disabled>Select Service</option>
-            {% for s in owner.services_json %}<option value="{{ s }}">{{ s }}</option>{% endfor %}
-        </select>
-        <input type="datetime-local" x-model="booking_datetime" required>
-        <input type="text" x-model="customer_name" placeholder="Name" required>
-        <input type="email" x-model="customer_email" placeholder="Email" required>
-        <input type="tel" x-model="customer_phone" placeholder="Phone" required>
-        <button type="submit">Book Now</button>
-    </form>
+<div x-data="bookingManager({{ owner.availability_json | tojson }})">
+  <div class="grid grid-cols-7 gap-2">
+    <template x-for="day in weekDays" :key="day.date">
+      <button @click="selectedDate = day.date" class="p-4 border rounded" :class="{'bg-blue-500 text-white': selectedDate === day.date}">
+        <span x-text="day.label"></span>
+      </button>
+    </template>
+  </div>
+  <div class="grid grid-cols-3 gap-2 mt-4">
+    <template x-for="slot in availableSlots" :key="slot">
+      <button class="p-2 border rounded hover:bg-gray-100" x-text="slot" @click="book(slot)"></button>
+    </template>
+  </div>
 </div>
+
+<script>
+  document.addEventListener('alpine:init', () => {
+    Alpine.data('bookingManager', (availability) => ({
+      selectedDate: null,
+      availability: availability,
+      get weekDays() { /* Generate next 7 days */ },
+      get availableSlots() {
+        if (!this.selectedDate) return [];
+        return this.availability[this.selectedDate] || [];
+      },
+      book(slot) { /* Logic to trigger booking modal/form */ }
+    }))
+  });
+</script>
