@@ -1,3 +1,8 @@
+## Iteration 46
+_2026-05-12 20:43 UTC_
+
+Created the base booking form template using Jinja2 and HTMX for async submission to the /book/submit endpoint.
+
 ## Iteration 45
 _2026-05-12 18:56 UTC_
 

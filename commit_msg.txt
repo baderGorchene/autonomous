@@ -1,1 +1,1 @@
-Implement /book/submit endpoint with background notifications
+Add public booking form template with HTMX integration
