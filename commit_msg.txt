@@ -1,1 +1,1 @@
-Implement availability API endpoint and dynamic slot loading in booking page
+feat: add Alpine.js form validation and submission logic to booking template
