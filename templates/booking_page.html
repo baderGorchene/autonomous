@@ -1,41 +1,36 @@
-<!DOCTYPE html>
-<html lang="{{ lang }}" {% if lang == 'ar' %}dir="rtl"{% endif %}>
-<head>
-    <meta charset="UTF-8">
-    <title>{{ owner.business_name }} | BookSlot</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-50">
-    <div class="max-w-md mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
-        <h1 class="text-2xl font-bold mb-4">{{ owner.business_name }}</h1>
-        <form action="/book/submit" method="POST" class="space-y-4">
-            <input type="hidden" name="owner_id" value="{{ owner.id }}">
-            <div>
-                <label class="block text-sm font-medium">Full Name</label>
-                <input type="text" name="customer_name" required class="w-full p-2 border rounded">
-            </div>
-            <div>
-                <label class="block text-sm font-medium">Email</label>
-                <input type="email" name="customer_email" required class="w-full p-2 border rounded">
-            </div>
-            <div>
-                <label class="block text-sm font-medium">Phone (WhatsApp)</label>
-                <input type="tel" name="customer_phone" required class="w-full p-2 border rounded">
-            </div>
-            <div>
-                <label class="block text-sm font-medium">Service</label>
-                <select name="service" class="w-full p-2 border rounded">
-                    {% for service in owner.services_json %}
-                        <option value="{{ service }}">{{ service }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div>
-                <label class="block text-sm font-medium">Date & Time</label>
-                <input type="datetime-local" name="datetime" required class="w-full p-2 border rounded">
-            </div>
-            <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded font-bold">Confirm Booking</button>
-        </form>
-    </div>
-</body>
-</html>
+<form id="bookingForm">
+  <input type="hidden" id="owner_id" value="{{ owner.id }}">
+  <input type="text" id="customer_name" placeholder="Name" required>
+  <input type="email" id="customer_email" placeholder="Email" required>
+  <input type="tel" id="customer_phone" placeholder="Phone" required>
+  <select id="service" required>
+    {% for s in owner.services_json %}<option value="{{s}}">{{s}}</option>{% endfor %}
+  </select>
+  <input type="datetime-local" id="datetime" required>
+  <button type="submit" id="submitBtn">Book Now</button>
+</form>
+<div id="message"></div>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script>
+  document.getElementById('bookingForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('submitBtn');
+    const msg = document.getElementById('message');
+    btn.disabled = true;
+    try {
+      const response = await axios.post('/book/submit', {
+        owner_id: parseInt(document.getElementById('owner_id').value),
+        customer_name: document.getElementById('customer_name').value,
+        customer_email: document.getElementById('customer_email').value,
+        customer_phone: document.getElementById('customer_phone').value,
+        service: document.getElementById('service').value,
+        datetime: document.getElementById('datetime').value
+      });
+      msg.textContent = 'Booking successful!';
+    } catch (err) {
+      msg.textContent = 'Error: ' + (err.response?.data?.detail || err.message);
+    } finally {
+      btn.disabled = false;
+    }
+  };
+</script>

@@ -1,1 +1,1 @@
-Add booking_page.html template for public appointment scheduling
+feat: add AJAX booking submission to booking page
