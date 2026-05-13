@@ -1,3 +1,8 @@
+## Iteration 51
+_2026-05-13 13:12 UTC_
+
+Created a new route file src/routes/dashboard.py with a PUT endpoint to manage booking status (confirmed/cancelled).
+
 ## Iteration 50
 _2026-05-13 07:52 UTC_
 

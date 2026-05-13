@@ -1,1 +1,1 @@
-Implement dashboard with Alpine.js filtering and Tailwind table layout
+Add PUT endpoint for updating booking status in dashboard
