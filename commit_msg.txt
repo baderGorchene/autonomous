@@ -1,1 +1,1 @@
-Add hx-put status update controls to dashboard
+feat: add mobile-friendly dashboard template with PrimeUI-inspired styling
