@@ -26,6 +26,15 @@ def get_booking_page(slug: str, request: Request, db: Session = Depends(lambda: 
         "lang": request.state.locale
     })
 
+@router.put("/{booking_id}/status")
+def update_booking_status(booking_id: int, status: str = Form(...), db: Session = Depends(lambda: database.SessionLocal())):
+    booking = db.query(models.Booking).filter(models.Booking.id == booking_id).first()
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+    booking.status = status
+    db.commit()
+    return {"status": "updated"}
+
 @router.post("/submit")
 async def submit_booking(booking_data: BookingCreate, background_tasks: BackgroundTasks, db: Session = Depends(lambda: database.SessionLocal())):
     owner = db.query(models.Owner).filter(models.Owner.id == booking_data.owner_id).first()

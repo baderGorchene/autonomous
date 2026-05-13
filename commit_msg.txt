@@ -1,1 +1,1 @@
-Add PUT endpoint for updating booking status in dashboard
+Add PUT /bookings/{booking_id}/status endpoint to allow status updates
