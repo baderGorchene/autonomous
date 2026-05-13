@@ -1,3 +1,8 @@
+## Iteration 50
+_2026-05-13 07:52 UTC_
+
+Dashboard now supports real-time client name search and status filtering using Alpine.js.
+
 ## Iteration 49
 _2026-05-13 04:44 UTC_
 

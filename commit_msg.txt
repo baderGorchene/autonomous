@@ -1,1 +1,1 @@
-feat: add AJAX booking submission to booking page
+Implement dashboard with Alpine.js filtering and Tailwind table layout
