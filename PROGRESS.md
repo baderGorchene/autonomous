@@ -1,3 +1,8 @@
+## Iteration 53
+_2026-05-13 20:49 UTC_
+
+Integrated HTMX to enable inline booking status management directly from the dashboard without page refreshes.
+
 ## Iteration 52
 _2026-05-13 18:58 UTC_
 

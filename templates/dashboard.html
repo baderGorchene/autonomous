@@ -1,42 +1,30 @@
-<div x-data="{ 
-    search: '', 
-    filterStatus: 'all', 
-    bookings: {{ bookings | tojson | safe }},
-    get filteredBookings() {
-        return this.bookings.filter(b => 
-            (this.filterStatus === 'all' || b.status === this.filterStatus) &&
-            (b.customer_name.toLowerCase().includes(this.search.toLowerCase()))
-        );
-    }
-}" class="p-6">
-    <h1 class="text-2xl font-bold mb-4">My Bookings</h1>
-    <div class="flex gap-4 mb-6">
-        <input x-model="search" placeholder="Search clients..." class="border p-2 rounded w-full">
-        <select x-model="filterStatus" class="border p-2 rounded">
-            <option value="all">All Statuses</option>
-            <option value="pending">Pending</option>
-            <option value="confirmed">Confirmed</option>
-            <option value="cancelled">Cancelled</option>
-        </select>
-    </div>
-    <table class="w-full border-collapse">
-        <thead>
-            <tr class="bg-gray-100">
-                <th class="border p-2">Client</th>
-                <th class="border p-2">Service</th>
-                <th class="border p-2">Date</th>
-                <th class="border p-2">Status</th>
-            </tr>
-        </thead>
-        <tbody>
-            <template x-for="booking in filteredBookings" :key="booking.id">
-                <tr>
-                    <td class="border p-2" x-text="booking.customer_name"></td>
-                    <td class="border p-2" x-text="booking.service"></td>
-                    <td class="border p-2" x-text="booking.datetime"></td>
-                    <td class="border p-2 font-bold" x-text="booking.status"></td>
-                </tr>
-            </template>
-        </tbody>
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+    <title>Dashboard</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+</head>
+<body>
+    <h1>Bookings</h1>
+    <table>
+        {% for b in bookings %}
+        <tr id="booking-{{ b.id }}">
+            <td>{{ b.customer_name }}</td>
+            <td>{{ b.service }}</td>
+            <td>{{ b.datetime }}</td>
+            <td>Status: <span id="status-{{ b.id }}">{{ b.status }}</span></td>
+            <td>
+                <form hx-put="/book/{{ b.id }}/status" hx-target="#status-{{ b.id }}" hx-swap="innerHTML">
+                    <input type="hidden" name="status" value="confirmed">
+                    <button type="submit">Confirm</button>
+                </form>
+                <form hx-put="/book/{{ b.id }}/status" hx-target="#status-{{ b.id }}" hx-swap="innerHTML">
+                    <input type="hidden" name="status" value="cancelled">
+                    <button type="submit">Cancel</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
     </table>
-</div>
+</body>
+</html>

@@ -1,1 +1,1 @@
-Add PUT /bookings/{booking_id}/status endpoint to allow status updates
+Add hx-put status update controls to dashboard
