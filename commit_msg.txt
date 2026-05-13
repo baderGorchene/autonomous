@@ -1,1 +1,1 @@
-Implement GET endpoint for public booking page slug
+Add booking_page.html template for public appointment scheduling

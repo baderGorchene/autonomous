@@ -1,33 +1,41 @@
-<div x-data="bookingManager('{{ owner.slug }}')" class="p-6">
-    <h1 class="text-2xl">Book with {{ owner.name }}</h1>
-    <div class="mt-4">
-        <input type="date" x-model="selectedDate" @change="fetchSlots()">
+<!DOCTYPE html>
+<html lang="{{ lang }}" {% if lang == 'ar' %}dir="rtl"{% endif %}>
+<head>
+    <meta charset="UTF-8">
+    <title>{{ owner.business_name }} | BookSlot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+    <div class="max-w-md mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
+        <h1 class="text-2xl font-bold mb-4">{{ owner.business_name }}</h1>
+        <form action="/book/submit" method="POST" class="space-y-4">
+            <input type="hidden" name="owner_id" value="{{ owner.id }}">
+            <div>
+                <label class="block text-sm font-medium">Full Name</label>
+                <input type="text" name="customer_name" required class="w-full p-2 border rounded">
+            </div>
+            <div>
+                <label class="block text-sm font-medium">Email</label>
+                <input type="email" name="customer_email" required class="w-full p-2 border rounded">
+            </div>
+            <div>
+                <label class="block text-sm font-medium">Phone (WhatsApp)</label>
+                <input type="tel" name="customer_phone" required class="w-full p-2 border rounded">
+            </div>
+            <div>
+                <label class="block text-sm font-medium">Service</label>
+                <select name="service" class="w-full p-2 border rounded">
+                    {% for service in owner.services_json %}
+                        <option value="{{ service }}">{{ service }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium">Date & Time</label>
+                <input type="datetime-local" name="datetime" required class="w-full p-2 border rounded">
+            </div>
+            <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded font-bold">Confirm Booking</button>
+        </form>
     </div>
-    <div class="mt-4 grid grid-cols-3 gap-2">
-        <template x-for="slot in availableSlots" :key="slot">
-            <button 
-                :disabled="bookedSlots.includes(slot)" 
-                @click="selectSlot(slot)"
-                x-text="slot"
-                class="p-2 border rounded disabled:opacity-50">
-            </button>
-        </template>
-    </div>
-</div>
-
-<script>
-    document.addEventListener('alpine:init', () => {
-        Alpine.data('bookingManager', (slug) => ({
-            selectedDate: new Date().toISOString().split('T')[0],
-            availableSlots: [],
-            bookedSlots: [],
-            async fetchSlots() {
-                const res = await fetch(`/book/${slug}/availability?date=${this.selectedDate}`);
-                const data = await res.json();
-                this.availableSlots = data.available_slots;
-                this.bookedSlots = data.booked_slots;
-            },
-            init() { this.fetchSlots() }
-        }))
-    })
-</script>
+</body>
+</html>
