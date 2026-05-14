@@ -1,1 +1,1 @@
-Add public booking page template and frontend axios submission logic
+Add dashboard.html template to display booking list
