@@ -1,1 +1,1 @@
-feat: add owner settings endpoint and setup form template
+Add interactive booking flow using Alpine.js and dynamic slot selection

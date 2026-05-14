@@ -1,36 +1,56 @@
-<form id="bookingForm">
-  <input type="hidden" id="owner_id" value="{{ owner.id }}">
-  <input type="text" id="customer_name" placeholder="Name" required>
-  <input type="email" id="customer_email" placeholder="Email" required>
-  <input type="tel" id="customer_phone" placeholder="Phone" required>
-  <select id="service" required>
-    {% for s in owner.services_json %}<option value="{{s}}">{{s}}</option>{% endfor %}
-  </select>
-  <input type="datetime-local" id="datetime" required>
-  <button type="submit" id="submitBtn">Book Now</button>
-</form>
-<div id="message"></div>
-<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<div x-data="bookingFlow" class="p-6">
+    <h1 class="text-2xl font-bold">Book with {{ owner.business_name }}</h1>
+    
+    <div class="mt-4">
+        <label>Select Service:</label>
+        <select x-model="selectedService" class="w-full border p-2">
+            <option value="" disabled>Choose a service</option>
+            <template x-for="service in services">
+                <option :value="service.name" x-text="service.name"></option>
+            </template>
+        </select>
+    </div>
+
+    <div class="mt-4" x-show="selectedService">
+        <label>Select Time Slot:</label>
+        <div class="grid grid-cols-3 gap-2 mt-2">
+            <template x-for="slot in availableSlots">
+                <button 
+                    @click="selectedSlot = slot" 
+                    :class="selectedSlot === slot ? 'bg-blue-600 text-white' : 'bg-gray-100'"
+                    class="p-2 rounded border" 
+                    x-text="slot">
+                </button>
+            </template>
+        </div>
+    </div>
+
+    <div class="mt-6" x-show="selectedSlot">
+        <button @click="submitBooking" class="bg-green-600 text-white px-4 py-2 rounded">Confirm Booking</button>
+    </div>
+</div>
+
 <script>
-  document.getElementById('bookingForm').onsubmit = async (e) => {
-    e.preventDefault();
-    const btn = document.getElementById('submitBtn');
-    const msg = document.getElementById('message');
-    btn.disabled = true;
-    try {
-      const response = await axios.post('/book/submit', {
-        owner_id: parseInt(document.getElementById('owner_id').value),
-        customer_name: document.getElementById('customer_name').value,
-        customer_email: document.getElementById('customer_email').value,
-        customer_phone: document.getElementById('customer_phone').value,
-        service: document.getElementById('service').value,
-        datetime: document.getElementById('datetime').value
-      });
-      msg.textContent = 'Booking successful!';
-    } catch (err) {
-      msg.textContent = 'Error: ' + (err.response?.data?.detail || err.message);
-    } finally {
-      btn.disabled = false;
-    }
-  };
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('bookingFlow', () => ({
+            selectedService: '',
+            selectedSlot: null,
+            services: {{ owner.services_json | tojson | safe }},
+            availableSlots: ['09:00', '10:00', '11:00', '14:00', '15:00'],
+            submitBooking() {
+                fetch('/book/submit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        owner_id: {{ owner.id }},
+                        customer_name: 'Anonymous User',
+                        customer_email: 'n/a',
+                        customer_phone: 'n/a',
+                        service: this.selectedService,
+                        datetime: new Date().toISOString()
+                    })
+                }).then(() => alert('Booking success!'));
+            }
+        }))
+    })
 </script>
