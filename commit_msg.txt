@@ -1,1 +1,1 @@
-feat: add mobile-friendly dashboard template with PrimeUI-inspired styling
+feat: add owner settings endpoint and setup form template
