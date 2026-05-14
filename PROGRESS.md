@@ -1,3 +1,8 @@
+## Iteration 64
+_2026-05-14 22:58 UTC_
+
+Created the HTML template for the booking form. The form includes necessary fields to match the Pydantic model used in the /book/submit endpoint.
+
 ## Iteration 63
 _2026-05-14 21:11 UTC_
 

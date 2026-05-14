@@ -1,1 +1,1 @@
-Add dashboard.html template to display booking list
+Add public booking form template for customers

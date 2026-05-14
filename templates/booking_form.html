@@ -1,28 +1,25 @@
-<div class="booking-container">
-    <h1>{{ _('Book an appointment with') }} {{ owner.business_name }}</h1>
-    <form hx-post="/book/submit" hx-target="#booking-result" hx-swap="innerHTML">
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+    <meta charset="UTF-8">
+    <title>Book an Appointment</title>
+</head>
+<body>
+    <h1>Book a Slot with {{ owner.business_name }}</h1>
+    <form action="/book/submit" method="POST">
         <input type="hidden" name="owner_id" value="{{ owner.id }}">
-        
-        <label>{{ _('Full Name') }}</label>
-        <input type="text" name="customer_name" required>
-        
-        <label>{{ _('Email') }}</label>
-        <input type="email" name="customer_email" required>
-        
-        <label>{{ _('Phone') }}</label>
-        <input type="tel" name="customer_phone" required>
-        
-        <label>{{ _('Service') }}</label>
-        <select name="service" required>
-            {% for service in owner.services_json %}
+        <label>Name: <input type="text" name="customer_name" required></label><br>
+        <label>Email: <input type="email" name="customer_email" required></label><br>
+        <label>Phone: <input type="text" name="customer_phone" required></label><br>
+        <label>Service:
+            <select name="service">
+                {% for service in owner.services_json %}
                 <option value="{{ service }}">{{ service }}</option>
-            {% endfor %}
-        </select>
-        
-        <label>{{ _('Date & Time') }}</label>
-        <input type="datetime-local" name="datetime" required>
-        
-        <button type="submit">{{ _('Confirm Booking') }}</button>
+                {% endfor %}
+            </select>
+        </label><br>
+        <label>Date & Time: <input type="datetime-local" name="datetime" required></label><br>
+        <button type="submit">Confirm Booking</button>
     </form>
-    <div id="booking-result"></div>
-</div>
+</body>
+</html>
