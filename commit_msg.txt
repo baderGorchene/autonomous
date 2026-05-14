@@ -1,1 +1,1 @@
-Implement /book/submit endpoint with background notification task
+Add public booking page template and frontend axios submission logic
