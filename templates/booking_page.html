@@ -1,56 +1,30 @@
-<div x-data="bookingFlow" class="p-6">
-    <h1 class="text-2xl font-bold">Book with {{ owner.business_name }}</h1>
-    
-    <div class="mt-4">
-        <label>Select Service:</label>
-        <select x-model="selectedService" class="w-full border p-2">
-            <option value="" disabled>Choose a service</option>
-            <template x-for="service in services">
-                <option :value="service.name" x-text="service.name"></option>
-            </template>
-        </select>
-    </div>
-
-    <div class="mt-4" x-show="selectedService">
-        <label>Select Time Slot:</label>
-        <div class="grid grid-cols-3 gap-2 mt-2">
-            <template x-for="slot in availableSlots">
-                <button 
-                    @click="selectedSlot = slot" 
-                    :class="selectedSlot === slot ? 'bg-blue-600 text-white' : 'bg-gray-100'"
-                    class="p-2 rounded border" 
-                    x-text="slot">
-                </button>
-            </template>
-        </div>
-    </div>
-
-    <div class="mt-6" x-show="selectedSlot">
-        <button @click="submitBooking" class="bg-green-600 text-white px-4 py-2 rounded">Confirm Booking</button>
-    </div>
+<div x-data="{ 
+    name: '', 
+    email: '', 
+    phone: '', 
+    owner_id: {{ owner.id }}, 
+    service: 'Consultation', 
+    bookingDate: '',
+    submit() {
+        fetch('/book/submit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                owner_id: this.owner_id,
+                customer_name: this.name,
+                customer_email: this.email,
+                customer_phone: this.phone,
+                service: this.service,
+                datetime: this.bookingDate
+            })
+        }).then(res => res.json()).then(data => alert('Booking successful!'));
+    }
+}">
+    <form @submit.prevent="submit">
+        <input x-model="name" placeholder="Your Name" required>
+        <input x-model="email" type="email" placeholder="Your Email" required>
+        <input x-model="phone" type="tel" placeholder="Your Phone" required>
+        <input x-model="bookingDate" type="datetime-local" required>
+        <button type="submit">Confirm Booking</button>
+    </form>
 </div>
-
-<script>
-    document.addEventListener('alpine:init', () => {
-        Alpine.data('bookingFlow', () => ({
-            selectedService: '',
-            selectedSlot: null,
-            services: {{ owner.services_json | tojson | safe }},
-            availableSlots: ['09:00', '10:00', '11:00', '14:00', '15:00'],
-            submitBooking() {
-                fetch('/book/submit', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        owner_id: {{ owner.id }},
-                        customer_name: 'Anonymous User',
-                        customer_email: 'n/a',
-                        customer_phone: 'n/a',
-                        service: this.selectedService,
-                        datetime: new Date().toISOString()
-                    })
-                }).then(() => alert('Booking success!'));
-            }
-        }))
-    })
-</script>
