@@ -1,1 +1,1 @@
-Add availability endpoint to fetch filtered time slots based on existing bookings
+feat: add interactive booking calendar using Alpine.js and fetch API
