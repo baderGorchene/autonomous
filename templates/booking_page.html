@@ -1,30 +1,14 @@
-<div x-data="{ 
-    name: '', 
-    email: '', 
-    phone: '', 
-    owner_id: {{ owner.id }}, 
-    service: 'Consultation', 
-    bookingDate: '',
-    submit() {
-        fetch('/book/submit', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                owner_id: this.owner_id,
-                customer_name: this.name,
-                customer_email: this.email,
-                customer_phone: this.phone,
-                service: this.service,
-                datetime: this.bookingDate
-            })
-        }).then(res => res.json()).then(data => alert('Booking successful!'));
-    }
-}">
-    <form @submit.prevent="submit">
-        <input x-model="name" placeholder="Your Name" required>
-        <input x-model="email" type="email" placeholder="Your Email" required>
-        <input x-model="phone" type="tel" placeholder="Your Phone" required>
-        <input x-model="bookingDate" type="datetime-local" required>
-        <button type="submit">Confirm Booking</button>
-    </form>
+<div x-data="{ loading: false, success: false, formData: { name: '', email: '', phone: '', service: '', datetime: '' } }" class="max-w-md mx-auto">
+    <div x-show="!success">
+        <form @submit.prevent="loading = true; fetch('/book/submit', { method: 'POST', body: JSON.stringify(formData), headers: {'Content-Type': 'application/json'} }).then(res => res.json()).then(data => { success = true; loading = false; })">
+            <input type="text" x-model="formData.name" placeholder="Your Name" required class="block w-full mb-2">
+            <input type="email" x-model="formData.email" placeholder="Your Email" required class="block w-full mb-2">
+            <input type="tel" x-model="formData.phone" placeholder="Your Phone" required class="block w-full mb-2">
+            <button type="submit" :disabled="loading" x-text="loading ? 'Booking...' : 'Confirm Booking'"></button>
+        </form>
+    </div>
+    <div x-show="success" x-cloak>
+        <h2>Booking Confirmed!</h2>
+        <p>Check your email for details.</p>
+    </div>
 </div>

@@ -1,1 +1,1 @@
-feat: add interactive booking calendar using Alpine.js and fetch API
+Add Alpine.js booking form with POST submission and success state
