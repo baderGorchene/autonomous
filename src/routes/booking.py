@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Request
 from sqlalchemy.orm import Session
 from .. import models, database, notifications
 from pydantic import BaseModel
-from datetime import datetime
+from datetime import datetime, timedelta
 
 router = APIRouter()
 
@@ -13,6 +13,29 @@ class BookingCreate(BaseModel):
     customer_phone: str
     service: str
     datetime: datetime
+
+@router.get("/{slug}/availability")
+def get_availability(slug: str, date: str, db: Session = Depends(lambda: database.SessionLocal())):
+    owner = db.query(models.Owner).filter(models.Owner.slug == slug).first()
+    if not owner:
+        raise HTTPException(status_code=404, detail="Owner not found")
+    
+    # Example logic: Get bookings for the date and subtract from availability_json
+    # availability_json format expected: {"monday": ["09:00", "10:00"], ...}
+    target_date = datetime.strptime(date, "%Y-%m-%d")
+    day_name = target_date.strftime("%A").lower()
+    
+    all_slots = owner.availability_json.get(day_name, [])
+    booked_slots = db.query(models.Booking).filter(
+        models.Booking.owner_id == owner.id,
+        models.Booking.datetime >= target_date,
+        models.Booking.datetime < target_date + timedelta(days=1)
+    ).all()
+    
+    booked_times = [b.datetime.strftime("%H:%M") for b in booked_slots]
+    available_slots = [s for s in all_slots if s not in booked_times]
+    
+    return {"available_slots": available_slots}
 
 @router.get("/{slug}")
 def get_booking_page(slug: str, request: Request, db: Session = Depends(lambda: database.SessionLocal())):
@@ -25,15 +48,6 @@ def get_booking_page(slug: str, request: Request, db: Session = Depends(lambda: 
         "owner": owner, 
         "lang": request.state.locale
     })
-
-@router.put("/{booking_id}/status")
-def update_booking_status(booking_id: int, status: str = Form(...), db: Session = Depends(lambda: database.SessionLocal())):
-    booking = db.query(models.Booking).filter(models.Booking.id == booking_id).first()
-    if not booking:
-        raise HTTPException(status_code=404, detail="Booking not found")
-    booking.status = status
-    db.commit()
-    return {"status": "updated"}
 
 @router.post("/submit")
 async def submit_booking(booking_data: BookingCreate, background_tasks: BackgroundTasks, db: Session = Depends(lambda: database.SessionLocal())):

@@ -1,3 +1,8 @@
+## Iteration 58
+_2026-05-14 10:18 UTC_
+
+Backend logic for checking availability is now implemented. It filters out booked slots per date based on owner preferences.
+
 ## Iteration 57
 _2026-05-14 07:43 UTC_
 

@@ -1,1 +1,1 @@
-Add customer booking form with Alpine.js integration
+Add availability endpoint to fetch filtered time slots based on existing bookings
