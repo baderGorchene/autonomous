@@ -1,25 +1,45 @@
 <!DOCTYPE html>
-<html lang="{{ lang }}">
+<html lang="{{ lang }}" {% if lang == 'ar' %}dir="rtl"{% endif %}>
 <head>
     <meta charset="UTF-8">
-    <title>Book an Appointment</title>
+    <title>{{ _('Book with') }} {{ owner.business_name }}</title>
+    <style>
+        body { font-family: sans-serif; max-width: 500px; margin: 2rem auto; padding: 0 1rem; }
+        .form-group { margin-bottom: 1rem; }
+        label { display: block; margin-bottom: 0.5rem; }
+        input, select { width: 100%; padding: 0.5rem; }
+        button { width: 100%; padding: 1rem; background: #007bff; color: white; border: none; cursor: pointer; }
+    </style>
 </head>
 <body>
-    <h1>Book a Slot with {{ owner.business_name }}</h1>
+    <h1>{{ owner.business_name }}</h1>
     <form action="/book/submit" method="POST">
         <input type="hidden" name="owner_id" value="{{ owner.id }}">
-        <label>Name: <input type="text" name="customer_name" required></label><br>
-        <label>Email: <input type="email" name="customer_email" required></label><br>
-        <label>Phone: <input type="text" name="customer_phone" required></label><br>
-        <label>Service:
-            <select name="service">
+        <div class="form-group">
+            <label>{{ _('Select Service') }}</label>
+            <select name="service" required>
                 {% for service in owner.services_json %}
-                <option value="{{ service }}">{{ service }}</option>
+                    <option value="{{ service }}">{{ service }}</option>
                 {% endfor %}
             </select>
-        </label><br>
-        <label>Date & Time: <input type="datetime-local" name="datetime" required></label><br>
-        <button type="submit">Confirm Booking</button>
+        </div>
+        <div class="form-group">
+            <label>{{ _('Full Name') }}</label>
+            <input type="text" name="customer_name" required>
+        </div>
+        <div class="form-group">
+            <label>{{ _('Email') }}</label>
+            <input type="email" name="customer_email" required>
+        </div>
+        <div class="form-group">
+            <label>{{ _('Phone Number') }}</label>
+            <input type="tel" name="customer_phone" required>
+        </div>
+        <div class="form-group">
+            <label>{{ _('Date & Time') }}</label>
+            <input type="datetime-local" name="datetime" required>
+        </div>
+        <button type="submit">{{ _('Confirm Booking') }}</button>
     </form>
 </body>
 </html>
