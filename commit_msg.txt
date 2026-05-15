@@ -1,1 +1,1 @@
-Add booking submission frontend logic with Fetch API
+Add unit test for booking submission flow and database verification
