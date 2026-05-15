@@ -1,3 +1,8 @@
+## Iteration 71
+_2026-05-15 19:40 UTC_
+
+Added a check in the /submit route to verify if a booking already exists for the specific owner at the requested datetime before saving to the database.
+
 ## Iteration 70
 _2026-05-15 17:28 UTC_
 

@@ -1,1 +1,1 @@
-Add unit tests for booking submission flow with notification mocking
+Implement conflict detection in booking submission flow

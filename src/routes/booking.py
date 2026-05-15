@@ -27,6 +27,15 @@ def get_booking_page(slug: str, request: Request, db: Session = Depends(lambda: 
 
 @router.post("/submit")
 async def submit_booking(booking_data: BookingCreate, background_tasks: BackgroundTasks, db: Session = Depends(lambda: database.SessionLocal())):
+    # Check for existing booking at the same time for the same owner
+    existing_booking = db.query(models.Booking).filter(
+        models.Booking.owner_id == booking_data.owner_id,
+        models.Booking.datetime == booking_data.datetime
+    ).first()
+    
+    if existing_booking:
+        raise HTTPException(status_code=400, detail="This time slot is already booked.")
+
     new_booking = models.Booking(
         owner_id=booking_data.owner_id,
         customer_name=booking_data.customer_name,
