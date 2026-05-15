@@ -1,1 +1,1 @@
-Add booking_form.html template and client-side submission logic.
+Add unit tests for booking submission flow with notification mocking
