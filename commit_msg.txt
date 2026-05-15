@@ -1,1 +1,1 @@
-Add booking_form.html template with fetch API integration for submit_booking endpoint
+Add unit tests for booking submission flow using pytest-asyncio
