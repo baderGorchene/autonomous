@@ -1,1 +1,1 @@
-Add unit tests for booking submission and conflict detection
+Add booking_form.html template with fetch API integration for submit_booking endpoint
