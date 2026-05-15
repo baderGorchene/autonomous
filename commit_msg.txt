@@ -1,1 +1,1 @@
-Add public booking form template for customers
+feat: add GET route for public booking page by slug

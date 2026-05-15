@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException
+from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException, Request
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
@@ -14,9 +14,19 @@ class BookingCreate(BaseModel):
     service: str
     datetime: datetime
 
+@router.get("/{slug}")
+def get_booking_page(slug: str, request: Request, db: Session = Depends(lambda: database.SessionLocal())):
+    owner = db.query(models.Owner).filter(models.Owner.slug == slug).first()
+    if not owner:
+        raise HTTPException(status_code=404, detail="Booking page not found")
+    return request.state.templates.TemplateResponse("booking_form.html", {
+        "request": request, 
+        "owner": owner, 
+        "lang": request.state.locale
+    })
+
 @router.post("/submit")
 async def submit_booking(booking_data: BookingCreate, background_tasks: BackgroundTasks, db: Session = Depends(lambda: database.SessionLocal())):
-    # Save booking to DB
     new_booking = models.Booking(
         owner_id=booking_data.owner_id,
         customer_name=booking_data.customer_name,
@@ -29,12 +39,10 @@ async def submit_booking(booking_data: BookingCreate, background_tasks: Backgrou
     db.commit()
     db.refresh(new_booking)
 
-    # Fetch owner details for notification
     owner = db.query(models.Owner).filter(models.Owner.id == booking_data.owner_id).first()
     if not owner:
         raise HTTPException(status_code=404, detail="Owner not found")
 
-    # Trigger async notification
     booking_details = {
         "customer": booking_data.customer_name,
         "time": booking_data.datetime.isoformat(),

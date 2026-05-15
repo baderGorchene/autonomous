@@ -1,3 +1,8 @@
+## Iteration 65
+_2026-05-15 00:04 UTC_
+
+Implemented the public booking route which retrieves the owner by slug and renders the booking_form template using the request state templates.
+
 ## Iteration 64
 _2026-05-14 22:58 UTC_
 
