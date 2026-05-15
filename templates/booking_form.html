@@ -1,45 +1,45 @@
-<!DOCTYPE html>
-<html lang="{{ lang }}" {% if lang == 'ar' %}dir="rtl"{% endif %}>
-<head>
-    <meta charset="UTF-8">
-    <title>{{ _('Book with') }} {{ owner.business_name }}</title>
-    <style>
-        body { font-family: sans-serif; max-width: 500px; margin: 2rem auto; padding: 0 1rem; }
-        .form-group { margin-bottom: 1rem; }
-        label { display: block; margin-bottom: 0.5rem; }
-        input, select { width: 100%; padding: 0.5rem; }
-        button { width: 100%; padding: 1rem; background: #007bff; color: white; border: none; cursor: pointer; }
-    </style>
-</head>
-<body>
-    <h1>{{ owner.business_name }}</h1>
-    <form action="/book/submit" method="POST">
-        <input type="hidden" name="owner_id" value="{{ owner.id }}">
-        <div class="form-group">
-            <label>{{ _('Select Service') }}</label>
-            <select name="service" required>
-                {% for service in owner.services_json %}
-                    <option value="{{ service }}">{{ service }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="form-group">
-            <label>{{ _('Full Name') }}</label>
-            <input type="text" name="customer_name" required>
-        </div>
-        <div class="form-group">
-            <label>{{ _('Email') }}</label>
-            <input type="email" name="customer_email" required>
-        </div>
-        <div class="form-group">
-            <label>{{ _('Phone Number') }}</label>
-            <input type="tel" name="customer_phone" required>
-        </div>
-        <div class="form-group">
-            <label>{{ _('Date & Time') }}</label>
-            <input type="datetime-local" name="datetime" required>
-        </div>
-        <button type="submit">{{ _('Confirm Booking') }}</button>
-    </form>
-</body>
-</html>
+<form id="bookingForm">
+  <input type="hidden" id="owner_id" name="owner_id" value="{{ owner.id }}">
+  <input type="text" id="customer_name" name="customer_name" placeholder="Your Name" required>
+  <input type="email" id="customer_email" name="customer_email" placeholder="Your Email" required>
+  <input type="tel" id="customer_phone" name="customer_phone" placeholder="Your Phone" required>
+  <select id="service" name="service">
+    {% for service in owner.services_json %}
+      <option value="{{ service }}">{{ service }}</option>
+    {% endfor %}
+  </select>
+  <input type="datetime-local" id="datetime" name="datetime" required>
+  <button type="submit">Book Now</button>
+</form>
+<div id="message"></div>
+
+<script>
+  document.getElementById('bookingForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const data = {
+      owner_id: parseInt(document.getElementById('owner_id').value),
+      customer_name: document.getElementById('customer_name').value,
+      customer_email: document.getElementById('customer_email').value,
+      customer_phone: document.getElementById('customer_phone').value,
+      service: document.getElementById('service').value,
+      datetime: document.getElementById('datetime').value
+    };
+
+    fetch('/book/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    })
+    .then(response => {
+      if (!response.ok) throw new Error('Booking failed');
+      return response.json();
+    })
+    .then(data => {
+      document.getElementById('message').innerText = 'Booking confirmed! ID: ' + data.booking_id;
+      document.getElementById('bookingForm').reset();
+    })
+    .catch(error => {
+      document.getElementById('message').innerText = 'Error: ' + error.message;
+    });
+  });
+</script>

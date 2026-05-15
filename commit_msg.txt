@@ -1,1 +1,1 @@
-Add booking_form.html template with i18n support and basic styling
+Add booking submission frontend logic with Fetch API
