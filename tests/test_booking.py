@@ -1,20 +1,48 @@
 import pytest
-import httpx
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from src.database import Base
+from src.models import Booking, Owner
+from src.routes.booking import submit_booking
 from datetime import datetime
-from src.notifications import send_booking_notification
+from fastapi import BackgroundTasks, HTTPException
+
+# Setup in-memory sqlite for testing
+engine = create_engine('sqlite:///:memory:')
+TestingSessionLocal = sessionmaker(bind=engine)
+Base.metadata.create_all(bind=engine)
+
+def get_test_db():
+    db = TestingSessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+@pytest.fixture
+def db_session():
+    return next(get_test_db())
+
+@pytest.fixture
+def setup_owner(db_session):
+    owner = Owner(id=1, name='Test', email='test@test.com', slug='test')
+    db_session.add(owner)
+    db_session.commit()
+    return owner
 
 @pytest.mark.asyncio
-async def test_send_booking_notification_requests():
-    def handler(request):
-        if "sendgrid" in str(request.url):
-            return httpx.Response(202)
-        if "twilio" in str(request.url):
-            return httpx.Response(201)
-        return httpx.Response(404)
-
-    transport = httpx.MockTransport(handler)
+async def test_booking_conflict_detection(db_session, setup_owner):
+    booking_time = datetime(2023, 10, 10, 10, 0)
+    data = {
+        "owner_id": 1, "customer_name": "John", "customer_email": "john@ex.com",
+        "customer_phone": "12345", "service": "Haircut", "datetime": booking_time
+    }
     
-    # Injecting the mock transport into the function scope via dependency injection would be cleaner,
-    # but for this test, we verify the notification logic handles external API calls.
-    # In production/test configuration, we will allow overriding the client.
-    assert True
+    # First booking
+    await submit_booking(type('obj', (object,), data)(**data), BackgroundTasks(), db_session)
+    
+    # Second booking at same time - should fail
+    with pytest.raises(HTTPException) as exc:
+        await submit_booking(type('obj', (object,), data)(**data), BackgroundTasks(), db_session)
+    assert exc.value.status_code == 400
+    assert "already booked" in exc.value.detail

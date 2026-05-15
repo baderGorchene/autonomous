@@ -1,1 +1,1 @@
-Implement conflict detection in booking submission flow
+Add unit tests for booking submission and conflict detection
