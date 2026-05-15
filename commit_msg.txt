@@ -1,1 +1,1 @@
-Add unit test for booking submission flow and database verification
+Add booking_form.html template and client-side submission logic.

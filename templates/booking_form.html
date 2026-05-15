@@ -1,45 +1,37 @@
-<form id="bookingForm">
-  <input type="hidden" id="owner_id" name="owner_id" value="{{ owner.id }}">
-  <input type="text" id="customer_name" name="customer_name" placeholder="Your Name" required>
-  <input type="email" id="customer_email" name="customer_email" placeholder="Your Email" required>
-  <input type="tel" id="customer_phone" name="customer_phone" placeholder="Your Phone" required>
-  <select id="service" name="service">
-    {% for service in owner.services_json %}
-      <option value="{{ service }}">{{ service }}</option>
-    {% endfor %}
-  </select>
-  <input type="datetime-local" id="datetime" name="datetime" required>
-  <button type="submit">Book Now</button>
-</form>
-<div id="message"></div>
-
-<script>
-  document.getElementById('bookingForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    const data = {
-      owner_id: parseInt(document.getElementById('owner_id').value),
-      customer_name: document.getElementById('customer_name').value,
-      customer_email: document.getElementById('customer_email').value,
-      customer_phone: document.getElementById('customer_phone').value,
-      service: document.getElementById('service').value,
-      datetime: document.getElementById('datetime').value
-    };
-
-    fetch('/book/submit', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    })
-    .then(response => {
-      if (!response.ok) throw new Error('Booking failed');
-      return response.json();
-    })
-    .then(data => {
-      document.getElementById('message').innerText = 'Booking confirmed! ID: ' + data.booking_id;
-      document.getElementById('bookingForm').reset();
-    })
-    .catch(error => {
-      document.getElementById('message').innerText = 'Error: ' + error.message;
-    });
-  });
-</script>
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ owner.business_name }} | BookSlot</title>
+</head>
+<body>
+    <h1>Book with {{ owner.business_name }}</h1>
+    <form id="bookingForm" action="/book/submit" method="POST">
+        <input type="hidden" name="owner_id" value="{{ owner.id }}">
+        <input type="text" name="customer_name" placeholder="Your Name" required>
+        <input type="email" name="customer_email" placeholder="Your Email" required>
+        <input type="tel" name="customer_phone" placeholder="Your Phone" required>
+        <select name="service">
+            {% for service in owner.services_json %}
+            <option value="{{ service }}">{{ service }}</option>
+            {% endfor %}
+        </select>
+        <input type="datetime-local" name="datetime" required>
+        <button type="submit">Confirm Booking</button>
+    </form>
+    <script>
+        const form = document.getElementById('bookingForm');
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+            const response = await fetch('/book/submit', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+            if (response.ok) alert('Booking success!');
+        });
+    </script>
+</body>
+</html>
