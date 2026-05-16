@@ -1,3 +1,8 @@
+## Iteration 75
+_2026-05-16 03:32 UTC_
+
+Implemented the booking form template which captures customer details and sends a JSON POST request to the /book/submit endpoint. Added support for RTL direction based on the locale.
+
 ## Iteration 74
 _2026-05-15 23:56 UTC_
 
