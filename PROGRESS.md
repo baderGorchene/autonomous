@@ -1,3 +1,8 @@
+## Iteration 84
+_2026-05-16 21:51 UTC_
+
+Defined Pydantic models in src/schemas.py to enforce data integrity for incoming booking requests and owner signups.
+
 ## Iteration 83
 _2026-05-16 20:50 UTC_
 
