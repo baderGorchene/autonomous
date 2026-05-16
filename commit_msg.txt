@@ -1,1 +1,1 @@
-feat: add pydantic schemas for booking and owner validation
+Implement booking_form.html for customer self-service
