@@ -1,1 +1,1 @@
-Implement GET /book/slots/{owner_slug} and add BookingCreate Pydantic schema
+Add booking_form.html template with i18n support and responsive layout

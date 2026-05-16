@@ -1,41 +1,40 @@
-<div id="booking-container">
-    <label for="date-picker">Select Date:</label>
-    <input type="date" id="date-picker" name="date">
-    <div id="slots-container"></div>
-</div>
-
-<script>
-    const datePicker = document.getElementById('date-picker');
-    const slotsContainer = document.getElementById('slots-container');
-
-    datePicker.addEventListener('change', async (e) => {
-        const selectedDate = e.target.value;
-        const ownerSlug = window.location.pathname.split('/')[2];
-        
-        slotsContainer.innerHTML = '<p>Loading slots...</p>';
-        
-        try {
-            const response = await fetch(`/book/slots/${ownerSlug}?date=${selectedDate}`);
-            const slots = await response.json();
-            
-            slotsContainer.innerHTML = '';
-            if (slots.length === 0) {
-                slotsContainer.innerHTML = '<p>No slots available.</p>';
-                return;
-            }
-            
-            slots.forEach(slot => {
-                const button = document.createElement('button');
-                button.innerText = slot;
-                button.onclick = () => selectSlot(slot);
-                slotsContainer.appendChild(button);
-            });
-        } catch (error) {
-            slotsContainer.innerHTML = '<p>Error loading slots. Please try again.</p>';
-        }
-    });
-
-    function selectSlot(time) {
-        console.log('Selected time:', time);
-    }
-</script>
+<!DOCTYPE html>
+<html lang="{{ lang }}" {% if lang == 'ar' %}dir="rtl"{% endif %}>
+<head>
+    <meta charset="UTF-8">
+    <title>{{ _('Book a service with') }} {{ owner.business_name }}</title>
+    <style>
+        body { font-family: sans-serif; max-width: 500px; margin: 2rem auto; padding: 0 1rem; }
+        .form-group { margin-bottom: 1rem; }
+        label { display: block; margin-bottom: 0.5rem; }
+        input, select { width: 100%; padding: 0.5rem; box-sizing: border-box; }
+        button { width: 100%; padding: 0.75rem; background: #007bff; color: white; border: none; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>{{ owner.business_name }}</h1>
+    <form action="/book/slots/{{ owner.slug }}" method="POST">
+        <div class="form-group">
+            <label>{{ _('Your Name') }}</label>
+            <input type="text" name="customer_name" required>
+        </div>
+        <div class="form-group">
+            <label>{{ _('Phone Number') }}</label>
+            <input type="tel" name="customer_phone" required>
+        </div>
+        <div class="form-group">
+            <label>{{ _('Service') }}</label>
+            <select name="service" required>
+                {% for service in owner.services_json %}
+                <option value="{{ service }}">{{ service }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label>{{ _('Date & Time') }}</label>
+            <input type="datetime-local" name="datetime" required>
+        </div>
+        <button type="submit">{{ _('Confirm Booking') }}</button>
+    </form>
+</body>
+</html>
