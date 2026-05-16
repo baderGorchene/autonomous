@@ -1,1 +1,1 @@
-Added get_available_slots endpoint to booking router
+Implement frontend JS for dynamic time slot fetching in booking_form.html

@@ -1,3 +1,8 @@
+## Iteration 78
+_2026-05-16 13:24 UTC_
+
+Added JavaScript logic to the booking page to fetch available slots from the API based on the date selected by the user.
+
 ## Iteration 77
 _2026-05-16 11:52 UTC_
 

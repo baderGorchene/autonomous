@@ -1,40 +1,41 @@
-<!DOCTYPE html>
-<html lang="{{ lang }}" dir="{{ 'rtl' if lang == 'ar' else 'ltr' }}">
-<head>
-    <meta charset="UTF-8">
-    <title>Book with {{ owner.business_name }}</title>
-</head>
-<body>
-    <h1>Book an appointment with {{ owner.business_name }}</h1>
-    <form id="bookingForm">
-        <input type="hidden" name="owner_id" value="{{ owner.id }}">
-        <input type="text" name="customer_name" placeholder="Your Name" required>
-        <input type="email" name="customer_email" placeholder="Your Email" required>
-        <input type="tel" name="customer_phone" placeholder="Your Phone" required>
-        <select name="service" required>
-            {% for service in owner.services_json %}
-                <option value="{{ service }}">{{ service }}</option>
-            {% endfor %}
-        </select>
-        <input type="datetime-local" name="datetime" required>
-        <button type="submit">Confirm Booking</button>
-    </form>
+<div id="booking-container">
+    <label for="date-picker">Select Date:</label>
+    <input type="date" id="date-picker" name="date">
+    <div id="slots-container"></div>
+</div>
 
-    <script>
-        document.getElementById('bookingForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            const data = Object.fromEntries(formData.entries());
+<script>
+    const datePicker = document.getElementById('date-picker');
+    const slotsContainer = document.getElementById('slots-container');
+
+    datePicker.addEventListener('change', async (e) => {
+        const selectedDate = e.target.value;
+        const ownerSlug = window.location.pathname.split('/')[2];
+        
+        slotsContainer.innerHTML = '<p>Loading slots...</p>';
+        
+        try {
+            const response = await fetch(`/book/slots/${ownerSlug}?date=${selectedDate}`);
+            const slots = await response.json();
             
-            const response = await fetch('/book/submit', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(data)
+            slotsContainer.innerHTML = '';
+            if (slots.length === 0) {
+                slotsContainer.innerHTML = '<p>No slots available.</p>';
+                return;
+            }
+            
+            slots.forEach(slot => {
+                const button = document.createElement('button');
+                button.innerText = slot;
+                button.onclick = () => selectSlot(slot);
+                slotsContainer.appendChild(button);
             });
-            
-            if (response.ok) alert('Booking confirmed!');
-            else alert('Error: ' + (await response.json()).detail);
-        });
-    </script>
-</body>
-</html>
+        } catch (error) {
+            slotsContainer.innerHTML = '<p>Error loading slots. Please try again.</p>';
+        }
+    });
+
+    function selectSlot(time) {
+        console.log('Selected time:', time);
+    }
+</script>
