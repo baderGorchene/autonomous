@@ -1,1 +1,1 @@
-Implement GET /book/slots/{owner_slug} to fetch availability
+feat: add POST /book/slots/{owner_slug} endpoint with background notifications

@@ -1,38 +1,38 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
-from .. import models, database
+from .. import models, database, schemas, notifications
 
 router = APIRouter()
 
-@router.get("/slots/{owner_slug}")
-def get_available_slots(owner_slug: str, date: str, db: Session = Depends(lambda: database.SessionLocal())):
+@router.post("/slots/{owner_slug}", status_code=201)
+def create_booking(
+    owner_slug: str, 
+    booking_data: schemas.BookingCreate, 
+    background_tasks: BackgroundTasks, 
+    db: Session = Depends(lambda: database.SessionLocal())
+):
     owner = db.query(models.Owner).filter(models.Owner.slug == owner_slug).first()
     if not owner:
         raise HTTPException(status_code=404, detail="Owner not found")
     
-    target_date = datetime.strptime(date, "%Y-%m-%d").date()
-    availability = owner.availability_json.get(target_date.strftime("%A").lower())
+    new_booking = models.Booking(
+        owner_id=owner.id,
+        customer_name=booking_data.customer_name,
+        customer_email=booking_data.customer_email,
+        customer_phone=booking_data.customer_phone,
+        service=booking_data.service,
+        datetime=booking_data.datetime
+    )
+    db.add(new_booking)
+    db.commit()
+    db.refresh(new_booking)
     
-    if not availability:
-        return {"slots": []}
+    background_tasks.add_task(
+        notifications.send_booking_notification,
+        owner.email,
+        getattr(owner, 'phone', None),
+        {"customer": new_booking.customer_name, "time": new_booking.datetime.strftime("%Y-%m-%d %H:%M")}
+    )
     
-    booked_slots = db.query(models.Booking).filter(
-        models.Booking.owner_id == owner.id,
-        models.Booking.datetime >= datetime.combine(target_date, datetime.min.time()),
-        models.Booking.datetime <= datetime.combine(target_date, datetime.max.time())
-    ).all()
-    
-    booked_times = [b.datetime.strftime("%H:%M") for b in booked_slots]
-    
-    all_slots = []
-    start = datetime.strptime(availability['start'], "%H:%M")
-    end = datetime.strptime(availability['end'], "%H:%M")
-    curr = start
-    while curr < end:
-        time_str = curr.strftime("%H:%M")
-        if time_str not in booked_times:
-            all_slots.append(time_str)
-        curr += timedelta(minutes=30)
-        
-    return {"slots": all_slots}
+    return {"status": "success", "booking_id": new_booking.id}
