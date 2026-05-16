@@ -1,1 +1,1 @@
-Implement frontend JS for dynamic time slot fetching in booking_form.html
+Implement GET /book/slots/{owner_slug} to fetch availability
