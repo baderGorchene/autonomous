@@ -1,3 +1,8 @@
+## Iteration 81
+_2026-05-16 17:56 UTC_
+
+Created a responsive Jinja2 template for the customer-facing booking page. The form is ready to interface with the backend endpoints.
+
 ## Iteration 80
 _2026-05-16 16:03 UTC_
 

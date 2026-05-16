@@ -3,36 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <title>Book {{ owner.business_name }}</title>
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        body { font-family: sans-serif; max-width: 500px; margin: 2rem auto; padding: 0 1rem; }
+        .form-group { margin-bottom: 1rem; }
+        label { display: block; margin-bottom: 0.5rem; }
+        input, select { width: 100%; padding: 0.5rem; }
+        button { width: 100%; padding: 1rem; background: #007bff; color: white; border: none; cursor: pointer; }
+    </style>
 </head>
 <body>
     <h1>Book with {{ owner.business_name }}</h1>
-    <form id="bookingForm">
-        <input type="hidden" name="owner_id" value="{{ owner.id }}">
-        <input type="text" name="customer_name" placeholder="Your Name" required>
-        <input type="email" name="customer_email" placeholder="Your Email" required>
-        <input type="tel" name="customer_phone" placeholder="Your Phone" required>
-        <select name="service">
-            {% for service in owner.services_json %}
+    <form action="/book/slots/{{ owner.slug }}" method="POST">
+        <div class="form-group">
+            <label>Name</label>
+            <input type="text" name="customer_name" required>
+        </div>
+        <div class="form-group">
+            <label>Email</label>
+            <input type="email" name="customer_email" required>
+        </div>
+        <div class="form-group">
+            <label>Phone</label>
+            <input type="tel" name="customer_phone" required>
+        </div>
+        <div class="form-group">
+            <label>Service</label>
+            <select name="service">
+                {% for service in owner.services_json %}
                 <option value="{{ service }}">{{ service }}</option>
-            {% endfor %}
-        </select>
-        <input type="datetime-local" name="datetime" required>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Date & Time</label>
+            <input type="datetime-local" name="datetime" required>
+        </div>
         <button type="submit">Confirm Booking</button>
     </form>
-    <div id="message"></div>
-    <script>
-        document.getElementById('bookingForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            const data = Object.fromEntries(formData.entries());
-            try {
-                const response = await axios.post('/book/submit', data);
-                document.getElementById('message').textContent = 'Booking successful! ID: ' + response.data.booking_id;
-            } catch (err) {
-                document.getElementById('message').textContent = 'Error: ' + err.message;
-            }
-        });
-    </script>
 </body>
 </html>
