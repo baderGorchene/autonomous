@@ -1,3 +1,8 @@
+## Iteration 76
+_2026-05-16 10:17 UTC_
+
+Implemented the core availability logic which generates time slots based on owner settings and filters out existing bookings from the database.
+
 ## Iteration 75
 _2026-05-16 03:32 UTC_
 

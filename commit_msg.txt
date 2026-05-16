@@ -1,1 +1,1 @@
-Add booking_form.html with basic submission logic
+Add availability calculation utility using dateutil rrule
