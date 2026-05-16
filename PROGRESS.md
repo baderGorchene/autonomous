@@ -1,3 +1,8 @@
+## Iteration 86
+_2026-05-16 23:54 UTC_
+
+Defined Pydantic models with validation for customer details and owner signup to ensure data integrity before database insertion.
+
 ## Iteration 85
 _2026-05-16 22:47 UTC_
 

@@ -2,17 +2,14 @@ from pydantic import BaseModel, EmailStr, Field
 from datetime import datetime
 from typing import Optional
 
-class BookingBase(BaseModel):
-    customer_name: str
+class BookingCreate(BaseModel):
+    customer_name: str = Field(..., min_length=2, max_length=100)
     customer_email: EmailStr
-    customer_phone: str
-    service: str
+    customer_phone: str = Field(..., min_length=7, max_length=20)
+    service: str = Field(..., min_length=1)
     datetime: datetime
 
-class BookingCreate(BookingBase):
-    pass
-
-class Booking(BookingBase):
+class BookingResponse(BookingCreate):
     id: int
     owner_id: int
     status: str
@@ -21,19 +18,15 @@ class Booking(BookingBase):
     class Config:
         from_attributes = True
 
-class OwnerBase(BaseModel):
-    name: str
+class OwnerCreate(BaseModel):
+    name: str = Field(..., min_length=2)
     email: EmailStr
-    business_name: str
-    slug: str
+    business_name: str = Field(..., min_length=2)
+    slug: str = Field(..., min_length=3, pattern='^[a-z0-9-]+$')
 
-class OwnerCreate(OwnerBase):
-    pass
-
-class Owner(OwnerBase):
+class OwnerResponse(OwnerCreate):
     id: int
-    services_json: Optional[dict] = None
-    availability_json: Optional[dict] = None
+    created_at: datetime
 
     class Config:
         from_attributes = True
