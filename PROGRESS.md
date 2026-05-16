@@ -1,3 +1,8 @@
+## Iteration 82
+_2026-05-16 19:10 UTC_
+
+Added Pydantic schemas for data validation and implemented the public booking page endpoint. Now the system can validate booking requests and serve the booking page.
+
 ## Iteration 81
 _2026-05-16 17:56 UTC_
 

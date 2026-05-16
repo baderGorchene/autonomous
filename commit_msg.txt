@@ -1,1 +1,1 @@
-Add public booking form template for service owners
+Implement GET /book/slots/{owner_slug} and add BookingCreate Pydantic schema

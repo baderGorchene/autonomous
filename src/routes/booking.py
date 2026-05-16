@@ -1,9 +1,21 @@
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Request
 from sqlalchemy.orm import Session
-from datetime import datetime, timedelta
+from datetime import datetime
 from .. import models, database, schemas, notifications
 
 router = APIRouter()
+
+@router.get("/slots/{owner_slug}")
+def get_booking_page(owner_slug: str, request: Request, db: Session = Depends(lambda: database.SessionLocal())):
+    owner = db.query(models.Owner).filter(models.Owner.slug == owner_slug).first()
+    if not owner:
+        raise HTTPException(status_code=404, detail="Owner not found")
+    
+    return request.state.templates.TemplateResponse("booking_form.html", {
+        "request": request, 
+        "owner": owner, 
+        "lang": request.state.locale
+    })
 
 @router.post("/slots/{owner_slug}", status_code=201)
 def create_booking(
