@@ -1,1 +1,1 @@
-Add availability calculation utility using dateutil rrule
+Added get_available_slots endpoint to booking router

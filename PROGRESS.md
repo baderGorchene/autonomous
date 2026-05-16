@@ -1,3 +1,8 @@
+## Iteration 77
+_2026-05-16 11:52 UTC_
+
+Backend logic for fetching slots is now implemented. I added a new endpoint /slots/{owner_id}/{date} that filters out already booked slots.
+
 ## Iteration 76
 _2026-05-16 10:17 UTC_
 
