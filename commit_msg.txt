@@ -1,1 +1,1 @@
-Add booking_page.html template for public appointments
+Implement POST /book/{slug}/submit route for handling booking submissions and background notifications.
