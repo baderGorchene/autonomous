@@ -1,1 +1,1 @@
-Add booking_form.html template with basic client-side submission logic
+Implement dashboard view for service owners to track bookings
