@@ -1,3 +1,8 @@
+## Iteration 97
+_2026-05-17 21:56 UTC_
+
+Successfully added the route to serve the booking page. The route retrieves the owner via slug and passes it to the templates rendered by Jinja2.
+
 ## Iteration 96
 _2026-05-17 20:54 UTC_
 

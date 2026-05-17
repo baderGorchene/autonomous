@@ -1,1 +1,1 @@
-Add booking.html template with axios submission logic
+Implement GET /{slug} route to render custom booking pages
