@@ -1,3 +1,8 @@
+## Iteration 98
+_2026-05-17 22:56 UTC_
+
+Created the booking page template with basic i18n support for English and Arabic (LTR/RTL).
+
 ## Iteration 97
 _2026-05-17 21:56 UTC_
 

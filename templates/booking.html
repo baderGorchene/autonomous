@@ -1,38 +1,30 @@
 <!DOCTYPE html>
-<html lang="{{ lang }}" {% if lang == 'ar' %}dir="rtl"{% endif %}>
+<html lang="{{ lang }}" dir="{{ 'rtl' if lang == 'ar' else 'ltr' }}">
 <head>
     <meta charset="UTF-8">
-    <title>{{ owner.business_name }} - Booking</title>
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <title>{{ _('Book an appointment with') }} {{ owner.business_name }}</title>
+    <style>body { font-family: sans-serif; max-width: 500px; margin: 2rem auto; padding: 0 1rem; }</style>
 </head>
 <body>
-    <h1>{{ _('Book a session with') }} {{ owner.business_name }}</h1>
-    <form id="bookingForm">
-        <input type="text" name="customer_name" placeholder="{{ _('Your Name') }}" required />
-        <input type="email" name="customer_email" placeholder="{{ _('Your Email') }}" required />
-        <input type="tel" name="customer_phone" placeholder="{{ _('Your Phone') }}" required />
-        <select name="service" required>
+    <h1>{{ _('Book with') }} {{ owner.business_name }}</h1>
+    <form action="/book/{{ owner.slug }}/submit" method="POST">
+        <label>{{ _('Name') }}:</label><br>
+        <input type="text" name="name" required><br><br>
+        
+        <label>{{ _('Phone') }}:</label><br>
+        <input type="tel" name="phone" required><br><br>
+        
+        <label>{{ _('Service') }}:</label><br>
+        <select name="service">
             {% for service in owner.services_json %}
             <option value="{{ service }}">{{ service }}</option>
             {% endfor %}
-        </select>
-        <input type="datetime-local" name="booking_datetime" required />
+        </select><br><br>
+        
+        <label>{{ _('Date & Time') }}:</label><br>
+        <input type="datetime-local" name="datetime" required><br><br>
+        
         <button type="submit">{{ _('Confirm Booking') }}</button>
     </form>
-    <div id="message"></div>
-    <script>
-        document.querySelector('#bookingForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const formData = Object.fromEntries(new FormData(e.target));
-            try {
-                await axios.post(window.location.pathname.replace('/book/', '/book/') + '/submit', formData, {
-                    headers: {'Content-Type': 'application/json'}
-                });
-                document.querySelector('#message').innerText = '{{ _("Booking confirmed!") }}';
-            } catch (err) {
-                document.querySelector('#message').innerText = '{{ _("Error submitting booking.") }}';
-            }
-        });
-    </script>
 </body>
 </html>

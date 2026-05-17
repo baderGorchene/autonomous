@@ -1,1 +1,1 @@
-Implement GET /{slug} route to render custom booking pages
+Add booking.html template for client-side appointment scheduling
