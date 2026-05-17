@@ -1,3 +1,8 @@
+## Iteration 96
+_2026-05-17 20:54 UTC_
+
+Created a bilingual-ready template that consumes the booking API. Form uses standard HTML inputs and Axios for JSON submission.
+
 ## Iteration 95
 _2026-05-17 19:21 UTC_
 

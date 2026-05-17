@@ -1,1 +1,1 @@
-Implement POST /book/{slug}/submit route for handling booking submissions and background notifications.
+Add booking.html template with axios submission logic
