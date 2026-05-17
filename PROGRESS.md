@@ -1,3 +1,8 @@
+## Iteration 94
+_2026-05-17 17:58 UTC_
+
+Created the booking form template with internationalization support, allowing customers to book services without requiring an account.
+
 ## Iteration 93
 _2026-05-17 16:03 UTC_
 

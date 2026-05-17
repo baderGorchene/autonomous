@@ -1,1 +1,1 @@
-Implement POST route for booking submission and trigger background notifications
+Add booking_page.html template for public appointments

@@ -1,20 +1,32 @@
 <!DOCTYPE html>
 <html lang="{{ lang }}">
-<head><title>{{ owner.business_name }} Booking</title></head>
+<head>
+    <meta charset="UTF-8">
+    <title>{{ _('Book a service with') }} {{ owner.business_name }}</title>
+</head>
 <body>
-    <h1>{{ owner.business_name }}</h1>
-    <form action="/book/confirm" method="POST">
-        <label>Select Service:</label>
+    <h1>{{ _('Book a service') }}</h1>
+    <form action="/book/{{ owner.slug }}/submit" method="POST">
+        <label>{{ _('Full Name') }}</label>
+        <input type="text" name="customer_name" required><br>
+
+        <label>{{ _('Email') }}</label>
+        <input type="email" name="customer_email" required><br>
+
+        <label>{{ _('Phone Number') }}</label>
+        <input type="tel" name="customer_phone" required><br>
+
+        <label>{{ _('Service') }}</label>
         <select name="service" required>
-            {% for service in services %}
-                <option value="{{ service.name }}">{{ service.name }} ({{ service.price }})</option>
+            {% for service in owner.services_json %}
+                <option value="{{ service }}">{{ service }}</option>
             {% endfor %}
-        </select>
-        <label>Date & Time:</label>
-        <input type="datetime-local" name="booking_time" required>
-        <input type="text" name="customer_name" placeholder="Your Name" required>
-        <input type="tel" name="customer_phone" placeholder="WhatsApp Number" required>
-        <button type="submit">Book Slot</button>
+        </select><br>
+
+        <label>{{ _('Date & Time') }}</label>
+        <input type="datetime-local" name="datetime" required><br>
+
+        <button type="submit">{{ _('Confirm Booking') }}</button>
     </form>
 </body>
 </html>
