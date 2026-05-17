@@ -1,3 +1,8 @@
+## Iteration 93
+_2026-05-17 16:03 UTC_
+
+Implemented booking submission logic in src/routes/booking.py, including DB persistence and async notification triggering via BackgroundTasks.
+
 ## Iteration 92
 _2026-05-17 14:58 UTC_
 

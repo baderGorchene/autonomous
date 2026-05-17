@@ -1,1 +1,1 @@
-Implement public booking page UI and route
+Implement POST route for booking submission and trigger background notifications
