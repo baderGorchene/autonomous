@@ -2,33 +2,52 @@
 <html lang="{{ lang }}" dir="{{ 'rtl' if lang == 'ar' else 'ltr' }}">
 <head>
     <meta charset="UTF-8">
-    <title>{{ _('Book a service with') }} {{ owner.business_name }}</title>
+    <title>{{ owner.business_name }} - BookSlot</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50 p-6">
-    <div class="max-w-md mx-auto bg-white p-8 rounded-xl shadow-sm">
+    <div class="max-w-md mx-auto bg-white p-8 rounded-lg shadow-sm">
         <h1 class="text-2xl font-bold mb-6">{{ owner.business_name }}</h1>
-        <form action="/book/slots/{{ owner.slug }}" method="POST" class="space-y-4">
+        <form id="bookingForm" class="space-y-4">
             <div>
-                <label class="block text-sm font-medium">{{ _('Full Name') }}</label>
-                <input type="text" name="customer_name" required class="w-full p-2 border rounded">
+                <label class="block text-sm font-medium">Full Name</label>
+                <input type="text" name="customer_name" required class="w-full border p-2 rounded">
             </div>
             <div>
-                <label class="block text-sm font-medium">{{ _('Email') }}</label>
-                <input type="email" name="customer_email" required class="w-full p-2 border rounded">
+                <label class="block text-sm font-medium">Email</label>
+                <input type="email" name="customer_email" required class="w-full border p-2 rounded">
             </div>
             <div>
-                <label class="block text-sm font-medium">{{ _('Phone') }}</label>
-                <input type="tel" name="customer_phone" required class="w-full p-2 border rounded">
+                <label class="block text-sm font-medium">Phone</label>
+                <input type="tel" name="customer_phone" required class="w-full border p-2 rounded">
             </div>
             <div>
-                <label class="block text-sm font-medium">{{ _('Preferred Date & Time') }}</label>
-                <input type="datetime-local" name="datetime" required class="w-full p-2 border rounded">
+                <label class="block text-sm font-medium">Service</label>
+                <select name="service" required class="w-full border p-2 rounded">
+                    {% for service in owner.services_json %}
+                    <option value="{{ service }}">{{ service }}</option>
+                    {% endfor %}
+                </select>
             </div>
-            <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg font-bold hover:bg-blue-700">
-                {{ _('Confirm Booking') }}
-            </button>
+            <div>
+                <label class="block text-sm font-medium">Date & Time</label>
+                <input type="datetime-local" name="datetime" required class="w-full border p-2 rounded">
+            </div>
+            <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">Confirm Booking</button>
         </form>
     </div>
+    <script>
+        document.getElementById('bookingForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+            const response = await fetch('/book/slots/{{ owner.slug }}', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+            if (response.ok) alert('Booking successful!');
+        });
+    </script>
 </body>
 </html>

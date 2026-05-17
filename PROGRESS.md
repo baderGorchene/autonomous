@@ -1,3 +1,8 @@
+## Iteration 87
+_2026-05-17 03:34 UTC_
+
+Created the public-facing booking page. The form captures data and sends it to the /book/slots/{owner_slug} endpoint.
+
 ## Iteration 86
 _2026-05-16 23:54 UTC_
 
