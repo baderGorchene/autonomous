@@ -1,14 +1,20 @@
-<div x-data="{ loading: false, success: false, formData: { name: '', email: '', phone: '', service: '', datetime: '' } }" class="max-w-md mx-auto">
-    <div x-show="!success">
-        <form @submit.prevent="loading = true; fetch('/book/submit', { method: 'POST', body: JSON.stringify(formData), headers: {'Content-Type': 'application/json'} }).then(res => res.json()).then(data => { success = true; loading = false; })">
-            <input type="text" x-model="formData.name" placeholder="Your Name" required class="block w-full mb-2">
-            <input type="email" x-model="formData.email" placeholder="Your Email" required class="block w-full mb-2">
-            <input type="tel" x-model="formData.phone" placeholder="Your Phone" required class="block w-full mb-2">
-            <button type="submit" :disabled="loading" x-text="loading ? 'Booking...' : 'Confirm Booking'"></button>
-        </form>
-    </div>
-    <div x-show="success" x-cloak>
-        <h2>Booking Confirmed!</h2>
-        <p>Check your email for details.</p>
-    </div>
-</div>
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head><title>{{ owner.business_name }} Booking</title></head>
+<body>
+    <h1>{{ owner.business_name }}</h1>
+    <form action="/book/confirm" method="POST">
+        <label>Select Service:</label>
+        <select name="service" required>
+            {% for service in services %}
+                <option value="{{ service.name }}">{{ service.name }} ({{ service.price }})</option>
+            {% endfor %}
+        </select>
+        <label>Date & Time:</label>
+        <input type="datetime-local" name="booking_time" required>
+        <input type="text" name="customer_name" placeholder="Your Name" required>
+        <input type="tel" name="customer_phone" placeholder="WhatsApp Number" required>
+        <button type="submit">Book Slot</button>
+    </form>
+</body>
+</html>

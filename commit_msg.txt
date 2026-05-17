@@ -1,1 +1,1 @@
-Implement dashboard template with i18n support and auth token handling
+Implement public booking page UI and route
