@@ -1,3 +1,8 @@
+## Iteration 91
+_2026-05-17 13:23 UTC_
+
+Created the dashboard.html template using Jinja2 with i18n placeholders and added a global JS helper for handling JWT tokens in future frontend API calls.
+
 ## Iteration 90
 _2026-05-17 11:08 UTC_
 

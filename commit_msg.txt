@@ -1,1 +1,1 @@
-Refactor dashboard route to use authenticated owner instead of URL parameter
+Implement dashboard template with i18n support and auth token handling
