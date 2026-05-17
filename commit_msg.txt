@@ -1,1 +1,1 @@
-Implement OAuth2 JWT authentication infrastructure
+Refactor dashboard route to use authenticated owner instead of URL parameter

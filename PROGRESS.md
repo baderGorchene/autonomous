@@ -1,3 +1,8 @@
+## Iteration 90
+_2026-05-17 11:08 UTC_
+
+Successfully moved the dashboard route to /dashboard and integrated get_current_owner dependency to enforce authorization, removing the insecure URL parameter approach.
+
 ## Iteration 89
 _2026-05-17 09:06 UTC_
 

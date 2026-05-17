@@ -25,7 +25,7 @@ async def add_locale_middleware(request: Request, call_next):
     response = await call_next(request)
     return response
 
-@app.get("/dashboard/{owner_id}")
-def get_dashboard(owner_id: int, request: Request, db: Session = Depends(get_db)):
-    bookings = db.query(models.Booking).filter(models.Booking.owner_id == owner_id).order_by(models.Booking.datetime.desc()).all()
+@app.get("/dashboard")
+def get_dashboard(request: Request, current_owner: models.Owner = Depends(auth.get_current_owner), db: Session = Depends(get_db)):
+    bookings = db.query(models.Booking).filter(models.Booking.owner_id == current_owner.id).order_by(models.Booking.datetime.desc()).all()
     return request.state.templates.TemplateResponse("dashboard.html", {"request": request, "bookings": bookings, "lang": request.state.locale})
