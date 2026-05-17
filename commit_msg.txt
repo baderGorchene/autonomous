@@ -1,1 +1,1 @@
-Implement dashboard view for service owners to track bookings
+Implement OAuth2 JWT authentication infrastructure

@@ -7,6 +7,7 @@ class Owner(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String)
     email = Column(String, unique=True, index=True)
+    hashed_password = Column(String)
     business_name = Column(String)
     slug = Column(String, unique=True, index=True)
     services_json = Column(JSON)
@@ -24,10 +25,3 @@ class Booking(Base):
     datetime = Column(DateTime)
     status = Column(String, default='pending')
     created_at = Column(DateTime, server_default=func.now())
-
-class Settings(Base):
-    __tablename__ = 'settings'
-    id = Column(Integer, primary_key=True, index=True)
-    owner_id = Column(Integer, ForeignKey('owners.id'))
-    timezone = Column(String, default='UTC')
-    language = Column(String, default='en')

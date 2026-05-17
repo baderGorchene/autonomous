@@ -1,3 +1,8 @@
+## Iteration 89
+_2026-05-17 09:06 UTC_
+
+Added hashed_password column to Owner model and implemented JWT login/token validation logic in auth.py.
+
 ## Iteration 88
 _2026-05-17 06:46 UTC_
 
