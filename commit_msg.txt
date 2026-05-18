@@ -1,1 +1,1 @@
-Implement GET route for booking page by slug
+feat: create booking.html template with i18n support
