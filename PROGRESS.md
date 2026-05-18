@@ -1,3 +1,8 @@
+## Iteration 103
+_2026-05-18 17:30 UTC_
+
+Created the booking router and submission logic. Integrated BackgroundTasks to ensure notifications don't block the request-response cycle.
+
 ## Iteration 102
 _2026-05-18 14:30 UTC_
 
