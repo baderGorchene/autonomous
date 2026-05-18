@@ -1,31 +1,26 @@
-<!DOCTYPE html>
-<html lang="{{ lang }}">
-<head>
-    <meta charset="UTF-8">
-    <title>{{ owner.business_name }} - Book a Slot</title>
-    <link rel="stylesheet" href="/static/style.css" />
-</head>
-<body>
-    <h1>{{ _('Book an appointment with') }} {{ owner.business_name }}</h1>
-    <form action="/book/{{ owner.slug }}/submit" method="POST">
-        <label>{{ _('Select Service') }}:</label>
-        <select name="service" required>
-            {% for service in services %}
-                <option value="{{ service }}">{{ service }}</option>
-            {% endfor %}
-        </select>
-        <br>
-        <label>{{ _('Select Date & Time') }}:</label>
-        <select name="datetime" required>
-            {% for slot in availability %}
-                <option value="{{ slot }}">{{ slot }}</option>
-            {% endfor %}
-        </select>
-        <br>
-        <input type="text" name="customer_name" placeholder="{{ _('Your Name') }}" required>
-        <input type="email" name="customer_email" placeholder="{{ _('Your Email') }}" required>
-        <input type="tel" name="customer_phone" placeholder="{{ _('Your Phone') }}" required>
-        <button type="submit">{{ _('Confirm Booking') }}</button>
-    </form>
-</body>
-</html>
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ _('Book with') }} {{ owner.business_name }}</h1>
+<form action="/book/{{ owner.slug }}/submit" method="POST">
+    <label>{{ _('Full Name') }}</label>
+    <input type="text" name="customer_name" required>
+    
+    <label>{{ _('Email') }}</label>
+    <input type="email" name="customer_email" required>
+    
+    <label>{{ _('Phone Number') }}</label>
+    <input type="tel" name="customer_phone" required>
+    
+    <label>{{ _('Select Service') }}</label>
+    <select name="service" required>
+        {% for service in owner.services_json %}
+            <option value="{{ service }}">{{ service }}</option>
+        {% endfor %}
+    </select>
+
+    <label>{{ _('Preferred Time') }}</label>
+    <input type="datetime-local" name="booking_time" required>
+
+    <button type="submit">{{ _('Confirm Booking') }}</button>
+</form>
+{% endblock %}

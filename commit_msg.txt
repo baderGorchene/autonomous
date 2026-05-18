@@ -1,1 +1,1 @@
-Implement POST /book/{slug}/submit route with database persistence and background notification trigger
+Add public booking form template with i18n support
