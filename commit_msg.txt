@@ -1,1 +1,1 @@
-Implement booking submission logic with database persistence and background notifications
+Add booking and dashboard HTML templates with i18n support

@@ -1,3 +1,8 @@
+## Iteration 100
+_2026-05-18 05:06 UTC_
+
+Frontend templates for the booking page and the owner's dashboard are now created, utilizing Jinja2 template inheritance and i18n support.
+
 ## Iteration 99
 _2026-05-18 00:01 UTC_
 
