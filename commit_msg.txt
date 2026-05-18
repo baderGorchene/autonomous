@@ -1,1 +1,1 @@
-Add booking and dashboard HTML templates with i18n support
+Implement public booking page GET route

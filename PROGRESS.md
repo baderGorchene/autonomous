@@ -1,3 +1,8 @@
+## Iteration 101
+_2026-05-18 10:07 UTC_
+
+Added the /{slug} GET endpoint in the booking router to render the booking.html template using the request state templates configured in the middleware.
+
 ## Iteration 100
 _2026-05-18 05:06 UTC_
 

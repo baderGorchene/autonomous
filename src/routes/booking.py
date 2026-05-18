@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, Form, BackgroundTasks, HTTPException, Request
+from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 from datetime import datetime
 from .. import models, database, notifications
@@ -11,6 +12,17 @@ def get_db():
         yield db
     finally:
         db.close()
+
+@router.get("/{slug}", response_class=HTMLResponse)
+async def get_booking_page(slug: str, request: Request, db: Session = Depends(get_db)):
+    owner = db.query(models.Owner).filter(models.Owner.slug == slug).first()
+    if not owner:
+        raise HTTPException(status_code=404, detail="Business not found")
+    
+    return request.state.templates.TemplateResponse(
+        "booking.html", 
+        {"request": request, "owner": owner, "lang": request.state.locale}
+    )
 
 @router.post("/{slug}/submit")
 async def submit_booking(
