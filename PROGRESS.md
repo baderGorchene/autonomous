@@ -1,3 +1,8 @@
+## Iteration 105
+_2026-05-18 21:13 UTC_
+
+Added the GET endpoint to src/routes/booking.py to fetch owner details by slug and render the booking template.
+
 ## Iteration 104
 _2026-05-18 19:46 UTC_
 
