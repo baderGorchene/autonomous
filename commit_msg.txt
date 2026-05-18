@@ -1,1 +1,1 @@
-Add booking.html template for client-side appointment scheduling
+Implement booking submission logic with database persistence and background notifications

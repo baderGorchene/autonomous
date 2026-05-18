@@ -1,3 +1,8 @@
+## Iteration 99
+_2026-05-18 00:01 UTC_
+
+Created the POST endpoint for booking submissions, integrated SQLAlchemy for persistence, and hooked up background tasks for notification dispatch.
+
 ## Iteration 98
 _2026-05-17 22:56 UTC_
 

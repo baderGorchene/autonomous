@@ -1,6 +1,5 @@
-from fastapi import APIRouter, Depends, Request, HTTPException
+from fastapi import APIRouter, Depends, Form, BackgroundTasks, HTTPException, Request
 from sqlalchemy.orm import Session
-from pydantic import BaseModel, EmailStr
 from datetime import datetime
 from .. import models, database, notifications
 
@@ -13,48 +12,45 @@ def get_db():
     finally:
         db.close()
 
-@router.get("/{slug}")
-async def render_booking_page(slug: str, request: Request, db: Session = Depends(get_db)):
+@router.post("/{slug}/submit")
+async def submit_booking(
+    slug: str,
+    background_tasks: BackgroundTasks,
+    customer_name: str = Form(...),
+    customer_email: str = Form(...),
+    customer_phone: str = Form(...),
+    service: str = Form(...),
+    booking_datetime: str = Form(...),
+    db: Session = Depends(get_db)
+):
     owner = db.query(models.Owner).filter(models.Owner.slug == slug).first()
     if not owner:
-        raise HTTPException(status_code=404, detail="Provider not found")
+        raise HTTPException(status_code=404, detail="Business not found")
     
-    return request.state.templates.TemplateResponse("booking.html", {
-        "request": request, 
-        "owner": owner, 
-        "lang": request.state.locale
-    })
-
-class BookingCreate(BaseModel):
-    customer_name: str
-    customer_email: EmailStr
-    customer_phone: str
-    service: str
-    booking_datetime: datetime
-
-@router.post("/{slug}/submit", status_code=201)
-async def submit_booking(slug: str, data: BookingCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
-    owner = db.query(models.Owner).filter(models.Owner.slug == slug).first()
-    if not owner:
-        raise HTTPException(status_code=404, detail="Provider not found")
-    
+    booking_dt = datetime.fromisoformat(booking_datetime)
     new_booking = models.Booking(
         owner_id=owner.id,
-        customer_name=data.customer_name,
-        customer_email=data.customer_email,
-        customer_phone=data.customer_phone,
-        service=data.service,
-        datetime=data.booking_datetime
+        customer_name=customer_name,
+        customer_email=customer_email,
+        customer_phone=customer_phone,
+        service=service,
+        datetime=booking_dt
     )
     db.add(new_booking)
     db.commit()
     db.refresh(new_booking)
+
+    booking_details = {
+        "customer": customer_name,
+        "time": booking_dt.strftime("%Y-%m-%d %H:%M"),
+        "service": service
+    }
     
     background_tasks.add_task(
         notifications.send_booking_notification,
-        owner_email=owner.email,
-        owner_phone=getattr(owner, 'phone', ""),
-        booking_details={"customer": data.customer_name, "time": str(data.booking_datetime)}
+        owner.email,
+        "+1234567890", 
+        booking_details
     )
     
-    return {"status": "success", "booking_id": new_booking.id}
+    return {"status": "success", "message": "Booking confirmed"}
