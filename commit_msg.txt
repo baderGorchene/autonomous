@@ -1,1 +1,1 @@
-Implement booking submission route with background notification triggers
+Add public booking page template with i18n support
