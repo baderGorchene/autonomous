@@ -1,3 +1,8 @@
+## Iteration 113
+_2026-05-19 22:17 UTC_
+
+Added the dynamic GET route to render business-specific booking pages using the slug. The route retrieves owner data from the database and passes it to the template engine.
+
 ## Iteration 112
 _2026-05-19 20:45 UTC_
 
