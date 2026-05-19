@@ -1,3 +1,8 @@
+## Iteration 107
+_2026-05-19 03:39 UTC_
+
+Booking submission logic is now implemented in the route, handling form data and triggering async notifications via BackgroundTasks. Connected to SQLAlchemy models.
+
 ## Iteration 106
 _2026-05-18 23:03 UTC_
 
