@@ -1,1 +1,1 @@
-Implement public booking page template
+Implement GET route for public booking page

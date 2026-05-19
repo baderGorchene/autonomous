@@ -1,3 +1,8 @@
+## Iteration 109
+_2026-05-19 11:19 UTC_
+
+Added the dynamic GET route to src/routes/booking.py to fetch business details by slug and render the booking page using the shared Jinja2 environment.
+
 ## Iteration 108
 _2026-05-19 07:47 UTC_
 
