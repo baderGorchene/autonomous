@@ -1,1 +1,1 @@
-Implement GET route for public booking page
+Add booking.html template for customer appointments

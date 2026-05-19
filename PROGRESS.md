@@ -1,3 +1,8 @@
+## Iteration 110
+_2026-05-19 15:27 UTC_
+
+Created the public-facing booking form with basic internationalization support (RTL support for Arabic).
+
 ## Iteration 109
 _2026-05-19 11:19 UTC_
 
