@@ -1,1 +1,1 @@
-Add booking.html template for customer appointments
+Implement booking submission route with background notification triggers

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Form, BackgroundTasks, HTTPException, Request
+from fastapi import APIRouter, Depends, Form, BackgroundTasks, HTTPException
 from sqlalchemy.orm import Session
 from datetime import datetime
 from .. import models, database, notifications
@@ -12,56 +12,39 @@ def get_db():
     finally:
         db.close()
 
-@router.get("/{slug}")
-async def get_booking_page(request: Request, slug: str, db: Session = Depends(get_db)):
-    owner = db.query(models.Owner).filter(models.Owner.slug == slug).first()
-    if not owner:
-        raise HTTPException(status_code=404, detail="Business not found")
-    return request.state.templates.TemplateResponse("booking.html", {
-        "request": request, 
-        "owner": owner, 
-        "lang": request.state.locale
-    })
-
 @router.post("/{slug}/submit")
 async def submit_booking(
     slug: str,
     background_tasks: BackgroundTasks,
-    customer_name: str = Form(),
-    customer_email: str = Form(),
-    customer_phone: str = Form(),
-    service: str = Form(),
-    booking_time: str = Form(),
+    name: str = Form(...),
+    email: str = Form(...),
+    phone: str = Form(...),
+    service: str = Form(...),
+    date_time: str = Form(...),
     db: Session = Depends(get_db)
 ):
     owner = db.query(models.Owner).filter(models.Owner.slug == slug).first()
     if not owner:
         raise HTTPException(status_code=404, detail="Business not found")
-    
-    booking_dt = datetime.fromisoformat(booking_time)
-    new_booking = models.Booking(
+
+    booking = models.Booking(
         owner_id=owner.id,
-        customer_name=customer_name,
-        customer_email=customer_email,
-        customer_phone=customer_phone,
+        customer_name=name,
+        customer_email=email,
+        customer_phone=phone,
         service=service,
-        datetime=booking_dt
+        datetime=datetime.fromisoformat(date_time)
     )
-    db.add(new_booking)
+    db.add(booking)
     db.commit()
-    db.refresh(new_booking)
     
     booking_details = {
-        "customer": customer_name,
-        "time": booking_time,
+        "customer": name,
+        "time": date_time,
         "service": service
     }
     
-    background_tasks.add_task(
-        notifications.send_booking_notification, 
-        owner.email, 
-        getattr(owner, 'phone', None), 
-        booking_details
-    )
+    # Trigger notifications in background
+    background_tasks.add_task(notifications.send_booking_notification, owner.email, "+1234567890", booking_details)
     
     return {"status": "success", "message": "Booking confirmed"}
