@@ -1,1 +1,1 @@
-Add booking.html Jinja2 template with i18n support
+Implement booking submission route with database persistence and background notifications
