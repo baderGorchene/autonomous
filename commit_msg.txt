@@ -1,1 +1,1 @@
-Add Jinja2 templates for public booking page and owner dashboard
+Add public booking page GET route and mobile-responsive HTML form

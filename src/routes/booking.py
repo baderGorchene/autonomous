@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Form, BackgroundTasks, HTTPException
+from fastapi import APIRouter, Depends, Form, BackgroundTasks, HTTPException, Request
 from sqlalchemy.orm import Session
 from datetime import datetime
 from .. import models, database, notifications
@@ -11,6 +11,17 @@ def get_db():
         yield db
     finally:
         db.close()
+
+@router.get("/{slug}")
+async def get_booking_page(slug: str, request: Request, db: Session = Depends(get_db)):
+    owner = db.query(models.Owner).filter(models.Owner.slug == slug).first()
+    if not owner:
+        raise HTTPException(status_code=404, detail="Owner not found")
+    return request.state.templates.TemplateResponse("booking_form.html", {
+        "request": request, 
+        "owner": owner, 
+        "lang": request.state.locale
+    })
 
 @router.post("/{slug}/submit")
 async def submit_booking(
@@ -45,6 +56,6 @@ async def submit_booking(
         "service": service
     }
     
-    background_tasks.add_task(notifications.send_booking_notification, owner.email, owner.phone if hasattr(owner, 'phone') else "", booking_details)
+    background_tasks.add_task(notifications.send_booking_notification, owner.email, getattr(owner, 'phone', ""), booking_details)
     
     return {"status": "success", "booking_id": booking.id}

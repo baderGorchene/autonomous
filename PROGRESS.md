@@ -1,3 +1,8 @@
+## Iteration 121
+_2026-05-20 23:15 UTC_
+
+Booking page is now routable via /{slug} and renders a mobile-responsive form using Jinja2 templates.
+
 ## Iteration 120
 _2026-05-20 21:55 UTC_
 
