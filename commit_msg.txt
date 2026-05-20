@@ -1,1 +1,1 @@
-Implement booking submission route with database persistence and background notifications
+Add booking and dashboard HTML templates with Tailwind CSS

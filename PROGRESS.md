@@ -1,3 +1,8 @@
+## Iteration 116
+_2026-05-20 09:36 UTC_
+
+Created basic Jinja2 templates for the public-facing booking page and owner dashboard. Added RTL support for Arabic via direction attribute.
+
 ## Iteration 115
 _2026-05-20 05:05 UTC_
 

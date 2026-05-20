@@ -1,36 +1,19 @@
 <!DOCTYPE html>
-<html lang="{{ lang }}" {% if lang == 'ar' %}dir="rtl"{% endif %}>
-<head>
-    <meta charset="UTF-8">
-    <title>{{ _('Book with') }} {{ owner.business_name }}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
+<html dir="{{ 'rtl' if lang == 'ar' else 'ltr' }}" lang="{{ lang }}">
+<head><title>Book Appointment</title><script src="https://cdn.tailwindcss.com"></script></head>
 <body class="bg-gray-50 p-6">
-    <div class="max-w-md mx-auto bg-white p-8 rounded-lg shadow-sm">
-        <h1 class="text-2xl font-bold mb-4">{{ owner.business_name }}</h1>
-        <form action="/book/{{ owner.slug }}/confirm" method="POST" class="space-y-4">
-            <div>
-                <label class="block text-sm font-medium">{{ _('Select Service') }}</label>
-                <select name="service" class="w-full border p-2 rounded" required>
-                    {% for service in owner.services_json %}
-                    <option value="{{ service }}">{{ service }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div>
-                <label class="block text-sm font-medium">{{ _('Date & Time') }}</label>
-                <input type="datetime-local" name="datetime" class="w-full border p-2 rounded" required>
-            </div>
-            <div>
-                <label class="block text-sm font-medium">{{ _('Name') }}</label>
-                <input type="text" name="customer_name" class="w-full border p-2 rounded" required>
-            </div>
-            <div>
-                <label class="block text-sm font-medium">{{ _('WhatsApp/Phone') }}</label>
-                <input type="tel" name="customer_phone" class="w-full border p-2 rounded" required>
-            </div>
-            <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">{{ _('Confirm Booking') }}</button>
-        </form>
-    </div>
+  <div class="max-w-md mx-auto bg-white p-8 rounded-lg shadow">
+    <h1 class="text-2xl font-bold mb-6">Book an Appointment</h1>
+    <form action="submit" method="POST" class="space-y-4">
+      <input type="text" name="customer_name" placeholder="Your Name" required class="w-full p-2 border rounded">
+      <input type="email" name="customer_email" placeholder="Your Email" required class="w-full p-2 border rounded">
+      <input type="tel" name="customer_phone" placeholder="Your Phone" required class="w-full p-2 border rounded">
+      <select name="service" class="w-full p-2 border rounded">
+        {% for service in services %}<option value="{{ service }}">{{ service }}</option>{% endfor %}
+      </select>
+      <input type="datetime-local" name="booking_time" required class="w-full p-2 border rounded">
+      <button type="submit" class="w-full bg-blue-600 text-white p-2 rounded">Confirm Booking</button>
+    </form>
+  </div>
 </body>
 </html>
