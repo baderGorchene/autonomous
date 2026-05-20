@@ -1,1 +1,1 @@
-Implement public booking page route with dynamic service data
+Add booking.html template with i18n support and RTL handling
