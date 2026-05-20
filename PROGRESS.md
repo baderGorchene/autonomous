@@ -1,3 +1,8 @@
+## Iteration 120
+_2026-05-20 21:55 UTC_
+
+Created initial frontend templates with i18n support for the booking page and dashboard. Added RTL support for Arabic.
+
 ## Iteration 119
 _2026-05-20 19:26 UTC_
 

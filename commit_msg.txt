@@ -1,1 +1,1 @@
-Implement booking submission route with database persistence and background notifications
+Add Jinja2 templates for public booking page and owner dashboard
