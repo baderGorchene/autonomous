@@ -1,3 +1,8 @@
+## Iteration 117
+_2026-05-20 12:26 UTC_
+
+Added GET /{slug} endpoint to fetch owner and services data, rendering the booking.html template via Jinja2.
+
 ## Iteration 116
 _2026-05-20 09:36 UTC_
 

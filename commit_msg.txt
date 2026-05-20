@@ -1,1 +1,1 @@
-Add booking and dashboard HTML templates with Tailwind CSS
+Implement public booking page route with dynamic service data
