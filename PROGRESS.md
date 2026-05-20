@@ -1,3 +1,8 @@
+## Iteration 114
+_2026-05-20 00:07 UTC_
+
+Created the primary booking interface. The template uses Jinja2 i18n placeholders and supports RTL direction for Arabic.
+
 ## Iteration 113
 _2026-05-19 22:17 UTC_
 

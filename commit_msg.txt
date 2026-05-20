@@ -1,1 +1,1 @@
-Implement GET route for public booking page
+Add booking.html Jinja2 template with i18n support
