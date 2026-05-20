@@ -1,1 +1,1 @@
-Add booking.html template with i18n support and RTL handling
+Implement booking submission route with database persistence and background notifications
