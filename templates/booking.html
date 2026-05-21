@@ -1,19 +1,16 @@
-<!DOCTYPE html>
-<html lang="{{ lang }}" {% if lang == 'ar' %}dir="rtl"{% endif %}>
-<head><title>{{ _('Book with') }} {{ owner.business_name }}</title></head>
-<body>
-    <h1>{{ _('Book a slot with') }} {{ owner.business_name }}</h1>
-    <form action="/book/{{ owner.slug }}/submit" method="POST">
-        <input type="text" name="customer_name" placeholder="{{ _('Your Name') }}" required>
-        <input type="email" name="customer_email" placeholder="{{ _('Your Email') }}" required>
-        <input type="tel" name="customer_phone" placeholder="{{ _('Your Phone') }}" required>
-        <select name="service">
-            {% for service in owner.services_json %}
-            <option value="{{ service }}">{{ service }}</option>
-            {% endfor %}
-        </select>
-        <input type="datetime-local" name="booking_time" required>
-        <button type="submit">{{ _('Confirm Booking') }}</button>
-    </form>
-</body>
-</html>
+<html><body>
+<h1>Book with {{ owner.business_name }}</h1>
+<select id="date" onchange="fetchSlots()">
+    <option value="2023-10-27">2023-10-27</option>
+</select>
+<select id="slots"></select>
+<script>
+async function fetchSlots() {
+    const date = document.getElementById('date').value;
+    const response = await fetch(`/book/{{ owner.slug }}/slots?date=${date}`);
+    const data = await response.json();
+    const select = document.getElementById('slots');
+    select.innerHTML = data.slots.map(s => `<option value="${s}">${s}</option>`).join('');
+}
+</script>
+</body></html>

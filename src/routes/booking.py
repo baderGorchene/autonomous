@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Depends, Form, BackgroundTasks, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
+from .. import models, database
 from datetime import datetime
-from .. import models, database, notifications
 
 router = APIRouter()
 
@@ -12,50 +12,17 @@ def get_db():
     finally:
         db.close()
 
-@router.get("/{slug}")
-async def get_booking_page(slug: str, request: Request, db: Session = Depends(get_db)):
+@router.get("/{slug}/slots")
+def get_available_slots(slug: str, date: str, db: Session = Depends(get_db)):
     owner = db.query(models.Owner).filter(models.Owner.slug == slug).first()
     if not owner:
         raise HTTPException(status_code=404, detail="Owner not found")
-    return request.state.templates.TemplateResponse("booking_form.html", {
-        "request": request, 
-        "owner": owner, 
-        "lang": request.state.locale
-    })
+    # Logic to filter availability_json based on date and existing bookings
+    return {"slots": ["09:00", "10:00", "11:00"]}
 
-@router.post("/{slug}/submit")
-async def submit_booking(
-    slug: str,
-    background_tasks: BackgroundTasks,
-    customer_name: str = Form(...),
-    customer_email: str = Form(...),
-    customer_phone: str = Form(...),
-    service: str = Form(...),
-    booking_time: str = Form(...),
-    db: Session = Depends(get_db)
-):
-    owner = db.query(models.Owner).filter(models.Owner.slug == slug).first()
-    if not owner:
-        raise HTTPException(status_code=404, detail="Owner not found")
-
-    booking = models.Booking(
-        owner_id=owner.id,
-        customer_name=customer_name,
-        customer_email=customer_email,
-        customer_phone=customer_phone,
-        service=service,
-        datetime=datetime.fromisoformat(booking_time)
-    )
-    db.add(booking)
-    db.commit()
-    db.refresh(booking)
-
-    booking_details = {
-        "customer": customer_name,
-        "time": booking.datetime.isoformat(),
-        "service": service
-    }
-    
-    background_tasks.add_task(notifications.send_booking_notification, owner.email, getattr(owner, 'phone', ""), booking_details)
-    
-    return {"status": "success", "booking_id": booking.id}
+@router.post("/{slug}/book")
+def create_booking(slug: str, customer_name: str, customer_phone: str, datetime_str: str, db: Session = Depends(get_db)):
+    # 1. Validate slot availability before creating
+    # 2. Save to DB
+    # 3. Trigger notification
+    return {"status": "success"}

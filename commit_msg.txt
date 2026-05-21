@@ -1,1 +1,1 @@
-Implement core availability logic and slot validation helper
+Added booking route skeleton and frontend slot fetching logic

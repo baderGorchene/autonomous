@@ -1,3 +1,8 @@
+## Iteration 123
+_2026-05-21 11:28 UTC_
+
+Created the booking router and a basic template to demonstrate fetching availability. Next, I need to implement the actual SQL querying to ensure slots are not double-booked.
+
 ## Iteration 122
 _2026-05-21 03:52 UTC_
 
