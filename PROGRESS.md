@@ -1,3 +1,8 @@
+## Iteration 127
+_2026-05-21 22:20 UTC_
+
+Completed the backend routing for the public booking page and form submission. The routes now utilize the middleware-injected Jinja2 environment to ensure translations are applied correctly based on the 'lang' query parameter.
+
 ## Iteration 126
 _2026-05-21 20:06 UTC_
 

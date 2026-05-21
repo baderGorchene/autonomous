@@ -1,1 +1,1 @@
-Add i18n-ready booking and success templates for public interface
+Implement booking route logic with locale-aware template rendering
