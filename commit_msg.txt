@@ -1,1 +1,1 @@
-Add public booking page GET route and mobile-responsive HTML form
+Implement core availability logic and slot validation helper
