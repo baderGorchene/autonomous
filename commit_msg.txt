@@ -1,1 +1,1 @@
-Implement slot availability validation logic in booking routes
+Integrate notifications.py into booking flow using BackgroundTasks

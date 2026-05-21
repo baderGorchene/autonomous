@@ -1,3 +1,8 @@
+## Iteration 125
+_2026-05-21 18:00 UTC_
+
+Booking creation now persists to DB and triggers asynchronous email/WhatsApp notifications via SendGrid and Twilio.
+
 ## Iteration 124
 _2026-05-21 15:30 UTC_
 
