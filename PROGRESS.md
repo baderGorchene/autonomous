@@ -1,3 +1,8 @@
+## Iteration 124
+_2026-05-21 15:30 UTC_
+
+Added slot validation helper and updated get_available_slots to filter against existing database records. The create_booking endpoint now prevents double-booking.
+
 ## Iteration 123
 _2026-05-21 11:28 UTC_
 
