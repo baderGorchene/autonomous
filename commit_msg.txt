@@ -1,1 +1,1 @@
-Integrate notifications.py into booking flow using BackgroundTasks
+Add i18n-ready booking and success templates for public interface

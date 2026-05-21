@@ -1,3 +1,8 @@
+## Iteration 126
+_2026-05-21 20:06 UTC_
+
+Created Jinja2 templates for the public booking flow, utilizing the _() translation function for full i18n support.
+
 ## Iteration 125
 _2026-05-21 18:00 UTC_
 

@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ _('Booking Confirmed!') }}</h1>
+<p>{{ _('Your appointment with') }} {{ owner.business_name }} {{ _('has been scheduled.') }}</p>
+<a href="/book/{{ owner.slug }}">{{ _('Back to booking page') }}</a>
+{% endblock %}
