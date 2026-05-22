@@ -1,40 +1,35 @@
 <!DOCTYPE html>
-<html lang="{{ lang }}" dir="{{ 'rtl' if lang == 'ar' else 'ltr' }}">
+<html lang="{{ lang }}" {% if lang == 'ar' %}dir="rtl"{% endif %}>
 <head>
     <meta charset="UTF-8">
-    <title>{{ owner.business_name }} - {{ _('Book an Appointment') }}</title>
-    <style>
-        body { font-family: sans-serif; max-width: 600px; margin: 2rem auto; padding: 0 1rem; }
-        .service-card { border: 1px solid #ddd; padding: 1rem; margin-bottom: 1rem; border-radius: 8px; }
-        .slot-btn { display: inline-block; padding: 0.5rem 1rem; margin: 0.25rem; background: #007bff; color: white; border-radius: 4px; text-decoration: none; }
-    </style>
+    <title>{{ owner.business_name }} | {{ _('Book Appointment') }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <h1>{{ owner.business_name }}</h1>
-    <h3>{{ _('Select a Service') }}</h3>
-    <form action="/book/{{ owner.slug }}/submit" method="POST">
-        <div class="services">
-            {% for service in owner.services_json %}
-            <div class="service-card">
-                <input type="radio" name="service" value="{{ service.name }}" id="{{ service.name }}" required>
-                <label for="{{ service.name }}"><strong>{{ service.name }}</strong> - {{ service.price }}</label>
+<body class="bg-gray-50 font-sans">
+    <div class="max-w-md mx-auto p-6">
+        <h1 class="text-2xl font-bold mb-4">{{ owner.business_name }}</h1>
+        <form action="/book/{{ owner.slug }}/confirm" method="POST" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium">{{ _('Select Service') }}</label>
+                <select name="service" class="w-full p-2 border rounded" required>
+                    {% for service in services %}
+                        <option value="{{ service.name }}">{{ service.name }} - {{ service.price }}</option>
+                    {% endfor %}
+                </select>
             </div>
-            {% endfor %}
-        </div>
-
-        <h3>{{ _('Available Slots') }}</h3>
-        <div class="slots">
-            {% for slot in available_slots %}
-            <input type="radio" name="booking_time" value="{{ slot }}" id="{{ slot }}" required>
-            <label for="{{ slot }}" class="slot-btn">{{ slot }}</label>
-            {% endfor %}
-        </div>
-
-        <h3>{{ _('Your Details') }}</h3>
-        <input type="text" name="customer_name" placeholder="{{ _('Your Name') }}" required><br>
-        <input type="email" name="customer_email" placeholder="{{ _('Email') }}" required><br>
-        <input type="tel" name="customer_phone" placeholder="{{ _('Phone Number') }}" required><br>
-        <button type="submit">{{ _('Confirm Booking') }}</button>
-    </form>
+            <div>
+                <label class="block text-sm font-medium">{{ _('Select Time') }}</label>
+                <select name="datetime" class="w-full p-2 border rounded" required>
+                    {% for slot in availability %}
+                        <option value="{{ slot }}">{{ slot }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <input type="text" name="customer_name" placeholder="{{ _('Your Name') }}" class="w-full p-2 border rounded" required>
+            <input type="email" name="customer_email" placeholder="{{ _('Your Email') }}" class="w-full p-2 border rounded" required>
+            <input type="tel" name="customer_phone" placeholder="{{ _('Your WhatsApp Number') }}" class="w-full p-2 border rounded" required>
+            <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded font-bold">{{ _('Confirm Booking') }}</button>
+        </form>
+    </div>
 </body>
 </html>

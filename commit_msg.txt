@@ -1,1 +1,1 @@
-Implement GET route for public booking page
+Add bilingual booking page template with Jinja2 and Tailwind CSS
