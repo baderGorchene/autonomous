@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}" dir="{{ 'rtl' if lang == 'ar' else 'ltr' }}">
+<head>
+    <meta charset="UTF-8">
+    <title>Book with {{ owner.business_name }}</title>
+    <style>body { font-family: sans-serif; max-width: 500px; margin: 2rem auto; padding: 0 1rem; }</style>
+</head>
+<body>
+    <h1>{{ owner.business_name }}</h1>
+    <form action="/book/{{ owner.slug }}/submit" method="POST">
+        <label>Name</label><br><input type="text" name="customer_name" required><br><br>
+        <label>Email</label><br><input type="email" name="customer_email" required><br><br>
+        <label>Phone</label><br><input type="tel" name="customer_phone" required><br><br>
+        <label>Service</label><br>
+        <select name="service">
+            {% for service in owner.services_json %}
+                <option value="{{ service }}">{{ service }}</option>
+            {% endfor %}
+        </select><br><br>
+        <label>Time</label><br><input type="datetime-local" name="booking_time" required><br><br>
+        <button type="submit">Confirm Booking</button>
+    </form>
+</body>
+</html>
