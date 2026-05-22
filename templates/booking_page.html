@@ -1,31 +1,39 @@
 <!DOCTYPE html>
-<html lang="{{ lang }}">
+<html lang="{{ lang }}" dir="{{ 'rtl' if lang == 'ar' else 'ltr' }}">
 <head>
     <meta charset="UTF-8">
-    <title>{{ _('Book a service with') }} {{ owner.business_name }}</title>
+    <title>{{ owner.business_name }} - {{ _('Book an Appointment') }}</title>
+    <style>
+        body { font-family: sans-serif; max-width: 600px; margin: 2rem auto; padding: 0 1rem; }
+        .service-card { border: 1px solid #ddd; padding: 1rem; margin-bottom: 1rem; border-radius: 8px; }
+        .slot-btn { display: inline-block; padding: 0.5rem 1rem; margin: 0.25rem; background: #007bff; color: white; border-radius: 4px; text-decoration: none; }
+    </style>
 </head>
 <body>
-    <h1>{{ _('Book a service') }}</h1>
+    <h1>{{ owner.business_name }}</h1>
+    <h3>{{ _('Select a Service') }}</h3>
     <form action="/book/{{ owner.slug }}/submit" method="POST">
-        <label>{{ _('Full Name') }}</label>
-        <input type="text" name="customer_name" required><br>
-
-        <label>{{ _('Email') }}</label>
-        <input type="email" name="customer_email" required><br>
-
-        <label>{{ _('Phone Number') }}</label>
-        <input type="tel" name="customer_phone" required><br>
-
-        <label>{{ _('Service') }}</label>
-        <select name="service" required>
+        <div class="services">
             {% for service in owner.services_json %}
-                <option value="{{ service }}">{{ service }}</option>
+            <div class="service-card">
+                <input type="radio" name="service" value="{{ service.name }}" id="{{ service.name }}" required>
+                <label for="{{ service.name }}"><strong>{{ service.name }}</strong> - {{ service.price }}</label>
+            </div>
             {% endfor %}
-        </select><br>
+        </div>
 
-        <label>{{ _('Date & Time') }}</label>
-        <input type="datetime-local" name="datetime" required><br>
+        <h3>{{ _('Available Slots') }}</h3>
+        <div class="slots">
+            {% for slot in available_slots %}
+            <input type="radio" name="booking_time" value="{{ slot }}" id="{{ slot }}" required>
+            <label for="{{ slot }}" class="slot-btn">{{ slot }}</label>
+            {% endfor %}
+        </div>
 
+        <h3>{{ _('Your Details') }}</h3>
+        <input type="text" name="customer_name" placeholder="{{ _('Your Name') }}" required><br>
+        <input type="email" name="customer_email" placeholder="{{ _('Email') }}" required><br>
+        <input type="tel" name="customer_phone" placeholder="{{ _('Phone Number') }}" required><br>
         <button type="submit">{{ _('Confirm Booking') }}</button>
     </form>
 </body>

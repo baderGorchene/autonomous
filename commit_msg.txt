@@ -1,1 +1,1 @@
-Implement booking submission logic with background notification triggers
+feat: implement public booking page template with i18n support

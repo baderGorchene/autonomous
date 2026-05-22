@@ -1,3 +1,8 @@
+## Iteration 130
+_2026-05-22 09:27 UTC_
+
+Created the Jinja2 template for the public-facing booking page. It supports dynamic service listing, slot selection, and basic form submission fields. Added RTL support for Arabic.
+
 ## Iteration 129
 _2026-05-22 05:01 UTC_
 
