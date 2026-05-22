@@ -1,1 +1,1 @@
-feat: implement public booking page template with i18n support
+Implement GET route for public booking page

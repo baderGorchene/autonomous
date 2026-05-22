@@ -1,3 +1,8 @@
+## Iteration 131
+_2026-05-22 12:20 UTC_
+
+Added the /{slug} route to fetch owner details, services, and availability, passing them to the template via request.state.templates.
+
 ## Iteration 130
 _2026-05-22 09:27 UTC_
 
