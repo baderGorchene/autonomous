@@ -1,1 +1,1 @@
-Add bilingual booking page template with Jinja2 and Tailwind CSS
+Implement booking submission route with background notifications
