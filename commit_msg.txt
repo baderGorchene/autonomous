@@ -1,1 +1,1 @@
-Add GET route for /{slug} to render booking page
+feat: add booking template with i18n support
