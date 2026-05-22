@@ -1,3 +1,8 @@
+## Iteration 129
+_2026-05-22 05:01 UTC_
+
+Booking submission route now handles POST requests, saves to database, and uses background tasks for email/WhatsApp notifications.
+
 ## Iteration 128
 _2026-05-22 00:03 UTC_
 

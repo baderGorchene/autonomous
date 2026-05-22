@@ -1,1 +1,1 @@
-Add locale-aware booking and confirmation Jinja2 templates
+Implement booking submission logic with background notification triggers
