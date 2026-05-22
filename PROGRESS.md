@@ -1,3 +1,8 @@
+## Iteration 128
+_2026-05-22 00:03 UTC_
+
+Created initial templates for the client-facing booking flow. Templates support RTL for Arabic and use gettext for internationalization.
+
 ## Iteration 127
 _2026-05-21 22:20 UTC_
 

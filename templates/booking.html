@@ -1,16 +1,21 @@
-{% extends "base.html" %}
-{% block content %}
-<h1>{{ _('Book an Appointment with') }} {{ owner.business_name }}</h1>
-<form action="/book/{{ owner.slug }}/create" method="POST">
-    <input type="text" name="name" placeholder="{{ _('Your Name') }}" required>
-    <input type="email" name="email" placeholder="{{ _('Your Email') }}" required>
-    <input type="tel" name="phone" placeholder="{{ _('Your Phone') }}" required>
-    <select name="service">
-        {% for service in owner.services_json %}
-        <option value="{{ service }}">{{ service }}</option>
-        {% endfor %}
-    </select>
-    <input type="datetime-local" name="time" required>
-    <button type="submit">{{ _('Confirm Booking') }}</button>
-</form>
-{% endblock %}
+<!DOCTYPE html>
+<html {% if lang == 'ar' %}dir="rtl"{% endif %} lang="{{ lang }}">
+<head><title>{{ _('Book with') }} {{ owner.business_name }}</title></head>
+<body>
+    <h1>{{ _('Book an appointment with') }} {{ owner.business_name }}</h1>
+    <form action="/book/submit/{{ owner.slug }}" method="POST">
+        <input type="hidden" name="lang" value="{{ lang }}">
+        <label>{{ _('Your Name') }}</label><input type="text" name="name" required><br>
+        <label>{{ _('Email') }}</label><input type="email" name="email" required><br>
+        <label>{{ _('Phone') }}</label><input type="tel" name="phone" required><br>
+        <label>{{ _('Select Service') }}</label>
+        <select name="service">
+            {% for service in owner.services_json %}
+            <option value="{{ service }}">{{ service }}</option>
+            {% endfor %}
+        </select><br>
+        <label>{{ _('Date & Time') }}</label><input type="datetime-local" name="datetime" required><br>
+        <button type="submit">{{ _('Confirm Booking') }}</button>
+    </form>
+</body>
+</html>
