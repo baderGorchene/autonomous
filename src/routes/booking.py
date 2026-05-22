@@ -13,6 +13,21 @@ def get_db():
     finally:
         db.close()
 
+@router.get("/{slug}")
+async def get_booking_page(request: Request, slug: str, db: Session = Depends(get_db)):
+    owner = db.query(models.Owner).filter(models.Owner.slug == slug).first()
+    if not owner:
+        raise HTTPException(status_code=404, detail="Business not found")
+    
+    return request.state.templates.TemplateResponse(
+        "book.html", 
+        {
+            "request": request, 
+            "owner": owner, 
+            "lang": request.state.locale
+        }
+    )
+
 @router.post("/{slug}/submit")
 async def submit_booking(
     slug: str,

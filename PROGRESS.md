@@ -1,3 +1,8 @@
+## Iteration 135
+_2026-05-22 21:11 UTC_
+
+Implemented the public facing booking page route which retrieves the owner by slug and renders the template using the request-state templates.
+
 ## Iteration 134
 _2026-05-22 19:47 UTC_
 

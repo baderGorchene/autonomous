@@ -1,1 +1,1 @@
-Add public booking page template
+Add GET route for /{slug} to render booking page
