@@ -1,3 +1,8 @@
+## Iteration 137
+_2026-05-23 03:23 UTC_
+
+Implemented the booking submission logic. Added the route to handle form data, saved the booking to the database, and integrated the background task for owner notifications.
+
 ## Iteration 136
 _2026-05-22 23:00 UTC_
 
