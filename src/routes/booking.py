@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, Form, HTTPException, BackgroundTasks, Request
+from fastapi import APIRouter, Depends, Form, BackgroundTasks, HTTPException
 from sqlalchemy.orm import Session
 from datetime import datetime
 from .. import models, database, notifications
+from typing import Annotated
 
 router = APIRouter()
 
@@ -12,31 +13,22 @@ def get_db():
     finally:
         db.close()
 
-@router.get("/{slug}")
-async def get_booking_page(slug: str, request: Request, db: Session = Depends(get_db)):
-    owner = db.query(models.Owner).filter(models.Owner.slug == slug).first()
-    if not owner:
-        raise HTTPException(status_code=404, detail="Business not found")
-    return request.state.templates.TemplateResponse("booking.html", {
-        "request": request, 
-        "owner": owner, 
-        "lang": request.state.locale
-    })
-
 @router.post("/{slug}/submit")
 async def submit_booking(
     slug: str,
     background_tasks: BackgroundTasks,
-    customer_name: str = Form(...),
-    customer_email: str = Form(...),
-    customer_phone: str = Form(...),
-    service: str = Form(...),
-    booking_time: str = Form(...),
+    customer_name: Annotated[str, Form()],
+    customer_email: Annotated[str, Form()],
+    customer_phone: Annotated[str, Form()],
+    service: Annotated[str, Form()],
+    booking_datetime: Annotated[str, Form()],
     db: Session = Depends(get_db)
 ):
     owner = db.query(models.Owner).filter(models.Owner.slug == slug).first()
     if not owner:
-        raise HTTPException(status_code=404, detail="Business not found")
+        raise HTTPException(status_code=404, detail="Owner not found")
+
+    dt = datetime.fromisoformat(booking_datetime)
     
     new_booking = models.Booking(
         owner_id=owner.id,
@@ -44,18 +36,24 @@ async def submit_booking(
         customer_email=customer_email,
         customer_phone=customer_phone,
         service=service,
-        datetime=datetime.fromisoformat(booking_time)
+        datetime=dt
     )
     
     db.add(new_booking)
     db.commit()
     db.refresh(new_booking)
-    
+
+    booking_details = {
+        "customer": customer_name,
+        "time": dt.strftime("%Y-%m-%d %H:%M"),
+        "service": service
+    }
+
     background_tasks.add_task(
-        notifications.send_booking_notification,
-        owner.email,
-        getattr(owner, 'phone', None),
-        {"customer": customer_name, "time": booking_time, "service": service}
+        notifications.send_booking_notification, 
+        owner.email, 
+        getattr(owner, 'phone', None), 
+        booking_details
     )
-    
-    return {"status": "success", "booking_id": new_booking.id}
+
+    return {"status": "success", "message": "Booking confirmed"}
