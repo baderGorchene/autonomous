@@ -1,3 +1,8 @@
+## Iteration 140
+_2026-05-23 11:12 UTC_
+
+Created the public-facing booking interface. The form allows users to select services (mapped from the owner's JSON profile) and input personal details. Added RTL support for Arabic via lang-based CSS direction.
+
 ## Iteration 139
 _2026-05-23 09:02 UTC_
 

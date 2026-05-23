@@ -1,1 +1,1 @@
-Implement GET route for public booking page and setup context rendering
+Add booking.html template with multi-language support and service selection form
