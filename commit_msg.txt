@@ -1,1 +1,1 @@
-Add base, booking, and dashboard templates for BookSlot MVP
+Implement GET route for public booking page and setup context rendering

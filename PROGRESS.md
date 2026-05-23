@@ -1,3 +1,8 @@
+## Iteration 139
+_2026-05-23 09:02 UTC_
+
+Added the GET endpoint to handle the /book/{slug} route, which fetches owner data and renders the booking template via the request state's template engine.
+
 ## Iteration 138
 _2026-05-23 06:34 UTC_
 
