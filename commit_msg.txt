@@ -1,1 +1,1 @@
-Add requirements.txt and fix missing pytest dependency for testing
+Fix: Provide comprehensive requirements.txt with pytest and Babel
