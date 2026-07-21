@@ -1,1 +1,1 @@
-Fix: Pydantic validation error in Settings class
+feat: Implement bilingual support with Arabic and French translation files and language toggles

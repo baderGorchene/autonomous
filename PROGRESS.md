@@ -1,3 +1,8 @@
+## Iteration 150
+_2026-07-21 12:24 UTC_
+
+Created initial .po translation files for Arabic and French. Updated dashboard.html and booking_page.html to use gettext for translatable strings and added a language toggle. Ensured the 'lang' parameter is passed to templates from both main.py and booking.py routes. The previous 'No module named pytest' error was noted as a test environment issue, not a code bug, and was not directly addressed in this task.
+
 ## Iteration 149
 _2026-07-21 13:07 UTC_
 
