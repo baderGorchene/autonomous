@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ _('Book an Appointment with %s') | format(owner.business_name) }}</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; } 
+        .language-switcher { margin-bottom: 20px; } 
+        .language-switcher a { margin-right: 10px; text-decoration: none; color: blue; } 
+        .language-switcher a.active { font-weight: bold; color: black; } 
+        .error { color: red; margin-top: 10px; } 
+        form div { margin-bottom: 10px; } 
+        label { display: block; margin-bottom: 5px; } 
+        input[type="text"], input[type="email"], select { width: 100%; padding: 8px; box-sizing: border-box; } 
+        button { padding: 10px 15px; background-color: #007bff; color: white; border: none; cursor: pointer; } 
+        button:hover { background-color: #0056b3; } 
+    </style>
+</head>
+<body>
+    <div class="language-switcher">
+        <a href="?lang=en" {% if lang == 'en' %}class="active"{% endif %}>{{ _('English') }}</a>
+        <a href="?lang=ar" {% if lang == 'ar' %}class="active"{% endif %}>{{ _('Arabic') }}</a>
+        <a href="?lang=fr" {% if lang == 'fr' %}class="active"{% endif %}>{{ _('French') }}</a>
+    </div>
+
+    <h1>{{ _('Book an Appointment with %s') | format(owner.business_name) }}</h1>
+
+    {% if error_message %}
+        <p class="error">{{ _(error_message) }}</p>
+    {% endif %}
+
+    <form action="/book/{{ owner.slug }}?lang={{ lang }}" method="post">
+        <div>
+            <label for="service">{{ _('Select a Service') }}</label>
+            <select id="service" name="service" required>
+                {% for service in owner.services_json %}
+                    <option value="{{ service.name }}">{{ service.name }} - {{ service.duration_minutes }} min</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label for="date">{{ _('Select a Date') }}</label>
+            <input type="date" id="date" name="date" required>
+        </div>
+        <div>
+            <label for="time">{{ _('Select a Time') }}</label>
+            <input type="time" id="time" name="time" required>
+        </div>
+        <div>
+            <label for="customer_name">{{ _('Your Name') }}</label>
+            <input type="text" id="customer_name" name="customer_name" required>
+        </div>
+        <div>
+            <label for="customer_email">{{ _('Your Email') }}</label>
+            <input type="email" id="customer_email" name="customer_email" required>
+        </div>
+        <div>
+            <label for="customer_phone">{{ _('Your Phone (Optional)') }}</label>
+            <input type="text" id="customer_phone" name="customer_phone">
+        </div>
+        <button type="submit">{{ _('Book Now') }}</button>
+    </form>
+</body>
+</html>

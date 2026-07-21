@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}" {% if lang == 'ar' %}dir="rtl"{% endif %}>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book with {{ owner.business_name }}</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; line-height: 1.6; max-width: 500px; margin: auto; }
+        input, select, button { width: 100%; padding: 12px; margin: 10px 0; box-sizing: border-box; }
+        button { background: #007bff; color: white; border: none; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Book {{ owner.business_name }}</h1>
+    <form action="/book/{{ owner.slug }}/submit" method="POST">
+        <input type="text" name="customer_name" placeholder="Your Name" required>
+        <input type="email" name="customer_email" placeholder="Your Email" required>
+        <input type="tel" name="customer_phone" placeholder="Your Phone" required>
+        <select name="service">
+            {% for service in owner.services_json %}
+            <option value="{{ service }}">{{ service }}</option>
+            {% endfor %}
+        </select>
+        <input type="datetime-local" name="booking_time" required>
+        <button type="submit">Confirm Booking</button>
+    </form>
+</body>
+</html>

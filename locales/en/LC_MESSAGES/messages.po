@@ -1,0 +1,113 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: BookSlot\n"
+"POT-Creation-Date: 2023-10-27 10:00+0000\n"
+"PO-Revision-Date: 2023-10-27 10:00+0000\n"
+"Last-Translator: \n"
+"Language-Team: English\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: en\n"
+
+msgid "BookSlot Dashboard"
+msgstr "BookSlot Dashboard"
+
+msgid "Welcome"
+msgstr "Welcome"
+
+msgid "Manage your profile and bookings."
+msgstr "Manage your profile and bookings."
+
+msgid "Upcoming Bookings"
+msgstr "Upcoming Bookings"
+
+msgid "No upcoming bookings."
+msgstr "No upcoming bookings."
+
+msgid "Date"
+msgstr "Date"
+
+msgid "Time"
+msgstr "Time"
+
+msgid "Customer Name"
+msgstr "Customer Name"
+
+msgid "Customer Email"
+msgstr "Customer Email"
+
+msgid "Service"
+msgstr "Service"
+
+msgid "Status"
+msgstr "Status"
+
+msgid "Edit Profile"
+msgstr "Edit Profile"
+
+msgid "Your Name"
+msgstr "Your Name"
+
+msgid "Business Name"
+msgstr "Business Name"
+
+msgid "Phone Number (Optional)"
+msgstr "Phone Number (Optional)"
+
+msgid "Update Profile"
+msgstr "Update Profile"
+
+msgid "Profile updated successfully!"
+msgstr "Profile updated successfully!"
+
+msgid "Logout"
+msgstr "Logout"
+
+msgid "Book an Appointment with %s"
+msgstr "Book an Appointment with %s"
+
+msgid "Select a Service"
+msgstr "Select a Service"
+
+msgid "Select a Date"
+msgstr "Select a Date"
+
+msgid "Select a Time"
+msgstr "Select a Time"
+
+msgid "Your Email"
+msgstr "Your Email"
+
+msgid "Your Phone (Optional)"
+msgstr "Your Phone (Optional)"
+
+msgid "Book Now"
+msgstr "Book Now"
+
+msgid "Booking successful!"
+msgstr "Booking successful!"
+
+msgid "Go back to booking page"
+msgstr "Go back to booking page"
+
+msgid "The selected slot is no longer available. Please choose another time."
+msgstr "The selected slot is no longer available. Please choose another time."
+
+msgid "Invalid booking details. Please check your input."
+msgstr "Invalid booking details. Please check your input."
+
+msgid "English"
+msgstr "English"
+
+msgid "Arabic"
+msgstr "Arabic"
+
+msgid "French"
+msgstr "French"
+
+msgid "Your appointment has been successfully booked."
+msgstr "Your appointment has been successfully booked."
+
+msgid "You will receive a confirmation email shortly."
+msgstr "You will receive a confirmation email shortly."

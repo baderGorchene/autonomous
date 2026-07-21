@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}" {% if lang == 'ar' %}dir="rtl"{% endif %}>
+<head>
+    <meta charset="UTF-8">
+    <title>{{ _('Book with') }} {{ owner.business_name }}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
+</head>
+<body>
+    <h1>{{ _('Book a service with') }} {{ owner.business_name }}</h1>
+    <form action="/book/{{ owner.slug }}/confirm" method="POST">
+        <label for="service">{{ _('Select Service') }}</label>
+        <select name="service" id="service" required>
+            {% for service in owner.services_json %}
+                <option value="{{ service.name }}">{{ service.name }} - {{ service.price }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="datetime">{{ _('Select Time') }}</label>
+        <input type="datetime-local" name="datetime" id="datetime" required>
+
+        <label for="name">{{ _('Your Name') }}</label>
+        <input type="text" name="customer_name" required>
+
+        <label for="email">{{ _('Your Email') }}</label>
+        <input type="email" name="customer_email" required>
+
+        <label for="phone">{{ _('Your WhatsApp/Phone') }}</label>
+        <input type="tel" name="customer_phone" required>
+
+        <button type="submit">{{ _('Confirm Booking') }}</button>
+    </form>
+</body>
+</html>

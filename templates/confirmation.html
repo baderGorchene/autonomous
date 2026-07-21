@@ -1,0 +1,9 @@
+<!DOCTYPE html>
+<html {% if lang == 'ar' %}dir="rtl"{% endif %} lang="{{ lang }}">
+<head><title>{{ _('Booking Confirmed') }}</title></head>
+<body>
+    <h1>{{ _('Success!') }}</h1>
+    <p>{{ _('Your appointment with') }} {{ owner.business_name }} {{ _('is confirmed for') }} {{ booking_time }}.</p>
+    <a href="/book/{{ owner.slug }}?lang={{ lang }}">{{ _('Back to booking page') }}</a>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>{{ owner.business_name }}</h1>
+<form action="/book/{{ owner.slug }}" method="post">
+  <label>Service:</label>
+  <select name="service_name">
+    {% for service in owner.services_json %}
+      <option value="{{ service.name }}">{{ service.name }} - {{ service.price }}</option>
+    {% endfor %}
+  </select>
+  <input type="text" name="customer_name" placeholder="Your Name" required>
+  <input type="email" name="customer_email" placeholder="Your Email" required>
+  <input type="tel" name="customer_phone" placeholder="Your Phone" required>
+  <input type="datetime-local" name="booking_datetime" required>
+  <button type="submit">Book Slot</button>
+</form>
+{% endblock %}

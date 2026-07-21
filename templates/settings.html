@@ -1,0 +1,12 @@
+<form method="POST" action="/settings/{{owner.id}}/update" class="p-6 space-y-4">
+    <h2 class="text-xl font-bold">{{ _('Configure Your Services & Availability') }}</h2>
+    <div>
+        <label>{{ _('Services (JSON format)') }}</label>
+        <textarea name="services" class="w-full border p-2">{{ owner.services_json }}</textarea>
+    </div>
+    <div>
+        <label>{{ _('Availability (JSON format)') }}</label>
+        <textarea name="availability" class="w-full border p-2">{{ owner.availability_json }}</textarea>
+    </div>
+    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">{{ _('Save Changes') }}</button>
+</form>

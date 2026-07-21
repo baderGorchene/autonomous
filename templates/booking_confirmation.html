@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ _('Booking successful!') }}</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; } 
+        .language-switcher { margin-bottom: 20px; } 
+        .language-switcher a { margin-right: 10px; text-decoration: none; color: blue; } 
+        .language-switcher a.active { font-weight: bold; color: black; } 
+        .success-message { color: green; margin-top: 20px; font-size: 1.2em; } 
+        .back-link { margin-top: 20px; display: block; } 
+    </style>
+</head>
+<body>
+    <div class="language-switcher">
+        <a href="?lang=en" {% if lang == 'en' %}class="active"{% endif %}>{{ _('English') }}</a>
+        <a href="?lang=ar" {% if lang == 'ar' %}class="active"{% endif %}>{{ _('Arabic') }}</a>
+        <a href="?lang=fr" {% if lang == 'fr' %}class="active"{% endif %}>{{ _('French') }}</a>
+    </div>
+
+    <h1 class="success-message">{{ _('Booking successful!') }}</h1>
+    <p>{{ _('Your appointment has been successfully booked.') }}</p>
+    <p>{{ _('You will receive a confirmation email shortly.') }}</p>
+    <a href="/book/{{ owner_slug }}?lang={{ lang }}" class="back-link">{{ _('Go back to booking page') }}</a>
+</body>
+</html>
