@@ -1,1 +1,1 @@
-Fix: Provide comprehensive requirements.txt with pytest and Babel
+Fix: Ensure pytest is in requirements.txt
