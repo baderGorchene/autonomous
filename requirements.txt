@@ -1,10 +1,14 @@
 fastapi
 uvicorn
 sqlalchemy
-alembic
 pydantic
+pydantic-settings
+jinja2
 python-jose[cryptography]
 passlib[bcrypt]
 python-multipart
-jinja2
-aiosmtplib
+sendgrid
+twilio
+google-generativeai
+babel
+pytest

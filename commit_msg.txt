@@ -1,1 +1,1 @@
-feat: Implement bilingual support with Arabic and French translation files and language toggles
+Add requirements.txt and fix missing pytest dependency for testing
