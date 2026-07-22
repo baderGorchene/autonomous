@@ -12,7 +12,7 @@ def get_jinja_env(locale='en', templates_dir='templates', project_root=None):
     
     localedir = os.path.join(project_root, 'locales')
     
-    translate = gettext.translation('messages', localedir, languages=[locale], fallback=True)
-    env.install_gettext_translations(translate)
+    translate = gettext.translation('messages', localedir, languages=[locale], fallback=True);
+    env.install_gettext_translations(translate);
     
     return env
