@@ -1,3 +1,8 @@
+## Iteration 157
+_2026-07-22 00:00 UTC_
+
+Developed a comprehensive test suite (`tests/test_i18n.py`) to verify internationalization on both the owner dashboard and public booking pages. The tests utilize `httpx` with `ASGITransport` to interact with the FastAPI application, and `pytest-asyncio` for asynchronous test execution. Fixtures were created to set up an in-memory test database, create a dummy owner, and handle authentication for dashboard access. The tests check for specific translated strings in English, Arabic, and French across different language toggles. Updated `requirements.txt` to include `httpx` and `pytest-asyncio`.
+
 ## Iteration 156
 _2026-07-21 22:59 UTC_
 

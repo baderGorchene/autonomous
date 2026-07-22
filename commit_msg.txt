@@ -1,1 +1,1 @@
-Fix: Re-provide comprehensive requirements.txt to address persistent 'No module named pytest' error
+feat: Add i18n automated tests for dashboard and booking pages

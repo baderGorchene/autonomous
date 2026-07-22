@@ -1,105 +1,129 @@
 import pytest
-from fastapi.testclient import TestClient
+import httpx
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from src.main import app, get_db
+from src.main import app as fastapi_app, get_db
 from src.database import Base
-from src import models, crud, security, schemas
+from src import models, schemas, crud, security
+from src.config import settings
+from jose import jwt
 from datetime import datetime, timedelta
 
-SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+# --- Test Database Setup ---
+SQLALCHEMY_DATABASE_URL = "sqlite:///./test_i18n.db"
 
-@pytest.fixture(name="db")
-def session_fixture():
-    Base.metadata.create_all(bind=engine)
+test_engine = create_engine(
+    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
+)
+TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
+
+def override_get_db():
+    try:
+        db = TestingSessionLocal()
+        yield db
+    finally:
+        db.close()
+
+fastapi_app.dependency_overrides[get_db] = override_get_db
+
+@pytest.fixture(name="db_session")
+def db_session_fixture():
+    Base.metadata.create_all(bind=test_engine)
     db = TestingSessionLocal()
     try:
         yield db
     finally:
         db.close()
-        Base.metadata.drop_all(bind=engine)
+        Base.metadata.drop_all(bind=test_engine)
 
+# --- HTTPX Client Fixture ---
 @pytest.fixture(name="client")
-def client_fixture(db: TestingSessionLocal):
-    def override_get_db():
-        try:
-            yield db
-        finally:
-            db.close()
-    app.dependency_overrides[get_db] = override_get_db
-    with TestClient(app) as client:
+async def client_fixture(db_session):
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=fastapi_app), base_url="http://test") as client:
         yield client
-    app.dependency_overrides.clear()
 
-@pytest.fixture
-def test_owner(db: TestingSessionLocal):
-    owner_create = schemas.OwnerCreate(
-        name="Test Owner",
-        email="test@example.com",
-        password="testpassword",
-        business_name="Test Business",
-        slug="test-business-slug"
-    )
-    owner = crud.create_owner(db, owner_create)
+# --- Authentication Fixtures ---
+def create_access_token(data: dict, expires_delta: timedelta = None):
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(minutes=15)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+    return encoded_jwt
+
+@pytest.fixture(name="owner_data")
+def owner_data_fixture():
+    return {
+        "name": "Test Owner",
+        "email": "test@example.com",
+        "password": "testpassword",
+        "business_name": "Test Business",
+        "slug": "test-business",
+        "phone": "1234567890"
+    }
+
+@pytest.fixture(name="test_owner")
+def test_owner_fixture(db_session, owner_data):
+    owner_schema = schemas.OwnerCreate(**owner_data)
+    owner = crud.create_owner(db_session, owner_schema)
+    # Manually update services_json and availability_json for the slug page to work
+    owner.services_json = [{"name": "Consultation", "duration": 30, "price": 50}]
+    owner.availability_json = {"monday": [{"start": "09:00", "end": "17:00"}]}
+    db_session.add(owner)
+    db_session.commit()
+    db_session.refresh(owner)
     return owner
 
-@pytest.fixture
-def authenticated_client(client: TestClient, test_owner: models.Owner):
-    response = client.post(
-        "/auth/token",
-        data={"username": test_owner.email, "password": "testpassword"}
+@pytest.fixture(name="auth_headers")
+def auth_headers_fixture(test_owner):
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": test_owner.email}, expires_delta=access_token_expires
     )
+    return {"Authorization": f"Bearer {access_token}"}
+
+# --- I18n Tests for Dashboard Page ---
+@pytest.mark.asyncio
+async def test_dashboard_language_toggle_en(client, auth_headers):
+    response = await client.get("/dashboard?lang=en", headers=auth_headers)
     assert response.status_code == 200
-    token = response.json()["access_token"]
-    client.headers["Authorization"] = f"Bearer {token}"
-    return client
+    assert "Dashboard" in response.text
+    assert "Upcoming Bookings" in response.text
 
-def test_dashboard_language_arabic(authenticated_client: TestClient, test_owner: models.Owner, db: TestingSessionLocal):
-    booking_data = schemas.BookingCreate(
-        customer_name="John Doe",
-        customer_email="john@example.com",
-        customer_phone="1234567890",
-        service="Haircut",
-        datetime=datetime.now() + timedelta(days=1)
-    )
-    crud.create_booking(db, booking_data, test_owner.id)
-
-    response = authenticated_client.get("/dashboard?lang=ar")
+@pytest.mark.asyncio
+async def test_dashboard_language_toggle_ar(client, auth_headers):
+    response = await client.get("/dashboard?lang=ar", headers=auth_headers)
     assert response.status_code == 200
-    assert "الحجوزات القادمة" in response.text or "مرحباً بك في لوحة التحكم الخاصة بك" in response.text
+    assert "لوحة التحكم" in response.text
+    assert "الحجوزات القادمة" in response.text
 
-def test_dashboard_language_french(authenticated_client: TestClient, test_owner: models.Owner, db: TestingSessionLocal):
-    booking_data = schemas.BookingCreate(
-        customer_name="Jane Doe",
-        customer_email="jane@example.com",
-        customer_phone="0987654321",
-        service="Massage",
-        datetime=datetime.now() + timedelta(days=2)
-    )
-    crud.create_booking(db, booking_data, test_owner.id)
-
-    response = authenticated_client.get("/dashboard?lang=fr")
+@pytest.mark.asyncio
+async def test_dashboard_language_toggle_fr(client, auth_headers):
+    response = await client.get("/dashboard?lang=fr", headers=auth_headers)
     assert response.status_code == 200
-    assert "Réservations à venir" in response.text or "Bienvenue sur votre tableau de bord" in response.text
+    assert "Tableau de bord" in response.text
+    assert "Prochaines réservations" in response.text
 
-def test_booking_page_language_arabic(client: TestClient, test_owner: models.Owner):
-    response = client.get(f"/book/{test_owner.slug}?lang=ar")
+# --- I18n Tests for Booking Page ---
+@pytest.mark.asyncio
+async def test_booking_page_language_toggle_en(client, test_owner):
+    response = await client.get(f"/book/{test_owner.slug}?lang=en")
     assert response.status_code == 200
-    assert "احجز موعداً" in response.text or "الرجاء إدخال بياناتك" in response.text
+    assert "Book an Appointment" in response.text
+    assert "Your Name" in response.text
 
-def test_booking_page_language_french(client: TestClient, test_owner: models.Owner):
-    response = client.get(f"/book/{test_owner.slug}?lang=fr")
+@pytest.mark.asyncio
+async def test_booking_page_language_toggle_ar(client, test_owner):
+    response = await client.get(f"/book/{test_owner.slug}?lang=ar")
     assert response.status_code == 200
-    assert "Prendre un rendez-vous" in response.text or "Veuillez entrer vos coordonnées" in response.text
+    assert "احجز موعدًا" in response.text
+    assert "اسمك" in response.text
 
-def test_booking_page_default_language_english(client: TestClient, test_owner: models.Owner):
-    response = client.get(f"/book/{test_owner.slug}")
+@pytest.mark.asyncio
+async def test_booking_page_language_toggle_fr(client, test_owner):
+    response = await client.get(f"/book/{test_owner.slug}?lang=fr")
     assert response.status_code == 200
-    assert "Book an appointment" in response.text or "Please enter your details" in response.text
-
-def test_dashboard_default_language_english(authenticated_client: TestClient, test_owner: models.Owner):
-    response = authenticated_client.get("/dashboard")
-    assert response.status_code == 200
-    assert "Upcoming Bookings" in response.text or "Welcome to your dashboard" in response.text
+    assert "Réserver un rendez-vous" in response.text
+    assert "Votre nom" in response.text
