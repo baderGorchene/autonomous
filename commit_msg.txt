@@ -1,1 +1,1 @@
-Fix: Add missing requirements.txt with pytest and other dependencies
+Add/update requirements.txt to ensure pytest is available
