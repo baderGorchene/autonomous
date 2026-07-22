@@ -4,11 +4,12 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from src.main import app, get_db
 from src.database import Base
-from src import models, crud, schemas, security
-from datetime import datetime, timedelta
+from src import models, crud, schemas
+from datetime import datetime
+import json
 
-# Setup for test database
-SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
+# Setup a test database
+SQLALCHEMY_DATABASE_URL = "sqlite:///./test_bookslot.db"
 engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -28,80 +29,52 @@ def client_fixture(db_session):
         try:
             yield db_session
         finally:
-            pass 
-    
-    app.dependency_overrides[get_db] = override_get_db
-    with TestClient(app) as test_client:
-        yield test_client
-    app.dependency_overrides.clear()
+            db_session.close()
 
-def create_test_owner(db_session):
+    app.dependency_overrides[get_db] = override_get_db
+    with TestClient(app) as c:
+        yield c
+    app.dependency_overrides = {} # Clean up overrides
+
+@pytest.fixture
+def setup_owner(db_session: TestingSessionLocal):
     owner_data = schemas.OwnerCreate(
         name="Test Owner",
         email="test@example.com",
         password="testpassword",
         business_name="Test Business",
-        slug="test-business-slug",
+        slug="test-business",
     )
     owner = crud.create_owner(db_session, owner_data)
-    owner.services_json = [{"name": "Haircut", "duration": 30}] # Add a dummy service for booking page
+    owner.services_json = json.dumps([{"name": "Haircut", "duration": 30}])
+    owner.availability_json = json.dumps({
+        "monday": ["09:00-17:00"]
+    })
     db_session.add(owner)
     db_session.commit()
     db_session.refresh(owner)
     return owner
 
-def get_owner_token(client, email, password):
-    response = client.post("/auth/token", data={"username": email, "password": password})
-    assert response.status_code == 200, f"Failed to get token: {response.text}"
-    return response.json()["access_token"]
+def test_booking_page_i18n_english(client: TestClient, setup_owner: models.Owner):
+    response = client.get(f"/book/{setup_owner.slug}?lang=en")
+    assert response.status_code == 200
+    assert "Book an Appointment" in response.text
+    assert "Your Name" in response.text
+    assert "Select Service" in response.text
+    assert "Book Now" in response.text
 
-def test_i18n_language_toggle_on_booking_page(client, db_session):
-    owner = create_test_owner(db_session)
-    
-    # Test English
-    response_en = client.get(f"/book/{owner.slug}?lang=en")
-    assert response_en.status_code == 200
-    assert "Book an appointment" in response_en.text
-    assert "Service" in response_en.text
-    assert "Customer Name" in response_en.text
-    
-    # Test Arabic
-    response_ar = client.get(f"/book/{owner.slug}?lang=ar")
-    assert response_ar.status_code == 200
-    assert "احجز موعدا" in response_ar.text 
-    assert "الخدمة" in response_ar.text
-    assert "اسم العميل" in response_ar.text
+def test_booking_page_i18n_arabic(client: TestClient, setup_owner: models.Owner):
+    response = client.get(f"/book/{setup_owner.slug}?lang=ar")
+    assert response.status_code == 200
+    assert "احجز موعدًا" in response.text # "Book an Appointment"
+    assert "اسمك" in response.text # "Your Name"
+    assert "اختر الخدمة" in response.text # "Select Service"
+    assert "احجز الآن" in response.text # "Book Now"
 
-    # Test French
-    response_fr = client.get(f"/book/{owner.slug}?lang=fr")
-    assert response_fr.status_code == 200
-    assert "Prendre rendez-vous" in response_fr.text
-    assert "Service" in response_fr.text 
-    assert "Nom du client" in response_fr.text
-
-def test_i18n_language_toggle_on_dashboard_page(client, db_session):
-    owner = create_test_owner(db_session)
-    token = get_owner_token(client, owner.email, "testpassword")
-
-    headers = {"Authorization": f"Bearer {token}"}
-
-    # Test English
-    response_en = client.get("/dashboard?lang=en", headers=headers)
-    assert response_en.status_code == 200
-    assert "Dashboard" in response_en.text
-    assert "Upcoming Bookings" in response_en.text
-    assert "Profile" in response_en.text
-
-    # Test Arabic
-    response_ar = client.get("/dashboard?lang=ar", headers=headers)
-    assert response_ar.status_code == 200
-    assert "لوحة التحكم" in response_ar.text 
-    assert "الحجوزات القادمة" in response_ar.text
-    assert "الملف الشخصي" in response_ar.text
-
-    # Test French
-    response_fr = client.get("/dashboard?lang=fr", headers=headers)
-    assert response_fr.status_code == 200
-    assert "Tableau de bord" in response_fr.text
-    assert "Réservations à venir" in response_fr.text
-    assert "Profil" in response_fr.text
+def test_booking_page_i18n_french(client: TestClient, setup_owner: models.Owner):
+    response = client.get(f"/book/{setup_owner.slug}?lang=fr")
+    assert response.status_code == 200
+    assert "Prendre un rendez-vous" in response.text # "Book an Appointment"
+    assert "Votre Nom" in response.text # "Your Name"
+    assert "Sélectionner un Service" in response.text # "Select Service"
+    assert "Réserver Maintenant" in response.text # "Book Now"

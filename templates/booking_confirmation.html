@@ -3,13 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _("Booking Confirmed!") }}</title>
+    <title>{{ gettext('Booking Confirmed') }} - BookSlot</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .lang-toggle-container {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            z-index: 10;
+        }
+    </style>
 </head>
-<body>
-    <h1>{{ _("Booking Confirmed!") }}</h1>
-    <p>{{ _("Thank you") }}, {{ booking.customer_name }}!</p>
-    <p>{{ _("Your booking for") }} {{ booking.service }} {{ _("with") }} {{ owner.business_name }} {{ _("on") }} {{ booking.datetime }} {{ _("is confirmed.") }}</p>
-    <p>{{ _("A confirmation email has been sent to") }} {{ booking.customer_email }}.</p>
-    <a href="/book/{{ owner.slug }}">{{ _("Book another appointment") }}</a>
+<body class="bg-gray-100 font-sans leading-normal tracking-normal flex items-center justify-center min-h-screen">
+    <div class="lang-toggle-container">
+        <div class="relative inline-block text-left">
+            <div>
+                <button type="button" class="inline-flex justify-center w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none" id="menu-button" aria-expanded="true" aria-haspopup="true">
+                    {{ lang.upper() }}
+                    <svg class="-mr-1 ml-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+            </div>
+            <div class="origin-top-right absolute right-0 mt-2 w-20 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none hidden" role="menu" aria-orientation="vertical" aria-labelledby="menu-button" tabindex="-1">
+                <div class="py-1" role="none">
+                    <a href="?lang=en" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem" tabindex="-1" id="menu-item-0">EN</a>
+                    <a href="?lang=ar" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem" tabindex="-1" id="menu-item-1">AR</a>
+                    <a href="?lang=fr" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem" tabindex="-1" id="menu-item-2">FR</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="max-w-md mx-auto bg-white p-8 rounded-lg shadow-md text-center">
+        <h1 class="text-3xl font-bold text-green-600 mb-4">{{ gettext('Booking Confirmed!') }}</h1>
+        <p class="text-gray-700 mb-6">{{ gettext('Thank you for your booking.') }}</p>
+        
+        <div class="mb-4">
+            <p class="text-lg font-semibold">{{ gettext('Service') }}: {{ booking.service }}</p>
+            <p class="text-gray-600">{{ gettext('Date & Time') }}: {{ booking.datetime.strftime('%Y-%m-%d %H:%M') }}</p>
+            <p class="text-gray-600">{{ gettext('With') }}: {{ owner.business_name }}</p>
+        </div>
+
+        <p class="text-gray-700">{{ gettext('A confirmation email has been sent to') }} {{ booking.customer_email }}.</p>
+        <p class="text-gray-700">{{ gettext('The business owner has also been notified.') }}</p>
+        
+        <div class="mt-8">
+            <a href="/book/{{ owner.slug }}?lang={{ lang }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded inline-block">
+                {{ gettext('Book another slot') }}
+            </a>
+        </div>
+    </div>
+    <script>
+        document.getElementById('menu-button').addEventListener('click', function() {
+            const dropdown = this.nextElementSibling;
+            dropdown.classList.toggle('hidden');
+        });
+
+        window.addEventListener('click', function(event) {
+            if (!event.target.matches('#menu-button')) {
+                const dropdowns = document.getElementsByClassName('origin-top-right');
+                for (let i = 0; i < dropdowns.length; i++) {
+                    const openDropdown = dropdowns[i];
+                    if (!openDropdown.classList.contains('hidden')) {
+                        openDropdown.classList.add('hidden');
+                    }
+                }
+            }
+        });
+    </script>
 </body>
 </html>

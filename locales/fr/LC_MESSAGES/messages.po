@@ -1,15 +1,15 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-11-20 10:00+0000\n"
-"PO-Revision-Date: 2023-11-20 10:00+0000\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: French <LL@li.org>\n"
+"Project-Id-Version: BookSlot\n"
+"POT-Creation-Date: 2023-10-27 10:00+0000\n"
+"PO-Revision-Date: 2023-10-27 10:00+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.13.1\n"
+"Generated-By: Babel 2.13.0\n"
+"Language: fr\n"
 
 msgid "Dashboard"
 msgstr "Tableau de bord"
@@ -17,14 +17,11 @@ msgstr "Tableau de bord"
 msgid "Welcome"
 msgstr "Bienvenue"
 
-msgid "Upcoming Bookings"
-msgstr "Réservations à venir"
+msgid "Your booking page link"
+msgstr "Votre lien de page de réservation"
 
-msgid "No upcoming bookings."
-msgstr "Pas de réservations à venir."
-
-msgid "Profile"
-msgstr "Profil"
+msgid "Update Profile"
+msgstr "Mettre à jour le profil"
 
 msgid "Name"
 msgstr "Nom"
@@ -32,68 +29,71 @@ msgstr "Nom"
 msgid "Business Name"
 msgstr "Nom de l'entreprise"
 
-msgid "Phone"
-msgstr "Téléphone"
+msgid "Phone Number"
+msgstr "Numéro de téléphone"
 
-msgid "Update Profile"
-msgstr "Mettre à jour le profil"
-
-msgid "Book an appointment with"
-msgstr "Prendre rendez-vous avec"
-
-msgid "Book an appointment"
-msgstr "Prendre rendez-vous"
-
-msgid "Welcome to"
-msgstr "Bienvenue sur"
-
-msgid "booking page"
-msgstr "page de réservation"
-
-msgid "Customer Name"
-msgstr "Nom du client"
-
-msgid "Customer Email"
-msgstr "Email du client"
-
-msgid "Customer Phone"
-msgstr "Téléphone du client"
+msgid "Upcoming Bookings"
+msgstr "Réservations à venir"
 
 msgid "Service"
 msgstr "Service"
 
+msgid "When"
+msgstr "Quand"
+
+msgid "Customer"
+msgstr "Client"
+
+msgid "No upcoming bookings."
+msgstr "Pas de réservations à venir."
+
+msgid "Logout"
+msgstr "Déconnexion"
+
+msgid "Book a Slot"
+msgstr "Réserver un créneau"
+
+msgid "Book a Slot with"
+msgstr "Réserver un créneau avec"
+
+msgid "Please fill out the form below to book your appointment."
+msgstr "Veuillez remplir le formulaire ci-dessous pour prendre rendez-vous."
+
+msgid "Your Name"
+msgstr "Votre nom"
+
+msgid "Your Email"
+msgstr "Votre e-mail"
+
+msgid "Your Phone Number"
+msgstr "Votre numéro de téléphone"
+
 msgid "Select a service"
 msgstr "Sélectionnez un service"
 
-msgid "Date"
-msgstr "Date"
-
-msgid "Time"
-msgstr "Heure"
+msgid "Preferred Date and Time"
+msgstr "Date et heure préférées"
 
 msgid "Book Now"
-msgstr "Réserver maintenant"
+msgstr "Réservez maintenant"
 
 msgid "Booking Confirmed!"
 msgstr "Réservation confirmée !"
 
-msgid "Thank you"
-msgstr "Merci"
+msgid "Thank you for your booking."
+msgstr "Merci pour votre réservation."
 
-msgid "Your booking for"
-msgstr "Votre réservation pour"
+msgid "Date & Time"
+msgstr "Date et heure"
 
-msgid "with"
-msgstr "avec"
-
-msgid "on"
-msgstr "le"
-
-msgid "is confirmed."
-msgstr "est confirmée."
+msgid "With"
+msgstr "Avec"
 
 msgid "A confirmation email has been sent to"
 msgstr "Un e-mail de confirmation a été envoyé à"
 
-msgid "Book another appointment"
-msgstr "Prendre un autre rendez-vous"
+msgid "The business owner has also been notified."
+msgstr "Le propriétaire de l'entreprise a également été informé."
+
+msgid "Book another slot"
+msgstr "Réserver un autre créneau"

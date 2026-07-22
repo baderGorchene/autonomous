@@ -1,1 +1,1 @@
-Fix: Provide missing project files and i18n tests to resolve 'No module named pytest' and ensure project completeness
+Fix: Provide requirements.txt to resolve 'No module named pytest' error

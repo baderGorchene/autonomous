@@ -1,17 +1,10 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-
-class TokenData(BaseModel):
-    email: Optional[str] = None
-
 class OwnerBase(BaseModel):
+    email: EmailStr
     name: str
-    email: str
     business_name: str
     slug: str
 
@@ -26,7 +19,7 @@ class Owner(OwnerBase):
     created_at: datetime
 
     class Config:
-        from_attributes = True
+        orm_mode = True
 
 class OwnerProfileUpdate(BaseModel):
     name: str
@@ -35,7 +28,7 @@ class OwnerProfileUpdate(BaseModel):
 
 class BookingBase(BaseModel):
     customer_name: str
-    customer_email: str
+    customer_email: EmailStr
     customer_phone: str
     service: str
     datetime: datetime
@@ -50,4 +43,11 @@ class Booking(BookingBase):
     created_at: datetime
 
     class Config:
-        from_attributes = True
+        orm_mode = True
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class TokenData(BaseModel):
+    email: Optional[str] = None
