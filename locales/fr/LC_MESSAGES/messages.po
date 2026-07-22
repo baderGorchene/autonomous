@@ -1,1 +1,99 @@
-msgid ""msgstr """Project-Id-Version: BookSlot\n""POT-Creation-Date: 2023-10-27 10:00+0000\n""PO-Revision-Date: 2023-10-27 10:00+0000\n""Last-Translator: \n""Language-Team: \n""MIME-Version: 1.0\n""Content-Type: text/plain; charset=utf-8\n""Content-Transfer-Encoding: 8bit\n""Language: fr\n""X-Generator: Python-babel\n"msgid "BookSlot Dashboard"msgstr "Tableau de bord BookSlot"msgid "Logout"msgstr "Déconnexion"msgid "Profile updated successfully!"msgstr "Profil mis à jour avec succès !"msgid "Welcome, %s"msgstr "Bienvenue, %s"msgid "Your Business Profile"msgstr "Votre profil d'entreprise"msgid "Name"msgstr "Nom"msgid "Business Name"msgstr "Nom de l'entreprise"msgid "Phone"msgstr "Téléphone"msgid "Update Profile"msgstr "Mettre à jour le profil"msgid "Upcoming Bookings"msgstr "Réservations à venir"msgid "Customer Name"msgstr "Nom du client"msgid "Customer Email"msgstr "E-mail du client"msgid "Customer Phone"msgstr "Téléphone du client"msgid "Service"msgstr "Service"msgid "Date & Time"msgstr "Date et heure"msgid "Status"msgstr "Statut"msgid "No upcoming bookings."msgstr "Aucune réservation à venir."msgid "Book an Appointment with %s"msgstr "Réserver un rendez-vous avec %s"msgid "Select a Service"msgstr "Sélectionner un service"msgid "Select a Date"msgstr "Sélectionner une date"msgid "Select a Time"msgstr "Sélectionner une heure"msgid "Your Name"msgstr "Votre nom"msgid "Your Email"msgstr "Votre e-mail"msgid "Your Phone"msgstr "Votre téléphone"msgid "Book Now"msgstr "Réserver maintenant"msgid "Booking Confirmed!"msgstr "Réservation confirmée !"msgid "Thank you for your booking!"msgstr "Merci pour votre réservation !"msgid "Your appointment details have been sent to your email."msgstr "Les détails de votre rendez-vous ont été envoyés à votre e-mail."msgid "Back to Home"msgstr "Retour à l'accueil"msgid "%s - $%s"msgstr "%s - %s $"
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-11-20 10:00+0000\n"
+"PO-Revision-Date: 2023-11-20 10:00+0000\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: French <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.13.1\n"
+
+msgid "Dashboard"
+msgstr "Tableau de bord"
+
+msgid "Welcome"
+msgstr "Bienvenue"
+
+msgid "Upcoming Bookings"
+msgstr "Réservations à venir"
+
+msgid "No upcoming bookings."
+msgstr "Pas de réservations à venir."
+
+msgid "Profile"
+msgstr "Profil"
+
+msgid "Name"
+msgstr "Nom"
+
+msgid "Business Name"
+msgstr "Nom de l'entreprise"
+
+msgid "Phone"
+msgstr "Téléphone"
+
+msgid "Update Profile"
+msgstr "Mettre à jour le profil"
+
+msgid "Book an appointment with"
+msgstr "Prendre rendez-vous avec"
+
+msgid "Book an appointment"
+msgstr "Prendre rendez-vous"
+
+msgid "Welcome to"
+msgstr "Bienvenue sur"
+
+msgid "booking page"
+msgstr "page de réservation"
+
+msgid "Customer Name"
+msgstr "Nom du client"
+
+msgid "Customer Email"
+msgstr "Email du client"
+
+msgid "Customer Phone"
+msgstr "Téléphone du client"
+
+msgid "Service"
+msgstr "Service"
+
+msgid "Select a service"
+msgstr "Sélectionnez un service"
+
+msgid "Date"
+msgstr "Date"
+
+msgid "Time"
+msgstr "Heure"
+
+msgid "Book Now"
+msgstr "Réserver maintenant"
+
+msgid "Booking Confirmed!"
+msgstr "Réservation confirmée !"
+
+msgid "Thank you"
+msgstr "Merci"
+
+msgid "Your booking for"
+msgstr "Votre réservation pour"
+
+msgid "with"
+msgstr "avec"
+
+msgid "on"
+msgstr "le"
+
+msgid "is confirmed."
+msgstr "est confirmée."
+
+msgid "A confirmation email has been sent to"
+msgstr "Un e-mail de confirmation a été envoyé à"
+
+msgid "Book another appointment"
+msgstr "Prendre un autre rendez-vous"

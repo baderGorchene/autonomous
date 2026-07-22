@@ -1,129 +1,107 @@
 import pytest
-import httpx
+from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from src.main import app as fastapi_app, get_db
+from src.main import app, get_db
 from src.database import Base
-from src import models, schemas, crud, security
-from src.config import settings
-from jose import jwt
+from src import models, crud, schemas, security
 from datetime import datetime, timedelta
 
-# --- Test Database Setup ---
-SQLALCHEMY_DATABASE_URL = "sqlite:///./test_i18n.db"
-
-test_engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
-)
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
-
-def override_get_db():
-    try:
-        db = TestingSessionLocal()
-        yield db
-    finally:
-        db.close()
-
-fastapi_app.dependency_overrides[get_db] = override_get_db
+# Setup for test database
+SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
+engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
+TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 @pytest.fixture(name="db_session")
 def db_session_fixture():
-    Base.metadata.create_all(bind=test_engine)
+    Base.metadata.create_all(bind=engine)
     db = TestingSessionLocal()
     try:
         yield db
     finally:
         db.close()
-        Base.metadata.drop_all(bind=test_engine)
+        Base.metadata.drop_all(bind=engine)
 
-# --- HTTPX Client Fixture ---
 @pytest.fixture(name="client")
-async def client_fixture(db_session):
-    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=fastapi_app), base_url="http://test") as client:
-        yield client
+def client_fixture(db_session):
+    def override_get_db():
+        try:
+            yield db_session
+        finally:
+            pass 
+    
+    app.dependency_overrides[get_db] = override_get_db
+    with TestClient(app) as test_client:
+        yield test_client
+    app.dependency_overrides.clear()
 
-# --- Authentication Fixtures ---
-def create_access_token(data: dict, expires_delta: timedelta = None):
-    to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.utcnow() + expires_delta
-    else:
-        expire = datetime.utcnow() + timedelta(minutes=15)
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
-    return encoded_jwt
-
-@pytest.fixture(name="owner_data")
-def owner_data_fixture():
-    return {
-        "name": "Test Owner",
-        "email": "test@example.com",
-        "password": "testpassword",
-        "business_name": "Test Business",
-        "slug": "test-business",
-        "phone": "1234567890"
-    }
-
-@pytest.fixture(name="test_owner")
-def test_owner_fixture(db_session, owner_data):
-    owner_schema = schemas.OwnerCreate(**owner_data)
-    owner = crud.create_owner(db_session, owner_schema)
-    # Manually update services_json and availability_json for the slug page to work
-    owner.services_json = [{"name": "Consultation", "duration": 30, "price": 50}]
-    owner.availability_json = {"monday": [{"start": "09:00", "end": "17:00"}]}
+def create_test_owner(db_session):
+    owner_data = schemas.OwnerCreate(
+        name="Test Owner",
+        email="test@example.com",
+        password="testpassword",
+        business_name="Test Business",
+        slug="test-business-slug",
+    )
+    owner = crud.create_owner(db_session, owner_data)
+    owner.services_json = [{"name": "Haircut", "duration": 30}] # Add a dummy service for booking page
     db_session.add(owner)
     db_session.commit()
     db_session.refresh(owner)
     return owner
 
-@pytest.fixture(name="auth_headers")
-def auth_headers_fixture(test_owner):
-    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
-        data={"sub": test_owner.email}, expires_delta=access_token_expires
-    )
-    return {"Authorization": f"Bearer {access_token}"}
+def get_owner_token(client, email, password):
+    response = client.post("/auth/token", data={"username": email, "password": password})
+    assert response.status_code == 200, f"Failed to get token: {response.text}"
+    return response.json()["access_token"]
 
-# --- I18n Tests for Dashboard Page ---
-@pytest.mark.asyncio
-async def test_dashboard_language_toggle_en(client, auth_headers):
-    response = await client.get("/dashboard?lang=en", headers=auth_headers)
-    assert response.status_code == 200
-    assert "Dashboard" in response.text
-    assert "Upcoming Bookings" in response.text
+def test_i18n_language_toggle_on_booking_page(client, db_session):
+    owner = create_test_owner(db_session)
+    
+    # Test English
+    response_en = client.get(f"/book/{owner.slug}?lang=en")
+    assert response_en.status_code == 200
+    assert "Book an appointment" in response_en.text
+    assert "Service" in response_en.text
+    assert "Customer Name" in response_en.text
+    
+    # Test Arabic
+    response_ar = client.get(f"/book/{owner.slug}?lang=ar")
+    assert response_ar.status_code == 200
+    assert "احجز موعدا" in response_ar.text 
+    assert "الخدمة" in response_ar.text
+    assert "اسم العميل" in response_ar.text
 
-@pytest.mark.asyncio
-async def test_dashboard_language_toggle_ar(client, auth_headers):
-    response = await client.get("/dashboard?lang=ar", headers=auth_headers)
-    assert response.status_code == 200
-    assert "لوحة التحكم" in response.text
-    assert "الحجوزات القادمة" in response.text
+    # Test French
+    response_fr = client.get(f"/book/{owner.slug}?lang=fr")
+    assert response_fr.status_code == 200
+    assert "Prendre rendez-vous" in response_fr.text
+    assert "Service" in response_fr.text 
+    assert "Nom du client" in response_fr.text
 
-@pytest.mark.asyncio
-async def test_dashboard_language_toggle_fr(client, auth_headers):
-    response = await client.get("/dashboard?lang=fr", headers=auth_headers)
-    assert response.status_code == 200
-    assert "Tableau de bord" in response.text
-    assert "Prochaines réservations" in response.text
+def test_i18n_language_toggle_on_dashboard_page(client, db_session):
+    owner = create_test_owner(db_session)
+    token = get_owner_token(client, owner.email, "testpassword")
 
-# --- I18n Tests for Booking Page ---
-@pytest.mark.asyncio
-async def test_booking_page_language_toggle_en(client, test_owner):
-    response = await client.get(f"/book/{test_owner.slug}?lang=en")
-    assert response.status_code == 200
-    assert "Book an Appointment" in response.text
-    assert "Your Name" in response.text
+    headers = {"Authorization": f"Bearer {token}"}
 
-@pytest.mark.asyncio
-async def test_booking_page_language_toggle_ar(client, test_owner):
-    response = await client.get(f"/book/{test_owner.slug}?lang=ar")
-    assert response.status_code == 200
-    assert "احجز موعدًا" in response.text
-    assert "اسمك" in response.text
+    # Test English
+    response_en = client.get("/dashboard?lang=en", headers=headers)
+    assert response_en.status_code == 200
+    assert "Dashboard" in response_en.text
+    assert "Upcoming Bookings" in response_en.text
+    assert "Profile" in response_en.text
 
-@pytest.mark.asyncio
-async def test_booking_page_language_toggle_fr(client, test_owner):
-    response = await client.get(f"/book/{test_owner.slug}?lang=fr")
-    assert response.status_code == 200
-    assert "Réserver un rendez-vous" in response.text
-    assert "Votre nom" in response.text
+    # Test Arabic
+    response_ar = client.get("/dashboard?lang=ar", headers=headers)
+    assert response_ar.status_code == 200
+    assert "لوحة التحكم" in response_ar.text 
+    assert "الحجوزات القادمة" in response_ar.text
+    assert "الملف الشخصي" in response_ar.text
+
+    # Test French
+    response_fr = client.get("/dashboard?lang=fr", headers=headers)
+    assert response_fr.status_code == 200
+    assert "Tableau de bord" in response_fr.text
+    assert "Réservations à venir" in response_fr.text
+    assert "Profil" in response_fr.text

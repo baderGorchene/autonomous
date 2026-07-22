@@ -1,1 +1,41 @@
-<!DOCTYPE html><html lang="{{ lang }}"><head>    <meta charset="UTF-8">    <meta name="viewport" content="width=device-width, initial-scale=1.0">    <title>BookSlot - {{ _('Book Your Slot') }}</title>    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"></head><body class="bg-gray-100 flex items-center justify-center min-h-screen font-sans">    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md">        <div class="flex justify-end mb-4">            <div class="language-toggle">                <a href="?lang=en" class="text-blue-600 hover:underline {% if lang == 'en' %}font-bold{% endif %}">{{ _('English') }}</a> |                <a href="?lang=ar" class="text-blue-600 hover:underline {% if lang == 'ar' %}font-bold{% endif %}">{{ _('Arabic') }}</a> |                <a href="?lang=fr" class="text-blue-600 hover:underline {% if lang == 'fr' %}font-bold{% endif %}">{{ _('French') }}</a>            </div>        </div>        <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">{{ _('Book a Slot with') }} {{ owner.business_name }}</h1>        <form action="/book/{{ owner.slug }}" method="POST">            <div class="mb-4">                <label for="service" class="block text-gray-700 text-sm font-bold mb-2">{{ _('Select a Service') }}</label>                <select id="service" name="service" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>                    <option value="">{{ _('-- Please select a service --') }}</option>                    {% for service in owner.services_json %}                    <option value="{{ service.name }}">{{ service.name }} - {{ service.duration }} mins</option>                    {% endfor %}                </select>            </div>            <div class="mb-4">                <label for="date" class="block text-gray-700 text-sm font-bold mb-2">{{ _('Select a Date') }}</label>                <input type="date" id="date" name="date" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>            </div>            <div class="mb-4">                <label for="time" class="block text-gray-700 text-sm font-bold mb-2">{{ _('Select a Time') }}</label>                <input type="time" id="time" name="time" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>            </div>            <div class="mb-4">                <label for="customer_name" class="block text-gray-700 text-sm font-bold mb-2">{{ _('Your Name') }}</label>                <input type="text" id="customer_name" name="customer_name" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>            </div>            <div class="mb-4">                <label for="customer_email" class="block text-gray-700 text-sm font-bold mb-2">{{ _('Your Email') }}</label>                <input type="email" id="customer_email" name="customer_email" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>            </div>            <div class="mb-6">                <label for="customer_phone" class="block text-gray-700 text-sm font-bold mb-2">{{ _('Your Phone (optional)') }}</label>                <input type="text" id="customer_phone" name="customer_phone" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">            </div>            <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full">{{ _('Book Now') }}</button>        </form>    </div></body></html>
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ _("Book an appointment with") }} {{ owner.business_name }}</title>
+</head>
+<body>
+    <h1>{{ _("Book an appointment") }}</h1>
+    <p>{{ _("Welcome to") }} {{ owner.business_name }}'s {{ _("booking page") }}.</p>
+
+    <form action="/book/{{ owner.slug }}/book" method="post">
+        <label for="customer_name">{{ _("Customer Name") }}:</label>
+        <input type="text" id="customer_name" name="customer_name" required><br>
+        
+        <label for="customer_email">{{ _("Customer Email") }}:</label>
+        <input type="email" id="customer_email" name="customer_email" required><br>
+
+        <label for="customer_phone">{{ _("Customer Phone") }}:</label>
+        <input type="text" id="customer_phone" name="customer_phone" required><br>
+
+        <label for="service">{{ _("Service") }}:</label>
+        <select id="service" name="service" required>
+            <option value="">{{ _("Select a service") }}</option>
+            {% for service_item in owner.services_json %}
+            <option value="{{ service_item.name }}">{{ service_item.name }}</option>
+            {% endfor %}
+        </select><br>
+
+        <label for="booking_date">{{ _("Date") }}:</label>
+        <input type="date" id="booking_date" name="booking_date" required><br>
+
+        <label for="booking_time">{{ _("Time") }}:</label>
+        <input type="time" id="booking_time" name="booking_time" required><br>
+
+        <button type="submit">{{ _("Book Now") }}</button>
+    </form>
+
+    <a href="?lang=en">English</a> | <a href="?lang=ar">العربية</a> | <a href="?lang=fr">Français</a>
+</body>
+</html>

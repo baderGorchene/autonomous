@@ -1,6 +1,13 @@
 from pydantic import BaseModel
-from typing import List, Dict, Optional
+from typing import List, Dict, Any, Optional
 from datetime import datetime
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class TokenData(BaseModel):
+    email: Optional[str] = None
 
 class OwnerBase(BaseModel):
     name: str
@@ -11,20 +18,20 @@ class OwnerBase(BaseModel):
 class OwnerCreate(OwnerBase):
     password: str
 
-class OwnerProfileUpdate(BaseModel):
-    name: str
-    business_name: str
-    phone: Optional[str] = None
-
 class Owner(OwnerBase):
     id: int
-    services_json: List[Dict]
-    availability_json: Dict
+    services_json: List[Dict[str, Any]]
+    availability_json: Dict[str, Any]
     phone: Optional[str] = None
     created_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
+
+class OwnerProfileUpdate(BaseModel):
+    name: str
+    business_name: str
+    phone: Optional[str] = None
 
 class BookingBase(BaseModel):
     customer_name: str
@@ -43,4 +50,4 @@ class Booking(BookingBase):
     created_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True

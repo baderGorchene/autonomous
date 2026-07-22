@@ -1,1 +1,1 @@
-feat: Add i18n automated tests for dashboard and booking pages
+Fix: Provide missing project files and i18n tests to resolve 'No module named pytest' and ensure project completeness

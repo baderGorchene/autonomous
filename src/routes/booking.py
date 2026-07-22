@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Request, Depends, Form, BackgroundTasks, HTTPException
+from fastapi import APIRouter, Request, Depends, Form, HTTPException, BackgroundTasks
+from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
-from .. import models, schemas, database, notifications, crud
 from datetime import datetime
-from typing import Optional
+from .. import crud, schemas, database, notifications
 
 router = APIRouter()
 
@@ -13,30 +13,31 @@ def get_db():
     finally:
         db.close()
 
-@router.get("/{owner_slug}")
-async def get_booking_page(owner_slug: str, request: Request, db: Session = Depends(get_db)):
+@router.get("/{owner_slug}", response_class=HTMLResponse)
+async def get_booking_page(request: Request, owner_slug: str, db: Session = Depends(get_db)):
     owner = crud.get_owner_by_slug(db, owner_slug)
     if not owner:
         raise HTTPException(status_code=404, detail="Owner not found")
     
-    # Pass the request.state.templates and request.state.locale to the template
-    return request.state.templates.TemplateResponse("booking_page.html", {
+    templates = request.state.templates
+    
+    return templates.TemplateResponse("booking_page.html", {
         "request": request,
         "owner": owner,
-        "lang": request.state.locale # Pass language to template
+        "lang": request.state.locale
     })
 
-@router.post("/{owner_slug}")
+@router.post("/{owner_slug}/book", response_class=HTMLResponse)
 async def submit_booking(
-    owner_slug: str,
     request: Request,
-    background_tasks: BackgroundTasks,
-    service: str = Form(...),
-    date: str = Form(...),
-    time: str = Form(...),
+    owner_slug: str,
     customer_name: str = Form(...),
     customer_email: str = Form(...),
-    customer_phone: Optional[str] = Form(None),
+    customer_phone: str = Form(...),
+    service: str = Form(...),
+    booking_date: str = Form(...),
+    booking_time: str = Form(...),
+    background_tasks: BackgroundTasks = BackgroundTasks(),
     db: Session = Depends(get_db)
 ):
     owner = crud.get_owner_by_slug(db, owner_slug)
@@ -44,7 +45,8 @@ async def submit_booking(
         raise HTTPException(status_code=404, detail="Owner not found")
 
     try:
-        booking_datetime = datetime.strptime(f"{date} {time}", "%Y-%m-%d %H:%M")
+        booking_datetime_str = f"{booking_date} {booking_time}"
+        booking_datetime = datetime.strptime(booking_datetime_str, "%Y-%m-%d %H:%M")
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid date or time format")
 
@@ -55,17 +57,25 @@ async def submit_booking(
         service=service,
         datetime=booking_datetime
     )
-
+    
     db_booking = crud.create_booking(db, booking_schema, owner.id)
 
-    # Send notifications in the background
-    background_tasks.add_task(notifications.send_owner_notification, owner, db_booking)
-    background_tasks.add_task(notifications.send_customer_confirmation, owner, db_booking)
+    background_tasks.add_task(
+        notifications.send_email_confirmation, 
+        to_email=customer_email, 
+        subject="Booking Confirmation", 
+        body=f"Hi {customer_name}, your booking for {service} on {booking_datetime} is confirmed with {owner.business_name}."
+    )
+    background_tasks.add_task(
+        notifications.send_whatsapp_notification,
+        to_phone=owner.phone, 
+        message=f"New booking for {service} on {booking_datetime} by {customer_name} ({customer_phone})."
+    )
 
-    # Render booking confirmation page
-    return request.state.templates.TemplateResponse("booking_confirmation.html", {
+    templates = request.state.templates
+    return templates.TemplateResponse("booking_confirmation.html", {
         "request": request,
-        "owner": owner,
         "booking": db_booking,
-        "lang": request.state.locale # Pass language to confirmation template as well
+        "owner": owner,
+        "lang": request.state.locale
     })
