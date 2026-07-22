@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr
-from typing import List, Dict, Any, Optional
 from datetime import datetime
+from typing import List, Dict, Any, Optional
 
 class Token(BaseModel):
     access_token: str
@@ -10,8 +10,8 @@ class TokenData(BaseModel):
     email: Optional[str] = None
 
 class OwnerBase(BaseModel):
-    name: str
     email: EmailStr
+    name: str
     business_name: str
     slug: str
 
