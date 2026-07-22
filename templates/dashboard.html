@@ -3,69 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _('Dashboard') }}</title>
-    <style>
-        body { font-family: sans-serif; margin: 20px; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .language-toggle a { margin-left: 10px; text-decoration: none; color: blue; }
-        .language-toggle a.active { font-weight: bold; color: black; }
-        .booking-list ul { list-style: none; padding: 0; }
-        .booking-list li { background-color: #f0f0f0; margin-bottom: 10px; padding: 10px; border-radius: 5px; }
-        .profile-form { margin-top: 30px; padding: 20px; border: 1px solid #ccc; border-radius: 5px; }
-        .profile-form label { display: block; margin-bottom: 5px; }
-        .profile-form input[type="text"], .profile-form input[type="email"] { width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px; }
-        .profile-form button { padding: 10px 15px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
-        .profile-form button:hover { background-color: #0056b3; }
-    </style>
+    <title>{{ _("Dashboard") }} - {{ owner.business_name }}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
 </head>
-<body>
-    <div class="header">
-        <h1>{{ _('Dashboard') }}</h1>
-        <div class="language-toggle">
-            <a href="?lang=en" class="{{ 'active' if lang == 'en' }}">English</a>
-            <a href="?lang=ar" class="{{ 'active' if lang == 'ar' }}">العربية</a>
-            <a href="?lang=fr" class="{{ 'active' if lang == 'fr' }}">Français</a>
-        </div>
-        <form action="/auth/logout" method="post">
-            <button type="submit">{{ _('Logout') }}</button>
-        </form>
-    </div>
+<body class="bg-gray-100 font-sans">
+    <div class="min-h-screen flex flex-col">
+        <header class="bg-white shadow p-4 flex justify-between items-center">
+            <h1 class="text-xl font-semibold text-gray-800">{{ _("Welcome,") }} {{ owner.name }}!</h1>
+            <div class="flex items-center space-x-4">
+                <a href="?lang=en" class="text-blue-500 hover:underline mx-1">{{ _("English") }}</a> |
+                <a href="?lang=ar" class="text-blue-500 hover:underline mx-1">{{ _("Arabic") }}</a> |
+                <a href="?lang=fr" class="text-blue-500 hover:underline mx-1">{{ _("French") }}</a>
+                <form action="/auth/logout" method="post">
+                    <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md text-sm">{{ _("Logout") }}</button>
+                </form>
+            </div>
+        </header>
 
-    {% if message %}
-        <p style="color: green;">{{ message }}</p>
-    {% endif %}
+        <main class="flex-1 p-4 md:p-8">
+            <div class="max-w-4xl mx-auto">
+                {% if message %}
+                <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-6" role="alert">
+                    <span class="block sm:inline">{{ message }}</span>
+                </div>
+                {% endif %}
 
-    <h2>{{ _('Upcoming Bookings') }}</h2>
-    <div class="booking-list">
-        {% if bookings %}
-            <ul>
-                {% for booking in bookings %}
-                    <li>
-                        <strong>{{ booking.customer_name }}</strong> - {{ booking.service }} on {{ booking.datetime.strftime('%Y-%m-%d %H:%M') }}
-                        <br>
-                        Email: {{ booking.customer_email }} | Phone: {{ booking.customer_phone }}
-                    </li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p>No upcoming bookings.</p>
-        {% endif %}
-    </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h2 class="text-lg font-bold text-gray-800 mb-4">{{ _("Update Profile") }}</h2>
+                        <form action="/dashboard/profile" method="post" class="space-y-4">
+                            <div>
+                                <label for="name" class="block text-sm font-medium text-gray-700">{{ _("Your Name") }}</label>
+                                <input type="text" id="name" name="name" value="{{ owner.name }}" required
+                                       class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            </div>
+                            <div>
+                                <label for="business_name" class="block text-sm font-medium text-gray-700">{{ _("Business Name") }}</label>
+                                <input type="text" id="business_name" name="business_name" value="{{ owner.business_name }}" required
+                                       class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            </div>
+                            <div>
+                                <label for="phone" class="block text-sm font-medium text-gray-700">{{ _("Your Phone (WhatsApp)") }}</label>
+                                <input type="text" id="phone" name="phone" value="{{ owner.phone }}"
+                                       class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            </div>
+                            <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                {{ _("Save Profile") }}
+                            </button>
+                        </form>
+                    </div>
 
-    <h2>{{ _('Profile Settings') }}</h2>
-    <div class="profile-form">
-        <form action="/dashboard/profile" method="post">
-            <label for="name">{{ _('Your Name') }}:</label>
-            <input type="text" id="name" name="name" value="{{ owner.name }}" required>
-
-            <label for="business_name">{{ _('Business Name') }}:</label>
-            <input type="text" id="business_name" name="business_name" value="{{ owner.business_name }}" required>
-
-            <label for="phone">{{ _('Your Phone (WhatsApp)') }}:</label>
-            <input type="text" id="phone" name="phone" value="{{ owner.phone if owner.phone else '' }}">
-
-            <button type="submit">{{ _('Update Profile') }}</button>
-        </form>
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h2 class="text-lg font-bold text-gray-800 mb-4">{{ _("Upcoming Bookings") }}</h2>
+                        {% if bookings %}
+                        <ul class="space-y-4">
+                            {% for booking in bookings %}
+                            <li class="border-b pb-4 last:border-b-0">
+                                <p class="text-gray-800 font-medium">{{ _("Service:") }} {{ booking.service }}</p>
+                                <p class="text-gray-600 text-sm">{{ _("Customer:") }} {{ booking.customer_name }} ({{ booking.customer_email }})</p>
+                                <p class="text-gray-600 text-sm">{{ _("Phone:") }} {{ booking.customer_phone }}</p>
+                                <p class="text-gray-600 text-sm">{{ _("Date/Time:") }} {{ booking.datetime.strftime('%Y-%m-%d %H:%M') }}</p>
+                                <span class="inline-block mt-2 px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">{{ booking.status }}</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        {% else %}
+                        <p class="text-gray-600">{{ _("No upcoming bookings.") }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
 </body>
 </html>

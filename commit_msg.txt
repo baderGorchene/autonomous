@@ -1,1 +1,1 @@
-feat: Add missing requirements.txt
+Re-provided requirements.txt for dependency installation

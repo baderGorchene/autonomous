@@ -1,15 +1,23 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ lang }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Booking Confirmation</title>
+    <title>{{ _("Booking Confirmed!") }}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
 </head>
-<body>
-    <h1>Booking Confirmed!</h1>
-    <p>Your booking for {{ booking.service }} on {{ booking.datetime.strftime('%Y-%m-%d %H:%M') }} has been confirmed.</p>
-    <p>A confirmation email has been sent to {{ booking.customer_email }}.</p>
-    <p>Thank you for booking with {{ owner.business_name }}.</p>
-    <a href="/book/{{ owner.slug }}">Book another appointment</a>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md text-center">
+        <h1 class="text-2xl font-bold text-green-600 mb-4">{{ _("Booking Confirmed!") }}</h1>
+        <p class="text-gray-700 mb-2">{{ _("Thank you,") }} {{ booking.customer_name }}!</p>
+        <p class="text-gray-700 mb-4">{{ _("Your appointment for") }} <strong>{{ booking.service }}</strong> {{ _("with") }} <strong>{{ owner.business_name }}</strong> {{ _("on") }} <strong>{{ booking.datetime.strftime('%Y-%m-%d %H:%M') }}</strong> {{ _("has been successfully booked.") }}</p>
+        <p class="text-gray-600 text-sm">{{ _("A confirmation email has been sent to") }} {{ booking.customer_email }}.</p>
+        {% if booking.customer_phone %}
+        <p class="text-gray-600 text-sm">{{ _("A WhatsApp message has been sent to") }} {{ booking.customer_phone }}.</p>
+        {% endif %}
+        <div class="mt-6">
+            <a href="/book/{{ owner.slug }}?lang={{ lang }}" class="text-blue-500 hover:underline">{{ _("Book another appointment") }}</a>
+        </div>
+    </div>
 </body>
 </html>
