@@ -1,10 +1,11 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: BookSlot\n"
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2023-10-27 10:00+0000\n"
 "PO-Revision-Date: 2023-10-27 10:00+0000\n"
-"Last-Translator: \n"
-"Language-Team: \n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -14,86 +15,38 @@ msgstr ""
 msgid "Dashboard"
 msgstr "Tableau de bord"
 
-msgid "Welcome"
-msgstr "Bienvenue"
-
-msgid "Your booking page link"
-msgstr "Votre lien de page de réservation"
-
-msgid "Update Profile"
-msgstr "Mettre à jour le profil"
-
-msgid "Name"
-msgstr "Nom"
-
-msgid "Business Name"
-msgstr "Nom de l'entreprise"
-
-msgid "Phone Number"
-msgstr "Numéro de téléphone"
-
 msgid "Upcoming Bookings"
-msgstr "Réservations à venir"
+msgstr "Prochaines Réservations"
 
-msgid "Service"
-msgstr "Service"
+msgid "Profile Settings"
+msgstr "Paramètres du profil"
 
-msgid "When"
-msgstr "Quand"
-
-msgid "Customer"
-msgstr "Client"
-
-msgid "No upcoming bookings."
-msgstr "Pas de réservations à venir."
+msgid "Language"
+msgstr "Langue"
 
 msgid "Logout"
 msgstr "Déconnexion"
 
-msgid "Book a Slot"
-msgstr "Réserver un créneau"
+msgid "Book an appointment with {business_name}"
+msgstr "Réservez un rendez-vous avec {business_name}"
 
-msgid "Book a Slot with"
-msgstr "Réserver un créneau avec"
+msgid "Service"
+msgstr "Service"
 
-msgid "Please fill out the form below to book your appointment."
-msgstr "Veuillez remplir le formulaire ci-dessous pour prendre rendez-vous."
+msgid "Date"
+msgstr "Date"
+
+msgid "Time"
+msgstr "Heure"
 
 msgid "Your Name"
-msgstr "Votre nom"
+msgstr "Votre Nom"
 
 msgid "Your Email"
-msgstr "Votre e-mail"
+msgstr "Votre E-mail"
 
-msgid "Your Phone Number"
-msgstr "Votre numéro de téléphone"
-
-msgid "Select a service"
-msgstr "Sélectionnez un service"
-
-msgid "Preferred Date and Time"
-msgstr "Date et heure préférées"
+msgid "Your Phone (WhatsApp)"
+msgstr "Votre Téléphone (WhatsApp)"
 
 msgid "Book Now"
-msgstr "Réservez maintenant"
-
-msgid "Booking Confirmed!"
-msgstr "Réservation confirmée !"
-
-msgid "Thank you for your booking."
-msgstr "Merci pour votre réservation."
-
-msgid "Date & Time"
-msgstr "Date et heure"
-
-msgid "With"
-msgstr "Avec"
-
-msgid "A confirmation email has been sent to"
-msgstr "Un e-mail de confirmation a été envoyé à"
-
-msgid "The business owner has also been notified."
-msgstr "Le propriétaire de l'entreprise a également été informé."
-
-msgid "Book another slot"
-msgstr "Réserver un autre créneau"
+msgstr "Réserver maintenant"
