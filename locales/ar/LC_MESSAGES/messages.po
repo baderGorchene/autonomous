@@ -1,21 +1,40 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: BookSlot\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-11-20 10:00+0000\n"
-"PO-Revision-Date: 2023-11-20 10:00+0000\n"
-"Last-Translator: \n"
-"Language-Team: Arabic\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Language: ar\n"
 
-msgid "Book an Appointment"
-msgstr "احجز موعدا"
+msgid "Dashboard"
+msgstr "لوحة القيادة"
 
-msgid "Select a Service"
-msgstr "اختر خدمة"
+msgid "Welcome"
+msgstr "أهلاً"
+
+msgid "Your Business"
+msgstr "عملك"
+
+msgid "Upcoming Bookings"
+msgstr "الحجوزات القادمة"
+
+msgid "No upcoming bookings."
+msgstr "لا توجد حجوزات قادمة."
+
+msgid "Profile"
+msgstr "الملف الشخصي"
+
+msgid "Name"
+msgstr "الاسم"
+
+msgid "Business Name"
+msgstr "اسم العمل"
+
+msgid "Phone"
+msgstr "الهاتف"
+
+msgid "Update Profile"
+msgstr "تحديث الملف الشخصي"
 
 msgid "English"
 msgstr "الإنجليزية"
@@ -26,89 +45,47 @@ msgstr "العربية"
 msgid "French"
 msgstr "الفرنسية"
 
+msgid "Book a Slot"
+msgstr "احجز موعدًا"
+
+msgid "Book an Appointment with"
+msgstr "احجز موعدًا مع"
+
+msgid "Service"
+msgstr "الخدمة"
+
+msgid "Price"
+msgstr "السعر"
+
+msgid "Duration"
+msgstr "المدة"
+
 msgid "Your Name"
 msgstr "اسمك"
 
 msgid "Your Email"
 msgstr "بريدك الإلكتروني"
 
-msgid "Your Phone (WhatsApp preferred)"
-msgstr "رقم هاتفك (يفضل واتساب)"
-
-msgid "-- Choose a service --"
-msgstr "-- اختر خدمة --"
-
-msgid "minutes"
-msgstr "دقيقة"
+msgid "Your Phone"
+msgstr "رقم هاتفك"
 
 msgid "Preferred Date and Time"
-msgstr "التاريخ والوقت المفضل"
+msgstr "التاريخ والوقت المفضلين"
 
 msgid "Book Now"
 msgstr "احجز الآن"
 
-msgid "Welcome,"
-msgstr "أهلاً بك،"
-
-msgid "Logout"
-msgstr "تسجيل الخروج"
-
-msgid "Dashboard"
-msgstr "لوحة القيادة"
-
-msgid "Update Profile"
-msgstr "تحديث الملف الشخصي"
-
-msgid "Business Name"
-msgstr "اسم العمل"
-
-msgid "Your Phone (WhatsApp)"
-msgstr "رقم هاتفك (واتساب)"
-
-msgid "Save Profile"
-msgstr "حفظ الملف الشخصي"
-
-msgid "Upcoming Bookings"
-msgstr "الحجوزات القادمة"
-
-msgid "Service:"
-msgstr "الخدمة:"
-
-msgid "Customer:"
-msgstr "العميل:"
-
-msgid "Phone:"
-msgstr "الهاتف:"
-
-msgid "Date/Time:"
-msgstr "التاريخ/الوقت:"
-
-msgid "No upcoming bookings."
-msgstr "لا توجد حجوزات قادمة."
-
 msgid "Booking Confirmed!"
 msgstr "تم تأكيد الحجز!"
 
-msgid "Thank you,"
-msgstr "شكرا لك،"
+msgid "Thank you for your booking,"
+msgstr "شكرا لحجزك،"
 
 msgid "Your appointment for"
 msgstr "موعدك لـ"
 
-msgid "with"
-msgstr "مع"
-
-msgid "on"
-msgstr "في"
-
-msgid "has been successfully booked."
-msgstr "تم حجزه بنجاح."
+msgid "is scheduled for"
+msgstr "محدد لـ"
 
 msgid "A confirmation email has been sent to"
 msgstr "تم إرسال بريد إلكتروني للتأكيد إلى"
-
-msgid "A WhatsApp message has been sent to"
-msgstr "تم إرسال رسالة واتساب إلى"
-
-msgid "Book another appointment"
-msgstr "احجز موعدا آخر"

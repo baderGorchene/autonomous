@@ -1,21 +1,40 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: BookSlot\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-11-20 10:00+0000\n"
-"PO-Revision-Date: 2023-11-20 10:00+0000\n"
-"Last-Translator: \n"
-"Language-Team: French\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Language: fr\n"
 
-msgid "Book an Appointment"
-msgstr "Prendre un rendez-vous"
+msgid "Dashboard"
+msgstr "Tableau de bord"
 
-msgid "Select a Service"
-msgstr "Sélectionner un service"
+msgid "Welcome"
+msgstr "Bienvenue"
+
+msgid "Your Business"
+msgstr "Votre entreprise"
+
+msgid "Upcoming Bookings"
+msgstr "Prochaines réservations"
+
+msgid "No upcoming bookings."
+msgstr "Aucune réservation à venir."
+
+msgid "Profile"
+msgstr "Profil"
+
+msgid "Name"
+msgstr "Nom"
+
+msgid "Business Name"
+msgstr "Nom de l'entreprise"
+
+msgid "Phone"
+msgstr "Téléphone"
+
+msgid "Update Profile"
+msgstr "Mettre à jour le profil"
 
 msgid "English"
 msgstr "Anglais"
@@ -26,89 +45,47 @@ msgstr "Arabe"
 msgid "French"
 msgstr "Français"
 
+msgid "Book a Slot"
+msgstr "Réserver un créneau"
+
+msgid "Book an Appointment with"
+msgstr "Prendre rendez-vous avec"
+
+msgid "Service"
+msgstr "Service"
+
+msgid "Price"
+msgstr "Prix"
+
+msgid "Duration"
+msgstr "Durée"
+
 msgid "Your Name"
-msgstr "Votre Nom"
+msgstr "Votre nom"
 
 msgid "Your Email"
-msgstr "Votre Email"
+msgstr "Votre e-mail"
 
-msgid "Your Phone (WhatsApp preferred)"
-msgstr "Votre Téléphone (WhatsApp préféré)"
-
-msgid "-- Choose a service --"
-msgstr "-- Choisir un service --"
-
-msgid "minutes"
-msgstr "minutes"
+msgid "Your Phone"
+msgstr "Votre téléphone"
 
 msgid "Preferred Date and Time"
-msgstr "Date et Heure Préférées"
+msgstr "Date et heure préférées"
 
 msgid "Book Now"
-msgstr "Réserver Maintenant"
-
-msgid "Welcome,"
-msgstr "Bienvenue,"
-
-msgid "Logout"
-msgstr "Déconnexion"
-
-msgid "Dashboard"
-msgstr "Tableau de bord"
-
-msgid "Update Profile"
-msgstr "Mettre à jour le profil"
-
-msgid "Business Name"
-msgstr "Nom de l'entreprise"
-
-msgid "Your Phone (WhatsApp)"
-msgstr "Votre Téléphone (WhatsApp)"
-
-msgid "Save Profile"
-msgstr "Enregistrer le profil"
-
-msgid "Upcoming Bookings"
-msgstr "Prochaines Réservations"
-
-msgid "Service:"
-msgstr "Service :"
-
-msgid "Customer:"
-msgstr "Client :"
-
-msgid "Phone:"
-msgstr "Téléphone :"
-
-msgid "Date/Time:"
-msgstr "Date/Heure :"
-
-msgid "No upcoming bookings."
-msgstr "Pas de réservations à venir."
+msgstr "Réserver maintenant"
 
 msgid "Booking Confirmed!"
-msgstr "Réservation Confirmée !"
+msgstr "Réservation confirmée !"
 
-msgid "Thank you,"
-msgstr "Merci,"
+msgid "Thank you for your booking,"
+msgstr "Merci pour votre réservation,"
 
 msgid "Your appointment for"
 msgstr "Votre rendez-vous pour"
 
-msgid "with"
-msgstr "avec"
-
-msgid "on"
-msgstr "le"
-
-msgid "has been successfully booked."
-msgstr "a été réservé avec succès."
+msgid "is scheduled for"
+msgstr "est prévu pour"
 
 msgid "A confirmation email has been sent to"
 msgstr "Un e-mail de confirmation a été envoyé à"
-
-msgid "A WhatsApp message has been sent to"
-msgstr "Un message WhatsApp a été envoyé à"
-
-msgid "Book another appointment"
-msgstr "Prendre un autre rendez-vous"
