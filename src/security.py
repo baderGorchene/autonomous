@@ -1,14 +1,12 @@
-from passlib.context import CryptContext
 from datetime import datetime, timedelta
 from typing import Optional
-from jose import jwt
-from fastapi.security import OAuth2PasswordBearer
 
-from .config import settings
+from jose import JWTError, jwt
+from passlib.context import CryptContext
+
+from src.config import settings
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
 
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)

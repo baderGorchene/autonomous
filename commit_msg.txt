@@ -1,1 +1,1 @@
-Add missing requirements.txt with pytest and other dependencies
+Add comprehensive requirements.txt with pytest and all project dependencies
