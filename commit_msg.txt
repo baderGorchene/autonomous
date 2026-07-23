@@ -1,1 +1,1 @@
-Add comprehensive requirements.txt with pytest and all project dependencies
+Verified i18n tests for language toggles and translations
