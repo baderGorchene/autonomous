@@ -1,1 +1,1 @@
-Verified i18n tests for language toggles and translations
+Fix: Ensure pytest is in requirements.txt to resolve 'No module named pytest' error

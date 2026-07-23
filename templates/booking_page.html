@@ -3,28 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BookSlot - {{ _('Book a Slot') }}</title>
+    <title>{{ owner.business_name }} - {{ _('Book an Appointment') }}</title>
+    <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-    <h1>{{ _('Book an Appointment with') }} {{ owner.business_name }}</h1>
-    <p>{{ _('Service') }}: {{ service.name }}</p>
-    <p>{{ _('Price') }}: {{ service.price }}</p>
-    <p>{{ _('Duration') }}: {{ service.duration }}</p>
+    <div class="container">
+        <div class="language-toggle">
+            {% if lang == 'en' %}
+                <a href="?lang=ar">العربية</a>
+                <a href="?lang=fr">Français</a>
+            {% elif lang == 'ar' %}
+                <a href="?lang=en">English</a>
+                <a href="?lang=fr">Français</a>
+            {% elif lang == 'fr' %}
+                <a href="?lang=en">English</a>
+                <a href="?lang=ar">العربية</a>
+            {% endif %}
+        </div>
 
-    <form action="/book/{{ owner.slug }}/{{ service.id }}?lang={{ lang }}" method="post">
-        <label for="customer_name">{{ _('Your Name') }}:</label>
-        <input type="text" id="customer_name" name="customer_name" required><br>
-        <label for="customer_email">{{ _('Your Email') }}:</label>
-        <input type="email" id="customer_email" name="customer_email" required><br>
-        <label for="customer_phone">{{ _('Your Phone') }}:</label>
-        <input type="text" id="customer_phone" name="customer_phone" required><br>
-        <label for="datetime">{{ _('Preferred Date and Time') }}:</label>
-        <input type="datetime-local" id="datetime" name="datetime" required><br>
-        <button type="submit">{{ _('Book Now') }}</button>
-    </form>
+        <h1>{{ owner.business_name }}</h1>
+        <p>{{ _('Please select a service and a convenient time slot.') }}</p>
 
-    <a href="/book/{{ owner.slug }}/{{ service.id }}?lang=en">{{ _('English') }}</a> |
-    <a href="/book/{{ owner.slug }}/{{ service.id }}?lang=ar">{{ _('Arabic') }}</a> |
-    <a href="/book/{{ owner.slug }}/{{ service.id }}?lang=fr">{{ _('French') }}</a>
+        {% if message %}
+            <div class="message success">{{ message }}</div>
+        {% endif %}
+        {% if error %}
+            <div class="message error">{{ error }}</div>
+        {% endif %}
+
+        <form action="/book/{{ owner.slug }}" method="post">
+            <div class="form-group">
+                <label>{{ _('Select Service') }}:</label>
+                <div class="service-options">
+                    {% for service in owner.services_json %}
+                        <div class="service-option" data-service-name="{{ service.name }}" data-service-duration="{{ service.duration_minutes }}">
+                            <h3>{{ service.name }}</h3>
+                            <p>{{ service.duration_minutes }} {{ _('minutes') }}</p>
+                        </div>
+                    {% endfor %}
+                </div>
+                <input type="hidden" id="service" name="service" required>
+            </div>
+
+            <div class="form-group">
+                <label for="date">{{ _('Select Date') }}:</label>
+                <input type="date" id="date" name="date" required>
+            </div>
+
+            <div class="form-group">
+                <label for="time">{{ _('Select Time') }}:</label>
+                <input type="time" id="time" name="time" required>
+            </div>
+
+            <div class="form-group">
+                <label for="customer_name">{{ _('Your Name') }}:</label>
+                <input type="text" id="customer_name" name="customer_name" required>
+            </div>
+
+            <div class="form-group">
+                <label for="customer_email">{{ _('Your Email') }}:</label>
+                <input type="email" id="customer_email" name="customer_email" required>
+            </div>
+
+            <div class="form-group">
+                <label for="customer_phone">{{ _('Your Phone Number (e.g., +1234567890)') }}:</label>
+                <input type="tel" id="customer_phone" name="customer_phone" placeholder="+1234567890" required>
+            </div>
+
+            <button type="submit">{{ _('Book Now') }}</button>
+        </form>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const serviceOptions = document.querySelectorAll('.service-option');
+            const hiddenServiceInput = document.getElementById('service');
+
+            serviceOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    serviceOptions.forEach(opt => opt.classList.remove('selected'));
+                    this.classList.add('selected');
+                    hiddenServiceInput.value = this.dataset.serviceName;
+                });
+            });
+
+            if (serviceOptions.length > 0 && !hiddenServiceInput.value) {
+                serviceOptions[0].click();
+            }
+        });
+    </script>
 </body>
 </html>

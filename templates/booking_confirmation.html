@@ -3,12 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BookSlot - {{ _('Booking Confirmation') }}</title>
+    <title>{{ _('Booking Confirmed') }}</title>
+    <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-    <h1>{{ _('Booking Confirmed!') }}</h1>
-    <p>{{ _('Thank you for your booking,') }} {{ booking.customer_name }}.</p>
-    <p>{{ _('Your appointment for') }} {{ booking.service }} {{ _('is scheduled for') }} {{ booking.datetime }}.</p>
-    <p>{{ _('A confirmation email has been sent to') }} {{ booking.customer_email }}.</p>
+    <div class="container">
+        <div class="language-toggle">
+            {% if lang == 'en' %}
+                <a href="?lang=ar">العربية</a>
+                <a href="?lang=fr">Français</a>
+            {% elif lang == 'ar' %}
+                <a href="?lang=en">English</a>
+                <a href="?lang=fr">Français</a>
+            {% elif lang == 'fr' %}
+                <a href="?lang=en">English</a>
+                <a href="?lang=ar">العربية</a>
+            {% endif %}
+        </div>
+        <h1>{{ _('Booking Confirmed!') }}</h1>
+        <p>{{ _('Thank you for your booking with') }} <strong>{{ owner.business_name }}</strong>.</p>
+        <p>{{ _('A confirmation email has been sent to') }} <strong>{{ booking.customer_email }}</strong>.</p>
+        <p>{{ _('We look forward to seeing you on') }} <strong>{{ booking.datetime.strftime('%Y-%m-%d') }}</strong> {{ _('at') }} <strong>{{ booking.datetime.strftime('%H:%M') }}</strong> {{ _('for your') }} <strong>{{ booking.service }}</strong> {{ _('appointment.') }}</p>
+        <p><a href="/book/{{ owner.slug }}">{{ _('Book another appointment') }}</a></p>
+    </div>
 </body>
 </html>

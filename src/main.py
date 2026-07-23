@@ -1,6 +1,7 @@
 import os
 from fastapi import FastAPI, Request, Depends, Form, BackgroundTasks, HTTPException
 from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 from . import i18n_config, models, schemas, database, notifications, crud
 from .routes import booking, auth
@@ -13,6 +14,10 @@ app.include_router(auth.router, prefix="/auth")
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 TEMPLATES_DIR = os.path.join(PROJECT_ROOT, "templates")
+STATIC_DIR = os.path.join(PROJECT_ROOT, "static")
+
+# Mount static files
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 def get_db():
     db = database.SessionLocal()

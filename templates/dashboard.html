@@ -3,36 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BookSlot - {{ _('Dashboard') }}</title>
+    <title>{{ _('Dashboard') }}</title>
+    <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-    <h1>{{ _('Welcome') }}, {{ owner.name }}!</h1>
-    <p>{{ _('Your Business') }}: {{ owner.business_name }}</p>
+    <div class="container">
+        <div class="language-toggle">
+            {% if lang == 'en' %}
+                <a href="?lang=ar">العربية</a>
+                <a href="?lang=fr">Français</a>
+            {% elif lang == 'ar' %}
+                <a href="?lang=en">English</a>
+                <a href="?lang=fr">Français</a>
+            {% elif lang == 'fr' %}
+                <a href="?lang=en">English</a>
+                <a href="?lang=ar">العربية</a>
+            {% endif %}
+        </div>
 
-    <h2>{{ _('Upcoming Bookings') }}</h2>
-    {% if bookings %}
-        <ul>
-            {% for booking in bookings %}
-                <li>{{ booking.customer_name }} - {{ booking.service }} at {{ booking.datetime }}</li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p>{{ _('No upcoming bookings.') }}</p>
-    {% endif %}
+        <div class="dashboard-header">
+            <h1>{{ _('Welcome') }}, {{ owner.name }}!</h1>
+            <form action="/auth/logout" method="post">
+                <button type="submit" class="logout-button">{{ _('Logout') }}</button>
+            </form>
+        </div>
 
-    <h2>{{ _('Profile') }}</h2>
-    <form action="/dashboard/profile?lang={{ lang }}" method="post">
-        <label for="name">{{ _('Name') }}:</label>
-        <input type="text" id="name" name="name" value="{{ owner.name }}" required><br>
-        <label for="business_name">{{ _('Business Name') }}:</label>
-        <input type="text" id="business_name" name="business_name" value="{{ owner.business_name }}" required><br>
-        <label for="phone">{{ _('Phone') }}:</label>
-        <input type="text" id="phone" name="phone" value="{{ owner.phone or '' }}"><br>
-        <button type="submit">{{ _('Update Profile') }}</button>
-    </form>
+        {% if message %}
+            <div class="message success">{{ message }}</div>
+        {% endif %}
+        {% if error %}
+            <div class="message error">{{ error }}</div>
+        {% endif %}
 
-    <a href="/dashboard?lang=en">{{ _('English') }}</a> |
-    <a href="/dashboard?lang=ar">{{ _('Arabic') }}</a> |
-    <a href="/dashboard?lang=fr">{{ _('French') }}</a>
+        <h2>{{ _('Your Profile') }}</h2>
+        <form action="/dashboard/profile" method="post">
+            <div class="form-group">
+                <label for="name">{{ _('Name') }}:</label>
+                <input type="text" id="name" name="name" value="{{ owner.name }}" required>
+            </div>
+            <div class="form-group">
+                <label for="business_name">{{ _('Business Name') }}:</label>
+                <input type="text" id="business_name" name="business_name" value="{{ owner.business_name }}" required>
+            </div>
+            <div class="form-group">
+                <label for="phone">{{ _('Phone Number') }} ({{ _('e.g., +1234567890') }}):</label>
+                <input type="tel" id="phone" name="phone" value="{{ owner.phone if owner.phone else '' }}" placeholder="+1234567890">
+            </div>
+            <button type="submit">{{ _('Update Profile') }}</button>
+        </form>
+
+        <div class="bookings-list">
+            <h2>{{ _('Upcoming Bookings') }}</h2>
+            {% if bookings %}
+                <div class="bookings-table-container">
+                    <table class="bookings-table">
+                        <thead>
+                            <tr>
+                                <th>{{ _('Customer Name') }}</th>
+                                <th>{{ _('Customer Email') }}</th>
+                                <th>{{ _('Customer Phone') }}</th>
+                                <th>{{ _('Service') }}</th>
+                                <th>{{ _('Date') }}</th>
+                                <th>{{ _('Time') }}</th>
+                                <th>{{ _('Status') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for booking in bookings %}
+                                <tr>
+                                    <td>{{ booking.customer_name }}</td>
+                                    <td>{{ booking.customer_email }}</td>
+                                    <td>{{ booking.customer_phone }}</td>
+                                    <td>{{ booking.service }}</td>
+                                    <td>{{ booking.datetime.strftime('%Y-%m-%d') }}</td>
+                                    <td>{{ booking.datetime.strftime('%H:%M') }}</td>
+                                    <td>{{ booking.status }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p>{{ _('No upcoming bookings.') }}</p>
+            {% endif %}
+        </div>
+    </div>
 </body>
 </html>
