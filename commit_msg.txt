@@ -1,1 +1,1 @@
-Fix: Ensure pytest is in requirements.txt to resolve module not found error
+Fix: Add missing pytest and i18n test files and translations

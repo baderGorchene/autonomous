@@ -1,9 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks, Form, Request
-from fastapi.responses import HTMLResponse
+from fastapi import APIRouter, Request, Depends, Form, BackgroundTasks, HTTPException
 from sqlalchemy.orm import Session
-from .. import crud, models, schemas, database, notifications
 from datetime import datetime
 from typing import Optional
+
+from .. import crud, database, schemas, notifications
+from ..main import TEMPLATES_DIR, PROJECT_ROOT
+from ..i18n_config import get_jinja_env
 
 router = APIRouter()
 
@@ -14,36 +16,41 @@ def get_db():
     finally:
         db.close()
 
-@router.get("/{owner_slug}", response_class=HTMLResponse)
-async def get_booking_page(request: Request, owner_slug: str, db: Session = Depends(get_db)):
-    owner = crud.get_owner_by_slug(db, owner_slug)
+@router.get("/{owner_slug}")
+async def get_booking_page(owner_slug: str, request: Request, db: Session = Depends(get_db)):
+    owner = crud.get_owner_by_slug(db, slug=owner_slug)
     if not owner:
         raise HTTPException(status_code=404, detail="Owner not found")
-    
-    return request.state.templates.TemplateResponse("booking_page.html", {
+
+    locale = request.query_params.get("lang", "en")
+    templates_env = get_jinja_env(locale=locale, templates_dir=TEMPLATES_DIR, project_root=PROJECT_ROOT)
+
+    return templates_env.get_template("booking_page.html").render({
         "request": request,
         "owner": owner,
-        "lang": request.state.locale
+        "lang": locale,
+        "services": owner.services_json,
+        "availability": owner.availability_json
     })
 
-@router.post("/{owner_slug}", response_class=HTMLResponse)
+@router.post("/{owner_slug}/book")
 async def submit_booking(
-    request: Request,
     owner_slug: str,
+    request: Request,
     background_tasks: BackgroundTasks,
     customer_name: str = Form(...),
     customer_email: str = Form(...),
     customer_phone: Optional[str] = Form(None),
     service: str = Form(...),
-    datetime_str: str = Form(..., alias="datetime"),
+    booking_datetime_str: str = Form(...),
     db: Session = Depends(get_db)
 ):
-    owner = crud.get_owner_by_slug(db, owner_slug)
+    owner = crud.get_owner_by_slug(db, slug=owner_slug)
     if not owner:
         raise HTTPException(status_code=404, detail="Owner not found")
 
     try:
-        booking_datetime = datetime.fromisoformat(datetime_str)
+        booking_datetime = datetime.fromisoformat(booking_datetime_str)
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid datetime format")
 
@@ -54,26 +61,30 @@ async def submit_booking(
         service=service,
         datetime=booking_datetime
     )
+    db_booking = crud.create_booking(db, booking=booking_schema, owner_id=owner.id)
+
+    background_tasks.add_task(notifications.send_email_confirmation,
+                              to_email=customer_email,
+                              subject=f"Booking Confirmation for {owner.business_name}",
+                              body=f"Hi {customer_name},\n\nYour booking for {service} on {booking_datetime.strftime('%Y-%m-%d %H:%M')} with {owner.business_name} is confirmed.\n\nThank you!")
     
-    db_booking = crud.create_booking(db=db, booking=booking_schema, owner_id=owner.id)
-
-    owner_subject = f"New Booking for {owner.business_name}"
-    owner_body = f"Hello {owner.name},\n\nYou have a new booking:\nCustomer: {db_booking.customer_name}\nEmail: {db_booking.customer_email}\nPhone: {db_booking.customer_phone or 'N/A'}\nService: {db_booking.service}\nWhen: {db_booking.datetime.strftime('%Y-%m-%d %H:%M')}\n\nThank you!"
-    background_tasks.add_task(notifications.send_email_confirmation, owner.email, owner_subject, owner_body)
+    if owner.email:
+        background_tasks.add_task(notifications.send_email_confirmation,
+                                  to_email=owner.email,
+                                  subject=f"New Booking for {owner.business_name}",
+                                  body=f"Hi {owner.name},\n\nYou have a new booking from {customer_name} for {service} on {booking_datetime.strftime('%Y-%m-%d %H:%M')}.\nCustomer Email: {customer_email}\nCustomer Phone: {customer_phone}")
+    
     if owner.phone:
-        whatsapp_message = f"New booking for {owner.business_name}:\nCustomer: {db_booking.customer_name}\nService: {db_booking.service}\nTime: {db_booking.datetime.strftime('%Y-%m-%d %H:%M')}"
-        background_tasks.add_task(notifications.send_whatsapp_notification, owner.phone, whatsapp_message)
+        whatsapp_message = f"New BookSlot booking for {owner.business_name}:\nService: {service}\nDate/Time: {booking_datetime.strftime('%Y-%m-%d %H:%M')}\nCustomer: {customer_name} ({customer_phone})\nEmail: {customer_email}"
+        background_tasks.add_task(notifications.send_whatsapp_notification,
+                                  to_phone=owner.phone,
+                                  message=whatsapp_message)
 
-    customer_subject = f"Your Booking Confirmation with {owner.business_name}"
-    customer_body = f"Hello {db_booking.customer_name},\n\nYour booking for {db_booking.service} with {owner.business_name} on {db_booking.datetime.strftime('%Y-%m-%d %H:%M')} has been confirmed.\n\nThank you!"
-    background_tasks.add_task(notifications.send_email_confirmation, db_booking.customer_email, customer_subject, customer_body)
-    if db_booking.customer_phone:
-        whatsapp_message = f"Hi {db_booking.customer_name}, your booking for {db_booking.service} with {owner.business_name} on {db_booking.datetime.strftime('%Y-%m-%d %H:%M')} is confirmed."
-        background_tasks.add_task(notifications.send_whatsapp_notification, db_booking.customer_phone, whatsapp_message)
-
-    return request.state.templates.TemplateResponse("booking_confirmation.html", {
+    locale = request.query_params.get("lang", "en")
+    templates_env = get_jinja_env(locale=locale, templates_dir=TEMPLATES_DIR, project_root=PROJECT_ROOT)
+    return templates_env.get_template("booking_confirmation.html").render({
         "request": request,
         "booking": db_booking,
         "owner": owner,
-        "lang": request.state.locale
+        "lang": locale
     })

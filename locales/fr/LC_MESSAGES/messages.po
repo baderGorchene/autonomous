@@ -1,12 +1,85 @@
 msgid ""
-msgstr "Project-Id-Version: BookSlot\nReport-Msgid-Bugs-To: \nPOT-Creation-Date: 2023-10-27 10:00+0000\nPO-Revision-Date: 2023-10-27 10:00+0000\nLast-Translator: \nLanguage-Team: French\nLanguage: fr\nMIME-Version: 1.0\nContent-Type: text/plain; charset=utf-8\nContent-Transfer-Encoding: 8bit\nPlural-Forms: nplurals=2; plural=(n > 1);\n\nmsgid "Dashboard"
-msgstr "Tableau de bord"
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-10-27 10:00+0000\n"
+"PO-Revision-Date: 2023-10-27 10:00+0000\n"
+"Last-Translator: \n"
+"Language-Team: French\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"Language: fr\n"
+
+msgid "Welcome"
+msgstr "Bienvenue"
+
+msgid "My Bookings"
+msgstr "Mes Réservations"
 
 msgid "Upcoming Bookings"
-msgstr "Prochaines réservations"
+msgstr "Réservations à venir"
 
-msgid "Book a Slot"
-msgstr "Réserver un créneau"
+msgid "Select Language"
+msgstr "Sélectionner la langue"
 
-msgid "Select a Service"
-msgstr "Sélectionnez un service"
+msgid "Book an Appointment"
+msgstr "Réserver un rendez-vous"
+
+msgid "Select a service"
+msgstr "Sélectionner un service"
+
+msgid "Select a date"
+msgstr "Sélectionner une date"
+
+msgid "Book Now"
+msgstr "Réserver maintenant"
+
+msgid "Bookings"
+msgstr "Réservations"
+
+msgid "Date"
+msgstr "Date"
+
+msgid "Service"
+msgstr "Service"
+
+msgid "Customer Name"
+msgstr "Nom du client"
+
+msgid "Customer Email"
+msgstr "Email du client"
+
+msgid "Customer Phone"
+msgstr "Téléphone du client"
+
+msgid "Update Profile"
+msgstr "Mettre à jour le profil"
+
+msgid "Name"
+msgstr "Nom"
+
+msgid "Business Name"
+msgstr "Nom de l'entreprise"
+
+msgid "Phone Number"
+msgstr "Numéro de téléphone"
+
+msgid "Save Changes"
+msgstr "Enregistrer les modifications"
+
+msgid "Logout"
+msgstr "Déconnexion"
+
+msgid "Your Name"
+msgstr "Votre Nom"
+
+msgid "Your Email"
+msgstr "Votre Email"
+
+msgid "Your Phone"
+msgstr "Votre Téléphone"
+
+msgid "Select a time"
+msgstr "Sélectionner une heure"

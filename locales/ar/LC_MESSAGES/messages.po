@@ -1,12 +1,85 @@
 msgid ""
-msgstr "Project-Id-Version: BookSlot\nReport-Msgid-Bugs-To: \nPOT-Creation-Date: 2023-10-27 10:00+0000\nPO-Revision-Date: 2023-10-27 10:00+0000\nLast-Translator: \nLanguage-Team: Arabic\nLanguage: ar\nMIME-Version: 1.0\nContent-Type: text/plain; charset=utf-8\nContent-Transfer-Encoding: 8bit\nPlural-Forms: nplurals=6; plural=n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5;\n\nmsgid "Dashboard"
-msgstr "لوحة التحكم"
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-10-27 10:00+0000\n"
+"PO-Revision-Date: 2023-10-27 10:00+0000\n"
+"Last-Translator: \n"
+"Language-Team: Arabic\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5;\n"
+"Language: ar\n"
+
+msgid "Welcome"
+msgstr "مرحباً"
+
+msgid "My Bookings"
+msgstr "حجوزاتي"
 
 msgid "Upcoming Bookings"
 msgstr "الحجوزات القادمة"
 
-msgid "Book a Slot"
+msgid "Select Language"
+msgstr "اختر اللغة"
+
+msgid "Book an Appointment"
 msgstr "احجز موعدا"
 
-msgid "Select a Service"
+msgid "Select a service"
 msgstr "اختر خدمة"
+
+msgid "Select a date"
+msgstr "اختر تاريخا"
+
+msgid "Book Now"
+msgstr "احجز الآن"
+
+msgid "Bookings"
+msgstr "الحجوزات"
+
+msgid "Date"
+msgstr "التاريخ"
+
+msgid "Service"
+msgstr "الخدمة"
+
+msgid "Customer Name"
+msgstr "اسم العميل"
+
+msgid "Customer Email"
+msgstr "بريد العميل الإلكتروني"
+
+msgid "Customer Phone"
+msgstr "هاتف العميل"
+
+msgid "Update Profile"
+msgstr "تحديث الملف الشخصي"
+
+msgid "Name"
+msgstr "الاسم"
+
+msgid "Business Name"
+msgstr "اسم العمل"
+
+msgid "Phone Number"
+msgstr "رقم الهاتف"
+
+msgid "Save Changes"
+msgstr "حفظ التغييرات"
+
+msgid "Logout"
+msgstr "تسجيل الخروج"
+
+msgid "Your Name"
+msgstr "اسمك"
+
+msgid "Your Email"
+msgstr "بريدك الإلكتروني"
+
+msgid "Your Phone"
+msgstr "رقم هاتفك"
+
+msgid "Select a time"
+msgstr "اختر وقتا"

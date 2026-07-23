@@ -1,10 +1,17 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from typing import List, Dict, Optional
 from datetime import datetime
 
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class TokenData(BaseModel):
+    email: Optional[str] = None
+
 class OwnerBase(BaseModel):
     name: str
-    email: str
+    email: EmailStr
     business_name: str
     slug: str
     phone: Optional[str] = None
@@ -28,7 +35,7 @@ class OwnerProfileUpdate(BaseModel):
 
 class BookingBase(BaseModel):
     customer_name: str
-    customer_email: str
+    customer_email: EmailStr
     customer_phone: Optional[str] = None
     service: str
     datetime: datetime
@@ -39,7 +46,7 @@ class BookingCreate(BookingBase):
 class Booking(BookingBase):
     id: int
     owner_id: int
-    status: str = "pending"
+    status: str
     created_at: datetime
 
     class Config:
