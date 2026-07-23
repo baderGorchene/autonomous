@@ -1,1 +1,1 @@
-Fix: Add missing pytest and i18n test files and translations
+Add missing requirements.txt with pytest and other dependencies
