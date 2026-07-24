@@ -1,0 +1,49 @@
+/* General Styles */
+body {font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;margin: 0;padding: 0;background-color: #f8f9fa;color: #343a40;line-height: 1.6;}
+.container {max-width: 960px;margin: 20px auto;padding: 0 15px;}
+
+/* Header */
+header {background-color: #007bff;color: white;padding: 15px 0;text-align: center;}
+header h1 {margin: 0;font-size: 1.8em;}
+header p {margin: 5px 0 0;font-size: 0.9em;}
+
+/* Language Toggle */
+.lang-toggle {text-align: right;padding: 10px 15px;background-color: #e9ecef;border-bottom: 1px solid #dee2e6;}
+.lang-toggle a {margin-left: 10px;color: #007bff;text-decoration: none;font-weight: bold;}
+.lang-toggle a:hover {text-decoration: underline;}
+
+/* Main Content Sections */
+.section {background-color: white;padding: 20px;margin-bottom: 20px;border-radius: 8px;box-shadow: 0 2px 4px rgba(0,0,0,0.05);}
+
+/* Forms */
+form label {display: block;margin-bottom: 5px;font-weight: bold;}
+form input[type="text"],form input[type="email"],form input[type="tel"],form input[type="date"],form select,form textarea {width: calc(100% - 22px);padding: 10px;margin-bottom: 15px;border: 1px solid #ced4da;border-radius: 4px;box-sizing: border-box;}
+form button {background-color: #28a745;color: white;padding: 12px 20px;border: none;border-radius: 4px;cursor: pointer;font-size: 1em;transition: background-color 0.3s ease;}
+form button:hover {background-color: #218838;}
+
+/* Dashboard Specific Styles */
+.dashboard-nav {display: flex;justify-content: space-around;background-color: #e9ecef;padding: 10px 0;margin-bottom: 20px;border-radius: 8px;}
+.dashboard-nav a {text-decoration: none;color: #007bff;padding: 8px 15px;border-radius: 4px;}
+.dashboard-nav a:hover {background-color: #cce5ff;}
+.dashboard-nav a.active {background-color: #007bff;color: white;}
+
+.booking-list table {width: 100%;border-collapse: collapse;margin-top: 15px;}
+.booking-list th,.booking-list td {border: 1px solid #dee2e6;padding: 10px;text-align: left;}
+.booking-list th {background-color: #e9ecef;font-weight: bold;}
+
+/* Utility Classes */
+.text-center {text-align: center;}
+.mb-3 {margin-bottom: 1rem;}
+.mt-3 {margin-top: 1rem;}
+.message {padding: 10px;margin-bottom: 15px;border-radius: 4px;}
+.message.success {background-color: #d4edda;color: #155724;border: 1px solid #c3e6cb;}
+.logout-button {background-color: #dc3545;color: white;padding: 8px 15px;border: none;border-radius: 4px;cursor: pointer;font-size: 0.9em;transition: background-color 0.3s ease;float: right;}
+.logout-button:hover {background-color: #c82333;}
+
+/* Mobile Adjustments */
+@media (max-width: 768px) {
+    .container {margin: 10px auto;}
+    .dashboard-nav {flex-direction: column;}
+    .dashboard-nav a {text-align: center;margin-bottom: 5px;}
+    .logout-button {float: none;width: 100%;margin-top: 15px;}
+}

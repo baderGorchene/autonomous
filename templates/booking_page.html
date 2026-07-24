@@ -1,1 +1,64 @@
-<!DOCTYPE html><html lang="{{ lang }}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>{{ owner.business_name }} - {{ _('Book an Appointment') }}</title><link rel="stylesheet" href="/static/style.css"></head><body><div class="container"><div class="lang-switcher"><a href="?lang=en" class="{{ 'active' if lang == 'en' else '' }}">English</a><a href="?lang=ar" class="{{ 'active' if lang == 'ar' else '' }}">العربية</a><a href="?lang=fr" class="{{ 'active' if lang == 'fr' else '' }}">Français</a></div><h1>{{ owner.business_name }}</h1><h2>{{ _('Book Your Service') }}</h2>{% if message %}<div class="message success">{{ message }}</div>{% endif %}{% if error %}<div class="message error">{{ error }}</div>{% endif %}<form action="/book/{{ owner.slug }}" method="post"><div class="form-group"><label for="customer_name">{{ _('Your Name:') }}</label><input type="text" id="customer_name" name="customer_name" required></div><div class="form-group"><label for="customer_email">{{ _('Your Email:') }}</label><input type="email" id="customer_email" name="customer_email" required></div><div class="form-group"><label for="customer_phone">{{ _('Your Phone (WhatsApp preferred):') }}</label><input type="tel" id="customer_phone" name="customer_phone"></div><div class="form-group"><label for="service">{{ _('Select Service:') }}</label><select id="service" name="service" required>{% for service in owner.services_json %}<option value="{{ service.name }}">{{ service.name }} - {{ service.duration }} {{ _('mins') }}</option>{% endfor %}</select></div><div class="form-group"><label for="datetime">{{ _('Preferred Date and Time:') }}</label><input type="datetime-local" id="datetime" name="datetime" required></div><button type="submit">{{ _('Book Now') }}</button></form></div></body></html>
+<!DOCTYPE html>
+<html lang="{{ lang or 'en' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ owner.business_name }} - {{ _('Book an Appointment') }}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="lang-toggle">
+        <label for="lang-select">{{ _('Language') }}:</label>
+        <select id="lang-select" onchange="changeLanguage(this.value)">
+            <option value="en" {% if lang == 'en' %}selected{% endif %}>English</option>
+            <option value="ar" {% if lang == 'ar' %}selected{% endif %}>العربية</option>
+            <option value="fr" {% if lang == 'fr' %}selected{% endif %}>Français</option>
+        </select>
+    </div>
+    <header>
+        <div class="container">
+            <h1>{{ owner.business_name }}</h1>
+            <p>{{ _('Book your next service with ease.') }}</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="section">
+            <h2 class="text-center">{{ _('Book a Service') }}</h2>
+            <form action="/book/{{ owner.slug }}/submit?lang={{ lang }}" method="post">
+                <label for="customer_name">{{ _('Your Name') }}:</label>
+                <input type="text" id="customer_name" name="customer_name" required>
+
+                <label for="customer_email">{{ _('Your Email') }}:</label>
+                <input type="email" id="customer_email" name="customer_email" required>
+
+                <label for="customer_phone">{{ _('Your Phone Number') }} ({{ _('WhatsApp preferred') }}):</label>
+                <input type="tel" id="customer_phone" name="customer_phone" placeholder="+1234567890" required>
+
+                <label for="service">{{ _('Select Service') }}:</label>
+                <select id="service" name="service_id" required>
+                    <option value="">{{ _('Choose a service') }}</option>
+                    {% for service in owner.services_json %}
+                        <option value="{{ service.id }}">{{ service.name }} ({{ service.duration }} {{ _('min') }}) - {{ service.price }}</option>
+                    {% endfor %}
+                </select>
+
+                <label for="booking_date">{{ _('Select Date') }}:</label>
+                <input type="date" id="booking_date" name="booking_date" required>
+
+                <label for="booking_time">{{ _('Select Time') }}:</label>
+                <select id="booking_time" name="booking_time" required>
+                    <option value="">{{ _('Select a time') }}</option>
+                    <!-- Time slots will be populated by JavaScript -->
+                </select>
+
+                <button type="submit">{{ _('Book Now') }}</button>
+            </form>
+        </div>
+    </main>
+
+    <script id="owner-availability" type="application/json">{{ owner.availability_json | tojson }}</script>
+    <script id="owner-services" type="application/json">{{ owner.services_json | tojson }}</script>
+    <script src="/static/js/script.js"></script>
+</body>
+</html>

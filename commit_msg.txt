@@ -1,1 +1,1 @@
-Fix: Ensure pytest and all dependencies are listed in requirements.txt
+Feat: UI/UX polish for booking page and dashboard with CSS/JS
