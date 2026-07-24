@@ -1,122 +1,71 @@
 <!DOCTYPE html>
-<html lang="{{ current_language }}">
+<html lang="{{ locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ _('Dashboard') }} - {{ owner.business_name }}</title>
-    <link rel="stylesheet" href="/static/css/styles.css">
-    <style>
-        /* Dashboard specific styles */
-        .dashboard-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-        .dashboard-header h1 {
-            margin: 0;
-        }
-        .logout-btn {
-            background-color: #dc3545; /* Red for logout */
-        }
-        .logout-btn:hover {
-            background-color: #c82333;
-        }
-        .section-title {
-            border-bottom: 1px solid #eee;
-            padding-bottom: 10px;
-            margin-top: 30px;
-            margin-bottom: 20px;
-            color: #2c3e50;
-        }
-        .booking-item-details {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-        }
-        .booking-item-details span {
-            margin-bottom: 5px;
-        }
-        .booking-item-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px; /* For mobile */
-        }
-        @media (min-width: 768px) {
-            .booking-item-details {
-                flex-direction: row;
-                justify-content: space-between;
-                width: 100%;
-            }
-            .booking-item-details span {
-                margin-bottom: 0;
-                flex: 1;
-            }
-            .booking-item-actions {
-                margin-top: 0;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
-    <div class="container">
-        <div class="language-selector">
-            <a href="?lang=en">English</a> |
-            <a href="?lang=ar">العربية</a> |
-            <a href="?lang=fr">Français</a>
-        </div>
-
-        <div class="dashboard-header">
-            <h1>{{ _('Dashboard') }}</h1>
-            <a href="/owner/logout" class="btn btn-secondary logout-btn">{{ _('Logout') }}</a>
-        </div>
-
-        {% if message %}
-            <div class="message {{ message_type }}">{{ message }}</div>
-        {% endif %}
-
-        <h2 class="section-title">{{ _('Welcome,') }} {{ owner.name }}!</h2>
-        <p>{{ _('Your booking page link:') }} <a href="/book/{{ owner.slug }}" target="_blank">bookslot.app/{{ owner.slug }}</a></p>
-
-        <h3 class="section-title">{{ _('Upcoming Bookings') }}</h3>
-        {% if upcoming_bookings %}
-            <ul class="list-group">
-                {% for booking in upcoming_bookings %}
-                    <li class="list-group-item">
-                        <div class="booking-item-details">
-                            <span><strong>{{ _('Customer') }}:</strong> {{ booking.customer_name }}</span>
-                            <span><strong>{{ _('Service') }}:</strong> {{ booking.service_name }}</span>
-                            <span><strong>{{ _('Date') }}:</strong> {{ booking.booking_date }}</span>
-                            <span><strong>{{ _('Time') }}:</strong> {{ booking.booking_time }}</span>
-                            <span><strong>{{ _('Contact') }}:</b> {{ booking.customer_email }} / {{ booking.customer_phone }}</span>
-                        </div>
-                        <div class="booking-item-actions">
-                            <!-- Add actions like 'Cancel' or 'Reschedule' later -->
-                            <!-- <button class="btn btn-secondary">Manage</button> -->
-                        </div>
-                    </li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p>{{ _('No upcoming bookings.') }}</p>
-        {% endif %}
-
-        <h3 class="section-title">{{ _('Update Your Profile') }}</h3>
-        <form action="/owner/dashboard/update-profile" method="post">
-            <div class="form-group">
-                <label for="name">{{ _('Your Name') }}:</label>
-                <input type="text" id="name" name="name" value="{{ owner.name }}" required>
+    <div class="dashboard-container">
+        <header class="dashboard-header">
+            <h1 class="dashboard-title">{{ _('Welcome,') }} {{ owner.name }}!</h1>
+            <div class="language-toggle">
+                <a href="?lang=en" class="{{ 'active' if locale == 'en' else '' }}">EN</a> |
+                <a href="?lang=ar" class="{{ 'active' if locale == 'ar' else '' }}">AR</a> |
+                <a href="?lang=fr" class="{{ 'active' if locale == 'fr' else '' }}">FR</a>
             </div>
-            <div class="form-group">
-                <label for="business_name">{{ _('Business Name') }}:</label>
-                <input type="text" id="business_name" name="business_name" value="{{ owner.business_name }}" required>
-            </div>
-            <div class="form-group">
-                <label for="phone">{{ _('Your Phone Number (WhatsApp preferred)') }}:</label>
-                <input type="tel" id="phone" name="phone" value="{{ owner.phone }}" placeholder="+1234567890" required>
-            </div>
-            <button type="submit" class="btn">{{ _('Update Profile') }}</button>
-        </form>
+            <nav class="dashboard-nav">
+                <a href="/dashboard">{{ _('My Dashboard') }}</a>
+                <a href="/logout">{{ _('Logout') }}</a>
+            </nav>
+        </header>
+
+        <main class="dashboard-main">
+            <section class="upcoming-bookings">
+                <h2 class="section-title">{{ _('Upcoming Bookings') }}</h2>
+                {% if upcoming_bookings %}
+                    <div class="bookings-grid">
+                        {% for booking in upcoming_bookings %}
+                            <div class="booking-card">
+                                <h3>{{ booking.service_name }}</h3>
+                                <p><strong>{{ _('Date:') }}</strong> {{ booking.booking_date.strftime('%Y-%m-%d') }}</p>
+                                <p><strong>{{ _('Time:') }}</strong> {{ booking.booking_time.strftime('%H:%M') }}</p>
+                                <p><strong>{{ _('Customer:') }}</strong> {{ booking.customer_name }}</p>
+                                <p><strong>{{ _('Email:') }}</strong> {{ booking.customer_email }}</p>
+                                <p><strong>{{ _('Phone:') }}</strong> {{ booking.customer_phone }}</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p>{{ _('No upcoming bookings.') }}</p>
+                {% endif %}
+            </section>
+
+            <section class="profile-settings">
+                <h2 class="section-title">{{ _('Profile Settings') }}</h2>
+                <form action="/dashboard/profile" method="post" class="profile-form">
+                    <div class="form-group">
+                        <label for="name">{{ _('Your Name') }}</label>
+                        <input type="text" id="name" name="name" value="{{ owner.name }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="business_name">{{ _('Business Name') }}</label>
+                        <input type="text" id="business_name" name="business_name" value="{{ owner.business_name }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">{{ _('Your Phone (WhatsApp)') }}</label>
+                        <input type="text" id="phone" name="phone" value="{{ owner.phone if owner.phone else '' }}" placeholder="{{ _('e.g., +15551234567') }}">
+                    </div>
+                    <button type="submit" class="btn-primary">{{ _('Update Profile') }}</button>
+                </form>
+            </section>
+        </main>
+
+        <footer class="dashboard-footer">
+            <p>&copy; 2023 BookSlot. {{ _('All rights reserved.') }}</p>
+        </footer>
     </div>
+    <script src="/static/js/main.js"></script>
 </body>
 </html>

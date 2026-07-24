@@ -1,341 +1,336 @@
-/* Basic Reset & Box-sizing */
-*, *::before, *::after {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
-
+/* General Body & Typography */
 :root {
-    --color-primary: #4A90E2; /* Blue */
-    --color-secondary: #50E3C2; /* Teal */
-    --color-text-dark: #333;
-    --color-text-medium: #666;
-    --color-text-light: #fff;
-    --color-background-light: #F7F9FC;
-    --color-background-white: #FFFFFF;
-    --color-border: #E0E0E0;
-    --color-error: #D32F2F; /* Red for errors */
-    --color-success: #388E3C; /* Green for success */
-    --color-success-bg: #E8F5E9;
-    --color-success-border: #A5D6A7;
-    --font-family-base: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
-    --border-radius: 8px;
-    --spacing-xs: 4px;
-    --spacing-sm: 8px;
-    --spacing-md: 16px;
-    --spacing-lg: 24px;
-    --spacing-xl: 32px;
+    --primary-color: #007bff; /* Blue */
+    --secondary-color: #6c757d; /* Gray */
+    --accent-color: #28a745; /* Green */
+    --background-light: #f8f9fa; /* Light Gray */
+    --text-color: #343a40; /* Dark Gray */
+    --border-color: #dee2e6;
+    --error-color: #dc3545; /* Red */
+    --font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 body {
-    font-family: var(--font-family-base);
+    font-family: var(--font-family);
     line-height: 1.6;
-    color: var(--color-text-dark);
-    background-color: var(--color-background-light);
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
+    margin: 0;
+    padding: 0;
+    background-color: var(--background-light);
+    color: var(--text-color);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
-.container {
+.container, .dashboard-container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: var(--spacing-md);
-    width: 100%;
+    padding: 20px;
 }
 
-header {
-    background-color: var(--color-primary);
-    color: var(--color-text-light);
-    padding: var(--spacing-md) 0;
-    text-align: center;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-header h1 {
-    font-size: 1.8em;
-    margin-bottom: var(--spacing-sm);
-}
-
-.header-controls {
+/* Header & Navigation */
+.header, .dashboard-header {
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    margin-bottom: 20px;
     display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: var(--spacing-md);
-}
-
-.language-selector {
-    padding: var(--spacing-xs) var(--spacing-sm);
-    border: 1px solid var(--color-text-light);
-    border-radius: var(--border-radius);
-    background-color: rgba(255,255,255,0.1);
-    color: var(--color-text-light);
-    cursor: pointer;
-    appearance: none; /* Remove default select arrow */
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23ffffff%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-6.5%200-12.3%203.4-15.5%208.9-3.2%205.4-3.5%2012.3-1%2017.9l139%20140.1a17.6%2017.6%200%200%0025.9%200l139-140.1c3.5-5.6%203.2-12.4-.7-17.9z%22%2F%3E%3C%2Fsvg%3E");
-    background-repeat: no-repeat;
-    background-position: right var(--spacing-sm) center;
-    background-size: 12px;
-    padding-right: var(--spacing-lg); /* Make space for the custom arrow */
-}
-.language-selector option {
-    color: var(--color-text-dark); /* Options should be dark text on light background */
-    background-color: var(--color-background-white);
-}
-
-main {
-    flex-grow: 1;
-    padding: var(--spacing-xl) 0;
-}
-
-.card {
-    background-color: var(--color-background-white);
-    border-radius: var(--border-radius);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    padding: var(--spacing-xl);
-    margin-bottom: var(--spacing-xl);
-}
-
-h2 {
-    color: var(--color-primary);
-    font-size: 1.5em;
-    margin-bottom: var(--spacing-lg);
-    text-align: center;
-}
-
-h3 {
-    color: var(--color-text-dark);
-    font-size: 1.2em;
-    margin-bottom: var(--spacing-md);
-}
-
-p {
-    margin-bottom: var(--spacing-md);
-    color: var(--color-text-medium);
-}
-
-/* Forms */
-.form-group {
-    margin-bottom: var(--spacing-md);
-}
-
-label {
-    display: block;
-    margin-bottom: var(--spacing-sm);
-    font-weight: bold;
-    color: var(--color-text-dark);
-}
-
-input[type="text"],
-input[type="email"],
-input[type="tel"],
-input[type="password"],
-input[type="date"],
-input[type="time"],
-select,
-textarea {
-    width: 100%;
-    padding: var(--spacing-sm);
-    border: 1px solid var(--color-border);
-    border-radius: var(--border-radius);
-    font-family: var(--font-family-base);
-    font-size: 1em;
-    color: var(--color-text-dark);
-    transition: border-color 0.2s ease-in-out;
-}
-
-input[type="text"]:focus,
-input[type="email"]:focus,
-input[type="tel"]:focus,
-input[type="password"]:focus,
-input[type="date"]:focus,
-input[type="time"]:focus,
-select:focus,
-textarea:focus {
-    outline: none;
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
-}
-
-textarea {
-    resize: vertical;
-    min-height: 80px;
-}
-
-.btn {
-    display: inline-block;
-    padding: var(--spacing-sm) var(--spacing-lg);
-    border-radius: var(--border-radius);
-    font-size: 1em;
-    font-weight: bold;
-    text-align: center;
-    cursor: pointer;
-    transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out, border-color 0.2s ease-in-out;
-    border: none;
-}
-
-.btn-primary {
-    background-color: var(--color-primary);
-    color: var(--color-text-light);
-}
-
-.btn-primary:hover {
-    background-color: #3A7CDA; /* Slightly darker blue */
-}
-
-.btn-secondary {
-    background-color: var(--color-secondary);
-    color: var(--color-text-light);
-}
-
-.btn-secondary:hover {
-    background-color: #40C6AE; /* Slightly darker teal */
-}
-
-.btn-outline {
-    background-color: transparent;
-    border: 1px solid var(--color-primary);
-    color: var(--color-primary);
-}
-
-.btn-outline:hover {
-    background-color: var(--color-primary);
-    color: var(--color-text-light);
-}
-
-.text-center {
-    text-align: center;
-}
-
-.error-message {
-    color: var(--color-error);
-    font-size: 0.9em;
-    margin-top: var(--spacing-xs);
-    background-color: #FFEBEE;
-    border: 1px solid #EF9A9A;
-    border-radius: var(--border-radius);
-    padding: var(--spacing-sm) var(--spacing-md);
-    margin-bottom: var(--spacing-md);
-    text-align: center;
-}
-
-.success-message {
-    color: var(--color-success);
-    background-color: var(--color-success-bg);
-    border: 1px solid var(--color-success-border);
-    border-radius: var(--border-radius);
-    padding: var(--spacing-sm) var(--spacing-md);
-    margin-bottom: var(--spacing-md);
-    text-align: center;
-}
-
-/* Specific styles for booking page */
-.service-details {
-    margin-bottom: var(--spacing-xl);
-}
-
-.service-details h2 {
-    margin-bottom: var(--spacing-md);
-}
-
-.service-item {
-    background-color: var(--color-background-light);
-    border: 1px solid var(--color-border);
-    border-radius: var(--border-radius);
-    padding: var(--spacing-md);
-    margin-bottom: var(--spacing-md);
-    display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;
 }
 
-.service-item h4 {
+.business-name, .dashboard-title {
+    color: var(--primary-color);
     margin: 0;
-    color: var(--color-primary);
+    font-size: 1.8em;
+    flex-grow: 1;
 }
 
-.service-item p {
-    margin: 0;
+.language-toggle {
     font-size: 0.9em;
+    margin-left: 20px; /* Adjust as needed */
 }
 
-.availability-slots {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    gap: var(--spacing-sm);
-    margin-top: var(--spacing-md);
+.language-toggle a {
+    color: var(--secondary-color);
+    text-decoration: none;
+    padding: 5px 8px;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
 }
 
-.slot-button {
-    display: block;
+.language-toggle a:hover {
+    background-color: var(--border-color);
+}
+
+.language-toggle a.active {
+    background-color: var(--primary-color);
+    color: #ffffff;
+}
+
+.dashboard-nav {
+    margin-top: 10px;
     width: 100%;
-    padding: var(--spacing-sm);
-    border: 1px solid var(--color-border);
-    border-radius: var(--border-radius);
-    background-color: var(--color-background-white);
-    color: var(--color-primary);
+    display: flex;
+    justify-content: flex-end;
+}
+
+.dashboard-nav a {
+    color: var(--primary-color);
+    text-decoration: none;
+    margin-left: 15px;
+    font-weight: 500;
+}
+
+.dashboard-nav a:hover {
+    text-decoration: underline;
+}
+
+/* Main Content Sections */
+.booking-section, .upcoming-bookings, .profile-settings {
+    background-color: #ffffff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    margin-bottom: 20px;
+}
+
+.section-title {
+    color: var(--primary-color);
+    font-size: 1.6em;
+    margin-top: 0;
+    margin-bottom: 20px;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 10px;
+}
+
+.owner-name-tag {
+    font-style: italic;
+    color: var(--secondary-color);
+    margin-bottom: 15px;
+}
+
+.description {
+    margin-bottom: 25px;
+    color: var(--text-color);
+}
+
+.error-message {
+    background-color: #f8d7da;
+    color: var(--error-color);
+    border: 1px solid var(--error-color);
+    padding: 10px 15px;
+    border-radius: 5px;
+    margin-bottom: 20px;
     text-align: center;
-    cursor: pointer;
-    transition: background-color 0.2s, border-color 0.2s;
 }
 
-.slot-button:hover,
-.slot-button.selected {
-    background-color: var(--color-primary);
-    color: var(--color-text-light);
-    border-color: var(--color-primary);
-}
-
-/* Specific styles for dashboard */
-.dashboard-grid {
+/* Forms */
+.booking-form, .profile-form {
     display: grid;
-    grid-template-columns: 1fr;
-    gap: var(--spacing-xl);
+    gap: 15px;
 }
 
-.booking-list {
-    list-style: none;
-    padding: 0;
+.form-group {
+    margin-bottom: 10px;
 }
 
-.booking-item {
-    background-color: var(--color-background-light);
-    border: 1px solid var(--color-border);
-    border-radius: var(--border-radius);
-    padding: var(--spacing-md);
-    margin-bottom: var(--spacing-md);
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: var(--text-color);
 }
 
-.booking-item strong {
-    color: var(--color-primary);
+.form-group input[type="text"],
+.form-group input[type="email"],
+.form-group input[type="date"],
+.form-group input[type="time"],
+.form-group select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    font-size: 1em;
+    box-sizing: border-box; /* Include padding in width */
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.booking-item p {
-    margin: var(--spacing-xs) 0;
+.form-group input:focus,
+.form-group select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+    outline: none;
 }
 
-.booking-item .status {
-    font-weight: bold;
-    color: var(--color-secondary); /* Or based on status */
+.btn-primary {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 5px;
+    font-size: 1.1em;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    width: auto; /* Make button size to content */
+    align-self: start; /* Align to the start in grid */
 }
 
-/* Responsive adjustments */
+.btn-primary:hover {
+    background-color: #0056b3; /* Darker blue */
+    transform: translateY(-1px);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+}
+
+/* Bookings Grid (for Dashboard) */
+.bookings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.booking-card {
+    background-color: var(--background-light);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    transition: transform 0.2s ease;
+}
+
+.booking-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.booking-card h3 {
+    color: var(--primary-color);
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 1.3em;
+}
+
+.booking-card p {
+    margin: 5px 0;
+    font-size: 0.95em;
+}
+
+.booking-card p strong {
+    color: var(--text-color);
+}
+
+
+/* Footer */
+.footer, .dashboard-footer {
+    text-align: center;
+    padding: 20px;
+    color: var(--secondary-color);
+    font-size: 0.9em;
+    margin-top: 40px;
+}
+
+/* Responsive Adjustments */
 @media (min-width: 768px) {
-    header h1 {
-        font-size: 2.2em;
+    .header, .dashboard-header {
+        flex-wrap: nowrap;
     }
-    .card {
-        padding: var(--spacing-xl) var(--spacing-xxl); /* Add more horizontal padding */
+
+    .language-toggle {
+        margin-left: auto; /* Push to right */
+        order: 2; /* Keep it after business name */
     }
-    .dashboard-grid {
-        grid-template-columns: 2fr 1fr; /* Two columns for dashboard on larger screens */
+
+    .dashboard-nav {
+        width: auto;
+        margin-top: 0;
+        margin-left: 20px; /* Space from language toggle */
+    }
+
+    .booking-form, .profile-form {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .booking-form .btn-primary, .profile-form .btn-primary {
+        grid-column: 1 / -1; /* Make button span all columns */
+        justify-self: center; /* Center the button */
+        width: 50%; /* Adjust button width for larger screens */
     }
 }
 
-@media (min-width: 1024px) {
-    .container {
-        padding: var(--spacing-md) 0; /* Remove side padding on very large screens, let max-width handle it */
+@media (max-width: 767px) {
+    .header, .dashboard-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .business-name, .dashboard-title {
+        width: 100%;
+        text-align: center;
+        margin-bottom: 15px;
+    }
+    .language-toggle {
+        width: 100%;
+        text-align: center;
+        margin-left: 0;
+        margin-bottom: 15px;
+    }
+    .dashboard-nav {
+        width: 100%;
+        justify-content: center;
+    }
+    .dashboard-nav a {
+        margin: 0 10px;
+    }
+    .container, .dashboard-container {
+        padding: 10px;
+    }
+    .booking-section, .upcoming-bookings, .profile-settings {
+        padding: 20px;
+    }
+    .btn-primary {
+        width: 100%;
+    }
+}
+
+/* RTL support for Arabic */
+[lang="ar"] body, [lang="fr"] body { /* Assuming similar directionality for FR, adjust if needed */
+    direction: rtl;
+    text-align: right;
+}
+
+[lang="ar"] .header, [lang="ar"] .dashboard-header {
+    flex-direction: row-reverse; /* Reverse order of elements in header */
+}
+
+[lang="ar"] .language-toggle {
+    margin-right: 20px;
+    margin-left: 0;
+}
+
+[lang="ar"] .dashboard-nav {
+    justify-content: flex-start; /* For RTL, nav items should start from right */
+}
+
+[lang="ar"] .dashboard-nav a {
+    margin-left: 0;
+    margin-right: 15px;
+}
+
+[lang="ar"] .section-title {
+    border-bottom: 2px solid var(--border-color); /* Still border-bottom */
+    padding-bottom: 10px;
+}
+
+[lang="ar"] .form-group label {
+    text-align: right;
+}
+
+/* Adjust button alignment for RTL on larger screens */
+@media (min-width: 768px) {
+    [lang="ar"] .booking-form .btn-primary, [lang="ar"] .profile-form .btn-primary {
+        justify-self: center; /* Center button */
     }
 }
