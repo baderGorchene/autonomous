@@ -1,1 +1,1 @@
-Feat: UI/UX polish for booking page and dashboard with CSS/JS
+feat: Implement comprehensive error handling for booking submissions and refine notifications

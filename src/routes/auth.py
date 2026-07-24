@@ -2,23 +2,24 @@ from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from datetime import timedelta
+from typing import Optional
 
-from src import crud, schemas, security, models
-from src.database import SessionLocal, get_db
-from src.config import settings
-from fastapi.templating import Jinja2Templates
-import os
+from .. import crud, schemas, security, models, database
+from ..config import settings
 
 router = APIRouter()
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
 
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir))
-TEMPLATES_DIR = os.path.join(PROJECT_ROOT, "templates")
-templates = Jinja2Templates(directory=TEMPLATES_DIR)
+def get_db():
+    db = database.SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 @router.post("/token", response_model=schemas.Token)
-async def login_for_access_token(response: Response, form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     owner = crud.authenticate_owner(db, form_data.username, form_data.password)
     if not owner:
         raise HTTPException(
@@ -30,15 +31,41 @@ async def login_for_access_token(response: Response, form_data: OAuth2PasswordRe
     access_token = security.create_access_token(
         data={"sub": owner.email}, expires_delta=access_token_expires
     )
-    response.set_cookie(key="access_token", value=access_token, httponly=True, expires=access_token_expires.total_seconds())
     return {"access_token": access_token, "token_type": "bearer"}
 
-@router.get("/register")
-async def register_page(request: Request):
-    return templates.TemplateResponse("register.html", {"request": request})
+async def get_current_owner(request: Request, db: Session = Depends(get_db)):
+    token = request.cookies.get("access_token")
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_303_SEE_OTHER,
+            headers={"Location": "/auth/login"},
+            detail="Not authenticated, redirecting to login",
+        )
+    
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = security.decode_access_token(token)
+        email: str = payload.get("sub")
+        if email is None:
+            raise credentials_exception
+        token_data = schemas.TokenData(email=email)
+    except Exception:
+        raise credentials_exception
+    owner = crud.get_owner_by_email(db, email=token_data.email)
+    if owner is None:
+        raise credentials_exception
+    return owner
 
-@router.post("/register")
-async def register_owner(
+@router.get("/signup")
+async def signup_page(request: Request):
+    return request.state.templates.TemplateResponse("signup.html", {"request": request, "lang": request.state.locale})
+
+@router.post("/signup")
+async def signup_owner(
     request: Request,
     name: str = Form(...),
     email: str = Form(...),
@@ -47,32 +74,44 @@ async def register_owner(
     slug: str = Form(...),
     db: Session = Depends(get_db)
 ):
-    db_owner = crud.get_owner_by_email(db, email)
-    if db_owner:
-        raise HTTPException(status_code=400, detail="Email already registered")
-    db_owner = crud.get_owner_by_slug(db, slug)
-    if db_owner:
-        raise HTTPException(status_code=400, detail="Slug already taken")
-    
-    owner_in = schemas.OwnerCreate(name=name, email=email, password=password, business_name=business_name, slug=slug)
-    owner = crud.create_owner(db=db, owner=owner_in)
-    
-    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = security.create_access_token(
-        data={"sub": owner.email}, expires_delta=access_token_expires
-    )
-    
-    response = templates.TemplateResponse("login.html", {"request": request, "message": "Registration successful! Please log in."})
-    response.set_cookie(key="access_token", value=access_token, httponly=True, expires=access_token_expires.total_seconds())
-    return response
+    owner = crud.get_owner_by_email(db, email=email)
+    if owner:
+        return request.state.templates.TemplateResponse("signup.html", {
+            "request": request,
+            "error_message": request.state.templates.env.gettext("Email already registered"),
+            "name": name, "email": email, "business_name": business_name, "slug": slug,
+            "lang": request.state.locale
+        })
+    owner = crud.get_owner_by_slug(db, slug=slug)
+    if owner:
+        return request.state.templates.TemplateResponse("signup.html", {
+            "request": request,
+            "error_message": request.state.templates.env.gettext("Business URL already taken"),
+            "name": name, "email": email, "business_name": business_name, "slug": slug,
+            "lang": request.state.locale
+        })
 
+    try:
+        owner_schema = schemas.OwnerCreate(
+            name=name, email=email, password=password, business_name=business_name, slug=slug
+        )
+        crud.create_owner(db=db, owner=owner_schema)
+        response = Response(status_code=status.HTTP_303_SEE_OTHER, headers={"Location": "/auth/login"})
+        return response
+    except Exception as e:
+        return request.state.templates.TemplateResponse("signup.html", {
+            "request": request,
+            "error_message": request.state.templates.env.gettext(f"An error occurred during signup: {e}"),
+            "name": name, "email": email, "business_name": business_name, "slug": slug,
+            "lang": request.state.locale
+        })
 
 @router.get("/login")
-async def login_page(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request})
+async def login_page(request: Request, error_message: Optional[str] = None):
+    return request.state.templates.TemplateResponse("login.html", {"request": request, "error_message": error_message, "lang": request.state.locale})
 
 @router.post("/login")
-async def login_owner(
+async def login(
     request: Request,
     response: Response,
     email: str = Form(...),
@@ -81,36 +120,24 @@ async def login_owner(
 ):
     owner = crud.authenticate_owner(db, email, password)
     if not owner:
-        return templates.TemplateResponse("login.html", {"request": request, "error": "Incorrect email or password"})
+        return request.state.templates.TemplateResponse("login.html", {
+            "request": request,
+            "error_message": request.state.templates.env.gettext("Incorrect email or password"),
+            "email": email,
+            "lang": request.state.locale
+        })
     
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = security.create_access_token(
         data={"sub": owner.email}, expires_delta=access_token_expires
     )
     
-    response.set_cookie(key="access_token", value=access_token, httponly=True, expires=access_token_expires.total_seconds())
-    response.headers["Location"] = "/dashboard"
-    response.status_code = status.HTTP_302_FOUND
+    response = Response(status_code=status.HTTP_303_SEE_OTHER, headers={"Location": "/dashboard"})
+    response.set_cookie(key="access_token", value=access_token, httponly=True, max_age=access_token_expires.total_seconds())
     return response
 
-async def get_current_owner(request: Request, db: Session = Depends(get_db)) -> models.Owner:
-    token = request.cookies.get("access_token")
-    if not token:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        email: str = payload.get("sub")
-        if email is None:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials")
-        token_data = schemas.TokenData(email=email)
-    except JWTError:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials")
-    
-    owner = crud.get_owner_by_email(db, email=token_data.email)
-    if owner is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials")
-    return owner
+@router.post("/logout")
+async def logout(response: Response):
+    response = Response(status_code=status.HTTP_303_SEE_OTHER, headers={"Location": "/auth/login"})
+    response.delete_cookie(key="access_token")
+    return response
