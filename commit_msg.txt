@@ -1,1 +1,1 @@
-Feat: Add README, Dockerfile, and ensure pytest dependency
+Fix: Ensure pytest and deployment libraries are listed in requirements.txt and request missing UI files
