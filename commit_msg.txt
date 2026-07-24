@@ -1,1 +1,1 @@
-Fix: Ensure pytest and deployment libraries are listed in requirements.txt and request missing UI files
+Fix: Add requirements.txt and provide basic templates/static files for UI/UX polish

@@ -1,21 +1,20 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr
 from datetime import datetime
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any
 
 class ServiceSchema(BaseModel):
     name: str
-    description: Optional[str] = None
-    duration: int
-    price: Optional[float] = None
+    duration_minutes: int
+    price: str
 
-class AvailabilitySlotSchema(BaseModel):
-    day_of_week: int
+class AvailabilitySchema(BaseModel):
+    day: str
     start_time: str
     end_time: str
 
 class OwnerBase(BaseModel):
-    email: EmailStr
     name: str
+    email: EmailStr
     business_name: str
     slug: str
 
@@ -27,33 +26,21 @@ class OwnerProfileUpdate(BaseModel):
     business_name: str
     phone: Optional[str] = None
 
-class OwnerInDB(OwnerBase):
-    id: int
-    hashed_password: str
-    services_json: List[ServiceSchema] = []
-    availability_json: Dict[str, List[AvailabilitySlotSchema]] = {}
-    phone: Optional[str] = None
-
-    class Config:
-        from_attributes = True
-
 class Owner(OwnerBase):
     id: int
-    services: List[ServiceSchema] = Field(default_factory=list, alias="services_json")
-    availability: Dict[str, List[AvailabilitySlotSchema]] = Field(default_factory=dict, alias="availability_json")
+    services_json: List[ServiceSchema] = []
+    availability_json: Dict[str, Any] = {}
     phone: Optional[str] = None
 
     class Config:
         from_attributes = True
-        populate_by_name = True
 
 class BookingBase(BaseModel):
+    service_name: str
+    datetime: datetime
     customer_name: str
     customer_email: EmailStr
     customer_phone: Optional[str] = None
-    service_name: str
-    datetime: datetime
-    duration: int
 
 class BookingCreate(BookingBase):
     pass
@@ -61,7 +48,6 @@ class BookingCreate(BookingBase):
 class Booking(BookingBase):
     id: int
     owner_id: int
-    status: str
 
     class Config:
         from_attributes = True
@@ -71,8 +57,4 @@ class Token(BaseModel):
     token_type: str
 
 class TokenData(BaseModel):
-    email: Optional[str] = None
-
-class LoginForm(BaseModel):
-    email: EmailStr
-    password: str
+    id: Optional[int] = None

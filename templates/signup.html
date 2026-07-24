@@ -3,44 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign Up</title>
-    <style>
-        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; background-color: #f4f4f4; }
-        .signup-container { background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
-        .signup-container h1 { margin-bottom: 20px; color: #333; }
-        .signup-container label { display: block; text-align: left; margin-bottom: 5px; font-weight: bold; }
-        .signup-container input[type="text"], .signup-container input[type="email"], .signup-container input[type="password"] { width: calc(100% - 20px); padding: 10px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 4px; }
-        .signup-container button { width: 100%; padding: 10px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
-        .signup-container button:hover { background-color: #218838; }
-        .error-message { color: red; margin-bottom: 15px; }
-        .login-link { margin-top: 15px; }
-    </style>
+    <title>{{ _("BookSlot Signup") }}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
-    <div class="signup-container">
-        <h1>Sign Up for BookSlot</h1>
-        {% if error_message %}
+    <header>
+        <div class="container">
+            <h1>{{ _("BookSlot") }}</h1>
+            <div class="language-toggle">
+                <a href="?lang=en">EN</a> | <a href="?lang=ar">AR</a> | <a href="?lang=fr">FR</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="signup-section">
+            <h2>{{ _("Create your BookSlot Account") }}</h2>
+            {% if error_message %}
             <p class="error-message">{{ error_message }}</p>
-        {% endif %}
-        <form action="/auth/signup" method="post">
-            <label for="name">Your Name:</label>
-            <input type="text" id="name" name="name" required>
-            
-            <label for="email">Email:</label>
-            <input type="email" id="email" name="email" required>
-            
-            <label for="password">Password:</label>
-            <input type="password" id="password" name="password" required>
-            
-            <label for="business_name">Business Name:</label>
-            <input type="text" id="business_name" name="business_name" required>
-            
-            <label for="slug">Your Booking URL (e.g., bookslot.app/your-slug):</label>
-            <input type="text" id="slug" name="slug" required>
-            
-            <button type="submit">Sign Up</button>
-        </form>
-        <p class="login-link">Already have an account? <a href="/auth/login">Login</a></p>
-    </div>
+            {% endif %}
+            <form action="/auth/signup?lang={{ lang }}" method="post" class="signup-form">
+                <div class="form-group">
+                    <label for="name">{{ _("Your Name") }}:</label>
+                    <input type="text" id="name" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="business_name">{{ _("Business Name") }}:</label>
+                    <input type="text" id="business_name" name="business_name" required>
+                </div>
+                <div class="form-group">
+                    <label for="slug">{{ _("Your Booking Page Link (e.g., your-name)") }}:</label>
+                    <input type="text" id="slug" name="slug" required pattern="[a-z0-9-]+" title="{{ _('Only lowercase letters, numbers, and hyphens') }}">
+                </div>
+                <div class="form-group">
+                    <label for="email">{{ _("Email") }}:</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">{{ _("Password") }}:</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit" class="button-primary">{{ _("Sign Up") }}</button>
+            </form>
+            <p>{{ _("Already have an account?") }} <a href="/auth/login?lang={{ lang }}">{{ _("Log in here") }}</a></p>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2023 BookSlot</p>
+        </div>
+    </footer>
 </body>
 </html>

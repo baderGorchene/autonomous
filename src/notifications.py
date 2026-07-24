@@ -2,17 +2,17 @@ import os
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 from twilio.rest import Client
-from .config import settings
 import logging
-from datetime import datetime
+
+from ..config import settings
+from ..schemas import Booking
 
 logger = logging.getLogger(__name__)
 
-def send_email_notification(to_email: str, subject: str, html_content: str):
-    """Sends an email using SendGrid."""
+def send_email(to_email: str, subject: str, html_content: str):
     try:
         message = Mail(
-            from_email='no-reply@bookslot.app', # This should be a verified sender in SendGrid
+            from_email='no-reply@bookslot.app',
             to_emails=to_email,
             subject=subject,
             html_content=html_content
@@ -20,53 +20,85 @@ def send_email_notification(to_email: str, subject: str, html_content: str):
         sendgrid_client = SendGridAPIClient(settings.SENDGRID_API_KEY)
         response = sendgrid_client.send(message)
         logger.info(f"Email sent to {to_email}. Status Code: {response.status_code}")
-        return True
     except Exception as e:
         logger.error(f"Error sending email to {to_email}: {e}")
-        return False
 
-def send_whatsapp_notification(to_phone_number: str, message_body: str):
-    """Sends a WhatsApp message using Twilio."""
+def send_whatsapp_message(to_phone_number: str, message_body: str):
     try:
-        client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
-        # Twilio requires phone numbers in E.164 format (e.g., +1234567890)
-        # And for WhatsApp, it typically uses "whatsapp:<number>" format
-        to_whatsapp = f"whatsapp:{to_phone_number}"
-        from_whatsapp = f"whatsapp:{settings.TWILIO_WHATSAPP_NUMBER}"
+        account_sid = settings.TWILIO_ACCOUNT_SID
+        auth_token = settings.TWILIO_AUTH_TOKEN
+        client = Client(account_sid, auth_token)
 
         message = client.messages.create(
-            from_=from_whatsapp,
+            from_=f"whatsapp:{settings.TWILIO_WHATSAPP_NUMBER}",
             body=message_body,
-            to=to_whatsapp
+            to=f"whatsapp:{to_phone_number}"
         )
         logger.info(f"WhatsApp message sent to {to_phone_number}. SID: {message.sid}")
-        return True
     except Exception as e:
         logger.error(f"Error sending WhatsApp message to {to_phone_number}: {e}")
-        return False
 
-def send_booking_confirmation_email(customer_email: str, owner_name: str, service_name: str, booking_datetime: datetime, customer_name: str):
-    subject = f"Booking Confirmation for {service_name}"
-    html_content = f"""
-    <p>Dear {customer_name},</p>
-    <p>Your booking for {service_name} with {owner_name} has been confirmed.</p>
-    <p>Date and Time: {booking_datetime.strftime('%Y-%m-%d %H:%M')}</p>
-    <p>Thank you for choosing BookSlot!</p>
+def send_booking_confirmation(
+    owner_email: str,
+    owner_phone: Optional[str],
+    customer_email: str,
+    customer_phone: Optional[str],
+    booking: Booking,
+    owner_name: str,
+    business_name: str
+):
+    booking_time_str = booking.datetime.strftime('%Y-%m-%d %H:%M')
+    
+    customer_email_subject = f"Your BookSlot Appointment with {business_name} is Confirmed!"
+    customer_email_html = f"""
+    <html>
+    <body>
+        <p>Dear {booking.customer_name},</p>
+        <p>Your appointment for <strong>{booking.service_name}</strong> with <strong>{business_name}</strong> has been confirmed.</p>
+        <p><strong>Date & Time:</strong> {booking_time_str}</p>
+        <p>We look forward to seeing you!</p>
+        <p>Best regards,</p>
+        <p>{business_name}</p>
+    </body>
+    </html>
     """
-    return send_email_notification(customer_email, subject, html_content)
+    send_email(customer_email, customer_email_subject, customer_email_html)
 
-def send_owner_booking_notification_email(owner_email: str, customer_name: str, customer_phone: str, service_name: str, booking_datetime: datetime):
-    subject = f"New Booking Received: {service_name}"
-    html_content = f"""
-    <p>Dear Owner,</p>
-    <p>You have received a new booking!</p>
-    <p>Service: {service_name}</p>
-    <p>Customer Name: {customer_name}</p>
-    <p>Customer Phone: {customer_phone if customer_phone else 'N/A'}</p>
-    <p>Date and Time: {booking_datetime.strftime('%Y-%m-%d %H:%M')}</p>
+    if customer_phone:
+        customer_whatsapp_message = (
+            f"Hi {booking.customer_name},\n"
+            f"Your booking for {booking.service_name} with {business_name} on {booking_time_str} is confirmed.\n"
+            f"See you then!"
+        )
+        send_whatsapp_message(customer_phone, customer_whatsapp_message)
+
+    owner_email_subject = f"New BookSlot Booking for {business_name}!"
+    owner_email_html = f"""
+    <html>
+    <body>
+        <p>Dear {owner_name},</p>
+        <p>A new booking has been made for your business, <strong>{business_name}</strong>:</p>
+        <ul>
+            <li><strong>Service:</strong> {booking.service_name}</li>
+            <li><strong>Date & Time:</strong> {booking_time_str}</li>
+            <li><strong>Customer Name:</strong> {booking.customer_name}</li>
+            <li><strong>Customer Email:</strong> {booking.customer_email}</li>
+            <li><strong>Customer Phone:</strong> {booking.customer_phone or 'N/A'}</li>
+        </ul>
+        <p>Please check your dashboard for more details.</p>
+        <p>Best regards,</p>
+        <p>BookSlot Team</p>
+    </body>
+    </html>
     """
-    return send_email_notification(owner_email, subject, html_content)
+    send_email(owner_email, owner_email_subject, owner_email_html)
 
-def send_owner_booking_notification_whatsapp(owner_phone: str, customer_name: str, customer_email: str, service_name: str, booking_datetime: datetime):
-    message_body = f"New BookSlot booking: {service_name} for {customer_name} ({customer_email}) on {booking_datetime.strftime('%Y-%m-%d %H:%M')}"
-    return send_whatsapp_notification(owner_phone, message_body)
+    if owner_phone:
+        owner_whatsapp_message = (
+            f"New booking for {business_name}:\n"
+            f"Service: {booking.service_name}\n"
+            f"Date & Time: {booking_time_str}\n"
+            f"Customer: {booking.customer_name} ({booking.customer_phone or booking.customer_email})\n"
+            f"Check dashboard for details."
+        )
+        send_whatsapp_message(owner_phone, owner_whatsapp_message)

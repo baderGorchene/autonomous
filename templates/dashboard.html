@@ -1,1 +1,72 @@
-<!DOCTYPE html><html lang="{{ lang }}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>{{ _('BookSlot Dashboard') }}</title><link rel="stylesheet" href="/static/css/style.css"></head><body><div class="language-toggle"><a href="?lang=en" data-lang="en">{{ _('English') }}</a> |<a href="?lang=ar" data-lang="ar">{{ _('Arabic') }}</a> |<a href="?lang=fr" data-lang="fr">{{ _('French') }}</a></div><header><div class="container dashboard-header"><h1>{{ _('Welcome,') }} {{ owner.name }}!</h1><a href="/auth/logout" class="btn-secondary">{{ _('Logout') }}</a></div></header><main class="container"><div id="profile-message-container"data-message="{{ message if message else '' }}"data-error-message="{{ error_message if error_message else '' }}">{% if message %}<div class="message">{{ message }}</div>{% endif %}{% if error_message %}<div class="error-message">{{ error_message }}</div>{% endif %}</div><div class="dashboard-sections"><div class="card profile-card"><h2>{{ _('Your Profile') }}</h2><form id="profileUpdateForm" action="/dashboard/profile" method="post" class="profile-form"><div class="form-group"><label for="name">{{ _('Your Name') }}:</label><input type="text" id="name" name="name" value="{{ owner.name }}" required></div><div class="form-group"><label for="business_name">{{ _('Business Name') }}:</label><input type="text" id="business_name" name="business_name" value="{{ owner.business_name }}" required></div><div class="form-group"><label for="email">{{ _('Email') }}:</label><input type="email" id="email" name="email" value="{{ owner.email }}" disabled></div><div class="form-group"><label for="phone">{{ _('Phone Number') }} ({{ _('Optional') }}):</label><input type="tel" id="phone" name="phone" value="{{ owner.phone if owner.phone else '' }}" placeholder="{{ _('e.g., +15551234567') }}"></div><div class="form-group"><input type="submit" value="{{ _('Update Profile') }}" class="btn-primary"></div></form></div><div class="card services-card"><h2>{{ _('Your Services') }}</h2>{% if services %}<ul>{% for service in services %}<li><strong>{{ service.name }}</strong> - {{ service.duration_minutes }} {{ _('minutes') }} - {{ service.price }}</li>{% endfor %}</ul>{% else %}<p>{{ _('No services configured. Please set them up.') }}</p>{% endif %}<button class="btn-primary">{{ _('Manage Services') }}</button></div><div class="card bookings-card"><h2>{{ _('Upcoming Bookings') }}</h2><div class="booking-list">{% if bookings %}<table><thead><tr><th>{{ _('Service') }}</th><th>{{ _('Date & Time') }}</th><th>{{ _('Customer Name') }}</th><th>{{ _('Customer Email') }}</th><th>{{ _('Customer Phone') }}</th></tr></thead><tbody>{% for booking in bookings %}<tr><td>{{ booking.service_name }}</td><td>{{ booking.datetime.strftime('%Y-%m-%d %H:%M') }}</td><td>{{ booking.customer_name }}</td><td>{{ booking.customer_email }}</td><td>{{ booking.customer_phone if booking.customer_phone else _('N/A') }}</td></tr>{% endfor %}</tbody></table>{% else %}<p class="no-bookings">{{ _('No upcoming bookings.') }}</p>{% endif %}</div></div></div></main><script src="/static/js/script.js"></script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ _('Dashboard') }}</title>
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+</head>
+<body>
+    <div class="container">
+        <h1>{{ _('Welcome') }}, {{ owner.name }}!</h1>
+        <p>{{ _('This is your dashboard. Here you can see your upcoming bookings and manage your profile.') }}</p>
+
+        <div class="language-toggle">
+            <a href="?lang=en">English</a> |
+            <a href="?lang=ar">العربية</a> |
+            <a href="?lang=fr">Français</a>
+        </div>
+
+        <h2>{{ _('Upcoming Bookings') }}</h2>
+        {% if bookings %}
+        <table>
+            <thead>
+                <tr>
+                    <th>{{ _('Service') }}</th>
+                    <th>{{ _('Date') }}</th>
+                    <th>{{ _('Time') }}</th>
+                    <th>{{ _('Customer Name') }}</th>
+                    <th>{{ _('Customer Email') }}</th>
+                    <th>{{ _('Customer Phone') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for booking in bookings %}
+                <tr>
+                    <td>{{ booking.service_name }}</td>
+                    <td>{{ booking.booking_date }}</td>
+                    <td>{{ booking.booking_time }}</td>
+                    <td>{{ booking.customer_name }}</td>
+                    <td>{{ booking.customer_email }}</td>
+                    <td>{{ booking.customer_phone }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>{{ _('No upcoming bookings.') }}</p>
+        {% endif %}
+
+        <h2>{{ _('Manage Profile') }}</h2>
+        <form id="profileForm" action="/dashboard/profile" method="post">
+            <label for="name">{{ _('Your Name') }}:</label>
+            <input type="text" id="name" name="name" value="{{ owner.name }}" required>
+
+            <label for="business_name">{{ _('Business Name') }}:</label>
+            <input type="text" id="business_name" name="business_name" value="{{ owner.business_name }}" required>
+
+            <label for="phone">{{ _('Your Phone (WhatsApp)') }}:</label>
+            <input type="tel" id="phone" name="phone" value="{{ owner.phone if owner.phone else '' }}">
+
+            <button type="submit">{{ _('Update Profile') }}</button>
+        </form>
+
+        {% if profile_update_message %}
+        <p class="success-message">{{ profile_update_message }}</p>
+        {% endif %}
+
+        <p><a href="/logout">{{ _('Logout') }}</a></p>
+    </div>
+    <script src="/static/js/dashboard.js"></script>
+</body>
+</html>

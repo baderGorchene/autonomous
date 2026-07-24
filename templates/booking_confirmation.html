@@ -3,28 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _('Booking Confirmed') }}</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <title>{{ _("Booking Confirmed!") }}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
-    <div class="container">
-        <div class="language-toggle">
-            {% if lang == 'en' %}
-                <a href="?lang=ar">العربية</a>
-                <a href="?lang=fr">Français</a>
-            {% elif lang == 'ar' %}
-                <a href="?lang=en">English</a>
-                <a href="?lang=fr">Français</a>
-            {% elif lang == 'fr' %}
-                <a href="?lang=en">English</a>
-                <a href="?lang=ar">العربية</a>
-            {% endif %}
+    <header>
+        <div class="container">
+            <h1>{{ _("Booking Confirmed!") }}</h1>
+            <div class="language-toggle">
+                <a href="?lang=en">EN</a> | <a href="?lang=ar">AR</a> | <a href="?lang=fr">FR</a>
+            </div>
         </div>
-        <h1>{{ _('Booking Confirmed!') }}</h1>
-        <p>{{ _('Thank you for your booking with') }} <strong>{{ owner.business_name }}</strong>.</p>
-        <p>{{ _('A confirmation email has been sent to') }} <strong>{{ booking.customer_email }}</strong>.</p>
-        <p>{{ _('We look forward to seeing you on') }} <strong>{{ booking.datetime.strftime('%Y-%m-%d') }}</strong> {{ _('at') }} <strong>{{ booking.datetime.strftime('%H:%M') }}</strong> {{ _('for your') }} <strong>{{ booking.service }}</strong> {{ _('appointment.') }}</p>
-        <p><a href="/book/{{ owner.slug }}">{{ _('Book another appointment') }}</a></p>
-    </div>
+    </header>
+
+    <main class="container">
+        <section class="confirmation-section">
+            <h2>{{ _("Thank you for your booking!") }}</h2>
+            <p>{{ _("Your appointment for") }} <strong>{{ booking.service_name }}</strong> {{ _("with") }} <strong>{{ owner.business_name }}</strong> {{ _("has been confirmed.") }}</p>
+            <p>{{ _("Details:") }}</p>
+            <ul>
+                <li><strong>{{ _("Date & Time") }}:</strong> {{ booking.datetime.strftime('%Y-%m-%d %H:%M') }}</li>
+                <li><strong>{{ _("Customer Name") }}:</strong> {{ booking.customer_name }}</li>
+                <li><strong>{{ _("Customer Email") }}:</strong> {{ booking.customer_email }}</li>
+                {% if booking.customer_phone %}
+                <li><strong>{{ _("Customer Phone") }}:</strong> {{ booking.customer_phone }}</li>
+                {% endif %}
+            </ul>
+            <p>{{ _("A confirmation email has been sent to you and to the business owner.") }}</p>
+            <a href="/book/{{ owner.slug }}?lang={{ lang }}" class="button-primary">{{ _("Book another appointment") }}</a>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2023 BookSlot</p>
+        </div>
+    </footer>
 </body>
 </html>

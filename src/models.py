@@ -1,7 +1,6 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Boolean
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, JSON
 from sqlalchemy.orm import relationship
 from .database import Base
-from sqlalchemy.dialects.sqlite import JSON
 
 class Owner(Base):
     __tablename__ = "owners"
@@ -12,9 +11,9 @@ class Owner(Base):
     hashed_password = Column(String)
     business_name = Column(String)
     slug = Column(String, unique=True, index=True)
-    services_json = Column(JSON)
-    availability_json = Column(JSON)
     phone = Column(String, nullable=True)
+    services_json = Column(JSON, default=[])
+    availability_json = Column(JSON, default={})
 
     bookings = relationship("Booking", back_populates="owner")
 
@@ -23,12 +22,10 @@ class Booking(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     owner_id = Column(Integer, ForeignKey("owners.id"))
+    service_name = Column(String)
+    datetime = Column(DateTime)
     customer_name = Column(String)
     customer_email = Column(String)
     customer_phone = Column(String, nullable=True)
-    service_name = Column(String)
-    datetime = Column(DateTime)
-    duration = Column(Integer)
-    status = Column(String, default="confirmed")
 
     owner = relationship("Owner", back_populates="bookings")

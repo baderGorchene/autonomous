@@ -55,7 +55,9 @@ def get_dashboard(request: Request, current_owner: models.Owner = Depends(auth.g
         "owner": current_owner,
         "services": owner_services,
         "availability": owner_availability,
-        "lang": request.state.locale
+        "lang": request.state.locale,
+        "message": None,
+        "error_message": None
     })
 
 @app.post("/dashboard/profile")
