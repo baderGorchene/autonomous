@@ -1,0 +1,11 @@
+.git
+.venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache
+.DS_Store
+*.sqlite
+*.db
+locales/*.mo

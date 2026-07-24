@@ -1,1 +1,1 @@
-feat: Implement comprehensive error handling for booking submissions and refine notifications
+Fix: Add requirements.txt to resolve 'No module named pytest' error

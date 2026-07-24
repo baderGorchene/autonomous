@@ -1,126 +1,125 @@
-<!DOCTYPE html>
-<html lang="{{ lang or 'en' }}">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ owner.business_name }} - {{ _('Dashboard') }}</title>
-    <link rel="stylesheet" href="/static/css/style.css">
-</head>
-<body>
-    <div class="lang-toggle">
-        <label for="lang-select">{{ _('Language') }}:</label>
-        <select id="lang-select" onchange="changeLanguage(this.value)">
-            <option value="en" {% if lang == 'en' %}selected{% endif %}>English</option>
-            <option value="ar" {% if lang == 'ar' %}selected{% endif %}>العربية</option>
-            <option value="fr" {% if lang == 'fr' %}selected{% endif %}>Français</option>
-        </select>
-    </div>
-    <header>
-        <div class="container">
-            <h1>{{ owner.business_name }}</h1>
-            <p>{{ _('Welcome,') }} {{ owner.name }}!</p>
-            <form action="/auth/logout" method="post" style="display: inline;">
-                <button type="submit" class="logout-button">{{ _('Logout') }}</button>
-            </form>
-        </div>
-    </header>
+{% extends "base.html" %}
+{% block title %}{% trans %}Dashboard{% endtrans %} - BookSlot{% endblock %}
 
-    <main class="container">
-        <nav class="dashboard-nav">
-            <a href="#bookings" class="active">{{ _('Upcoming Bookings') }}</a>
-            <a href="#profile">{{ _('Profile Settings') }}</a>
+{% block head_extra %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <aside class="sidebar">
+        <nav>
+            <ul>
+                <li><a href="#profile" class="active">{% trans %}Profile{% endtrans %}</a></li>
+                <li><a href="#bookings">{% trans %}Upcoming Bookings{% endtrans %}</a></li>
+                <li><a href="#services">{% trans %}Services{% endtrans %}</a></li>
+                <li><a href="#availability">{% trans %}Availability{% endtrans %}</a></li>
+                <li><a href="/auth/logout">{% trans %}Logout{% endtrans %}</a></li>
+            </ul>
         </nav>
+    </aside>
+    <main class="dashboard-content">
+        <h1>{% trans %}Welcome{% endtrans %}, {{ owner.name }}!</h1>
 
         {% if message %}
-            <div class="message success">{{ message }}</div>
+        <div class="alert alert-success">{{ message }}</div>
+        {% endif %}
+        {% if error_message %}
+        <div class="alert alert-danger">{{ error_message }}</div>
         {% endif %}
 
-        <div id="bookings" class="section">
-            <h2>{{ _('Upcoming Bookings') }}</h2>
-            <div class="booking-list">
-                {% if bookings %}
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>{{ _('Customer Name') }}</th>
-                                <th>{{ _('Service') }}</th>
-                                <th>{{ _('Date & Time') }}</th>
-                                <th>{{ _('Contact') }}</th>
-                                <th>{{ _('Status') }}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for booking in bookings %}
-                                <tr>
-                                    <td>{{ booking.customer_name }}</td>
-                                    <td>{{ booking.service }}</td>
-                                    <td>{{ booking.datetime.strftime('%Y-%m-%d %H:%M') }}</td>
-                                    <td>{{ booking.customer_email }}<br>{{ booking.customer_phone }}</td>
-                                    <td>{{ booking.status }}</td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                {% else %}
-                    <p>{{ _('No upcoming bookings.') }}</p>
-                {% endif %}
-            </div>
-        </div>
-
-        <div id="profile" class="section" style="display: none;">
-            <h2>{{ _('Profile Settings') }}</h2>
-            <form action="/dashboard/profile?lang={{ lang }}" method="post">
-                <label for="name">{{ _('Your Name') }}:</label>
-                <input type="text" id="name" name="name" value="{{ owner.name }}" required>
-
-                <label for="business_name">{{ _('Business Name') }}:</label>
-                <input type="text" id="business_name" name="business_name" value="{{ owner.business_name }}" required>
-
-                <label for="phone">{{ _('Phone Number') }} ({{ _('WhatsApp for notifications') }}):</label>
-                <input type="tel" id="phone" name="phone" value="{{ owner.phone or '' }}" placeholder="+1234567890">
-                
-                <button type="submit">{{ _('Update Profile') }}</button>
+        <section id="profile" class="dashboard-section active">
+            <h2>{% trans %}Your Profile{% endtrans %}</h2>
+            <form action="/dashboard/profile?lang={{ lang }}" method="post" class="profile-form">
+                <div class="form-group">
+                    <label for="name">{% trans %}Name{% endtrans %}:</label>
+                    <input type="text" id="name" name="name" value="{{ owner.name }}" required>
+                </div>
+                <div class="form-group">
+                    <label for="business_name">{% trans %}Business Name{% endtrans %}:</label>
+                    <input type="text" id="business_name" name="business_name" value="{{ owner.business_name }}" required>
+                </div>
+                <div class="form-group">
+                    <label for="phone">{% trans %}Phone (WhatsApp){% endtrans %}:</label>
+                    <input type="tel" id="phone" name="phone" value="{{ owner.phone or '' }}">
+                </div>
+                <button type="submit" class="btn btn-primary">{% trans %}Update Profile{% endtrans %}</button>
             </form>
-        </div>
+        </section>
+
+        <section id="bookings" class="dashboard-section">
+            <h2>{% trans %}Upcoming Bookings{% endtrans %}</h2>
+            {% if bookings %}
+            <ul class="booking-list">
+                {% for booking in bookings %}
+                <li>
+                    <strong>{{ booking.service_name }}</strong> {% trans %}with{% endtrans %} {{ booking.customer_name }}
+                    <br>
+                    {% trans %}On{% endtrans %} {{ booking.datetime.strftime('%Y-%m-%d %H:%M') }}
+                    <br>
+                    {% trans %}Contact{% endtrans %}: {{ booking.customer_email }} {% if booking.customer_phone %}/ {{ booking.customer_phone }}{% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p>{% trans %}No upcoming bookings.{% endtrans %}</p>
+            {% endif %}
+        </section>
+
+        <section id="services" class="dashboard-section">
+            <h2>{% trans %}Your Services{% endtrans %}</h2>
+            {% if services %}
+            <ul class="service-list">
+                {% for service in services %}
+                <li>{{ service.name }} ({{ service.duration_minutes }} {% trans %}minutes{% endtrans %}) - {{ service.price }}</li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p>{% trans %}No services configured yet.{% endtrans %}</p>
+            {% endif %}
+            <button class="btn btn-secondary">{% trans %}Add New Service{% endtrans %}</button>
+        </section>
+
+        <section id="availability" class="dashboard-section">
+            <h2>{% trans %}Your Availability{% endtrans %}</h2>
+            {% if availability %}
+            <pre>{{ availability | tojson(indent=2) }}</pre> {# Display raw JSON for now #}
+            {% else %}
+            <p>{% trans %}No availability configured yet.{% endtrans %}</p>
+            {% endif %}
+            <button class="btn btn-secondary">{% trans %}Update Availability{% endtrans %}</button>
+        </section>
     </main>
+</div>
+{% endblock %}
 
-    <script src="/static/js/script.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const navLinks = document.querySelectorAll('.dashboard-nav a');
-            const sections = document.querySelectorAll('.section');
+{% block scripts_extra %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const navLinks = document.querySelectorAll('.sidebar nav ul li a');
+        const sections = document.querySelectorAll('.dashboard-section');
 
-            function showSection(targetId) {
+        navLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                navLinks.forEach(nav => nav.classList.remove('active'));
+                this.classList.add('active');
+
+                const targetId = this.getAttribute('href').substring(1);
                 sections.forEach(section => {
-                    if ('#' + section.id === targetId) {
-                        section.style.display = 'block';
+                    if (section.id === targetId) {
+                        section.classList.add('active');
                     } else {
-                        section.style.display = 'none';
+                        section.classList.remove('active');
                     }
-                });
-                navLinks.forEach(link => {
-                    if (link.getAttribute('href') === targetId) {
-                        link.classList.add('active');
-                    } else {
-                        link.classList.remove('active');
-                    }
-                });
-            }
-
-            navLinks.forEach(link => {
-                link.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    showSection(this.getAttribute('href'));
                 });
             });
-
-            // Show default section based on hash or first section
-            if (window.location.hash) {
-                showSection(window.location.hash);
-            } else {
-                showSection('#bookings');
-            }
         });
-    </script>
-</body>
-</html>
+
+        // Activate the first section by default
+        if (navLinks.length > 0) {
+            navLinks[0].click();
+        }
+    });
+</script>
+{% endblock %}
