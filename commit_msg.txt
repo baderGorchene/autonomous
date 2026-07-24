@@ -1,1 +1,1 @@
-Fix: Ensure pytest is in requirements.txt to resolve 'No module named pytest' error
+Fix: Ensure pytest and all dependencies are listed in requirements.txt
