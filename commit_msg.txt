@@ -1,1 +1,1 @@
-Fix: Add requirements.txt to resolve 'No module named pytest' error
+Feat: Add README, Dockerfile, and ensure pytest dependency
