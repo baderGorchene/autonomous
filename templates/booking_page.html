@@ -1,53 +1,91 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ lang }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ owner.business_name }} - {{ _('Book an Appointment') }}</title>
-    <link rel="stylesheet" href="/static/css/booking_page.css">
+    <title>{{ _("Book an Appointment with") }} {{ owner.business_name }}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
-    <div class="container">
-        <h1>{{ owner.business_name }}</h1>
-        <p>{{ _('Welcome to our booking page. Please select a service and a time slot.') }}</p>
-        
-        <form id="bookingForm" action="/book/{{ owner.slug }}" method="post">
-            <label for="service">{{ _('Service') }}:</label>
-            <select id="service" name="service_name" required>
-                <option value="">{{ _('Select a service') }}</option>
-                {% for service in owner.services_json %}
-                <option value="{{ service.name }}">{{ service.name }} - {{ service.duration_minutes }} {{ _('minutes') }}</option>
-                {% endfor %}
+    <header>
+        <div class="container header-controls">
+            <h1>{{ _("Book an Appointment") }}</h1>
+            <select id="language-selector" class="language-selector">
+                <option value="en" {% if lang == 'en' %}selected{% endif %}>English</option>
+                <option value="ar" {% if lang == 'ar' %}selected{% endif %}>العربية</option>
+                <option value="fr" {% if lang == 'fr' %}selected{% endif %}>Français</option>
             </select>
-
-            <label for="date">{{ _('Date') }}:</label>
-            <input type="date" id="date" name="booking_date" required>
-
-            <label for="time">{{ _('Time') }}:</label>
-            <input type="time" id="time" name="booking_time" required>
-
-            <label for="customer_name">{{ _('Your Name') }}:</label>
-            <input type="text" id="customer_name" name="customer_name" required>
-
-            <label for="customer_email">{{ _('Your Email') }}:</label>
-            <input type="email" id="customer_email" name="customer_email" required>
-
-            <label for="customer_phone">{{ _('Your Phone (WhatsApp preferred)') }}:</label>
-            <input type="tel" id="customer_phone" name="customer_phone">
-
-            <button type="submit">{{ _('Book Now') }}</button>
-        </form>
-
-        {% if error_message %}
-        <p class="error-message">{{ error_message }}</p>
-        {% endif %}
-
-        <div class="language-toggle">
-            <a href="?lang=en">English</a> |
-            <a href="?lang=ar">العربية</a> |
-            <a href="?lang=fr">Français</a>
         </div>
-    </div>
-    <script src="/static/js/booking_page.js"></script>
+    </header>
+
+    <main>
+        <div class="container">
+            <div class="card">
+                <div class="service-details">
+                    <h2>{{ owner.business_name }}</h2>
+                    <p>{{ owner.name }}</p>
+                    <p>{{ _("Welcome to our booking page! Please select a service and an available time slot below.") }}</p>
+                </div>
+
+                {% if error_message %}
+                    <p class="error-message">{{ error_message }}</p>
+                {% endif %}
+
+                <form action="/book/{{ owner.slug }}" method="post">
+                    <h3>{{ _("1. Select a Service") }}</h3>
+                    <div class="form-group">
+                        <label for="service_id">{{ _("Service") }}</label>
+                        <select id="service_id" name="service_id" required>
+                            {% for service in owner.services_json %}
+                                <option value="{{ loop.index0 }}">{{ service.name }} ({{ service.duration }} {{ _("minutes") }}) - {{ service.price }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <h3>{{ _("2. Select a Date") }}</h3>
+                    <div class="form-group">
+                        <label for="booking_date">{{ _("Date") }}</label>
+                        <input type="date" id="booking_date" name="booking_date" required min="{{ today }}" onchange="this.form.submit()">
+                    </div>
+
+                    {% if selected_date and available_slots %}
+                        <h3>{{ _("3. Select a Time Slot for") }} {{ selected_date }}</h3>
+                        <div class="form-group">
+                            <input type="hidden" id="selected_time_slot" name="time_slot" required>
+                            <div class="availability-slots">
+                                {% for slot in available_slots %}
+                                    <button type="button" class="slot-button" data-time="{{ slot }}" aria-label="{{ _('Select time') }} {{ slot }}">{{ slot }}</button>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% elif selected_date and not available_slots %}
+                        <p class="text-center">{{ _("No slots available for this date. Please choose another date.") }}</p>
+                    {% endif %}
+
+                    {% if selected_date and available_slots %}
+                        <h3>{{ _("4. Your Contact Information") }}</h3>
+                        <div class="form-group">
+                            <label for="customer_name">{{ _("Your Name") }}</label>
+                            <input type="text" id="customer_name" name="customer_name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="customer_email">{{ _("Your Email") }}</label>
+                            <input type="email" id="customer_email" name="customer_email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="customer_phone">{{ _("Your Phone (WhatsApp preferred)") }}</label>
+                            <input type="tel" id="customer_phone" name="customer_phone" placeholder="+1234567890" required>
+                        </div>
+
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-primary">{{ _("Book Now") }}</button>
+                        </div>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <script src="/static/js/main.js"></script>
 </body>
 </html>

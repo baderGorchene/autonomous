@@ -1,72 +1,82 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ lang }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _('Dashboard') }}</title>
-    <link rel="stylesheet" href="/static/css/dashboard.css">
+    <title>{{ _("BookSlot Dashboard") }}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
-    <div class="container">
-        <h1>{{ _('Welcome') }}, {{ owner.name }}!</h1>
-        <p>{{ _('This is your dashboard. Here you can see your upcoming bookings and manage your profile.') }}</p>
-
-        <div class="language-toggle">
-            <a href="?lang=en">English</a> |
-            <a href="?lang=ar">العربية</a> |
-            <a href="?lang=fr">Français</a>
+    <header>
+        <div class="container header-controls">
+            <h1>{{ _("Dashboard for") }} {{ owner.business_name }}</h1>
+            <select id="language-selector" class="language-selector">
+                <option value="en" {% if lang == 'en' %}selected{% endif %}>English</option>
+                <option value="ar" {% if lang == 'ar' %}selected{% endif %}>العربية</option>
+                <option value="fr" {% if lang == 'fr' %}selected{% endif %}>Français</option>
+            </select>
         </div>
+    </header>
 
-        <h2>{{ _('Upcoming Bookings') }}</h2>
-        {% if bookings %}
-        <table>
-            <thead>
-                <tr>
-                    <th>{{ _('Service') }}</th>
-                    <th>{{ _('Date') }}</th>
-                    <th>{{ _('Time') }}</th>
-                    <th>{{ _('Customer Name') }}</th>
-                    <th>{{ _('Customer Email') }}</th>
-                    <th>{{ _('Customer Phone') }}</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for booking in bookings %}
-                <tr>
-                    <td>{{ booking.service_name }}</td>
-                    <td>{{ booking.booking_date }}</td>
-                    <td>{{ booking.booking_time }}</td>
-                    <td>{{ booking.customer_name }}</td>
-                    <td>{{ booking.customer_email }}</td>
-                    <td>{{ booking.customer_phone }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% else %}
-        <p>{{ _('No upcoming bookings.') }}</p>
-        {% endif %}
+    <main>
+        <div class="container">
+            {% if error_message %}
+                <p class="error-message">{{ error_message }}</p>
+            {% endif %}
+            {% if success_message %}
+                <p class="success-message">{{ success_message }}</p>
+            {% endif %}
 
-        <h2>{{ _('Manage Profile') }}</h2>
-        <form id="profileForm" action="/dashboard/profile" method="post">
-            <label for="name">{{ _('Your Name') }}:</label>
-            <input type="text" id="name" name="name" value="{{ owner.name }}" required>
+            <div class="dashboard-grid">
+                <div class="card">
+                    <h2>{{ _("Upcoming Bookings") }}</h2>
+                    {% if bookings %}
+                        <ul class="booking-list">
+                            {% for booking in bookings %}
+                                <li class="booking-item">
+                                    <p><strong>{{ _("Service:") }}</strong> {{ booking.service_name }}</p>
+                                    <p><strong>{{ _("Date:") }}</strong> {{ booking.booking_date }}</p>
+                                    <p><strong>{{ _("Time:") }}</strong> {{ booking.time_slot }}</p>
+                                    <p><strong>{{ _("Customer:") }}</strong> {{ booking.customer_name }} ({{ booking.customer_email }})</p>
+                                    <p><strong>{{ _("Phone:") }}</strong> {{ booking.customer_phone }}</p>
+                                    <p class="status"><strong>{{ _("Status:") }}</strong> {{ booking.status }}</p>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-center">{{ _("No upcoming bookings.") }}</p>
+                    {% endif %}
+                </div>
 
-            <label for="business_name">{{ _('Business Name') }}:</label>
-            <input type="text" id="business_name" name="business_name" value="{{ owner.business_name }}" required>
+                <div class="card">
+                    <h2>{{ _("Your Profile") }}</h2>
+                    <form action="/dashboard/profile" method="post">
+                        <div class="form-group">
+                            <label for="name">{{ _("Your Name") }}</label>
+                            <input type="text" id="name" name="name" value="{{ owner.name }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="business_name">{{ _("Business Name") }}</label>
+                            <input type="text" id="business_name" name="business_name" value="{{ owner.business_name }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">{{ _("Email") }}</label>
+                            <input type="email" id="email" name="email" value="{{ owner.email }}" disabled>
+                            <small>{{ _("Email cannot be changed.") }}</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="phone">{{ _("Phone (for notifications)") }}</label>
+                            <input type="tel" id="phone" name="phone" value="{{ owner.phone if owner.phone else '' }}" placeholder="+1234567890">
+                        </div>
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-primary">{{ _("Update Profile") }}</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
 
-            <label for="phone">{{ _('Your Phone (WhatsApp)') }}:</label>
-            <input type="tel" id="phone" name="phone" value="{{ owner.phone if owner.phone else '' }}">
-
-            <button type="submit">{{ _('Update Profile') }}</button>
-        </form>
-
-        {% if profile_update_message %}
-        <p class="success-message">{{ profile_update_message }}</p>
-        {% endif %}
-
-        <p><a href="/logout">{{ _('Logout') }}</a></p>
-    </div>
-    <script src="/static/js/dashboard.js"></script>
+    <script src="/static/js/main.js"></script>
 </body>
 </html>
