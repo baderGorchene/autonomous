@@ -1,53 +1,50 @@
 from pydantic import BaseModel, EmailStr, Field
 from typing import List, Dict, Any, Optional
-from datetime import datetime
+import datetime
 
 class Service(BaseModel):
     name: str
-    description: Optional[str] = None
     duration_minutes: int
-    price: float
+    price: str
 
 class AvailabilitySlot(BaseModel):
-    day_of_week: int # 0=Monday, 6=Sunday
-    start_time: str # HH:MM
-    end_time: str # HH:MM
+    day_of_week: str # e.g., "Monday"
+    start_time: str # e.g., "09:00"
+    end_time: str # e.g., "17:00"
 
 class OwnerBase(BaseModel):
-    email: EmailStr
-
-class OwnerCreate(OwnerBase):
     name: str
-    password: str
+    email: EmailStr
     business_name: str
     slug: str
 
-class OwnerLogin(OwnerBase):
+class OwnerCreate(OwnerBase):
     password: str
 
 class OwnerProfileUpdate(BaseModel):
     name: str
     business_name: str
     phone: Optional[str] = None
+    services: Optional[List[Service]] = None
+    availability: Optional[List[AvailabilitySlot]] = None
 
 class Owner(OwnerBase):
     id: int
-    name: str
-    business_name: str
-    slug: str
     phone: Optional[str] = None
-    services_json: str # JSON string for services
-    availability_json: str # JSON string for availability
+    # services and availability are loaded from JSON strings in the model
+    # For Pydantic, we'll represent them as List[Service] and List[AvailabilitySlot]
+    # The actual ORM model will store them as JSON strings
 
     class Config:
-        from_attributes = True
+        orm_mode = True
+        # We'll handle the JSON (de)serialization in the API layer or using hybrid properties
 
 class BookingBase(BaseModel):
     customer_name: str
     customer_email: EmailStr
     customer_phone: Optional[str] = None
     service_name: str
-    booking_time: datetime
+    booking_time: datetime.datetime
 
 class BookingCreate(BookingBase):
     pass
@@ -55,11 +52,10 @@ class BookingCreate(BookingBase):
 class Booking(BookingBase):
     id: int
     owner_id: int
-    status: str
-    created_at: datetime
+    created_at: datetime.datetime
 
     class Config:
-        from_attributes = True
+        orm_mode = True
 
 class Token(BaseModel):
     access_token: str

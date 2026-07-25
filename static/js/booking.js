@@ -1,55 +1,80 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', () => {
     const serviceSelect = document.getElementById('service_name');
     const bookingDateInput = document.getElementById('booking_date');
     const bookingTimeSelect = document.getElementById('booking_time');
-    const slug = window.location.pathname.split('/')[1]; // Extracts 'their-name' from /their-name/book
+    let selectedServiceDuration = 0; // Global variable to store selected service duration
 
-    // Set min date to today
+    const _ = (key) => key; // Placeholder for gettext in JS
+
+    // Set min date for booking_date to today
     const today = new Date();
     const yyyy = today.getFullYear();
-    const mm = String(today.getMonth() + 1).padStart(2, '0'); // Months start at 0!
+    const mm = String(today.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
     const dd = String(today.getDate()).padStart(2, '0');
     bookingDateInput.min = `${yyyy}-${mm}-${dd}`;
 
-    function fetchAvailableTimes() {
-        const serviceName = serviceSelect.value;
-        const bookingDate = bookingDateInput.value;
+    // Event listener for service selection
+    if (serviceSelect) {
+        serviceSelect.addEventListener('change', () => {
+            const selectedOption = serviceSelect.options[serviceSelect.selectedIndex];
+            selectedServiceDuration = parseInt(selectedOption.dataset.duration || '0');
+            generateTimeSlots();
+        });
+    }
 
-        if (!serviceName || !bookingDate) {
-            bookingTimeSelect.innerHTML = '<option value="">Select a time</option>';
+    // Event listener for date selection
+    if (bookingDateInput) {
+        bookingDateInput.addEventListener('change', generateTimeSlots);
+    }
+
+    function generateTimeSlots() {
+        if (!serviceSelect || !bookingDateInput || !bookingTimeSelect) return;
+
+        const selectedDateStr = bookingDateInput.value;
+        const selectedService = serviceSelect.value;
+
+        // Clear existing options
+        bookingTimeSelect.innerHTML = `<option value="">${_("Choose a time slot")}</option>`;
+
+        if (!selectedDateStr || !selectedService || selectedServiceDuration === 0) {
             return;
         }
 
-        // Fetch available times from the backend
-        fetch(`/${slug}/available-slots?service_name=${encodeURIComponent(serviceName)}&booking_date=${bookingDate}`)
-            .then(response => response.json())
-            .then(data => {
-                bookingTimeSelect.innerHTML = '<option value="">Select a time</option>';
-                if (data.available_slots && data.available_slots.length > 0) {
-                    data.available_slots.forEach(slot => {
-                        const option = document.createElement('option');
-                        option.value = slot;
-                        option.textContent = slot;
-                        bookingTimeSelect.appendChild(option);
-                    });
-                } else {
+        const selectedDate = new Date(selectedDateStr + 'T00:00:00'); // Use T00:00:00 to avoid timezone issues
+        const dayOfWeek = selectedDate.toLocaleString('en-US', { weekday: 'long' }); // e.g., "Monday"
+
+        const relevantAvailability = ownerAvailability.filter(slot => slot.day_of_week === dayOfWeek);
+
+        if (relevantAvailability.length === 0) {
+            // Optionally, display a message that no availability for this day
+            return;
+        }
+
+        const now = new Date();
+        const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+        relevantAvailability.forEach(slot => {
+            let currentSlotTime = new Date(`${selectedDateStr}T${slot.start_time}:00`);
+            const endTime = new Date(`${selectedDateStr}T${slot.end_time}:00`);
+
+            while (currentSlotTime.getTime() + selectedServiceDuration * 60 * 1000 <= endTime.getTime()) {
+                // Only add slots that are in the future
+                if (currentSlotTime > now) {
                     const option = document.createElement('option');
-                    option.value = '';
-                    option.textContent = 'No slots available';
+                    const timeString = currentSlotTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+                    option.value = timeString;
+                    option.textContent = timeString;
                     bookingTimeSelect.appendChild(option);
                 }
-            })
-            .catch(error => {
-                console.error('Error fetching available slots:', error);
-                bookingTimeSelect.innerHTML = '<option value="">Error loading times</option>';
-            });
+                currentSlotTime.setMinutes(currentSlotTime.getMinutes() + 30); // Increment by 30 minutes for next slot check
+            }
+        });
     }
 
-    serviceSelect.addEventListener('change', fetchAvailableTimes);
-    bookingDateInput.addEventListener('change', fetchAvailableTimes);
-
-    // Initial fetch if service and date are pre-filled (e.g., after a form submission error)
-    if (serviceSelect.value && bookingDateInput.value) {
-        fetchAvailableTimes();
+    // Initial generation if a service/date is already selected (e.g., after back button)
+    if (serviceSelect && bookingDateInput) {
+        const selectedOption = serviceSelect.options[serviceSelect.selectedIndex];
+        selectedServiceDuration = parseInt(selectedOption.dataset.duration || '0');
+        generateTimeSlots();
     }
 });

@@ -1,8 +1,7 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text
 from sqlalchemy.orm import relationship
-from sqlalchemy.sql import func
-
 from .database import Base
+import datetime
 
 class Owner(Base):
     __tablename__ = "owners"
@@ -11,11 +10,11 @@ class Owner(Base):
     name = Column(String, index=True)
     email = Column(String, unique=True, index=True)
     hashed_password = Column(String)
-    business_name = Column(String)
-    slug = Column(String, unique=True, index=True)
-    phone = Column(String, nullable=True)
-    services_json = Column(Text) # Stores JSON string of services
-    availability_json = Column(Text) # Stores JSON string of availability
+    business_name = Column(String, index=True)
+    slug = Column(String, unique=True, index=True) # e.g., bookslot.app/their-name
+    phone = Column(String, nullable=True) # Added in previous step
+    services_json = Column(Text) # Stored as JSON string
+    availability_json = Column(Text) # Stored as JSON string
 
     bookings = relationship("Booking", back_populates="owner")
 
@@ -23,13 +22,12 @@ class Booking(Base):
     __tablename__ = "bookings"
 
     id = Column(Integer, primary_key=True, index=True)
-    owner_id = Column(Integer, index=True)
+    owner_id = Column(Integer, ForeignKey("owners.id"))
     customer_name = Column(String)
     customer_email = Column(String)
-    customer_phone = Column(String, nullable=True)
+    customer_phone = Column(String, nullable=True) # Added in previous step
     service_name = Column(String)
     booking_time = Column(DateTime)
-    status = Column(String, default="pending") # e.g., pending, confirmed, cancelled
-    created_at = Column(DateTime, server_default=func.now())
+    created_at = Column(DateTime, default=datetime.datetime.now)
 
     owner = relationship("Owner", back_populates="bookings")

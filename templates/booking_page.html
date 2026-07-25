@@ -1,101 +1,71 @@
-{% extends "base.html" %}
-{% block title %}{{ owner.business_name }} - {{ _('Book an Appointment') }}{% endblock %}
-{% block content %}
-<div class="container booking-page-container">
-    <h1 class="text-center mb-4">{{ owner.business_name }}</h1>
-    <p class="text-center lead">{{ _('Book your appointment quickly and easily.') }}</p>
+<!DOCTYPE html>
+<html lang="{{ current_lang }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ owner.business_name }} - {{ _("Book Your Appointment") }}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <header>
+        <nav>
+            <a href="/{{ owner.slug }}" class="logo">{{ owner.business_name }}</a>
+            <div class="lang-toggle">
+                <a href="{{ request.url | urlencode(query_param_name='lang', value='en') }}" class="{{ 'active' if current_lang == 'en' }}">EN</a>
+                <a href="{{ request.url | urlencode(query_param_name='lang', value='ar') }}" class="{{ 'active' if current_lang == 'ar' }}">AR</a>
+                <a href="{{ request.url | urlencode(query_param_name='lang', value='fr') }}" class="{{ 'active' if current_lang == 'fr' }}">FR</a>
+            </div>
+        </nav>
+    </header>
+    <main class="booking-container">
+        <h1>{{ _("Book Your Appointment with %s") % owner.business_name }}</h1>
+        <p>{{ _("Welcome! Please select a service and an available time slot.") }}</p>
 
-    {% if error %}
-    <div class="alert alert-danger text-center">{{ error }}</div>
-    {% endif %}
+        {% if request.query_params.get('error') == 'owner_not_found' %}
+            <p class="error-message">{{ _("Booking page not found.") }}</p>
+        {% elif request.query_params.get('error') == 'invalid_booking_time' %}
+            <p class="error-message">{{ _("Invalid booking time. Please choose a future slot.") }}</p>
+        {% elif request.query_params.get('error') == 'booking_failed' %}
+            <p class="error-message">{{ _("Booking failed. Please try again later.") }}</p>
+        {% endif %}
 
-    <form action="/{{ owner.slug }}/book" method="post" class="booking-form card p-4 shadow-sm">
-        <div class="mb-3">
-            <label for="customer_name" class="form-label">{{ _('Your Name') }}</label>
-            <input type="text" class="form-control" id="customer_name" name="customer_name" required>
-        </div>
-        <div class="mb-3">
-            <label for="customer_email" class="form-label">{{ _('Your Email') }}</label>
-            <input type="email" class="form-control" id="customer_email" name="customer_email" required>
-        </div>
-        <div class="mb-3">
-            <label for="customer_phone" class="form-label">{{ _('Your Phone Number (Optional, for WhatsApp notifications)') }}</label>
-            <input type="text" class="form-control" id="customer_phone" name="customer_phone">
-        </div>
-        <div class="mb-3">
-            <label for="service_name" class="form-label">{{ _('Select Service') }}</label>
-            <select class="form-select" id="service_name" name="service_name" required>
-                <option value="">{{ _('Choose a service...') }}</option>
+        <form action="/{{ owner.slug }}/book" method="post">
+            <label for="customer_name">{{ _("Your Name") }}</label>
+            <input type="text" id="customer_name" name="customer_name" required>
+
+            <label for="customer_email">{{ _("Your Email") }}</label>
+            <input type="email" id="customer_email" name="customer_email" required>
+
+            <label for="customer_phone">{{ _("Your Phone Number (Optional, for WhatsApp notifications)") }}</label>
+            <input type="tel" id="customer_phone" name="customer_phone">
+
+            <label for="service_name">{{ _("Select Service") }}</label>
+            <select id="service_name" name="service_name" required>
+                <option value="">{{ _("Choose a service") }}</option>
                 {% for service in services %}
-                <option value="{{ service.name }}">{{ service.name }} - {{ "%.2f"|format(service.price) }}</option>
+                    <option value="{{ service.name }}" data-duration="{{ service.duration_minutes }}">{{ service.name }} ({{ service.price }}) - {{ service.duration_minutes }} {{ _("minutes") }}</option>
                 {% endfor %}
             </select>
-        </div>
-        <div class="mb-3">
-            <label for="booking_date" class="form-label">{{ _('Select Date') }}</label>
-            <input type="date" class="form-control" id="booking_date" name="booking_date" required>
-        </div>
-        <div class="mb-3">
-            <label for="booking_time" class="form-label">{{ _('Select Time') }}</label>
-            <select class="form-select" id="booking_time" name="booking_time" required>
-                <option value="">{{ _('Choose a time...') }}</option>
-                {% for slot in available_slots %}
-                    {% if loop.first or loop.previtem.date != slot.date %}
-                        <optgroup label="{{ slot.date }}">
-                    {% endif %}
-                    <option value="{{ slot.time }}" data-date="{{ slot.date }}">{{ slot.time }}</option>
-                    {% if loop.last or loop.nextitem.date != slot.date %}
-                        </optgroup>
-                    {% endif %}
-                {% endfor %}
+
+            <label for="booking_date">{{ _("Select Date") }}</label>
+            <input type="date" id="booking_date" name="booking_date" required>
+
+            <label for="booking_time">{{ _("Select Time") }}</label>
+            <select id="booking_time" name="booking_time" required>
+                <option value="">{{ _("Choose a time slot") }}</option>
+                <!-- Time slots will be dynamically loaded here by JavaScript -->
             </select>
-        </div>
-        <button type="submit" class="btn btn-primary btn-lg">{{ _('Book Now') }}</button>
-    </form>
-</div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const bookingDateInput = document.getElementById('booking_date');
-        const bookingTimeSelect = document.getElementById('booking_time');
-        const allTimeOptions = Array.from(bookingTimeSelect.options);
-
-        // Set min date to today
-        const today = new Date();
-        const yyyy = today.getFullYear();
-        const mm = String(today.getMonth() + 1).padStart(2, '0'); // Months start at 0!
-        const dd = String(today.getDate()).padStart(2, '0');
-        bookingDateInput.min = `${yyyy}-${mm}-${dd}`;
-
-        function filterTimes() {
-            const selectedDate = bookingDateInput.value;
-            bookingTimeSelect.innerHTML = '<option value="">{{ _("Choose a time...") }}</option>';
-
-            let currentOptgroupLabel = '';
-            allTimeOptions.forEach(option => {
-                if (option.tagName === 'OPTGROUP') {
-                    currentOptgroupLabel = option.label;
-                    return; // Skip optgroup itself
-                }
-
-                const optionDate = option.dataset.date || currentOptgroupLabel; // Fallback for options not directly under optgroup
-                if (optionDate === selectedDate) {
-                    let optgroup = bookingTimeSelect.querySelector(`optgroup[label="${optionDate}"]`);
-                    if (!optgroup) {
-                        optgroup = document.createElement('optgroup');
-                        optgroup.label = optionDate;
-                        bookingTimeSelect.appendChild(optgroup);
-                    }
-                    const newOption = option.cloneNode(true);
-                    optgroup.appendChild(newOption);
-                }
-            });
-        }
-
-        bookingDateInput.addEventListener('change', filterTimes);
-
-        // Initial filtering based on default selected date or today
-        filterTimes();
-    });
-</script>
-{% endblock %}
+            <button type="submit">{{ _("Book Now") }}</button>
+        </form>
+    </main>
+    <footer>
+        <p>&copy; 2023 BookSlot. {{ _("All rights reserved.") }}</p>
+    </footer>
+    <script>
+        const ownerAvailability = {{ availability | tojson }};
+        const _ = (key) => key; // Placeholder for gettext in JS
+    </script>
+    <script src="/static/js/booking.js"></script>
+</body>
+</html>

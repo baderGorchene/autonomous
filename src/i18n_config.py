@@ -29,4 +29,15 @@ def get_jinja_env(locale='en'):
             
     env.install_gettext_translations(translate)
     
+    # Add a custom filter for URL query parameter modification
+    def urlencode_query_param(url, query_param_name, value):
+        from urllib.parse import urlparse, urlunparse, parse_qs, urlencode
+        parsed_url = urlparse(url)
+        query_params = parse_qs(parsed_url.query)
+        query_params[query_param_name] = [value]
+        new_query = urlencode(query_params, doseq=True)
+        return urlunparse(parsed_url._replace(query=new_query))
+
+    env.filters['urlencode'] = urlencode_query_param
+    
     return env

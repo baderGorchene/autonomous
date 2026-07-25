@@ -15,7 +15,7 @@ def get_owners(db: Session, skip: int = 0, limit: int = 100):
 
 def create_owner(db: Session, owner: schemas.OwnerCreate):
     hashed_password = security.get_password_hash(owner.password)
-    db_owner = models.Owner(name=owner.name, email=owner.email, hashed_password=hashed_password, business_name=owner.business_name, slug=owner.slug, services_json=[], availability_json={})
+    db_owner = models.Owner(name=owner.name, email=owner.email, hashed_password=hashed_password, business_name=owner.business_name, slug=owner.slug, services_json="[]", availability_json="{}")
     db.add(db_owner)
     db.commit()
     db.refresh(db_owner)
@@ -40,6 +40,7 @@ def update_owner_profile(db: Session, current_owner: models.Owner, owner_update:
     current_owner.name = owner_update.name
     current_owner.business_name = owner_update.business_name
     current_owner.phone = owner_update.phone
+    # services_json and availability_json are updated in main.py directly after validation
     db.add(current_owner)
     db.commit()
     db.refresh(current_owner)

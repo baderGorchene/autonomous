@@ -1,14 +1,30 @@
-{% extends "base.html" %}
-{% block title %}{{ _('Booking Confirmed') }}{% endblock %}
-{% block content %}
-<div class="container confirmation-container text-center">
-    <h1 class="text-success mb-3"><i class="bi bi-check-circle-fill"></i> {{ _('Booking Confirmed!') }}</h1>
-    <p class="lead">{{ _('Thank you,') }} {{ booking.customer_name }}.</p>
-    <p>{{ _('Your appointment with') }} <strong>{{ owner.business_name }}</strong> {{ _('for') }} <strong>{{ booking.service_name }}</strong> {{ _('on') }} <strong>{{ booking.booking_time.strftime('%Y-%m-%d') }}</strong> {{ _('at') }} <strong>{{ booking.booking_time.strftime('%H:%M') }}</strong> {{ _('has been successfully booked.') }}</p>
-    <p>{{ _('A confirmation email has been sent to') }} {{ booking.customer_email }}.</p>
-    {% if booking.customer_phone %}
-    <p>{{ _('You may also receive a WhatsApp notification.') }}</p>
-    {% endif %}
-    <a href="/{{ owner.slug }}" class="btn btn-primary mt-4">{{ _('Book Another Appointment') }}</a>
-</div>
-{% endblock %}
+<!DOCTYPE html>
+<html lang="{{ current_lang }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ _("Booking Confirmed!") }} - BookSlot</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <header>
+        <nav>
+            <a href="/{{ owner.slug }}" class="logo">{{ owner.business_name }}</a>
+            <div class="lang-toggle">
+                <a href="{{ request.url | urlencode(query_param_name='lang', value='en') }}" class="{{ 'active' if current_lang == 'en' }}">EN</a>
+                <a href="{{ request.url | urlencode(query_param_name='lang', value='ar') }}" class="{{ 'active' if current_lang == 'ar' }}">AR</a>
+                <a href="{{ request.url | urlencode(query_param_name='lang', value='fr') }}" class="{{ 'active' if current_lang == 'fr' }}">FR</a>
+            </div>
+        </nav>
+    </header>
+    <main class="confirmation-container">
+        <h1>{{ _("Booking Confirmed!") }}</h1>
+        <p>{{ _("Thank you for your booking with %s.") % owner.business_name }}</p>
+        <p>{{ _("A confirmation email has been sent to you.") }}</p>
+        <p><a href="/{{ owner.slug }}">{{ _("Book another appointment") }}</a></p>
+    </main>
+    <footer>
+        <p>&copy; 2023 BookSlot. {{ _("All rights reserved.") }}</p>
+    </footer>
+</body>
+</html>
