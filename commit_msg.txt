@@ -1,1 +1,1 @@
-Feat: Comprehensive UI/UX polish for booking and dashboard pages
+Fix: Ensure pytest is installed by providing comprehensive requirements.txt
