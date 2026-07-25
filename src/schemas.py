@@ -2,67 +2,104 @@ from pydantic import BaseModel, EmailStr, Field
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 
-# Service Schema (for JSON storage within Owner)
-class ServiceSchema(BaseModel):
-    name: str
-    duration_minutes: int
-    price: float
+class Service(BaseModel):
+    name: str = Field(..., min_length=1, max_length=100)
+    duration_minutes: int = Field(..., gt=0)
+    price: float = Field(..., ge=0)
 
-# Availability Schema (for JSON storage within Owner)
-class AvailabilitySchema(BaseModel):
-    day_of_week: str # e.g., "Monday", "Tuesday"
-    start_time: str # e.g., "09:00"
-    end_time: str # e.g., "17:00"
+class AvailabilitySlot(BaseModel):
+    start_time: str
+    end_time: str
 
-# Owner Schemas
+class DayAvailability(BaseModel):
+    is_available: bool
+    slots: List[AvailabilitySlot] = []
+
 class OwnerBase(BaseModel):
-    email: EmailStr
     name: str
+    email: EmailStr
     business_name: str
-    slug: str # Unique identifier for public booking page URL
-    phone: Optional[str] = None # Added for WhatsApp notifications
+    slug: str
 
 class OwnerCreate(OwnerBase):
     password: str
+    phone: Optional[str] = None
+
+class OwnerUpdate(BaseModel):
+    name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    business_name: Optional[str] = None
+    phone: Optional[str] = None
+    services: Optional[List[Service]] = None
+    availability: Optional[Dict[str, DayAvailability]] = None
 
 class OwnerProfileUpdate(BaseModel):
     name: str
     business_name: str
     phone: Optional[str] = None
-    # services_json and availability_json are handled as raw JSON strings in main.py for flexibility
+    services: List[Service]
+    availability: Dict[str, DayAvailability]
 
 class OwnerInDB(OwnerBase):
     id: int
-    services_json: str = "[]"  # Store as JSON string
-    availability_json: str = "{}" # Store as JSON string
+    is_active: bool
+    services_json: str
+    availability_json: str
+    phone: Optional[str] = None
 
     class Config:
         from_attributes = True
 
-# Booking Schemas
+class Owner(OwnerInDB):
+    pass
+
 class BookingBase(BaseModel):
     customer_name: str
     customer_email: EmailStr
     customer_phone: Optional[str] = None
     service_name: str
-    booking_time: datetime # Use datetime object
+    booking_time: datetime
 
 class BookingCreate(BookingBase):
     pass
 
-class BookingInDB(BookingBase):
+class Booking(BookingBase):
     id: int
     owner_id: int
-    status: str
     created_at: datetime
 
     class Config:
         from_attributes = True
 
-# Security Schemas
 class Token(BaseModel):
     access_token: str
     token_type: str
 
 class TokenData(BaseModel):
     email: Optional[str] = None
+
+class LoginForm(BaseModel):
+    email: EmailStr
+    password: str
+
+class SignupForm(BaseModel):
+    name: str
+    email: EmailStr
+    password: str
+    business_name: str
+    slug: str
+    phone: Optional[str] = None
+
+class BookingForm(BaseModel):
+    customer_name: str
+    customer_email: EmailStr
+    customer_phone: Optional[str] = None
+    service_name: str
+    booking_date: str
+    booking_time: str
+
+class ServiceUpdateForm(BaseModel):
+    services: List[Service]
+
+class AvailabilityUpdateForm(BaseModel):
+    availability: Dict[str, DayAvailability]

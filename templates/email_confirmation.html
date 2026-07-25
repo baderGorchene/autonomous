@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Booking Confirmation</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 20px auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background-color: #f9f9f9; }
+        .header { background-color: #007bff; color: white; padding: 10px 20px; text-align: center; border-radius: 8px 8px 0 0; }
+        .content { padding: 20px; }
+        .footer { text-align: center; font-size: 0.9em; color: #777; margin-top: 20px; padding-top: 10px; border-top: 1px solid #eee; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>BookSlot Booking Confirmation</h2>
+        </div>
+        <div class="content">
+            {% if is_owner %}
+            <p>Dear {{ owner_name }},</p>
+            <p>You have a new booking!</p>
+            <p><strong>Customer:</strong> {{ customer_name }}</p>
+            <p><strong>Service:</strong> {{ service_name }}</p>
+            <p><strong>Time:</strong> {{ booking_time }}</p>
+            <p>Please check your BookSlot dashboard for more details.</p>
+            {% else %}
+            <p>Dear {{ customer_name }},</p>
+            <p>Your booking with {{ owner_name }} has been successfully confirmed!</p>
+            <p><strong>Service:</strong> {{ service_name }}</p>
+            <p><strong>Time:</strong> {{ booking_time }}</p>
+            <p>We look forward to seeing you!</p>
+            {% endif %}
+            <p>Thank you for using BookSlot.</p>
+        </div>
+        <div class="footer">
+            <p>&copy; {{ booking_time.split(' ')[0][:4] }} BookSlot. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

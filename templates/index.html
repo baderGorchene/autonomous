@@ -1,10 +1,45 @@
-{% extends "base.html" %}
-{% block title %}{{ _('Welcome to BookSlot') }}{% endblock %}
-{% block content %}
-<div class="container">
-    <h1>{{ _('Welcome to BookSlot') }}</h1>
-    <p>{{ _('Your dead-simple booking page for local service businesses.') }}</p>
-    <p><a href="/signup" class="btn btn-primary">{{ _('Sign Up Now') }}</a></p>
-    <p>{{ _('Already have an account?') }} <a href="/login">{{ _('Login') }}</a></p>
-</div>
-{% endblock %}
+<!DOCTYPE html>
+<html lang="{{ request.cookies.get('locale', 'en') }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ _('BookSlot - Dead-simple booking page') }}</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <header>
+        <h1>{{ _('BookSlot') }}</h1>
+        <nav>
+            <a href="/login">{{ _('Login') }}</a>
+            <a href="/signup">{{ _('Sign Up') }}</a>
+            <form action="/set-locale" method="post" style="display: inline;">
+                <select name="locale" onchange="this.form.submit()">
+                    <option value="en" {% if request.cookies.get('locale') == 'en' %}selected{% endif %}>English</option>
+                    <option value="ar" {% if request.cookies.get('locale') == 'ar' %}selected{% endif %}>العربية</option>
+                    <option value="fr" {% if request.cookies.get('locale') == 'fr' %}selected{% endif %}>Français</option>
+                </select>
+            </form>
+        </nav>
+    </header>
+    <main>
+        <section class="hero">
+            <h2>{{ _('Say Goodbye to WhatsApp Chaos') }}</h2>
+            <p>{{ _('BookSlot offers a dead-simple booking page for local service businesses.') }}</p>
+            <a href="/signup" class="button">{{ _('Get Started Free') }}</a>
+        </section>
+        <section class="features">
+            <h3>{{ _('Features') }}</h3>
+            <ul>
+                <li>{{ _('Shareable booking link') }}</li>
+                <li>{{ _('Customer self-booking') }}</li>
+                <li>{{ _('WhatsApp/Email notifications') }}</li>
+                <li>{{ _('No customer accounts needed') }}</li>
+                <li>{{ _('Bilingual support (English + Arabic/French)') }}</li>
+            </ul>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2024 BookSlot. {{ _('All rights reserved.') }}</p>
+    </footer>
+</body>
+</html>

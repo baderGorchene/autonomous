@@ -1,7 +1,6 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-
 from .database import Base
 
 class Owner(Base):
@@ -12,10 +11,11 @@ class Owner(Base):
     email = Column(String, unique=True, index=True)
     hashed_password = Column(String)
     business_name = Column(String)
-    slug = Column(String, unique=True, index=True) # For public booking page URL
-    services_json = Column(Text) # Stores JSON string of services offered
-    availability_json = Column(Text) # Stores JSON string of availability
-    phone = Column(String, nullable=True) # Owner's phone number for WhatsApp notifications
+    slug = Column(String, unique=True, index=True)
+    phone = Column(String, nullable=True)
+    services_json = Column(Text, default="[]")
+    availability_json = Column(Text, default="{}")
+    is_active = Column(Boolean, default=True)
 
     bookings = relationship("Booking", back_populates="owner")
 
@@ -28,8 +28,7 @@ class Booking(Base):
     customer_email = Column(String)
     customer_phone = Column(String, nullable=True)
     service_name = Column(String)
-    booking_time = Column(DateTime) # Store as datetime object
-    status = Column(String, default="pending") # e.g., "pending", "confirmed", "cancelled"
+    booking_time = Column(DateTime)
     created_at = Column(DateTime, server_default=func.now())
 
     owner = relationship("Owner", back_populates="bookings")

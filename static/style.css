@@ -1,21 +1,399 @@
-body { font-family: sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; color: #333; }
-header { background-color: #007bff; color: white; padding: 1em; text-align: center; }
-header h1 { margin: 0; }
-nav { margin-top: 10px; }
-nav a { color: white; margin: 0 10px; text-decoration: none; }
-nav a:hover { text-decoration: underline; }
-main { max-width: 800px; margin: 20px auto; padding: 20px; background-color: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-form label { display: block; margin-bottom: 5px; font-weight: bold; }
-form input[type="text"], form input[type="email"], form input[type="password"], form input[type="tel"], form input[type="date"], form input[type="time"], form select {
-    width: calc(100% - 20px); padding: 10px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;
+/* General Body Styles */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f7f6;
+    color: #333;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
-form button { background-color: #28a745; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
-form button:hover { background-color: #218838; }
-.error-messages { color: red; margin-bottom: 15px; border: 1px solid red; padding: 10px; border-radius: 4px; background-color: #ffe0e0; }
-.lang-switcher { float: right; }
-.lang-switcher a { color: white; text-decoration: none; margin-left: 5px; }
-.lang-switcher a.active { font-weight: bold; text-decoration: underline; }
-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-table, th, td { border: 1px solid #ddd; }
-th, td { padding: 8px; text-align: left; }
-th { background-color: #f2f2f2; }
+
+.container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Header */
+header {
+    background-color: #2c3e50;
+    color: #ecf0f1;
+    padding: 15px 0;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+header h1 {
+    margin: 0;
+    font-size: 2em;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+header nav {
+    display: inline-block;
+    vertical-align: middle;
+    margin-left: 20px;
+}
+
+header nav a {
+    color: #ecf0f1;
+    text-decoration: none;
+    margin: 0 10px;
+    font-weight: bold;
+    transition: color 0.3s ease;
+}
+
+header nav a:hover {
+    color: #3498db;
+}
+
+header select {
+    background-color: #34495e;
+    color: #ecf0f1;
+    border: 1px solid #4a627a;
+    padding: 5px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+/* Buttons */
+.button {
+    display: inline-block;
+    background-color: #3498db;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+}
+
+.button:hover {
+    background-color: #2980b9;
+}
+
+/* Form Styles */
+.auth-container, .booking-form, .profile-section form {
+    background-color: #ffffff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    margin: 30px auto;
+    max-width: 500px;
+}
+
+.auth-container h2, .booking-form h3, .profile-section h2, .profile-section h3 {
+    text-align: center;
+    color: #2c3e50;
+    margin-bottom: 25px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #555;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="tel"],
+input[type="date"],
+input[type="time"],
+input[type="number"],
+select,
+textarea {
+    width: calc(100% - 20px);
+    padding: 10px;
+    margin-top: 5px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-size: 1em;
+}
+
+input[type="submit"],
+form button[type="submit"] {
+    width: 100%;
+    background-color: #27ae60;
+    color: white;
+    padding: 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1.1em;
+    transition: background-color 0.3s ease;
+    margin-top: 20px;
+}
+
+input[type="submit"]:hover,
+form button[type="submit"]:hover {
+    background-color: #219d55;
+}
+
+.error-message {
+    color: #e74c3c;
+    background-color: #fdd;
+    border: 1px solid #e74c3c;
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.success-message {
+    color: #27ae60;
+    background-color: #dfd;
+    border: 1px solid #27ae60;
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+/* Dashboard Specifics */
+.dashboard-page main {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.profile-section, .bookings-section {
+    background-color: #ffffff;
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    flex: 1;
+    min-width: 300px;
+}
+
+.profile-section {
+    flex-basis: 60%;
+}
+
+.bookings-section {
+    flex-basis: 35%;
+}
+
+@media (max-width: 768px) {
+    .profile-section, .bookings-section {
+        flex-basis: 100%;
+    }
+}
+
+.bookings-section table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.bookings-section th, .bookings-section td {
+    border: 1px solid #eee;
+    padding: 10px;
+    text-align: left;
+}
+
+.bookings-section th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+}
+
+.service-item, .time-slot-item {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.service-item input, .time-slot-item input {
+    flex: 1;
+    min-width: 100px;
+}
+
+.remove-service-btn, .remove-slot-btn {
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.remove-service-btn:hover, .remove-slot-btn:hover {
+    background-color: #c0392b;
+}
+
+#add-service-btn, .add-slot-btn {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-top: 10px;
+}
+
+#add-service-btn:hover, .add-slot-btn:hover {
+    background-color: #2980b9;
+}
+
+.day-availability {
+    margin-bottom: 20px;
+    padding: 15px;
+    border: 1px solid #eee;
+    border-radius: 5px;
+    background-color: #fdfdfd;
+}
+
+.day-availability h4 {
+    margin-top: 0;
+    color: #2c3e50;
+}
+
+.time-slots {
+    margin-top: 10px;
+}
+
+.day-toggle {
+    margin-right: 8px;
+}
+
+/* Confirmation Page */
+.confirmation-page .confirmation-message {
+    text-align: center;
+    padding: 50px 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    margin-top: 50px;
+}
+
+.confirmation-page .confirmation-message h2 {
+    color: #27ae60;
+    font-size: 2.5em;
+    margin-bottom: 20px;
+}
+
+.confirmation-page .confirmation-message p {
+    font-size: 1.1em;
+    margin-bottom: 15px;
+}
+
+/* Footer */
+footer {
+    text-align: center;
+    padding: 20px;
+    margin-top: 40px;
+    color: #777;
+    font-size: 0.9em;
+    border-top: 1px solid #eee;
+}
+
+/* RTL support for Arabic */
+[lang="ar"] body {
+    direction: rtl;
+    text-align: right;
+}
+[lang="ar"] header nav {
+    margin-left: 0;
+    margin-right: 20px;
+}
+[lang="ar"] header nav a {
+    margin: 0 10px;
+}
+[lang="ar"] .bookings-section th, [lang="ar"] .bookings-section td {
+    text-align: right;
+}
+[lang="ar"] .service-item, [lang="ar"] .time-slot-item {
+    direction: rtl;
+}
+[lang="ar"] .service-item input, [lang="ar"] .service-item input {
+    text-align: right;
+}
+[lang="ar"] .profile-section p a {
+    direction: ltr;
+    display: inline-block;
+}
+[lang="ar"] header select {
+    direction: ltr;
+    text-align: left;
+}
+[lang="ar"] .auth-container span {
+    display: inline-block;
+    vertical-align: middle;
+}
+[lang="ar"] .auth-container input#slug {
+    display: inline-block;
+    width: calc(100% - 150px);
+    vertical-align: middle;
+    direction: ltr;
+    text-align: left;
+}
+
+/* Mobile-first adjustments */
+@media (max-width: 600px) {
+    .container {
+        padding: 10px;
+    }
+
+    header h1 {
+        font-size: 1.5em;
+        display: block;
+        margin-bottom: 10px;
+    }
+
+    header nav {
+        margin-left: 0;
+        display: block;
+        text-align: center;
+    }
+
+    header nav a {
+        display: block;
+        margin: 5px 0;
+    }
+
+    .auth-container, .booking-form, .profile-section form {
+        margin: 15px auto;
+        padding: 20px;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="tel"],
+    input[type="date"],
+    input[type="time"],
+    input[type="number"],
+    select,
+    textarea {
+        width: 100%;
+        padding: 8px;
+    }
+
+    .service-item, .time-slot-item {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 5px;
+    }
+
+    .service-item input, .time-slot-item input {
+        width: 100%;
+    }
+
+    .remove-service-btn, .remove-slot-btn, #add-service-btn, .add-slot-btn {
+        width: 100%;
+    }
+}

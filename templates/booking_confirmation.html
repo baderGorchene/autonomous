@@ -1,33 +1,37 @@
 <!DOCTYPE html>
-<html lang="{{ current_lang }}">
+<html lang="{{ request.cookies.get('locale', 'en') }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% trans %}Booking Confirmed{% endtrans %}</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f7fafc; }
-        .container { max-width: 500px; }
-    </style>
+    <title>{{ _('Booking Confirmed!') }}</title>
+    <link rel="stylesheet" href="/static/style.css">
 </head>
-<body class="flex items-center justify-center min-h-screen bg-gray-100 p-4">
-    <div class="container bg-white shadow-lg rounded-lg p-8 text-center">
-        <h1 class="text-4xl font-extrabold text-green-600 mb-6">{% trans %}Booking Confirmed!{% endtrans %} 🎉</h1>
-        <p class="text-gray-700 text-lg mb-4">{% trans %}Thank you for booking with{% endtrans %} <span class="font-semibold">{{ owner.business_name }}</span>.</p>
-        <p class="text-gray-600 mb-8">{% trans %}A confirmation email has been sent to your inbox.{% endtrans %}</p>
-        <div class="flex justify-center space-x-4">
-            <a href="/book/{{ owner.slug }}?lang={{ current_lang }}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300 shadow-md">
-                {% trans %}Book Another Slot{% endtrans %}
-            </a>
-            <a href="#" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-3 px-6 rounded-lg transition duration-300 shadow-md">
-                {% trans %}Contact Us{% endtrans %}
-            </a>
+<body class="confirmation-page">
+    <header>
+        <div class="container">
+            <h1>{{ owner.business_name }}</h1>
         </div>
-        <div class="mt-8">
-            <a href="{{ request.url|urlencode('lang', 'en') }}" class="text-blue-500 hover:text-blue-700 mx-2">English</a>
-            <a href="{{ request.url|urlencode('lang', 'ar') }}" class="text-blue-500 hover:text-blue-700 mx-2">العربية</a>
-            <a href="{{ request.url|urlencode('lang', 'fr') }}" class="text-blue-500 hover:text-blue-700 mx-2">Français</a>
+    </header>
+
+    <main class="container">
+        <div class="confirmation-message">
+            <h2>{{ _('Booking Confirmed!') }} 🎉</h2>
+            <p>{{ _('Thank you for your booking with') }} {{ owner.business_name }}.</p>
+            <p>{{ _('A confirmation email has been sent to your inbox.') }}</p>
+            <p>{{ _('We look forward to seeing you!') }}</p>
+            <a href="/bookslot.app/{{ owner.slug }}" class="button">{{ _('Book another service') }}</a>
         </div>
-    </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 BookSlot. {{ _('All rights reserved.') }}</p>
+    </footer>
+    <form action="/set-locale" method="post" style="text-align: center; margin-top: 20px;">
+        <select name="locale" onchange="this.form.submit()">
+            <option value="en" {% if request.cookies.get('locale') == 'en' %}selected{% endif %}>English</option>
+            <option value="ar" {% if request.cookies.get('locale') == 'ar' %}selected{% endif %}>العربية</option>
+            <option value="fr" {% if request.cookies.get('locale') == 'fr' %}selected{% endif %}>Français</option>
+        </select>
+    </form>
 </body>
 </html>
