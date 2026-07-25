@@ -1,42 +1,16 @@
-<!DOCTYPE html>
-<html lang="{{ current_lang }}">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _("Log In to BookSlot") }}</title>
-    <link rel="stylesheet" href="/static/css/style.css">
-</head>
-<body>
-    <header>
-        <nav>
-            <a href="/" class="logo">BookSlot</a>
-            <div class="lang-toggle">
-                <a href="{{ request.url | urlencode(query_param_name='lang', value='en') }}" class="{{ 'active' if current_lang == 'en' }}">EN</a>
-                <a href="{{ request.url | urlencode(query_param_name='lang', value='ar') }}" class="{{ 'active' if current_lang == 'ar' }}">AR</a>
-                <a href="{{ request.url | urlencode(query_param_name='lang', value='fr') }}" class="{{ 'active' if current_lang == 'fr' }}">FR</a>
-            </div>
-        </nav>
-    </header>
-    <main class="auth-container">
-        <h1>{{ _("Log In") }}</h1>
-        <form action="/login" method="post">
-            {% if request.query_params.get('message') == 'signup_success' %}
-                <p class="success-message">{{ _("Account created successfully! Please log in.") }}</p>
-            {% elif request.query_params.get('error') == 'invalid_credentials' %}
-                <p class="error-message">{{ _("Invalid email or password.") }}</p>
-            {% endif %}
-            <label for="email">{{ _("Email") }}</label>
-            <input type="email" id="email" name="email" required>
-
-            <label for="password">{{ _("Password") }}</label>
-            <input type="password" id="password" name="password" required>
-
-            <button type="submit">{{ _("Log In") }}</button>
-        </form>
-        <p>{{ _("Don't have an account?") }} <a href="/signup">{{ _("Sign Up") }}</a></p>
-    </main>
-    <footer>
-        <p>&copy; 2023 BookSlot. {{ _("All rights reserved.") }}</p>
-    </footer>
-</body>
-</html>
+{% extends "base.html" %}
+{% block title %}{{ _("Login") }}{% endblock %}
+{% block content %}
+<div class="container">
+    <h1>{{ _("Owner Login") }}</h1>
+    <form action="/login?lang={{ lang }}" method="post">
+        {% if error %}<p class="error">{{ error }}</p>{% endif %}
+        <label for="email">{{ _("Email") }}:</label>
+        <input type="email" id="email" name="username" required>
+        <label for="password">{{ _("Password") }}:</label>
+        <input type="password" id="password" name="password" required>
+        <button type="submit">{{ _("Login") }}</button>
+    </form>
+    <p>{{ _("Don't have an account?") }} <a href="/signup?lang={{ lang }}">{{ _("Sign Up") }}</a></p>
+</div>
+{% endblock %}

@@ -1,30 +1,12 @@
-<!DOCTYPE html>
-<html lang="{{ current_lang }}">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _("Booking Confirmed!") }} - BookSlot</title>
-    <link rel="stylesheet" href="/static/css/style.css">
-</head>
-<body>
-    <header>
-        <nav>
-            <a href="/{{ owner.slug }}" class="logo">{{ owner.business_name }}</a>
-            <div class="lang-toggle">
-                <a href="{{ request.url | urlencode(query_param_name='lang', value='en') }}" class="{{ 'active' if current_lang == 'en' }}">EN</a>
-                <a href="{{ request.url | urlencode(query_param_name='lang', value='ar') }}" class="{{ 'active' if current_lang == 'ar' }}">AR</a>
-                <a href="{{ request.url | urlencode(query_param_name='lang', value='fr') }}" class="{{ 'active' if current_lang == 'fr' }}">FR</a>
-            </div>
-        </nav>
-    </header>
-    <main class="confirmation-container">
-        <h1>{{ _("Booking Confirmed!") }}</h1>
-        <p>{{ _("Thank you for your booking with %s.") % owner.business_name }}</p>
-        <p>{{ _("A confirmation email has been sent to you.") }}</p>
-        <p><a href="/{{ owner.slug }}">{{ _("Book another appointment") }}</a></p>
-    </main>
-    <footer>
-        <p>&copy; 2023 BookSlot. {{ _("All rights reserved.") }}</p>
-    </footer>
-</body>
-</html>
+{% extends "base.html" %}
+{% block title %}{{ _("Booking Confirmed!") }}{% endblock %}
+{% block content %}
+<div class="container">
+    <h1>{{ _("Booking Confirmed!") }}</h1>
+    <p>{{ _("Thank you for your booking.") }}</p>
+    <p>{{ _("A confirmation email has been sent to") }} <strong>{{ booking.customer_email }}</strong>.</p>
+    <p>{{ _("You will be contacted shortly by") }} {{ owner.name }} ({{ owner.business_name }}).</p>
+    <p><a href="/book/{{ owner.slug }}?lang={{ lang }}">{{ _("Book another appointment") }}</a></p>
+    <p><a href="/dashboard?lang={{ lang }}">{{ _("Go to Dashboard") }}</a></p>
+</div>
+{% endblock %}

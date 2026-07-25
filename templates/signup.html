@@ -1,51 +1,22 @@
-<!DOCTYPE html>
-<html lang="{{ current_lang }}">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _("Sign Up for BookSlot") }}</title>
-    <link rel="stylesheet" href="/static/css/style.css">
-</head>
-<body>
-    <header>
-        <nav>
-            <a href="/" class="logo">BookSlot</a>
-            <div class="lang-toggle">
-                <a href="{{ request.url | urlencode(query_param_name='lang', value='en') }}" class="{{ 'active' if current_lang == 'en' }}">EN</a>
-                <a href="{{ request.url | urlencode(query_param_name='lang', value='ar') }}" class="{{ 'active' if current_lang == 'ar' }}">AR</a>
-                <a href="{{ request.url | urlencode(query_param_name='lang', value='fr') }}" class="{{ 'active' if current_lang == 'fr' }}">FR</a>
-            </div>
-        </nav>
-    </header>
-    <main class="auth-container">
-        <h1>{{ _("Create Your Account") }}</h1>
-        <form action="/signup" method="post">
-            {% if request.query_params.get('error') == 'email_exists' %}
-                <p class="error-message">{{ _("An account with this email already exists.") }}</p>
-            {% elif request.query_params.get('error') == 'slug_exists' %}
-                <p class="error-message">{{ _("This slug is already taken. Please choose another.") }}</p>
-            {% endif %}
-            <label for="name">{{ _("Your Name") }}</label>
-            <input type="text" id="name" name="name" required>
-
-            <label for="email">{{ _("Email") }}</label>
-            <input type="email" id="email" name="email" required>
-
-            <label for="password">{{ _("Password") }}</label>
-            <input type="password" id="password" name="password" required>
-
-            <label for="business_name">{{ _("Business Name") }}</label>
-            <input type="text" id="business_name" name="business_name" required>
-
-            <label for="slug">{{ _("Your Booking Page Link (e.g., bookslot.app/your-name)") }}</label>
-            <input type="text" id="slug" name="slug" pattern="[a-z0-9-]+" title="{{ _('Lowercase letters, numbers, and hyphens only.') }}" required>
-
-            <button type="submit">{{ _("Sign Up") }}</button>
-        </form>
-        <p>{{ _("Already have an account?") }} <a href="/login">{{ _("Log In") }}</a></p>
-    </main>
-    <footer>
-        <p>&copy; 2023 BookSlot. {{ _("All rights reserved.") }}</p>
-    </footer>
-</body>
-</html>
+{% extends "base.html" %}
+{% block title %}{{ _("Sign Up") }}{% endblock %}
+{% block content %}
+<div class="container">
+    <h1>{{ _("Owner Sign Up") }}</h1>
+    <form action="/signup?lang={{ lang }}" method="post">
+        {% if error %}<p class="error">{{ error }}</p>{% endif %}
+        <label for="name">{{ _("Your Name") }}:</label>
+        <input type="text" id="name" name="name" required>
+        <label for="email">{{ _("Email") }}:</label>
+        <input type="email" id="email" name="email" required>
+        <label for="password">{{ _("Password") }}:</label>
+        <input type="password" id="password" name="password" required>
+        <label for="business_name">{{ _("Business Name") }}:</label>
+        <input type="text" id="business_name" name="business_name" required>
+        <label for="slug">{{ _("Booking Page URL Slug") }} (e.g., your-business):</label>
+        <input type="text" id="slug" name="slug" required>
+        <button type="submit">{{ _("Sign Up") }}</button>
+    </form>
+    <p>{{ _("Already have an account?") }} <a href="/login?lang={{ lang }}">{{ _("Login") }}</a></p>
+</div>
+{% endblock %}

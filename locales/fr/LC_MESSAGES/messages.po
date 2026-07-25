@@ -1,30 +1,16 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: BookSlot\n"
-"POT-Creation-Date: 2023-11-20 10:00+0000\n"
-"PO-Revision-Date: 2023-11-20 10:00+0000\n"
-"Last-Translator: \n"
-"Language-Team: French <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 3.4\n"
 "Language: fr\n"
 
-msgid "Sign Up for BookSlot"
-msgstr "S'inscrire à BookSlot"
+msgid "Login"
+msgstr "Connexion"
 
-msgid "Create Your Account"
-msgstr "Créer votre compte"
-
-msgid "An account with this email already exists."
-msgstr "Un compte avec cet e-mail existe déjà."
-
-msgid "This slug is already taken. Please choose another."
-msgstr "Ce slug est déjà pris. Veuillez en choisir un autre."
-
-msgid "Your Name"
-msgstr "Votre nom"
+msgid "Owner Login"
+msgstr "Connexion Propriétaire"
 
 msgid "Email"
 msgstr "E-mail"
@@ -32,71 +18,122 @@ msgstr "E-mail"
 msgid "Password"
 msgstr "Mot de passe"
 
-msgid "Business Name"
-msgstr "Nom de l'entreprise"
-
-msgid "Your Booking Page Link (e.g., bookslot.app/your-name)"
-msgstr "Lien de votre page de réservation (ex: bookslot.app/votre-nom)"
-
-msgid "Lowercase letters, numbers, and hyphens only."
-msgstr "Lettres minuscules, chiffres et tirets uniquement."
+msgid "Don't have an account?"
+msgstr "Vous n'avez pas de compte ?"
 
 msgid "Sign Up"
 msgstr "S'inscrire"
 
+msgid "Owner Sign Up"
+msgstr "Inscription Propriétaire"
+
+msgid "Your Name"
+msgstr "Votre Nom"
+
+msgid "Business Name"
+msgstr "Nom de l'entreprise"
+
+msgid "Booking Page URL Slug"
+msgstr "Slug d'URL de la page de réservation"
+
 msgid "Already have an account?"
 msgstr "Vous avez déjà un compte ?"
 
-msgid "Log In"
-msgstr "Se connecter"
+msgid "Book Now"
+msgstr "Réserver maintenant"
 
-msgid "Log In to BookSlot"
-msgstr "Se connecter à BookSlot"
+msgid "Book your appointment with"
+msgstr "Réservez votre rendez-vous avec"
 
-msgid "Account created successfully! Please log in."
-msgstr "Compte créé avec succès ! Veuillez vous connecter."
+msgid "Your Phone (optional)"
+msgstr "Votre Téléphone (facultatif)"
 
-msgid "Invalid email or password."
-msgstr "E-mail ou mot de passe invalide."
+msgid "Select Service"
+msgstr "Sélectionner un service"
 
-msgid "Don't have an account?"
-msgstr "Vous n'avez pas de compte ?"
+msgid "Choose a service"
+msgstr "Choisissez un service"
 
-msgid "Logout"
-msgstr "Se déconnecter"
+msgid "min"
+msgstr "min"
 
-msgid "Owner Dashboard"
-msgstr "Tableau de bord du propriétaire"
+msgid "Preferred Date and Time"
+msgstr "Date et heure préférées"
 
-msgid "Welcome, %s!"
-msgstr "Bienvenue, %s !"
+msgid "Book Appointment"
+msgstr "Réserver un rendez-vous"
 
-msgid "Your booking page link:"
-msgstr "Lien de votre page de réservation :"
+msgid "Booking Confirmed!"
+msgstr "Réservation Confirmée !"
 
-msgid "Profile updated successfully!"
-msgstr "Profil mis à jour avec succès !"
+msgid "Thank you for your booking."
+msgstr "Merci pour votre réservation."
 
-msgid "Error updating profile: "
-msgstr "Erreur lors de la mise à jour du profil : "
+msgid "A confirmation email has been sent to"
+msgstr "Un e-mail de confirmation a été envoyé à"
 
-msgid "Your Profile"
-msgstr "Votre profil"
+msgid "You will be contacted shortly by"
+msgstr "Vous serez contacté(e) sous peu par"
 
-msgid "Phone Number (for WhatsApp notifications)"
-msgstr "Numéro de téléphone (pour les notifications WhatsApp)"
+msgid "Book another appointment"
+msgstr "Réserver un autre rendez-vous"
 
-msgid "Your Services"
-msgstr "Vos services"
+msgid "Go to Dashboard"
+msgstr "Aller au tableau de bord"
+
+msgid "Dashboard"
+msgstr "Tableau de bord"
+
+msgid "Welcome,"
+msgstr "Bienvenue,"
+
+msgid "Your Booking Page:"
+msgstr "Votre page de réservation :"
+
+msgid "Upcoming Bookings"
+msgstr "Réservations à venir"
+
+msgid "Customer Name"
+msgstr "Nom du client"
+
+msgid "Service"
+msgstr "Service"
+
+msgid "Date & Time"
+msgstr "Date et heure"
+
+msgid "Phone"
+msgstr "Téléphone"
+
+msgid "Status"
+msgstr "Statut"
+
+msgid "N/A"
+msgstr "N/A"
+
+msgid "No upcoming bookings."
+msgstr "Aucune réservation à venir."
+
+msgid "Update Your Profile"
+msgstr "Mettre à jour votre profil"
+
+msgid "Your Phone Number"
+msgstr "Votre numéro de téléphone"
+
+msgid "Services Offered"
+msgstr "Services Offerts"
 
 msgid "Service Name"
 msgstr "Nom du service"
 
-msgid "Duration (minutes)"
-msgstr "Durée (minutes)"
+msgid "Duration (min)"
+msgstr "Durée (min)"
 
-msgid "Price (e.g., $50)"
-msgstr "Prix (ex: 50$)"
+msgid "Price"
+msgstr "Prix"
+
+msgid "Description (optional)"
+msgstr "Description (facultatif)"
 
 msgid "Remove"
 msgstr "Supprimer"
@@ -104,11 +141,8 @@ msgstr "Supprimer"
 msgid "Add Service"
 msgstr "Ajouter un service"
 
-msgid "Your Availability"
-msgstr "Vos disponibilités"
-
-msgid "Select Day"
-msgstr "Sélectionner le jour"
+msgid "Availability"
+msgstr "Disponibilité"
 
 msgid "Monday"
 msgstr "Lundi"
@@ -131,95 +165,8 @@ msgstr "Samedi"
 msgid "Sunday"
 msgstr "Dimanche"
 
-msgid "Add Availability Slot"
-msgstr "Ajouter un créneau de disponibilité"
+msgid "Add Slot"
+msgstr "Ajouter un créneau"
 
 msgid "Update Profile"
 msgstr "Mettre à jour le profil"
-
-msgid "Upcoming Bookings"
-msgstr "Réservations à venir"
-
-msgid "No upcoming bookings."
-msgstr "Aucune réservation à venir."
-
-msgid "with"
-msgstr "avec"
-
-msgid "at"
-msgstr "à"
-
-msgid "Phone:"
-msgstr "Téléphone :"
-
-msgid "Book Your Appointment"
-msgstr "Réservez votre rendez-vous"
-
-msgid "Book Your Appointment with %s"
-msgstr "Réservez votre rendez-vous avec %s"
-
-msgid "Welcome! Please select a service and an available time slot."
-msgstr "Bienvenue ! Veuillez sélectionner un service et un créneau horaire disponible."
-
-msgid "Booking page not found."
-msgstr "Page de réservation introuvable."
-
-msgid "Invalid booking time. Please choose a future slot."
-msgstr "Heure de réservation invalide. Veuillez choisir un créneau futur."
-
-msgid "Booking failed. Please try again later."
-msgstr "La réservation a échoué. Veuillez réessayer plus tard."
-
-msgid "Select Service"
-msgstr "Sélectionner un service"
-
-msgid "Choose a service"
-msgstr "Choisir un service"
-
-msgid "minutes"
-msgstr "minutes"
-
-msgid "Select Date"
-msgstr "Sélectionner la date"
-
-msgid "Select Time"
-msgstr "Sélectionner l'heure"
-
-msgid "Choose a time slot"
-msgstr "Choisir un créneau horaire"
-
-msgid "Book Now"
-msgstr "Réserver maintenant"
-
-msgid "Booking Confirmed!"
-msgstr "Réservation confirmée !"
-
-msgid "Thank you for your booking with %s."
-msgstr "Merci pour votre réservation avec %s."
-
-msgid "A confirmation email has been sent to you."
-msgstr "Un e-mail de confirmation vous a été envoyé."
-
-msgid "Book another appointment"
-msgstr "Réserver un autre rendez-vous"
-
-msgid "New Booking Received!"
-msgstr "Nouvelle réservation reçue !"
-
-msgid "You have a new booking from %s for %s at %s."
-msgstr "Vous avez une nouvelle réservation de %s pour %s à %s."
-
-msgid "Customer Phone: %s."
-msgstr "Téléphone du client : %s."
-
-msgid "Your Booking with %s Confirmed!"
-msgstr "Votre réservation avec %s est confirmée !"
-
-msgid "Hi %s, your booking for %s with %s on %s is confirmed."
-msgstr "Bonjour %s, votre réservation pour %s avec %s le %s est confirmée."
-
-msgid "New booking for %s: %s for %s at %s. Customer Phone: %s"
-msgstr "Nouvelle réservation pour %s : %s pour %s à %s. Téléphone du client : %s"
-
-msgid "All rights reserved."
-msgstr "Tous droits réservés."
