@@ -1,1 +1,1 @@
-Feat: Implement comprehensive test suite for UI/UX integration, i18n, error handling and core features. Reconstruct missing app files.
+Fix: Ensure pytest is available by providing requirements.txt

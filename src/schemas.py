@@ -1,20 +1,16 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 
 class Service(BaseModel):
     name: str
     description: Optional[str] = None
-    price: Optional[float] = None
     duration_minutes: int
+    price: Optional[float] = None
 
 class AvailabilitySlot(BaseModel):
-    start_time: str # e.g., "09:00"
-    end_time: str   # e.g., "17:00"
-
-class DayAvailability(BaseModel):
-    day_of_week: str # e.g., "Monday"
-    slots: List[AvailabilitySlot]
+    start_time: str
+    end_time: str
 
 class OwnerBase(BaseModel):
     name: str
@@ -32,30 +28,16 @@ class OwnerProfileUpdate(BaseModel):
 
 class Owner(OwnerBase):
     id: int
-    services_json: List[Service] = []
-    availability_json: Dict[str, List[AvailabilitySlot]] = {} # e.g., {"Monday": [{"start_time": "09:00", "end_time": "17:00"}]}
     phone: Optional[str] = None
-    
-    class Config:
-        from_attributes = True
-
-class BookingBase(BaseModel):
-    customer_name: str
-    customer_email: EmailStr
-    customer_phone: Optional[str] = None
-    service_name: str
-    booking_time: datetime
-
-class BookingCreate(BookingBase):
-    pass
-
-class Booking(BookingBase):
-    id: int
-    owner_id: int
-    status: str
+    services_json: List[Service] = []
+    availability_json: Dict[str, List[AvailabilitySlot]] = {}
 
     class Config:
         from_attributes = True
+
+class OwnerLogin(BaseModel):
+    email: EmailStr
+    password: str
 
 class Token(BaseModel):
     access_token: str
@@ -63,3 +45,35 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     email: Optional[str] = None
+
+class BookingBase(BaseModel):
+    customer_name: str
+    customer_email: EmailStr
+    customer_phone: Optional[str] = None
+    service_name: str
+    booking_time: datetime
+    duration_minutes: int
+
+class BookingCreate(BookingBase):
+    pass
+
+class Booking(BookingBase):
+    id: int
+    owner_id: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class BookingDisplay(BaseModel):
+    customer_name: str
+    customer_email: EmailStr
+    customer_phone: Optional[str] = None
+    service_name: str
+    booking_time: datetime
+
+    class Config:
+        from_attributes = True
+
+class MessageResponse(BaseModel):
+    message: str

@@ -1,41 +1,31 @@
 <!DOCTYPE html>
-<html lang="{{ current_locale }}">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _("Sign Up") }} - BookSlot</title>
-    <link rel="stylesheet" href="/static/css/style.css">
+    <title>{{ gettext('Sign Up') }}</title>
+    <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
     <div class="container">
-        <h1>{{ _("Create Your BookSlot Account") }}</h1>
+        <h1>{{ gettext('Sign Up for BookSlot') }}</h1>
         {% if error %}
-            <p class="error-message">{{ error }}</p>
+            <p style="color: red;">{{ error }}</p>
         {% endif %}
         <form action="/signup" method="post">
-            <label for="name">{{ _("Your Name:") }}</label>
-            <input type="text" id="name" name="name" value="{{ name or '' }}" required>
-
-            <label for="email">{{ _("Email:") }}</label>
-            <input type="email" id="email" name="email" value="{{ email or '' }}" required>
-
-            <label for="password">{{ _("Password:") }}</label>
+            <label for="name">{{ gettext('Your Name') }}:</label>
+            <input type="text" id="name" name="name" required>
+            <label for="email">{{ gettext('Email') }}:</label>
+            <input type="email" id="email" name="email" required>
+            <label for="password">{{ gettext('Password') }}:</label>
             <input type="password" id="password" name="password" required>
-
-            <label for="business_name">{{ _("Business Name:") }}</label>
-            <input type="text" id="business_name" name="business_name" value="{{ business_name or '' }}" required>
-
-            <label for="slug">{{ _("Your Booking Page URL (e.g., bookslot.app/your-slug):") }}</label>
-            <input type="text" id="slug" name="slug" value="{{ slug or '' }}" required>
-            
-            <button type="submit">{{ _("Sign Up") }}</button>
+            <label for="business_name">{{ gettext('Business Name') }}:</label>
+            <input type="text" id="business_name" name="business_name" required>
+            <label for="slug">{{ gettext('Your unique booking page link (e.g., bookslot.app/your-slug)') }}:</label>
+            <input type="text" id="slug" name="slug" required>
+            <button type="submit">{{ gettext('Sign Up') }}</button>
         </form>
-        <p>{{ _("Already have an account?") }} <a href="/login">{{ _("Log in here") }}</a></p>
-        <div class="language-switcher">
-            <a href="/toggle-lang?lang=en" {% if current_locale == 'en' %}class="active"{% endif %}>English</a> |
-            <a href="/toggle-lang?lang=ar" {% if current_locale == 'ar' %}class="active"{% endif %}>العربية</a> |
-            <a href="/toggle-lang?lang=fr" {% if current_locale == 'fr' %}class="active"{% endif %}>Français</a>
-        </div>
+        <p>{{ gettext('Already have an account?') }} <a href="/login">{{ gettext('Login') }}</a></p>
     </div>
 </body>
 </html>
