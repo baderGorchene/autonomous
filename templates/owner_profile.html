@@ -1,45 +1,272 @@
 {% extends "base.html" %}
 
-{% block title %}{{ _('Edit Profile') }} - BookSlot{% endblock %}
+{% block title %}{{ _('Profile Settings') }} - BookSlot{% endblock %}
+
+{% block head %}
+<style>
+    .service-item, .availability-item {
+        border: 1px solid #ddd;
+        padding: 10px;
+        margin-bottom: 10px;
+        border-radius: 5px;
+        background-color: #f9f9f9;
+    }
+    .service-item .btn, .availability-item .btn {
+        margin-left: 5px;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8 max-w-xl">
-    <h1 class="text-3xl font-bold text-gray-800 mb-6">{{ _('Edit Your Profile') }}</h1>
+<h1 class="mb-4">{{ _('Profile Settings') }}</h1>
 
-    {% if message %}
-    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
-        <span class="block sm:inline">{{ message }}</span>
+<form action="/profile" method="post" id="profileForm">
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>{{ _('Basic Information') }}</h5>
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label for="name" class="form-label">{{ _('Your Name') }}</label>
+                <input type="text" class="form-control" id="name" name="name" value="{{ owner.name }}" required>
+            </div>
+            <div class="mb-3">
+                <label for="business_name" class="form-label">{{ _('Business Name') }}</label>
+                <input type="text" class="form-control" id="business_name" name="business_name" value="{{ owner.business_name }}" required>
+            </div>
+            <div class="mb-3">
+                <label for="phone" class="form-label">{{ _('Phone Number (for WhatsApp notifications)') }}</label>
+                <input type="text" class="form-control" id="phone" name="phone" value="{{ owner.phone or '' }}">
+                <small class="form-text text-muted">{{ _('Include country code, e.g., +1234567890') }}</small>
+            </div>
+            <div class="mb-3">
+                <label for="email" class="form-label">{{ _('Email Address') }}</label>
+                <input type="email" class="form-control" id="email" name="email" value="{{ owner.email }}" readonly>
+            </div>
+            <div class="mb-3">
+                <label for="slug" class="form-label">{{ _('Public Booking URL Slug') }}</label>
+                <div class="input-group">
+                    <span class="input-group-text">bookslot.app/</span>
+                    <input type="text" class="form-control" id="slug" name="slug" value="{{ owner.slug }}" readonly>
+                </div>
+                <small class="form-text text-muted">{{ _('This is your unique booking page URL and cannot be changed.') }}</small>
+            </div>
+        </div>
     </div>
-    {% endif %}
 
-    <form action="/auth/profile?lang={{ lang }}" method="POST" class="bg-white shadow-md rounded-lg px-8 pt-6 pb-8 mb-4">
-        <div class="mb-4">
-            <label class="block text-gray-700 text-sm font-bold mb-2" for="name">
-                {{ _('Your Name') }}
-            </label>
-            <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="name" name="name" type="text" placeholder="{{ _('Your Name') }}" value="{{ owner.name }}" required>
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5>{{ _('Your Services') }}</h5>
+            <button type="button" class="btn btn-success btn-sm" id="addServiceBtn">{{ _('Add Service') }}</button>
         </div>
-        <div class="mb-4">
-            <label class="block text-gray-700 text-sm font-bold mb-2" for="business_name">
-                {{ _('Business Name') }}
-            </label>
-            <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="business_name" name="business_name" type="text" placeholder="{{ _('Your Business Name') }}" value="{{ owner.business_name }}" required>
+        <div class="card-body">
+            <div id="servicesContainer">
+                {% for service in services %}
+                <div class="service-item" data-index="{{ loop.index0 }}">
+                    <div class="mb-2">
+                        <label class="form-label">{{ _('Service Name') }}</label>
+                        <input type="text" class="form-control service-name" value="{{ service.name }}" required>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">{{ _('Description') }}</label>
+                        <textarea class="form-control service-description">{{ service.description or '' }}</textarea>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-md-6">
+                            <label class="form-label">{{ _('Duration (minutes)') }}</label>
+                            <input type="number" class="form-control service-duration" value="{{ service.duration_minutes }}" required min="5">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{{ _('Price') }}</label>
+                            <input type="number" step="0.01" class="form-control service-price" value="{{ service.price }}" required min="0">
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-danger btn-sm remove-service">{{ _('Remove') }}</button>
+                </div>
+                {% endfor %}
+            </div>
+            <input type="hidden" name="services_json" id="servicesJsonInput">
         </div>
-        <div class="mb-6">
-            <label class="block text-gray-700 text-sm font-bold mb-2" for="phone">
-                {{ _('Phone Number (for WhatsApp notifications)') }}
-            </label>
-            <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="phone" name="phone" type="tel" placeholder="{{ _('e.g., +1234567890') }}" value="{{ owner.phone if owner.phone else '' }}">
-            <p class="text-xs text-gray-500 mt-1">{{ _('Include country code, e.g., +1234567890') }}</p>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5>{{ _('Your Availability') }}</h5>
+            <button type="button" class="btn btn-success btn-sm" id="addAvailabilityBtn">{{ _('Add Availability Slot') }}</button>
         </div>
-        <div class="flex items-center justify-between">
-            <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md focus:outline-none focus:shadow-outline transition duration-300 ease-in-out" type="submit">
-                {{ _('Update Profile') }}
-            </button>
-            <a href="/dashboard?lang={{ lang }}" class="inline-block align-baseline font-bold text-sm text-blue-600 hover:text-blue-800">
-                {{ _('Back to Dashboard') }}
-            </a>
+        <div class="card-body">
+            <div id="availabilityContainer">
+                {% for slot in availability %}
+                <div class="availability-item" data-index="{{ loop.index0 }}">
+                    <div class="row mb-2">
+                        <div class="col-md-4">
+                            <label class="form-label">{{ _('Day of Week') }}</label>
+                            <select class="form-select availability-day" required>
+                                <option value="0" {% if slot.day_of_week == 0 %}selected{% endif %}>{{ _('Monday') }}</option>
+                                <option value="1" {% if slot.day_of_week == 1 %}selected{% endif %}>{{ _('Tuesday') }}</option>
+                                <option value="2" {% if slot.day_of_week == 2 %}selected{% endif %}>{{ _('Wednesday') }}</option>
+                                <option value="3" {% if slot.day_of_week == 3 %}selected{% endif %}>{{ _('Thursday') }}</option>
+                                <option value="4" {% if slot.day_of_week == 4 %}selected{% endif %}>{{ _('Friday') }}</option>
+                                <option value="5" {% if slot.day_of_week == 5 %}selected{% endif %}>{{ _('Saturday') }}</option>
+                                <option value="6" {% if slot.day_of_week == 6 %}selected{% endif %}>{{ _('Sunday') }}</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">{{ _('Start Time') }}</label>
+                            <input type="time" class="form-control availability-start-time" value="{{ slot.start_time }}" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">{{ _('End Time') }}</label>
+                            <input type="time" class="form-control availability-end-time" value="{{ slot.end_time }}" required>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-danger btn-sm remove-availability">{{ _('Remove') }}</button>
+                </div>
+                {% endfor %}
+            </div>
+            <input type="hidden" name="availability_json" id="availabilityJsonInput">
         </div>
-    </form>
-</div>
+    </div>
+
+    <button type="submit" class="btn btn-primary w-100">{{ _('Save Changes') }}</button>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const servicesContainer = document.getElementById('servicesContainer');
+    const addServiceBtn = document.getElementById('addServiceBtn');
+    const servicesJsonInput = document.getElementById('servicesJsonInput');
+
+    const availabilityContainer = document.getElementById('availabilityContainer');
+    const addAvailabilityBtn = document.getElementById('addAvailabilityBtn');
+    const availabilityJsonInput = document.getElementById('availabilityJsonInput');
+
+    function updateServicesJson() {
+        const services = [];
+        servicesContainer.querySelectorAll('.service-item').forEach(item => {
+            services.push({
+                name: item.querySelector('.service-name').value,
+                description: item.querySelector('.service-description').value,
+                duration_minutes: parseInt(item.querySelector('.service-duration').value),
+                price: parseFloat(item.querySelector('.service-price').value)
+            });
+        });
+        servicesJsonInput.value = JSON.stringify(services);
+    }
+
+    function addServiceItem(service = {}) {
+        const div = document.createElement('div');
+        div.className = 'service-item';
+        div.innerHTML = `
+            <div class="mb-2">
+                <label class="form-label">{{ _('Service Name') }}</label>
+                <input type="text" class="form-control service-name" value="${service.name || ''}" required>
+            </div>
+            <div class="mb-2">
+                <label class="form-label">{{ _('Description') }}</label>
+                <textarea class="form-control service-description">${service.description || ''}</textarea>
+            </div>
+            <div class="row mb-2">
+                <div class="col-md-6">
+                    <label class="form-label">{{ _('Duration (minutes)') }}</label>
+                    <input type="number" class="form-control service-duration" value="${service.duration_minutes || 60}" required min="5">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">{{ _('Price') }}</label>
+                    <input type="number" step="0.01" class="form-control service-price" value="${service.price || 0.00}" required min="0">
+                </div>
+            </div>
+            <button type="button" class="btn btn-danger btn-sm remove-service">{{ _('Remove') }}</button>
+        `;
+        servicesContainer.appendChild(div);
+        div.querySelector('.remove-service').addEventListener('click', () => {
+            div.remove();
+            updateServicesJson();
+        });
+        div.querySelectorAll('input, textarea').forEach(input => input.addEventListener('change', updateServicesJson));
+        updateServicesJson();
+    }
+
+    addServiceBtn.addEventListener('click', () => addServiceItem());
+
+    function updateAvailabilityJson() {
+        const availability = [];
+        availabilityContainer.querySelectorAll('.availability-item').forEach(item => {
+            availability.push({
+                day_of_week: parseInt(item.querySelector('.availability-day').value),
+                start_time: item.querySelector('.availability-start-time').value,
+                end_time: item.querySelector('.availability-end-time').value
+            });
+        });
+        availabilityJsonInput.value = JSON.stringify(availability);
+    }
+
+    function addAvailabilityItem(slot = {}) {
+        const div = document.createElement('div');
+        div.className = 'availability-item';
+        div.innerHTML = `
+            <div class="row mb-2">
+                <div class="col-md-4">
+                    <label class="form-label">{{ _('Day of Week') }}</label>
+                    <select class="form-select availability-day" required>
+                        <option value="0" ${slot.day_of_week === 0 ? 'selected' : ''}>{{ _('Monday') }}</option>
+                        <option value="1" ${slot.day_of_week === 1 ? 'selected' : ''}>{{ _('Tuesday') }}</option>
+                        <option value="2" ${slot.day_of_week === 2 ? 'selected' : ''}>{{ _('Wednesday') }}</option>
+                        <option value="3" ${slot.day_of_week === 3 ? 'selected' : ''}>{{ _('Thursday') }}</option>
+                        <option value="4" ${slot.day_of_week === 4 ? 'selected' : ''}>{{ _('Friday') }}</option>
+                        <option value="5" ${slot.day_of_week === 5 ? 'selected' : ''}>{{ _('Saturday') }}</option>
+                        <option value="6" ${slot.day_of_week === 6 ? 'selected' : ''}>{{ _('Sunday') }}</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">{{ _('Start Time') }}</label>
+                    <input type="time" class="form-control availability-start-time" value="${slot.start_time || '09:00'}" required>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">{{ _('End Time') }}</label>
+                    <input type="time" class="form-control availability-end-time" value="${slot.end_time || '17:00'}" required>
+                </div>
+            </div>
+            <button type="button" class="btn btn-danger btn-sm remove-availability">{{ _('Remove') }}</button>
+        `;
+        availabilityContainer.appendChild(div);
+        div.querySelector('.remove-availability').addEventListener('click', () => {
+            div.remove();
+            updateAvailabilityJson();
+        });
+        div.querySelectorAll('input, select').forEach(input => input.addEventListener('change', updateAvailabilityJson));
+        updateAvailabilityJson();
+    }
+
+    addAvailabilityBtn.addEventListener('click', () => addAvailabilityItem());
+
+    // Initial setup
+    document.addEventListener('DOMContentLoaded', () => {
+        updateServicesJson();
+        updateAvailabilityJson();
+        // Add event listeners for existing items
+        servicesContainer.querySelectorAll('.remove-service').forEach(btn => {
+            btn.addEventListener('click', () => {
+                btn.closest('.service-item').remove();
+                updateServicesJson();
+            });
+        });
+        servicesContainer.querySelectorAll('input, textarea').forEach(input => input.addEventListener('change', updateServicesJson));
+
+        availabilityContainer.querySelectorAll('.remove-availability').forEach(btn => {
+            btn.addEventListener('click', () => {
+                btn.closest('.availability-item').remove();
+                updateAvailabilityJson();
+            });
+        });
+        availabilityContainer.querySelectorAll('input, select').forEach(input => input.addEventListener('change', updateAvailabilityJson));
+    });
+
+    // Before form submission, ensure JSON inputs are updated
+    document.getElementById('profileForm').addEventListener('submit', () => {
+        updateServicesJson();
+        updateAvailabilityJson();
+    });
+</script>
 {% endblock %}

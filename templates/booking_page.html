@@ -1,35 +1,176 @@
 {% extends "base.html" %}
-{% block title %}{{ owner.business_name }} - {{ _("Book Now") }}{% endblock %}
+
+{% block title %}{{ owner.business_name }} - {{ _('Book an Appointment') }}{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.css">
+<style>
+    .calendar-container {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 20px;
+    }
+    .time-slot-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 10px;
+        margin-top: 20px;
+    }
+    .time-slot-btn {
+        width: 100%;
+    }
+    .form-group label {
+        font-weight: bold;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container">
-    <h1>{{ owner.business_name }}</h1>
-    <p>{{ _("Book your appointment with") }} {{ owner.name }}</p>
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card">
+            <div class="card-header text-center">
+                <h1 class="card-title">{{ owner.business_name }}</h1>
+                <p class="card-subtitle text-muted">{{ _('Book your appointment with %s.') % owner.name }}</p>
+            </div>
+            <div class="card-body">
+                <form action="/book/{{ owner.slug }}" method="post">
+                    <div class="mb-3 form-group">
+                        <label for="customer_name" class="form-label">{{ _('Your Name') }}</label>
+                        <input type="text" class="form-control" id="customer_name" name="customer_name" required>
+                    </div>
+                    <div class="mb-3 form-group">
+                        <label for="customer_email" class="form-label">{{ _('Your Email') }}</label>
+                        <input type="email" class="form-control" id="customer_email" name="customer_email" required>
+                    </div>
+                    <div class="mb-3 form-group">
+                        <label for="customer_phone" class="form-label">{{ _('Your Phone Number (Optional, for WhatsApp notifications)') }}</label>
+                        <input type="text" class="form-control" id="customer_phone" name="customer_phone">
+                        <small class="form-text text-muted">{{ _('Include country code, e.g., +1234567890') }}</small>
+                    </div>
 
-    {% if error_message %}<p class="error-message">{{ error_message }}</p>{% endif %}
-    {% if success_message %}<p class="success-message">{{ success_message }}</p>{% endif %}
+                    <div class="mb-3 form-group">
+                        <label for="service_name" class="form-label">{{ _('Select a Service') }}</label>
+                        <select class="form-select" id="service_name" name="service_name" required>
+                            <option value="">{{ _('Choose a service...') }}</option>
+                            {% for service in services %}
+                            <option value="{{ service.name }}" data-duration="{{ service.duration_minutes }}">{{ service.name }} ({{ service.duration_minutes }} {{ _('min') }}. - {{ service.price | '%.2f' }} AED)</option>
+                            {% endfor %}
+                        </select>
+                    </div>
 
-    <form action="/book/{{ owner.slug }}?lang={{ lang }}" method="post">
-        <label for="customer_name">{{ _("Your Name") }}:</label>
-        <input type="text" id="customer_name" name="customer_name" required>
+                    <div class="mb-3 form-group">
+                        <label for="booking_date" class="form-label">{{ _('Select Date') }}</label>
+                        <input type="text" class="form-control" id="booking_date" name="booking_date" required readonly>
+                    </div>
 
-        <label for="customer_email">{{ _("Your Email") }}:</label>
-        <input type="email" id="customer_email" name="customer_email" required>
+                    <div class="mb-3 form-group">
+                        <label class="form-label">{{ _('Select Time Slot') }}</label>
+                        <div id="timeSlots" class="time-slot-grid">
+                            <p class="text-muted text-center col-12">{{ _('Please select a date to see available time slots.') }}</p>
+                        </div>
+                        <input type="hidden" id="booking_time" name="booking_time" required>
+                    </div>
 
-        <label for="customer_phone">{{ _("Your Phone (optional)") }}:</label>
-        <input type="tel" id="customer_phone" name="customer_phone">
-
-        <label for="service_name">{{ _("Select Service") }}:</label>
-        <select id="service_name" name="service_name" required>
-            <option value="">{{ _("Choose a service") }}</option>
-            {% for service in services %}
-                <option value="{{ service.name }}">{{ service.name }} ({{ service.duration }} {{ _("min") }})</option>
-            {% endfor %}
-        </select>
-
-        <label for="booking_time">{{ _("Preferred Date and Time") }}:</label>
-        <input type="datetime-local" id="booking_time" name="booking_time" required>
-
-        <button type="submit">{{ _("Book Appointment") }}</button>
-    </form>
+                    <button type="submit" class="btn btn-primary w-100">{{ _('Book Now') }}</button>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.js"></script>
+<script>
+    const availabilityData = {{ availability | tojson }};
+    const servicesData = {{ services | tojson }};
+    const bookingDateInput = document.getElementById('booking_date');
+    const timeSlotsContainer = document.getElementById('timeSlots');
+    const bookingTimeInput = document.getElementById('booking_time');
+    const serviceSelect = document.getElementById('service_name');
+
+    let selectedServiceDuration = 0;
+
+    // Update selected service duration
+    serviceSelect.addEventListener('change', () => {
+        const selectedOption = serviceSelect.options[serviceSelect.selectedIndex];
+        selectedServiceDuration = parseInt(selectedOption.dataset.duration || 0);
+        generateTimeSlots(bookingDateInput.value); // Re-generate slots with new duration
+    });
+
+    flatpickr(bookingDateInput, {
+        dateFormat: "Y-m-d",
+        minDate: "today",
+        onChange: function(selectedDates, dateStr, instance) {
+            generateTimeSlots(dateStr);
+        }
+    });
+
+    function generateTimeSlots(selectedDateStr) {
+        timeSlotsContainer.innerHTML = '';
+        bookingTimeInput.value = ''; // Clear selected time on date change
+
+        if (!selectedDateStr || selectedServiceDuration === 0) {
+            timeSlotsContainer.innerHTML = `<p class="text-muted text-center col-12">{{ _('Please select a service and a date.') }}</p>`;
+            return;
+        }
+
+        const selectedDate = new Date(selectedDateStr);
+        const dayOfWeek = selectedDate.getDay(); // 0 for Sunday, 1 for Monday, etc.
+        const currentDayAvailability = availabilityData.filter(slot => slot.day_of_week === (dayOfWeek === 0 ? 6 : dayOfWeek - 1)); // Adjust for 0=Monday, 6=Sunday vs JS 0=Sunday, 6=Saturday
+
+        if (currentDayAvailability.length === 0) {
+            timeSlotsContainer.innerHTML = `<p class="text-muted text-center col-12">{{ _('No availability for this day.') }}</p>`;
+            return;
+        }
+
+        const availableSlots = [];
+        const now = new Date();
+        const today = now.toISOString().slice(0, 10); // YYYY-MM-DD
+
+        currentDayAvailability.forEach(availability => {
+            let [startHour, startMinute] = availability.start_time.split(':').map(Number);
+            let [endHour, endMinute] = availability.end_time.split(':').map(Number);
+
+            let currentSlotTime = new Date(selectedDate);
+            currentSlotTime.setHours(startHour, startMinute, 0, 0);
+
+            let endAvailabilityTime = new Date(selectedDate);
+            endAvailabilityTime.setHours(endHour, endMinute, 0, 0);
+
+            while (currentSlotTime.getTime() + selectedServiceDuration * 60 * 1000 <= endAvailabilityTime.getTime()) {
+                // Only add slots in the future if it's today
+                if (selectedDateStr === today && currentSlotTime.getTime() <= now.getTime()) {
+                    currentSlotTime.setMinutes(currentSlotTime.getMinutes() + 30); // Increment by 30 mins for next slot check
+                    continue;
+                }
+
+                const timeString = currentSlotTime.toTimeString().slice(0, 5);
+                availableSlots.push(timeString);
+                currentSlotTime.setMinutes(currentSlotTime.getMinutes() + 30); // Assuming 30-minute intervals for display
+            }
+        });
+
+        if (availableSlots.length === 0) {
+            timeSlotsContainer.innerHTML = `<p class="text-muted text-center col-12">{{ _('No available time slots for the selected service and date.') }}</p>`;
+        } else {
+            availableSlots.sort().forEach(time => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'btn btn-outline-primary time-slot-btn';
+                button.textContent = time;
+                button.addEventListener('click', () => {
+                    document.querySelectorAll('.time-slot-btn').forEach(btn => btn.classList.remove('active', 'btn-primary'));
+                    button.classList.add('active', 'btn-primary');
+                    bookingTimeInput.value = time;
+                });
+                timeSlotsContainer.appendChild(button);
+            });
+        }
+    }
+
+    // Initial call to set up time slots if a date is pre-selected (unlikely in this MVP)
+    // generateTimeSlots(bookingDateInput.value);
+</script>
 {% endblock %}

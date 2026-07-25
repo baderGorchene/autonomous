@@ -1,16 +1,29 @@
 {% extends "base.html" %}
-{% block title %}{{ _("Login") }}{% endblock %}
+
+{% block title %}{{ _('Login') }} - BookSlot{% endblock %}
+
 {% block content %}
-<div class="container">
-    <h1>{{ _("Owner Login") }}</h1>
-    <form action="/login?lang={{ lang }}" method="post">
-        {% if error %}<p class="error">{{ error }}</p>{% endif %}
-        <label for="email">{{ _("Email") }}:</label>
-        <input type="email" id="email" name="username" required>
-        <label for="password">{{ _("Password") }}:</label>
-        <input type="password" id="password" name="password" required>
-        <button type="submit">{{ _("Login") }}</button>
-    </form>
-    <p>{{ _("Don't have an account?") }} <a href="/signup?lang={{ lang }}">{{ _("Sign Up") }}</a></p>
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="text-center">{{ _('Login to your BookSlot account') }}</h3>
+            </div>
+            <div class="card-body">
+                <form action="/token" method="post">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">{{ _('Email address') }}</label>
+                        <input type="email" class="form-control" id="username" name="username" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">{{ _('Password') }}</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">{{ _('Login') }}</button>
+                </form>
+                <p class="text-center mt-3">{{ _("Don't have an account?") }} <a href="/signup">{{ _('Sign Up') }}</a></p>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}

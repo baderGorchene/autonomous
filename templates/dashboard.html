@@ -1,130 +1,68 @@
 {% extends "base.html" %}
-{% block title %}{{ _("Dashboard") }}{% endblock %}
+
+{% block title %}{{ _('Dashboard') }} - BookSlot{% endblock %}
+
+{% block head %}
+<style>
+    .service-item, .availability-item {
+        border: 1px solid #ddd;
+        padding: 10px;
+        margin-bottom: 10px;
+        border-radius: 5px;
+        background-color: #f9f9f9;
+    }
+    .service-item .btn, .availability-item .btn {
+        margin-left: 5px;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container">
-    <h1>{{ _("Welcome,") }} {{ owner.name }}!</h1>
-    <p>{{ _("Business Name:") }} {{ owner.business_name }}</p>
-    <p>{{ _("Your Booking Page:") }} <a href="/book/{{ owner.slug }}?lang={{ lang }}">{{ request.url_for('public_booking_page', owner_slug=owner.slug) }}</a></p>
+<h1 class="mb-4">{{ _('Welcome, %s!') % owner.name }}</h1>
 
-    <h2>{{ _("Upcoming Bookings") }}</h2>
-    {% if bookings %}
-    <table>
-        <thead>
-            <tr>
-                <th>{{ _("Customer Name") }}</th>
-                <th>{{ _("Service") }}</th>
-                <th>{{ _("Date & Time") }}</th>
-                <th>{{ _("Email") }}</th>
-                <th>{{ _("Phone") }}</th>
-                <th>{{ _("Status") }}</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for booking in bookings %}
-            <tr>
-                <td>{{ booking.customer_name }}</td>
-                <td>{{ booking.service_name }}</td>
-                <td>{{ booking.booking_time.strftime('%Y-%m-%d %H:%M') }}</td>
-                <td>{{ booking.customer_email }}</td>
-                <td>{{ booking.customer_phone if booking.customer_phone else _("N/A") }}</td>
-                <td>{{ booking.status }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-    <p>{{ _("No upcoming bookings.") }}</p>
-    {% endif %}
-
-    <h2>{{ _("Update Your Profile") }}</h2>
-    <form action="/owner/me?lang={{ lang }}" method="post">
-        {% if profile_error %}<p class="error-message">{{ profile_error }}</p>{% endif %}
-        {% if profile_success %}<p class="success-message">{{ profile_success }}</p>{% endif %}
-
-        <label for="name">{{ _("Your Name") }}:</label>
-        <input type="text" id="name" name="name" value="{{ owner.name }}" required>
-
-        <label for="business_name">{{ _("Business Name") }}:</label>
-        <input type="text" id="business_name" name="business_name" value="{{ owner.business_name }}" required>
-
-        <label for="phone">{{ _("Your Phone Number") }}:</label>
-        <input type="tel" id="phone" name="phone" value="{{ owner.phone if owner.phone else '' }}">
-
-        <h3>{{ _("Services Offered") }}</h3>
-        <div id="services-container">
-            {% for service in services %}
-            <div class="service-item">
-                <input type="text" name="service_name" value="{{ service.name }}" placeholder="{{ _('Service Name') }}" required>
-                <input type="number" name="service_duration" value="{{ service.duration }}" placeholder="{{ _('Duration (min)') }}" required>
-                <input type="number" name="service_price" value="{{ service.price }}" step="0.01" placeholder="{{ _('Price') }}" required>
-                <textarea name="service_description" placeholder="{{ _('Description (optional)') }}">{{ service.description }}</textarea>
-                <button type="button" onclick="removeService(this)">{{ _("Remove") }}</button>
-            </div>
-            {% endfor %}
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">{{ _('Your Public Booking Page') }}</h5>
+    </div>
+    <div class="card-body">
+        <p>{{ _('Share this link with your customers to let them book appointments easily:') }}</p>
+        <div class="input-group mb-3">
+            <input type="text" class="form-control" value="bookslot.app/{{ owner.slug }}" readonly>
+            <button class="btn btn-outline-secondary" type="button" onclick="navigator.clipboard.writeText('bookslot.app/{{ owner.slug }}')">{{ _('Copy Link') }}</button>
         </div>
-        <button type="button" onclick="addService()">{{ _("Add Service") }}</button>
-
-        <h3>{{ _("Availability") }}</h3>
-        <div id="availability-container">
-            {% set days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] %}
-            {% for day in days %}
-            <div class="day-availability">
-                <h4>{{ _(day.capitalize()) }}</h4>
-                {% set slots = availability.get(day, []) %}
-                {% if slots %}
-                    {% for slot in slots %}
-                    <div class="slot-item">
-                        <input type="time" name="availability_{{ day }}_start" value="{{ slot.start_time }}" required>
-                        <input type="time" name="availability_{{ day }}_end" value="{{ slot.end_time }}" required>
-                        <input type="number" name="availability_{{ day }}_slot_duration" value="{{ slot.slot_duration }}" placeholder="{{ _('Slot Duration (min)') }}" required>
-                        <button type="button" onclick="removeSlot(this)">{{ _("Remove") }}</button>
-                    </div>
-                    {% endfor %}
-                {% endif %}
-                <button type="button" onclick="addSlot('{{ day }}')">{{ _("Add Slot") }}</button>
-            </div>
-            {% endfor %}
-        </div>
-
-
-        <button type="submit">{{ _("Update Profile") }}</button>
-    </form>
+    </div>
 </div>
-<script>
-    function addService() {
-        const container = document.getElementById('services-container');
-        const newService = document.createElement('div');
-        newService.className = 'service-item';
-        newService.innerHTML = `
-            <input type="text" name="service_name" placeholder="{{ _('Service Name') }}" required>
-            <input type="number" name="service_duration" placeholder="{{ _('Duration (min)') }}" required>
-            <input type="number" name="service_price" step="0.01" placeholder="{{ _('Price') }}" required>
-            <textarea name="service_description" placeholder="{{ _('Description (optional)') }}"></textarea>
-            <button type="button" onclick="removeService(this)">{{ _("Remove") }}</button>
-        `;
-        container.appendChild(newService);
-    }
 
-    function removeService(button) {
-        button.closest('.service-item').remove();
-    }
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">{{ _('Upcoming Bookings') }}</h5>
+    </div>
+    <div class="card-body">
+        {% if upcoming_bookings %}
+        <ul class="list-group">
+            {% for booking in upcoming_bookings %}
+            <li class="list-group-item">
+                <strong>{{ booking.service_name }}</strong> {{ _('with') }} {{ booking.customer_name }}<br>
+                {{ _('Date:') }} {{ booking.booking_date.strftime('%Y-%m-%d') }} {{ _('at') }} {{ booking.booking_time }}<br>
+                {{ _('Customer Email:') }} {{ booking.customer_email }}<br>
+                {{ _('Customer Phone:') }} {{ booking.customer_phone or _('N/A') }}
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p>{{ _('No upcoming bookings yet.') }}</p>
+        {% endif %}
+    </div>
+</div>
 
-    function addSlot(day) {
-        const container = document.querySelector(`#availability-container .day-availability:has(h4:contains("${day.capitalize()}"))`);
-        if (!container) return; 
-        const newSlot = document.createElement('div');
-        newSlot.className = 'slot-item';
-        newSlot.innerHTML = `
-            <input type="time" name="availability_${day}_start" required>
-            <input type="time" name="availability_${day}_end" required>
-            <input type="number" name="availability_${day}_slot_duration" placeholder="{{ _('Slot Duration (min)') }}" required>
-            <button type="button" onclick="removeSlot(this)">{{ _("Remove") }}</button>
-        `;
-        container.appendChild(newSlot);
-    }
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">{{ _('Your Profile and Settings') }}</h5>
+    </div>
+    <div class="card-body">
+        <p>{{ _('Manage your services, availability, and contact information.') }}</p>
+        <a href="/profile" class="btn btn-primary">{{ _('Edit Profile') }}</a>
+    </div>
+</div>
 
-    function removeSlot(button) {
-        button.closest('.slot-item').remove();
-    }
-</script>
 {% endblock %}

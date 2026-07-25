@@ -1,22 +1,45 @@
 {% extends "base.html" %}
-{% block title %}{{ _("Sign Up") }}{% endblock %}
+
+{% block title %}{{ _('Sign Up') }} - BookSlot{% endblock %}
+
 {% block content %}
-<div class="container">
-    <h1>{{ _("Owner Sign Up") }}</h1>
-    <form action="/signup?lang={{ lang }}" method="post">
-        {% if error %}<p class="error">{{ error }}</p>{% endif %}
-        <label for="name">{{ _("Your Name") }}:</label>
-        <input type="text" id="name" name="name" required>
-        <label for="email">{{ _("Email") }}:</label>
-        <input type="email" id="email" name="email" required>
-        <label for="password">{{ _("Password") }}:</label>
-        <input type="password" id="password" name="password" required>
-        <label for="business_name">{{ _("Business Name") }}:</label>
-        <input type="text" id="business_name" name="business_name" required>
-        <label for="slug">{{ _("Booking Page URL Slug") }} (e.g., your-business):</label>
-        <input type="text" id="slug" name="slug" required>
-        <button type="submit">{{ _("Sign Up") }}</button>
-    </form>
-    <p>{{ _("Already have an account?") }} <a href="/login?lang={{ lang }}">{{ _("Login") }}</a></p>
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="text-center">{{ _('Create your BookSlot account') }}</h3>
+            </div>
+            <div class="card-body">
+                <form action="/signup" method="post">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">{{ _('Your Name') }}</label>
+                        <input type="text" class="form-control" id="name" name="name" value="{{ form_data.name if form_data else '' }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="business_name" class="form-label">{{ _('Business Name') }}</label>
+                        <input type="text" class="form-control" id="business_name" name="business_name" value="{{ form_data.business_name if form_data else '' }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">{{ _('Email address') }}</label>
+                        <input type="email" class="form-control" id="email" name="email" value="{{ form_data.email if form_data else '' }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">{{ _('Password') }}</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="slug" class="form-label">{{ _('Your Public Booking URL (e.g., bookslot.app/your-name)') }}</label>
+                        <div class="input-group">
+                            <span class="input-group-text">bookslot.app/</span>
+                            <input type="text" class="form-control" id="slug" name="slug" value="{{ form_data.slug if form_data else '' }}" pattern="^[a-z0-9-]+" title="{{ _('Lowercase alphanumeric with hyphens only') }}" required>
+                        </div>
+                        <small class="form-text text-muted">{{ _('This will be your unique booking page URL.') }}</small>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">{{ _('Sign Up') }}</button>
+                </form>
+                <p class="text-center mt-3">{{ _('Already have an account?') }} <a href="/login">{{ _('Login') }}</a></p>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}

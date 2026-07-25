@@ -1,8 +1,7 @@
-from pydantic import BaseModel, EmailStr
-from typing import List, Dict, Any, Optional
+from pydantic import BaseModel, EmailStr, Field
+from typing import List, Dict, Optional
 import datetime
 
-# --- Token Schemas ---
 class Token(BaseModel):
     access_token: str
     token_type: str
@@ -10,69 +9,58 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     email: Optional[str] = None
 
-# --- Service Schemas (for services_json) ---
-class Service(BaseModel):
-    name: str
-    duration: int # in minutes
-    price: float
-    description: Optional[str] = None
-
-# --- Availability Schemas (for availability_json) ---
-class DayAvailability(BaseModel):
-    start_time: str # e.g., "09:00"
-    end_time: str   # e.g., "17:00"
-    slot_duration: int # in minutes, e.g., 30
-
-class Availability(BaseModel):
-    monday: Optional[List[DayAvailability]] = None
-    tuesday: Optional[List[DayAvailability]] = None
-    wednesday: Optional[List[DayAvailability]] = None
-    thursday: Optional[List[DayAvailability]] = None
-    friday: Optional[List[DayAvailability]] = None
-    saturday: Optional[List[DayAvailability]] = None
-    sunday: Optional[List[DayAvailability]] = None
-
-# --- Owner Schemas ---
 class OwnerBase(BaseModel):
-    name: str
     email: EmailStr
+    name: str
     business_name: str
-    slug: str
+    slug: str = Field(..., regex="^[a-z0-9-]+$") # Slug must be lowercase alphanumeric with hyphens
 
 class OwnerCreate(OwnerBase):
     password: str
 
-class OwnerProfileUpdate(BaseModel):
-    name: Optional[str] = None
-    business_name: Optional[str] = None
-    phone: Optional[str] = None
-    services: Optional[List[Service]] = None # For updating services_json
-    availability: Optional[Availability] = None # For updating availability_json
+class Service(BaseModel):
+    name: str
+    description: Optional[str] = None
+    duration_minutes: int
+    price: float
 
-class OwnerInDB(OwnerBase):
-    id: int
-    services_json: str
-    availability_json: str
+class Availability(BaseModel):
+    day_of_week: int # 0=Monday, 6=Sunday
+    start_time: str # "HH:MM"
+    end_time: str # "HH:MM"
+
+class OwnerProfileUpdate(BaseModel):
+    name: str
+    business_name: str
     phone: Optional[str] = None
+    services: List[Service]
+    availability: List[Availability]
+
+class Owner(OwnerBase):
+    id: int
+    phone: Optional[str] = None
+    is_active: bool
+    services_json: str # Raw JSON string
+    availability_json: str # Raw JSON string
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
-# --- Booking Schemas ---
 class BookingBase(BaseModel):
     customer_name: str
     customer_email: EmailStr
     customer_phone: Optional[str] = None
     service_name: str
-    booking_time: datetime.datetime
+    booking_date: datetime.date
+    booking_time: str # "HH:MM"
 
 class BookingCreate(BookingBase):
     pass
 
-class BookingDisplay(BookingBase):
+class Booking(BookingBase):
     id: int
     owner_id: int
     status: str
-
+    
     class Config:
-        orm_mode = True
+        from_attributes = True
