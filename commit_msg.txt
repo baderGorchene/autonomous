@@ -1,1 +1,1 @@
-Reconstruct full project structure including requirements.txt, core app files, templates, locales, and tests to resolve persistent 'No module named pytest' error and enable comprehensive integration testing.
+Fix: Ensure pytest is available by providing comprehensive requirements.txt
