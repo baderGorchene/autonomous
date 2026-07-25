@@ -1,49 +1,32 @@
 <!DOCTYPE html>
-<html lang="{{ lang }}">
+<html lang="{{ current_locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _("BookSlot Login") }}</title>
+    <title>{{ _("Login") }} - BookSlot</title>
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
-    <header>
-        <div class="container">
-            <h1>{{ _("BookSlot") }}</h1>
-            <div class="language-toggle">
-                <a href="?lang=en">EN</a> | <a href="?lang=ar">AR</a> | <a href="?lang=fr">FR</a>
-            </div>
-        </div>
-    </header>
+    <div class="container">
+        <h1>{{ _("Login to Your BookSlot Account") }}</h1>
+        {% if error %}
+            <p class="error-message">{{ error }}</p>
+        {% endif %}
+        <form action="/token" method="post">
+            <label for="username">{{ _("Email:") }}</label>
+            <input type="email" id="username" name="username" required>
 
-    <main class="container">
-        <section class="login-section">
-            <h2>{{ _("Login to your Dashboard") }}</h2>
-            {% if error_message %}
-            <p class="error-message">{{ error_message }}</p>
-            {% endif %}
-            {% if request.query_params.get('signup_success') %}
-            <p class="success-message">{{ _("Account created successfully! Please log in.") }}</p>
-            {% endif %}
-            <form action="/auth/login?lang={{ lang }}" method="post" class="login-form">
-                <div class="form-group">
-                    <label for="email">{{ _("Email") }}:</label>
-                    <input type="email" id="email" name="email" required>
-                </div>
-                <div class="form-group">
-                    <label for="password">{{ _("Password") }}:</label>
-                    <input type="password" id="password" name="password" required>
-                </div>
-                <button type="submit" class="button-primary">{{ _("Login") }}</button>
-            </form>
-            <p>{{ _("Don't have an account?") }} <a href="/auth/signup?lang={{ lang }}">{{ _("Sign up here") }}</a></p>
-        </section>
-    </main>
-
-    <footer>
-        <div class="container">
-            <p>&copy; 2023 BookSlot</p>
+            <label for="password">{{ _("Password:") }}</label>
+            <input type="password" id="password" name="password" required>
+            
+            <button type="submit">{{ _("Login") }}</button>
+        </form>
+        <p>{{ _("Don't have an account?") }} <a href="/signup">{{ _("Sign up here") }}</a></p>
+        <div class="language-switcher">
+            <a href="/toggle-lang?lang=en" {% if current_locale == 'en' %}class="active"{% endif %}>English</a> |
+            <a href="/toggle-lang?lang=ar" {% if current_locale == 'ar' %}class="active"{% endif %}>العربية</a> |
+            <a href="/toggle-lang?lang=fr" {% if current_locale == 'fr' %}class="active"{% endif %}>Français</a>
         </div>
-    </footer>
+    </div>
 </body>
 </html>

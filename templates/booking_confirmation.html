@@ -1,43 +1,41 @@
 <!DOCTYPE html>
-<html lang="{{ lang }}">
+<html lang="{{ current_locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _("Booking Confirmed!") }}</title>
+    <title>{{ _("Booking Confirmed!") }} - BookSlot</title>
     <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        body { font-family: 'Arial', sans-serif; margin: 0; padding: 0; background-color: #f4f7f6; color: #333; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .confirmation-container { max-width: 500px; text-align: center; padding: 30px; background-color: #fff; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        h1 { color: #28a745; margin-bottom: 20px; }
+        p { font-size: 1.1em; color: #555; line-height: 1.6; }
+        .back-link { display: inline-block; margin-top: 25px; padding: 10px 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px; transition: background-color 0.3s ease; }
+        .back-link:hover { background-color: #0056b3; }
+        .language-switcher { position: absolute; top: 15px; right: 15px; font-size: 0.9em; }
+        .language-switcher a { margin: 0 5px; color: #007bff; text-decoration: none; }
+        .language-switcher a.active { font-weight: bold; color: #333; }
+
+        {% if current_locale == 'ar' %}
+            body { direction: rtl; text-align: right; }
+            .confirmation-container { text-align: right; }
+            h1 { text-align: center; }
+            .language-switcher { left: 15px; right: auto; }
+        {% endif %}
+    </style>
 </head>
 <body>
-    <header>
-        <div class="container">
-            <h1>{{ _("Booking Confirmed!") }}</h1>
-            <div class="language-toggle">
-                <a href="?lang=en">EN</a> | <a href="?lang=ar">AR</a> | <a href="?lang=fr">FR</a>
-            </div>
-        </div>
-    </header>
-
-    <main class="container">
-        <section class="confirmation-section">
-            <h2>{{ _("Thank you for your booking!") }}</h2>
-            <p>{{ _("Your appointment for") }} <strong>{{ booking.service_name }}</strong> {{ _("with") }} <strong>{{ owner.business_name }}</strong> {{ _("has been confirmed.") }}</p>
-            <p>{{ _("Details:") }}</p>
-            <ul>
-                <li><strong>{{ _("Date & Time") }}:</strong> {{ booking.datetime.strftime('%Y-%m-%d %H:%M') }}</li>
-                <li><strong>{{ _("Customer Name") }}:</strong> {{ booking.customer_name }}</li>
-                <li><strong>{{ _("Customer Email") }}:</strong> {{ booking.customer_email }}</li>
-                {% if booking.customer_phone %}
-                <li><strong>{{ _("Customer Phone") }}:</strong> {{ booking.customer_phone }}</li>
-                {% endif %}
-            </ul>
-            <p>{{ _("A confirmation email has been sent to you and to the business owner.") }}</p>
-            <a href="/book/{{ owner.slug }}?lang={{ lang }}" class="button-primary">{{ _("Book another appointment") }}</a>
-        </section>
-    </main>
-
-    <footer>
-        <div class="container">
-            <p>&copy; 2023 BookSlot</p>
-        </div>
-    </footer>
+    <div class="language-switcher">
+        <a href="/toggle-lang?lang=en" {% if current_locale == 'en' %}class="active"{% endif %}>English</a> |
+        <a href="/toggle-lang?lang=ar" {% if current_locale == 'ar' %}class="active"{% endif %}>العربية</a> |
+        <a href="/toggle-lang?lang=fr" {% if current_locale == 'fr' %}class="active"{% endif %}>Français</a>
+    </div>
+    <div class="confirmation-container">
+        <h1>{{ _("Booking Confirmed!") }} &#9989;</h1>
+        <p>{{ _("Thank you for your booking!") }}</p>
+        <p>{{ _("You will receive a confirmation email shortly.") }}</p>
+        <p>{{ _("Your booking ID is:") }} {{ booking_id }}</p>
+        <a href="/bookslot.app/{{ owner_slug }}" class="back-link">{{ _("Back to booking page") }}</a>
+    </div>
 </body>
 </html>

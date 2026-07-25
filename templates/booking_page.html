@@ -1,75 +1,101 @@
 <!DOCTYPE html>
-<html lang="{{ locale }}">
+<html lang="{{ current_locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ owner.business_name }} - {{ _('Book an Appointment') }}</title>
+    <title>{{ owner.business_name }} - {{ _("Book Your Service") }}</title>
     <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        body { font-family: 'Arial', sans-serif; margin: 0; padding: 0; background-color: #f4f7f6; color: #333; }
+        .container { max-width: 600px; margin: 20px auto; padding: 20px; background-color: #fff; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        h1, h2 { color: #007bff; text-align: center; }
+        .business-info { text-align: center; margin-bottom: 20px; }
+        .business-info p { font-size: 1.1em; color: #555; }
+        form { display: flex; flex-direction: column; gap: 15px; }
+        label { font-weight: bold; margin-bottom: 5px; color: #333; }
+        input[type="text"], input[type="email"], input[type="tel"], select {
+            padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 1em; width: 100%; box-sizing: border-box;
+        }
+        button { background-color: #007bff; color: white; padding: 12px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 1.1em; transition: background-color 0.3s ease; }
+        button:hover { background-color: #0056b3; }
+        .error-message { color: #dc3545; background-color: #f8d7da; border: 1px solid #f5c6cb; padding: 10px; border-radius: 5px; margin-bottom: 15px; }
+        .success-message { color: #28a745; background-color: #d4edda; border: 1px solid #c3e6cb; padding: 10px; border-radius: 5px; margin-bottom: 15px; }
+        .language-switcher { text-align: center; margin-top: 20px; font-size: 0.9em; }
+        .language-switcher a { margin: 0 5px; color: #007bff; text-decoration: none; }
+        .language-switcher a.active { font-weight: bold; color: #333; }
+
+        @media (max-width: 768px) {
+            .container { margin: 10px; padding: 15px; }
+        }
+        @media (max-width: 480px) {
+            h1 { font-size: 1.8em; }
+            h2 { font-size: 1.4em; }
+            button { font-size: 1em; padding: 10px 15px; }
+        }
+        
+        {% if current_locale == 'ar' %}
+            body { direction: rtl; text-align: right; }
+            .container { text-align: right; }
+            h1, h2 { text-align: center; }
+            .language-switcher { text-align: center; }
+            form { align-items: flex-end; }
+            label { text-align: right; }
+        {% endif %}
+    </style>
 </head>
 <body>
     <div class="container">
-        <header class="header">
-            <h1 class="business-name">{{ owner.business_name }}</h1>
-            <div class="language-toggle">
-                <a href="?lang=en" class="{{ 'active' if locale == 'en' else '' }}">EN</a> |
-                <a href="?lang=ar" class="{{ 'active' if locale == 'ar' else '' }}">AR</a> |
-                <a href="?lang=fr" class="{{ 'active' if locale == 'fr' else '' }}">FR</a>
-            </div>
-        </header>
+        <div class="language-switcher">
+            <a href="/toggle-lang?lang=en" {% if current_locale == 'en' %}class="active"{% endif %}>English</a> |
+            <a href="/toggle-lang?lang=ar" {% if current_locale == 'ar' %}class="active"{% endif %}>العربية</a> |
+            <a href="/toggle-lang?lang=fr" {% if current_locale == 'fr' %}class="active"{% endif %}>Français</a>
+        </div>
+        <h1>{{ owner.business_name }}</h1>
+        <div class="business-info">
+            <p>{{ _("Welcome! Book your appointment below.") }}</p>
+        </div>
 
-        <main class="booking-section">
-            <p class="owner-name-tag">{{ owner.name }}</p>
-            <h2 class="section-title">{{ _('Book Your Service') }}</h2>
-            <p class="description">{{ _('Please select a service, date, and time that works for you.') }}</p>
+        {% if error_message %}
+            <p class="error-message">{{ error_message }}</p>
+        {% endif %}
+        {% if success_message %}
+            <p class="success-message">{{ success_message }}</p>
+        {% endif %}
 
-            {% if error_message %}
-                <div class="error-message">{{ error_message }}</div>
-            {% endif %}
+        <h2>{{ _("Book an Appointment") }}</h2>
+        <form action="/bookslot.app/{{ owner.slug }}/book" method="post">
+            <label for="customer_name">{{ _("Your Name:") }}</label>
+            <input type="text" id="customer_name" name="customer_name" value="{{ customer_name or '' }}" required>
 
-            <form action="/book/{{ owner.slug }}" method="post" class="booking-form">
-                <div class="form-group">
-                    <label for="service_name">{{ _('Service') }}</label>
-                    <select id="service_name" name="service_name" required>
-                        <option value="">{{ _('Select a service') }}</option>
-                        {% for service in owner.services_json %}
-                            <option value="{{ service.name }}">{{ service.name }} ({{ service.duration_minutes }} {{ _('minutes') }})</option>
-                        {% endfor %}
-                    </select>
-                </div>
+            <label for="customer_email">{{ _("Your Email:") }}</label>
+            <input type="email" id="customer_email" name="customer_email" value="{{ customer_email or '' }}" required>
 
-                <div class="form-group">
-                    <label for="booking_date">{{ _('Date') }}</label>
-                    <input type="date" id="booking_date" name="booking_date" required>
-                </div>
+            <label for="customer_phone">{{ _("Your Phone (optional, for WhatsApp notifications):") }}</label>
+            <input type="tel" id="customer_phone" name="customer_phone" value="{{ customer_phone or '' }}">
 
-                <div class="form-group">
-                    <label for="booking_time">{{ _('Time') }}</label>
-                    <input type="time" id="booking_time" name="booking_time" required>
-                </div>
+            <label for="service_name">{{ _("Select Service:") }}</label>
+            <select id="service_name" name="service_name" required>
+                <option value="">{{ _("Choose a service") }}</option>
+                {% for service in services %}
+                    <option value="{{ service.name }}" {% if service_name == service.name %}selected{% endif %}>{{ service.name }} ({{ service.duration_minutes }} {{ _("mins") }})</option>
+                {% else %}
+                    <option value="">{{ _("No services available") }}</option>
+                {% endfor %}
+            </select>
 
-                <div class="form-group">
-                    <label for="customer_name">{{ _('Your Name') }}</label>
-                    <input type="text" id="customer_name" name="customer_name" placeholder="{{ _('e.g., John Doe') }}" required>
-                </div>
+            <label for="booking_date">{{ _("Select Date:") }}</label>
+            <input type="date" id="booking_date" name="booking_date" value="{{ booking_date or '' }}" required>
 
-                <div class="form-group">
-                    <label for="customer_email">{{ _('Your Email') }}</label>
-                    <input type="email" id="customer_email" name="customer_email" placeholder="{{ _('e.g., john.doe@example.com') }}" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="customer_phone">{{ _('Your Phone (WhatsApp)') }}</label>
-                    <input type="text" id="customer_phone" name="customer_phone" placeholder="{{ _('e.g., +15551234567') }}" required>
-                </div>
-                
-                <button type="submit" class="btn-primary">{{ _('Book Now') }}</button>
-            </form>
-        </main>
-
-        <footer class="footer">
-            <p>&copy; 2023 BookSlot. {{ _('All rights reserved.') }}</p>
-        </footer>
+            <label for="booking_time">{{ _("Select Time Slot:") }}</label>
+            <select id="booking_time" name="booking_time" required>
+                <option value="">{{ _("Choose a time") }}</option>
+                {% for slot in available_slots %}
+                    <option value="{{ slot.time }}" {% if booking_time == slot.time %}selected{% endif %}>{{ slot.display }}</option>
+                {% endfor %}
+            </select>
+            
+            <button type="submit">{{ _("Confirm Booking") }}</button>
+        </form>
     </div>
-    <script src="/static/js/main.js"></script>
 </body>
 </html>

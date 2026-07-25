@@ -1,16 +1,20 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
+from typing import List, Dict, Any, Optional
 from datetime import datetime
-from typing import List, Dict, Optional, Any
 
-class ServiceSchema(BaseModel):
+class Service(BaseModel):
     name: str
+    description: Optional[str] = None
+    price: Optional[float] = None
     duration_minutes: int
-    price: str
 
-class AvailabilitySchema(BaseModel):
-    day: str
-    start_time: str
-    end_time: str
+class AvailabilitySlot(BaseModel):
+    start_time: str # e.g., "09:00"
+    end_time: str   # e.g., "17:00"
+
+class DayAvailability(BaseModel):
+    day_of_week: str # e.g., "Monday"
+    slots: List[AvailabilitySlot]
 
 class OwnerBase(BaseModel):
     name: str
@@ -28,19 +32,19 @@ class OwnerProfileUpdate(BaseModel):
 
 class Owner(OwnerBase):
     id: int
-    services_json: List[ServiceSchema] = []
-    availability_json: Dict[str, Any] = {}
+    services_json: List[Service] = []
+    availability_json: Dict[str, List[AvailabilitySlot]] = {} # e.g., {"Monday": [{"start_time": "09:00", "end_time": "17:00"}]}
     phone: Optional[str] = None
-
+    
     class Config:
         from_attributes = True
 
 class BookingBase(BaseModel):
-    service_name: str
-    datetime: datetime
     customer_name: str
     customer_email: EmailStr
     customer_phone: Optional[str] = None
+    service_name: str
+    booking_time: datetime
 
 class BookingCreate(BookingBase):
     pass
@@ -48,6 +52,7 @@ class BookingCreate(BookingBase):
 class Booking(BookingBase):
     id: int
     owner_id: int
+    status: str
 
     class Config:
         from_attributes = True
@@ -57,4 +62,4 @@ class Token(BaseModel):
     token_type: str
 
 class TokenData(BaseModel):
-    id: Optional[int] = None
+    email: Optional[str] = None

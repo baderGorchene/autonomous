@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, JSON
+from sqlalchemy import Column, Integer, String, JSON, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from .database import Base
 
@@ -11,9 +11,9 @@ class Owner(Base):
     hashed_password = Column(String)
     business_name = Column(String)
     slug = Column(String, unique=True, index=True)
-    phone = Column(String, nullable=True)
-    services_json = Column(JSON, default=[])
-    availability_json = Column(JSON, default={})
+    services_json = Column(JSON) # List of service dicts
+    availability_json = Column(JSON) # Dict of availability
+    phone = Column(String, nullable=True) # Added based on completed steps
 
     bookings = relationship("Booking", back_populates="owner")
 
@@ -22,10 +22,11 @@ class Booking(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     owner_id = Column(Integer, ForeignKey("owners.id"))
-    service_name = Column(String)
-    datetime = Column(DateTime)
     customer_name = Column(String)
     customer_email = Column(String)
-    customer_phone = Column(String, nullable=True)
+    customer_phone = Column(String, nullable=True) # Added based on completed steps
+    service_name = Column(String)
+    booking_time = Column(DateTime)
+    status = Column(String, default="pending") # e.g., 'pending', 'confirmed', 'cancelled'
 
     owner = relationship("Owner", back_populates="bookings")
