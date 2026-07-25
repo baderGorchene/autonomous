@@ -1,61 +1,101 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ owner.business_name }} - {{ gettext('Book an Appointment') }}</title>
-    <link rel="stylesheet" href="/static/style.css">
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>{{ owner.business_name }}</h1>
-            <div class="language-selector">
-                <form action="/set-language" method="post" style="display: inline;">
-                    <button type="submit" name="lang" value="en">English</button>
-                </form>
-                <form action="/set-language" method="post" style="display: inline;">
-                    <button type="submit" name="lang" value="ar">العربية</button>
-                </form>
-                <form action="/set-language" method="post" style="display: inline;">
-                    <button type="submit" name="lang" value="fr">Français</button>
-                </form>
-            </div>
+{% extends "base.html" %}
+{% block title %}{{ owner.business_name }} - {{ _('Book an Appointment') }}{% endblock %}
+{% block content %}
+<div class="container booking-page-container">
+    <h1 class="text-center mb-4">{{ owner.business_name }}</h1>
+    <p class="text-center lead">{{ _('Book your appointment quickly and easily.') }}</p>
+
+    {% if error %}
+    <div class="alert alert-danger text-center">{{ error }}</div>
+    {% endif %}
+
+    <form action="/{{ owner.slug }}/book" method="post" class="booking-form card p-4 shadow-sm">
+        <div class="mb-3">
+            <label for="customer_name" class="form-label">{{ _('Your Name') }}</label>
+            <input type="text" class="form-control" id="customer_name" name="customer_name" required>
         </div>
-
-        <h2>{{ gettext('Book Your Appointment') }}</h2>
-
-        {% if error_message %}
-            <p style="color: red;">{{ error_message }}</p>
-        {% endif %}
-
-        <form action="/{{ owner.slug }}/book" method="post">
-            <label for="customer_name">{{ gettext('Your Name') }}:</label>
-            <input type="text" id="customer_name" name="customer_name" required>
-
-            <label for="customer_email">{{ gettext('Your Email') }}:</label>
-            <input type="email" id="customer_email" name="customer_email" required>
-
-            <label for="customer_phone">{{ gettext('Your Phone Number (Optional, for WhatsApp notifications)') }}:</label>
-            <input type="tel" id="customer_phone" name="customer_phone">
-
-            <label for="service_name">{{ gettext('Select Service') }}:</label>
-            <select id="service_name" name="service_name" required>
+        <div class="mb-3">
+            <label for="customer_email" class="form-label">{{ _('Your Email') }}</label>
+            <input type="email" class="form-control" id="customer_email" name="customer_email" required>
+        </div>
+        <div class="mb-3">
+            <label for="customer_phone" class="form-label">{{ _('Your Phone Number (Optional, for WhatsApp notifications)') }}</label>
+            <input type="text" class="form-control" id="customer_phone" name="customer_phone">
+        </div>
+        <div class="mb-3">
+            <label for="service_name" class="form-label">{{ _('Select Service') }}</label>
+            <select class="form-select" id="service_name" name="service_name" required>
+                <option value="">{{ _('Choose a service...') }}</option>
                 {% for service in services %}
-                    <option value="{{ service.name }}">{{ service.name }} ({{ service.duration_minutes }} min){% if service.price %} - ${{ service.price }}{% endif %}</option>
-                {% else %}
-                    <option value="">{{ gettext('No services available') }}</option>
+                <option value="{{ service.name }}">{{ service.name }} - {{ "%.2f"|format(service.price) }}</option>
                 {% endfor %}
             </select>
+        </div>
+        <div class="mb-3">
+            <label for="booking_date" class="form-label">{{ _('Select Date') }}</label>
+            <input type="date" class="form-control" id="booking_date" name="booking_date" required>
+        </div>
+        <div class="mb-3">
+            <label for="booking_time" class="form-label">{{ _('Select Time') }}</label>
+            <select class="form-select" id="booking_time" name="booking_time" required>
+                <option value="">{{ _('Choose a time...') }}</option>
+                {% for slot in available_slots %}
+                    {% if loop.first or loop.previtem.date != slot.date %}
+                        <optgroup label="{{ slot.date }}">
+                    {% endif %}
+                    <option value="{{ slot.time }}" data-date="{{ slot.date }}">{{ slot.time }}</option>
+                    {% if loop.last or loop.nextitem.date != slot.date %}
+                        </optgroup>
+                    {% endif %}
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary btn-lg">{{ _('Book Now') }}</button>
+    </form>
+</div>
 
-            <label for="booking_date">{{ gettext('Select Date') }}:</label>
-            <input type="date" id="booking_date" name="booking_date" required>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const bookingDateInput = document.getElementById('booking_date');
+        const bookingTimeSelect = document.getElementById('booking_time');
+        const allTimeOptions = Array.from(bookingTimeSelect.options);
 
-            <label for="booking_time">{{ gettext('Select Time') }}:</label>
-            <input type="time" id="booking_time" name="booking_time" required>
+        // Set min date to today
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0'); // Months start at 0!
+        const dd = String(today.getDate()).padStart(2, '0');
+        bookingDateInput.min = `${yyyy}-${mm}-${dd}`;
 
-            <button type="submit">{{ gettext('Confirm Booking') }}</button>
-        </form>
-    </div>
-</body>
-</html>
+        function filterTimes() {
+            const selectedDate = bookingDateInput.value;
+            bookingTimeSelect.innerHTML = '<option value="">{{ _("Choose a time...") }}</option>';
+
+            let currentOptgroupLabel = '';
+            allTimeOptions.forEach(option => {
+                if (option.tagName === 'OPTGROUP') {
+                    currentOptgroupLabel = option.label;
+                    return; // Skip optgroup itself
+                }
+
+                const optionDate = option.dataset.date || currentOptgroupLabel; // Fallback for options not directly under optgroup
+                if (optionDate === selectedDate) {
+                    let optgroup = bookingTimeSelect.querySelector(`optgroup[label="${optionDate}"]`);
+                    if (!optgroup) {
+                        optgroup = document.createElement('optgroup');
+                        optgroup.label = optionDate;
+                        bookingTimeSelect.appendChild(optgroup);
+                    }
+                    const newOption = option.cloneNode(true);
+                    optgroup.appendChild(newOption);
+                }
+            });
+        }
+
+        bookingDateInput.addEventListener('change', filterTimes);
+
+        // Initial filtering based on default selected date or today
+        filterTimes();
+    });
+</script>
+{% endblock %}

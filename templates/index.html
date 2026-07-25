@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Welcome to BookSlot') }}{% endblock %}
+{% block content %}
+<div class="container">
+    <h1>{{ _('Welcome to BookSlot') }}</h1>
+    <p>{{ _('Your dead-simple booking page for local service businesses.') }}</p>
+    <p><a href="/signup" class="btn btn-primary">{{ _('Sign Up Now') }}</a></p>
+    <p>{{ _('Already have an account?') }} <a href="/login">{{ _('Login') }}</a></p>
+</div>
+{% endblock %}

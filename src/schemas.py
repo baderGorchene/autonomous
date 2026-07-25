@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 
@@ -6,19 +6,23 @@ class Service(BaseModel):
     name: str
     description: Optional[str] = None
     duration_minutes: int
-    price: Optional[float] = None
+    price: float
 
 class AvailabilitySlot(BaseModel):
-    start_time: str
-    end_time: str
+    day_of_week: int # 0=Monday, 6=Sunday
+    start_time: str # HH:MM
+    end_time: str # HH:MM
 
 class OwnerBase(BaseModel):
-    name: str
     email: EmailStr
+
+class OwnerCreate(OwnerBase):
+    name: str
+    password: str
     business_name: str
     slug: str
 
-class OwnerCreate(OwnerBase):
+class OwnerLogin(OwnerBase):
     password: str
 
 class OwnerProfileUpdate(BaseModel):
@@ -28,23 +32,15 @@ class OwnerProfileUpdate(BaseModel):
 
 class Owner(OwnerBase):
     id: int
+    name: str
+    business_name: str
+    slug: str
     phone: Optional[str] = None
-    services_json: List[Service] = []
-    availability_json: Dict[str, List[AvailabilitySlot]] = {}
+    services_json: str # JSON string for services
+    availability_json: str # JSON string for availability
 
     class Config:
         from_attributes = True
-
-class OwnerLogin(BaseModel):
-    email: EmailStr
-    password: str
-
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-
-class TokenData(BaseModel):
-    email: Optional[str] = None
 
 class BookingBase(BaseModel):
     customer_name: str
@@ -52,7 +48,6 @@ class BookingBase(BaseModel):
     customer_phone: Optional[str] = None
     service_name: str
     booking_time: datetime
-    duration_minutes: int
 
 class BookingCreate(BookingBase):
     pass
@@ -60,20 +55,15 @@ class BookingCreate(BookingBase):
 class Booking(BookingBase):
     id: int
     owner_id: int
+    status: str
     created_at: datetime
 
     class Config:
         from_attributes = True
 
-class BookingDisplay(BaseModel):
-    customer_name: str
-    customer_email: EmailStr
-    customer_phone: Optional[str] = None
-    service_name: str
-    booking_time: datetime
+class Token(BaseModel):
+    access_token: str
+    token_type: str
 
-    class Config:
-        from_attributes = True
-
-class MessageResponse(BaseModel):
-    message: str
+class TokenData(BaseModel):
+    email: Optional[str] = None

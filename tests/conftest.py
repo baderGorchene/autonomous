@@ -4,85 +4,80 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from src.database import Base, get_db
 from src.main import app
-from src import models, crud, security, schemas
-from src.config import settings
-from datetime import datetime, timedelta
-import pytz
+from src import models, security
 import os
+import json
+from datetime import datetime, timedelta
 
-TEST_DATABASE_URL = "sqlite:///./test.db"
-engine = create_engine(TEST_DATABASE_URL, connect_args={"check_same_thread": False})
+SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
+
+engine = create_engine(
+    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
+)
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-@pytest.fixture(scope="session", autouse=True)
-def setup_test_environment():
-    if os.path.exists("./test.db"):
-        os.remove("./test.db")
+@pytest.fixture(scope="session")
+def db_engine():
     Base.metadata.create_all(bind=engine)
-    yield
-    engine.dispose()
-    if os.path.exists("./test.db"):
-        os.remove("./test.db")
+    yield engine
+    Base.metadata.drop_all(bind=engine)
 
 @pytest.fixture(scope="function")
-def db_session():
-    connection = engine.connect()
+def db(db_engine):
+    connection = db_engine.connect()
     transaction = connection.begin()
-    session = TestingSessionLocal(bind=connection)
+    db = TestingSessionLocal(bind=connection)
 
-    def override_get_db():
-        try:
-            yield session
-        finally:
-            session.close()
+    yield db
 
-    app.dependency_overrides[get_db] = override_get_db
-    yield session
-    session.close()
+    db.close()
     transaction.rollback()
     connection.close()
-    app.dependency_overrides.clear()
 
 @pytest.fixture(scope="function")
-def client(db_session):
-    return TestClient(app)
+def client(db):
+    def override_get_db():
+        try:
+            yield db
+        finally:
+            db.close()
+    
+    app.dependency_overrides[get_db] = override_get_db
+    with TestClient(app) as c:
+        yield c
+    app.dependency_overrides = {} 
 
 @pytest.fixture(scope="function")
-def test_owner_data():
-    return {
-        "name": "Test Owner",
-        "email": "test@example.com",
-        "password": "testpassword",
-        "business_name": "Test Business",
-        "slug": "test-business",
-        "phone": "+1234567890"
-    }
+def test_owner(db):
+    hashed_password = security.get_password_hash("testpassword")
+    owner_data = models.Owner(
+        name="Test Owner",
+        email="test@example.com",
+        hashed_password=hashed_password,
+        business_name="Test Business",
+        slug="test-business",
+        phone="+1234567890",
+        services_json=json.dumps([{"name": "Haircut", "duration_minutes": 30, "price": 25.0}]),
+        availability_json=json.dumps({
+            "monday": [{"start_time": "09:00", "end_time": "17:00"}],
+            "tuesday": [{"start_time": "09:00", "end_time": "17:00"}]
+        })
+    )
+    db.add(owner_data)
+    db.commit()
+    db.refresh(owner_data)
+    return owner_data
 
 @pytest.fixture(scope="function")
-def create_test_owner(db_session, test_owner_data):
-    owner_in = schemas.OwnerCreate(**test_owner_data)
-    owner = crud.create_owner(db_session, owner_in)
-    owner.services_json = [
-        schemas.Service(name="Haircut", description="Standard haircut", price=30.0, duration_minutes=30).model_dump(),
-        schemas.Service(name="Manicure", description="Nail care", price=25.0, duration_minutes=45).model_dump(),
-    ]
-    owner.availability_json = {
-        "Monday": [{"start_time": "09:00", "end_time": "17:00"}],
-        "Tuesday": [{"start_time": "09:00", "end_time": "17:00"}],
-    }
-    db_session.add(owner)
-    db_session.commit()
-    db_session.refresh(owner)
-    return owner
-
-@pytest.fixture(scope="function")
-def authenticated_client(client, create_test_owner):
-    owner = create_test_owner
+def authenticated_client(client, test_owner):
     response = client.post(
         "/token",
-        data={"username": owner.email, "password": "testpassword"},
+        data={"username": test_owner.email, "password": "testpassword"},
     )
-    assert response.status_code == 200
-    token = response.json()["access_token"]
-    client.cookies["access_token"] = token
-    return client
+    assert response.status_code == 302
+    access_token = response.cookies.get("access_token")
+    assert access_token is not None
+    
+    client.headers["Authorization"] = f"Bearer {access_token}"
+    yield client
+    client.headers.pop("Authorization", None)

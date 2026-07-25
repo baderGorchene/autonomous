@@ -1,79 +1,70 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ gettext('Dashboard') }} - {{ owner.business_name }}</title>
-    <link rel="stylesheet" href="/static/style.css">
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>{{ gettext('Welcome') }}, {{ owner.name }}!</h1>
-            <div class="language-selector">
-                <form action="/set-language" method="post" style="display: inline;">
-                    <button type="submit" name="lang" value="en">English</button>
-                </form>
-                <form action="/set-language" method="post" style="display: inline;">
-                    <button type="submit" name="lang" value="ar">العربية</button>
-                </form>
-                <form action="/set-language" method="post" style="display: inline;">
-                    <button type="submit" name="lang" value="fr">Français</button>
-                </form>
+{% extends "base.html" %}
+{% block title %}{{ _('Dashboard') }}{% endblock %}
+{% block content %}
+<div class="container dashboard-container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>{{ _('Welcome,') }} {{ owner.name }}!</h2>
+        <form action="/logout" method="post" class="d-inline">
+            <button type="submit" class="btn btn-outline-secondary">{{ _('Logout') }}</button>
+        </form>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">{{ _('Your Booking Page') }}</h5>
+                    <p class="card-text">{{ _('Share this link with your customers:') }}</p>
+                    <a href="/{{ owner.slug }}" target="_blank" class="card-link">bookslot.app/{{ owner.slug }}</a>
+                </div>
             </div>
         </div>
-
-        <h2>{{ gettext('Your Public Booking Page') }}: <a href="/{{ owner.slug }}" target="_blank">bookslot.app/{{ owner.slug }}</a></h2>
-
-        <div class="section">
-            <h3>{{ gettext('Profile Settings') }}</h3>
-            {% if success_message %}
-                <p style="color: green;">{{ success_message }}</p>
-            {% endif %}
-            {% if error_message %}
-                <p style="color: red;">{{ error_message }}</p>
-            {% endif %}
-            <form action="/dashboard/profile" method="post">
-                <label for="name">{{ gettext('Your Name') }}:</label>
-                <input type="text" id="name" name="name" value="{{ owner.name }}" required>
-                <label for="business_name">{{ gettext('Business Name') }}:</label>
-                <input type="text" id="business_name" name="business_name" value="{{ owner.business_name }}" required>
-                <label for="phone">{{ gettext('Phone Number (for WhatsApp notifications)') }}:</label>
-                <input type="tel" id="phone" name="phone" value="{{ owner.phone if owner.phone else '' }}">
-                <button type="submit">{{ gettext('Update Profile') }}</button>
-            </form>
-        </div>
-
-        <div class="section">
-            <h3>{{ gettext('Upcoming Bookings') }}</h3>
-            {% if bookings %}
-                <ul>
-                    {% for booking in bookings %}
-                        <li>
-                            <strong>{{ booking.service_name }}</strong> - {{ booking.booking_time.strftime('%Y-%m-%d %H:%M') }}<br>
-                            {{ gettext('Customer') }}: {{ booking.customer_name }} ({{ booking.customer_email }})
-                            {% if booking.customer_phone %}
-                                ({{ booking.customer_phone }})
-                            {% endif %}
-                        </li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p>{{ gettext('No upcoming bookings.') }}</p>
-            {% endif %}
-        </div>
-
-        <div class="section">
-            <h3>{{ gettext('Services & Availability') }}</h3>
-            <p>{{ gettext('Manage your services and set your available time slots.') }} ({{ gettext('Coming Soon!') }})</p>
-            <ul>
-                {% for service in owner.services_json %}
-                    <li>{{ service.name }} ({{ service.duration_minutes }} min) - ${{ service.price }}</li>
-                {% else %}
-                    <li>{{ gettext('No services defined yet.') }}</li>
-                {% endfor %}
-            </ul>
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">{{ _('Quick Actions') }}</h5>
+                    <div class="list-group list-group-flush">
+                        <a href="/profile" class="list-group-item list-group-item-action">{{ _('Update Profile') }}</a>
+                        <a href="/services" class="list-group-item list-group-item-action">{{ _('Manage Services') }}</a>
+                        <a href="/availability" class="list-group-item list-group-item-action">{{ _('Set Availability') }}</a>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-</body>
-</html>
+
+    <h3 class="mt-4">{{ _('Upcoming Bookings') }}</h3>
+    {% if bookings %}
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>{{ _('Customer Name') }}</th>
+                    <th>{{ _('Service') }}</th>
+                    <th>{{ _('Date') }}</th>
+                    <th>{{ _('Time') }}</th>
+                    <th>{{ _('Email') }}</th>
+                    <th>{{ _('Phone') }}</th>
+                    <th>{{ _('Status') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for booking in bookings %}
+                <tr>
+                    <td>{{ booking.customer_name }}</td>
+                    <td>{{ booking.service_name }}</td>
+                    <td>{{ booking.booking_time.strftime('%Y-%m-%d') }}</td>
+                    <td>{{ booking.booking_time.strftime('%H:%M') }}</td>
+                    <td>{{ booking.customer_email }}</td>
+                    <td>{{ booking.customer_phone or 'N/A' }}</td>
+                    <td>{{ booking.status }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p>{{ _('No upcoming bookings.') }}</p>
+    {% endif %}
+</div>
+{% endblock %}

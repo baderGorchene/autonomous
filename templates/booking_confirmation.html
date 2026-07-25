@@ -1,18 +1,14 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ gettext('Booking Confirmed!') }}</title>
-    <link rel="stylesheet" href="/static/style.css">
-</head>
-<body>
-    <div class="container">
-        <h1>{{ gettext('Booking Confirmed!') }}</h1>
-        <p>{{ gettext('Thank you,') }} {{ booking.customer_name }}!</p>
-        <p>{{ gettext('Your appointment for') }} <strong>{{ booking.service_name }}</strong> {{ gettext('with') }} <strong>{{ owner.business_name }}</strong> {{ gettext('on') }} <strong>{{ booking.booking_time.strftime('%Y-%m-%d %H:%M') }}</strong> {{ gettext('has been successfully booked.') }}</p>
-        <p>{{ gettext('A confirmation email has been sent to') }} {{ booking.customer_email }}.</p>
-        <p><a href="/">{{ gettext('Go to home') }}</a></p>
-    </div>
-</body>
-</html>
+{% extends "base.html" %}
+{% block title %}{{ _('Booking Confirmed') }}{% endblock %}
+{% block content %}
+<div class="container confirmation-container text-center">
+    <h1 class="text-success mb-3"><i class="bi bi-check-circle-fill"></i> {{ _('Booking Confirmed!') }}</h1>
+    <p class="lead">{{ _('Thank you,') }} {{ booking.customer_name }}.</p>
+    <p>{{ _('Your appointment with') }} <strong>{{ owner.business_name }}</strong> {{ _('for') }} <strong>{{ booking.service_name }}</strong> {{ _('on') }} <strong>{{ booking.booking_time.strftime('%Y-%m-%d') }}</strong> {{ _('at') }} <strong>{{ booking.booking_time.strftime('%H:%M') }}</strong> {{ _('has been successfully booked.') }}</p>
+    <p>{{ _('A confirmation email has been sent to') }} {{ booking.customer_email }}.</p>
+    {% if booking.customer_phone %}
+    <p>{{ _('You may also receive a WhatsApp notification.') }}</p>
+    {% endif %}
+    <a href="/{{ owner.slug }}" class="btn btn-primary mt-4">{{ _('Book Another Appointment') }}</a>
+</div>
+{% endblock %}

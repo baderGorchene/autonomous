@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Set Availability') }}{% endblock %}
+{% block content %}
+<div class="container availability-container">
+    <h2>{{ _('Set Your Availability') }}</h2>
+    {% if success %}
+    <div class="alert alert-success">{{ success }}</div>
+    {% endif %}
+    {% if error %}
+    <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
+
+    <form id="availabilityForm" action="/availability" method="post">
+        <div class="row">
+            {% set days_of_week = [_('Monday'), _('Tuesday'), _('Wednesday'), _('Thursday'), _('Friday'), _('Saturday'), _('Sunday')] %}
+            {% for day_index in range(7) %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">{{ days_of_week[day_index] }}</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="slots-{{ day_index }}" class="slots-list">
+                            {% set day_availability = availability[day_index|string] if availability[day_index|string] is defined else [] %}
+                            {% if day_availability %}
+                                {% for slot in day_availability %}
+                                <div class="input-group mb-2 slot-item">
+                                    <input type="time" class="form-control start-time" value="{{ slot.start_time }}" required>
+                                    <input type="time" class="form-control end-time" value="{{ slot.end_time }}" required>
+                                    <button type="button" class="btn btn-outline-danger remove-slot">X</button>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <p class="no-slots-message">{{ _('No slots set for this day.') }}</p>
+                            {% endif %}
+                        </div>
+                        <button type="button" class="btn btn-sm btn-success add-slot mt-2" data-day="{{ day_index }}">{{ _('Add Slot') }}</button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <input type="hidden" name="availability_data" id="availabilityDataInput">
+        <button type="submit" class="btn btn-primary mt-4">{{ _('Save Availability') }}</button>
+    </form>
+    <p class="mt-3"><a href="/dashboard">{{ _('Back to Dashboard') }}</a></p>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const availabilityForm = document.getElementById('availabilityForm');
+        const availabilityDataInput = document.getElementById('availabilityDataInput');
+
+        const slotTemplate = `
+            <div class="input-group mb-2 slot-item">
+                <input type="time" class="form-control start-time" value="09:00" required>
+                <input type="time" class="form-control end-time" value="17:00" required>
+                <button type="button" class="btn btn-outline-danger remove-slot">X</button>
+            </div>
+        `;
+
+        function updateAvailabilityData() {
+            const currentAvailability = {};
+            document.querySelectorAll('.slots-list').forEach(slotsList => {
+                const dayIndex = slotsList.id.replace('slots-', '');
+                const daySlots = [];
+                slotsList.querySelectorAll('.slot-item').forEach(item => {
+                    daySlots.push({
+                        day_of_week: parseInt(dayIndex),
+                        start_time: item.querySelector('.start-time').value,
+                        end_time: item.querySelector('.end-time').value
+                    });
+                });
+                if (daySlots.length > 0) {
+                    currentAvailability[dayIndex] = daySlots;
+                }
+            });
+            availabilityDataInput.value = JSON.stringify(currentAvailability);
+        }
+
+        document.querySelectorAll('.add-slot').forEach(button => {
+            button.addEventListener('click', function() {
+                const dayIndex = this.dataset.day;
+                const slotsList = document.getElementById(`slots-${dayIndex}`);
+                const noSlotsMessage = slotsList.querySelector('.no-slots-message');
+                if (noSlotsMessage) {
+                    noSlotsMessage.remove();
+                }
+                slotsList.insertAdjacentHTML('beforeend', slotTemplate);
+            });
+        });
+
+        document.querySelectorAll('.slots-list').forEach(slotsList => {
+            slotsList.addEventListener('click', function(event) {
+                if (event.target.classList.contains('remove-slot')) {
+                    event.target.closest('.slot-item').remove();
+                    if (!this.querySelector('.slot-item')) {
+                        this.innerHTML = '<p class="no-slots-message">{{ _("No slots set for this day.") }}</p>';
+                    }
+                }
+            });
+        });
+
+        availabilityForm.addEventListener('submit', function(event) {
+            updateAvailabilityData();
+        });
+
+        // Initial update in case there is pre-filled availability
+        updateAvailabilityData();
+    });
+</script>
+{% endblock %}

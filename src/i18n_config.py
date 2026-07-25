@@ -3,16 +3,30 @@ from jinja2.ext import i18n
 import gettext
 import os
 
-def get_jinja_env(locale='en', templates_dir='templates', project_root=None):
-    if project_root is None:
-        current_dir = os.path.dirname(__file__)
-        project_root = os.path.abspath(os.path.join(current_dir, os.pardir))
+# Determine the base directory of the project
+# Assuming src/i18n_config.py is located at <project_root>/src/i18n_config.py
+current_file_dir = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.abspath(os.path.join(current_file_dir, os.pardir)) # Go up one level from 'src'
 
-    env = Environment(loader=FileSystemLoader(templates_dir), extensions=[i18n])
+TEMPLATES_DIR = os.path.join(PROJECT_ROOT, 'templates')
+LOCALES_DIR = os.path.join(PROJECT_ROOT, 'locales')
+
+def get_jinja_env(locale='en'):
+    env = Environment(loader=FileSystemLoader(TEMPLATES_DIR), extensions=[i18n])
     
-    localedir = os.path.join(project_root, 'locales')
-    
-    translate = gettext.translation('messages', localedir, languages=[locale], fallback=True);
-    env.install_gettext_translations(translate);
+    # Ensure the locale directory exists before trying to load translations
+    if not os.path.exists(LOCALES_DIR):
+        print(f"Warning: Locales directory not found at {LOCALES_DIR}")
+        # Fallback to a dummy translation if the directory doesn't exist
+        # This will make gettext return the original string
+        translate = gettext.NullTranslations()
+    else:
+        try:
+            translate = gettext.translation('messages', LOCALES_DIR, languages=[locale], fallback=True)
+        except Exception as e:
+            print(f"Warning: Could not load translations for locale '{locale}': {e}")
+            translate = gettext.NullTranslations() # Fallback to dummy
+            
+    env.install_gettext_translations(translate)
     
     return env

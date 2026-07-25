@@ -1,37 +1,58 @@
-# BookSlot
+# BookSlot - Dead-Simple Booking Page for Local Service Businesses
 
-BookSlot is a dead-simple booking page solution for local service businesses to manage appointments without the WhatsApp chaos. It provides a shareable booking link, allows customers to self-book, and notifies the owner via WhatsApp/email. Designed to be bilingual (English + Arabic/French) from day one, targeting underserved markets.
+BookSlot is a web application designed to provide a straightforward booking page for local service businesses such as salons, clinics, tutors, mechanics, and coaches. It aims to replace the manual appointment management often done through chaotic WhatsApp messages with a streamlined online booking system.
 
 ## Features
 
--   **Owner Signup & Service Setup**: Business owners can register, define their services, and set up their availability.
--   **Public Booking Page**: A mobile-first, beautiful booking page for customers to easily schedule appointments.
--   **Time Slot Availability**: Customers can see and select available time slots.
--   **Email Confirmations**: Automated email notifications for both the owner and the customer upon booking.
--   **Owner Dashboard**: A simple dashboard for owners to view upcoming bookings and manage their profile.
--   **Bilingual Support**: Full support for English, Arabic, and French, with a language toggle.
+*   **Owner Signup & Service Setup**: Business owners can create an account, set up their business profile, define their services, and specify their availability.
+*   **Public Booking Page**: Each owner gets a unique, shareable booking link (e.g., `bookslot.app/their-name`) where customers can easily book appointments without needing to create an account.
+*   **Time Slot Availability**: Customers can see and select available time slots based on the owner's defined schedule.
+*   **Email & WhatsApp Notifications**: Both the owner and the customer receive instant notifications (email and/or WhatsApp) with booking details upon successful reservation.
+*   **Simple Dashboard**: Owners have access to a dashboard displaying their upcoming bookings.
+*   **Bilingual Support**: The application supports English, Arabic, and French from day one to cater to the underserved MENA and North Africa markets.
+*   **Mobile-First UI/UX**: The booking page and dashboard are designed with a mobile-first approach for optimal experience on any device.
+*   **Error Handling**: Robust error handling for booking submissions and profile updates.
 
-## Getting Started
+## Monetization
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
+*   **Free Tier**: Up to 20 bookings per month.
+*   **Premium Tier**: $19/month for unlimited bookings.
+
+## Target Audience
+
+Solo service providers who typically have 10-50 clients per week and are currently overwhelmed by managing appointments via direct messaging platforms.
+
+## Technologies Used
+
+*   **Backend**: FastAPI (Python)
+*   **Database**: SQLAlchemy (SQLite for MVP, easily scalable)
+*   **Frontend**: Jinja2 (templating), HTML5, CSS3 (Bootstrap 5 for UI/UX)
+*   **Internationalization**: Babel, gettext
+*   **Notifications**: SendGrid (email), Twilio (WhatsApp)
+*   **Authentication**: JWT (JSON Web Tokens)
+*   **Testing**: Pytest, httpx, respx
+*   **Deployment**: Docker, Gunicorn/Uvicorn
+
+## Setup and Installation
 
 ### Prerequisites
 
--   Python 3.9+
--   pip
+*   Python 3.8+
+*   pip (Python package installer)
+*   Docker (optional, for containerized deployment)
 
-### Installation
+### Local Development
 
 1.  **Clone the repository:**
     ```bash
-    git clone https://github.com/your-username/bookslot.git
+    git clone <repository-url>
     cd bookslot
     ```
 
-2.  **Create a virtual environment and activate it:**
+2.  **Create and activate a virtual environment:**
     ```bash
     python -m venv venv
-    source venv/bin/activate  # On Windows: `venv\Scripts\activate`
+    source venv/bin/activate  # On Windows: venv\Scripts\activate
     ```
 
 3.  **Install dependencies:**
@@ -40,24 +61,41 @@ These instructions will get you a copy of the project up and running on your loc
     ```
 
 4.  **Set up environment variables:**
-    Create a `.env` file in the project root with the following variables:
-    ```
-    SECRET_KEY="your-super-secret-key"
-    SENDGRID_API_KEY="your-sendgrid-api-key"
-    TWILIO_ACCOUNT_SID="your-twilio-account-sid"
-    TWILIO_AUTH_TOKEN="your-twilio-auth-token"
-    TWILIO_WHATSAPP_NUMBER="whatsapp:+1234567890" # Your Twilio WhatsApp enabled number
-    GEMINI_API_KEY="your-gemini-api-key" # Placeholder for future AI features
+    Create a `.env` file in the project root based on `.env.example`. Fill in your API keys for SendGrid, Twilio, etc.
+    ```dotenv
+    SECRET_KEY="your-super-secret-key-replace-this"
+    ALGORITHM="HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES=30
+
+    SENDGRID_API_KEY="SG.YOUR_SENDGRID_API_KEY"
+    TWILIO_ACCOUNT_SID="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    TWILIO_AUTH_TOKEN="your_twilio_auth_token"
+    TWILIO_WHATSAPP_NUMBER="+14155238886" # Your Twilio WhatsApp Sandbox number or approved number
+    GEMINI_API_KEY="AIzaSyB-YOUR_GEMINI_API_KEY" # Not directly used in current MVP, but good to have
     ```
 
-5.  **Initialize the database:**
-    The application uses SQLite, and the database will be created automatically on first run. You can run migrations if you set up Alembic (not included in MVP).
+5.  **Run database migrations (if any, for SQLAlchemy models this is handled on app startup):**
+    The `src/database.py` and `src/main.py` handle initial table creation. No explicit migration steps are needed for the current SQLite setup.
 
-6.  **Run the application:**
+6.  **Compile translation files:**
     ```bash
-    uvicorn src.main:app --reload
+    # First, extract translatable strings (only needed when adding/changing strings)
+    # pybabel extract -F babel.cfg -o locales/messages.pot src templates
+    # Then, initialize or update .po files (only needed once per language or after extraction)
+    # pybabel init -i locales/messages.pot -d locales -l ar
+    # pybabel init -i locales/messages.pot -d locales -l fr
+    # pybabel update -i locales/messages.pot -d locales
+
+    # Compile .po files to .mo files for use by gettext
+    find locales -type d -name 'LC_MESSAGES' | xargs -I {} bash -c 'msgfmt {}.po -o {}.mo'
     ```
-    The application will be available at `http://127.0.0.1:8000`.
+    *Note: `babel.cfg` is not included but would be needed for `pybabel extract`. For this exercise, `.po` files are provided directly.* Also, `msgfmt` might not be available by default in some environments. It's part of `gettext` utilities.
+
+7.  **Run the application:**
+    ```bash
+    uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
+    ```
+    The application will be accessible at `http://127.0.0.1:8000`.
 
 ### Running Tests
 
@@ -65,26 +103,64 @@ These instructions will get you a copy of the project up and running on your loc
 pytest
 ```
 
-## Deployment
+### Docker Deployment
 
-A basic `Dockerfile` is provided for containerization.
+1.  **Build the Docker image:**
+    ```bash
+    docker build -t bookslot-app .
+    ```
 
-```bash
-docker build -t bookslot .
-docker run -p 8000:8000 bookslot
+2.  **Run the Docker container:**
+    ```bash
+    docker run -d -p 8000:8000 --name bookslot bookslot-app
+    ```
+
+    Remember to provide environment variables to the container. You can pass them using `-e` flags or by mounting an `.env` file.
+    ```bash
+    docker run -d -p 8000:8000 --name bookslot \ 
+        -e SECRET_KEY="your-secret-key" \ 
+        -e SENDGRID_API_KEY="SG.YOUR_SENDGRID_API_KEY" \ 
+        -e TWILIO_ACCOUNT_SID="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" \ 
+        -e TWILIO_AUTH_TOKEN="your_twilio_auth_token" \ 
+        -e TWILIO_WHATSAPP_NUMBER="+14155238886" \ 
+        bookslot-app
+    ```
+
+## Project Structure
+
 ```
-
-Remember to configure environment variables for production deployments.
-
-## Built With
-
--   [FastAPI](https://fastapi.tiangolo.com/) - The web framework used
--   [SQLAlchemy](https://www.sqlalchemy.org/) - SQL toolkit and Object Relational Mapper
--   [Jinja2](https://jinja.palletsprojects.com/) - Templating engine
--   [Pydantic](https://pydantic.dev/) - Data validation and settings management
--   [SendGrid](https://sendgrid.com/) - Email service
--   [Twilio](https://www.twilio.com/) - SMS/WhatsApp service
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE.md file for details (not yet created, but a standard placeholder).
+.env.example
+Dockerfile
+README.md
+requirements.txt
+src/
+├── __init__.py
+├── config.py
+├── crud.py
+├── database.py
+├── i18n_config.py
+├── main.py
+├── models.py
+├── notifications.py
+├── schemas.py
+└── security.py
+locales/
+├── ar/
+│   └── LC_MESSAGES/
+│       └── messages.po
+└── fr/
+    └── LC_MESSAGES/
+        └── messages.po
+templates/
+├── availability.html
+├── base.html
+├── booking_confirmation.html
+├── booking_page.html
+├── dashboard.html
+├── index.html
+├── login.html
+├── profile.html
+├── services.html
+tests/
+└── test_app.py
+```
