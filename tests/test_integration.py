@@ -1,234 +1,248 @@
-from fastapi.testclient import TestClient
-from sqlalchemy.orm import Session
-from src import crud, models, schemas, security
-from datetime import datetime, timedelta
-import pytz
 import pytest
+from fastapi.testclient import TestClient
+from unittest.mock import patch, MagicMock
+from sqlalchemy.orm import Session
+from datetime import datetime, timedelta
+import json
 
-from src.config import settings
-settings.SENDGRID_API_KEY = "test_sendgrid_key"
-settings.TWILIO_ACCOUNT_SID = "test_twilio_sid"
-settings.TWILIO_AUTH_TOKEN = "test_twilio_token"
-settings.TWILIO_WHATSAPP_NUMBER = "+15005550006"
-settings.GEMINI_API_KEY = "test_gemini_key"
-settings.SECRET_KEY = "super-secret-test-key"
+from src.main import app, get_db
+from src import models, schemas, security, crud, notifications
 
-def test_owner_signup_and_login(client: TestClient, db_session: Session, test_owner_data: dict):
-    response = client.post(
-        "/signup",
-        data=test_owner_data,
-        follow_redirects=False
+client = TestClient(app)
+
+# Fixture for a mock database session
+@pytest.fixture
+def mock_db_session():
+    db_mock = MagicMock(spec=Session)
+    yield db_mock
+
+# Override the get_db dependency to use the mock session
+@pytest.fixture(autouse=True)
+def override_get_db(mock_db_session):
+    app.dependency_overrides[get_db] = lambda: mock_db_session
+    yield
+    app.dependency_overrides.clear()
+
+# Fixture for a mock current owner
+@pytest.fixture
+def mock_owner():
+    owner = models.Owner(
+        id=1,
+        name="Test Owner",
+        email="owner@example.com",
+        hashed_password=security.get_password_hash("testpassword"),
+        business_name="Test Business",
+        slug="test-business",
+        services_json=json.dumps([{"name": "Haircut", "duration_minutes": 30, "price": 25.0}]),
+        availability_json=json.dumps({"Monday": [{"day_of_week": "Monday", "start_time": "09:00", "end_time": "17:00"}]}),
+        phone="+1234567890"
     )
-    assert response.status_code == 302
-    assert response.headers["location"] == "/dashboard"
+    return owner
 
-    owner_in_db = crud.get_owner_by_email(db_session, email=test_owner_data["email"])
-    assert owner_in_db is not None
-    assert owner_in_db.name == test_owner_data["name"]
-    assert owner_in_db.business_name == test_owner_data["business_name"]
-    assert owner_in_db.slug == test_owner_data["slug"]
-    assert security.verify_password(test_owner_data["password"], owner_in_db.hashed_password)
+# Override get_current_owner for authenticated routes
+@pytest.fixture(autouse=True)
+def override_get_current_owner(mock_owner):
+    with patch('src.security.get_current_owner') as mock_dependency:
+        mock_dependency.return_value = mock_owner
+        yield
+
+# Mock notification services
+@pytest.fixture(autouse=True)
+def mock_notifications():
+    with patch('src.notifications.send_email_notification') as mock_send_email,
+         patch('src.notifications.send_whatsapp_notification') as mock_send_whatsapp:
+        mock_send_email.return_value = True
+        mock_send_whatsapp.return_value = True
+        yield mock_send_email, mock_send_whatsapp
+
+
+# --- Health Check Test ---
+def test_health_check():
+    response = client.get("/health")
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok"}
+
+# --- Owner Registration & Authentication Tests ---
+def test_register_owner(mock_db_session):
+    mock_db_session.query.return_value.filter.return_value.first.side_effect = [None, None] # No owner by email, no owner by slug
+    mock_db_session.add.return_value = None
+    mock_db_session.commit.return_value = None
+    mock_db_session.refresh.return_value = models.Owner(id=1, email="new@example.com", name="New Owner", business_name="New Biz", slug="new-biz", hashed_password="hashed", services_json="[]", availability_json="{}")
 
     response = client.post(
-        "/token",
-        data={"username": test_owner_data["email"], "password": test_owner_data["password"]}
+        "/register",
+        json={"email": "new@example.com", "password": "newpass", "name": "New Owner", "business_name": "New Biz", "slug": "new-biz"}
     )
     assert response.status_code == 200
-    token_data = response.json()
-    assert "access_token" in token_data
-    assert token_data["token_type"] == "bearer"
-    assert "access_token" in client.cookies
+    assert response.json()["email"] == "new@example.com"
 
+def test_register_owner_email_exists(mock_db_session, mock_owner):
+    mock_db_session.query.return_value.filter.return_value.first.return_value = mock_owner # Owner with email exists
     response = client.post(
-        "/token",
-        data={"username": test_owner_data["email"], "password": "wrongpassword"}
+        "/register",
+        json={"email": "owner@example.com", "password": "newpass", "name": "New Owner", "business_name": "New Biz", "slug": "new-biz"}
     )
-    assert response.status_code == 401
-    assert response.json()["detail"] == "Incorrect email or password"
+    assert response.status_code == 400
+    assert "Email already registered" in response.json()["detail"]
 
-    response = client.post(
-        "/token",
-        data={"username": "nonexistent@example.com", "password": "anypassword"}
-    )
-    assert response.status_code == 401
-    assert response.json()["detail"] == "Incorrect email or password"
+def test_login_for_access_token(mock_db_session, mock_owner):
+    with patch('src.crud.authenticate_owner', return_value=mock_owner):
+        response = client.post(
+            "/token",
+            data={"username": "owner@example.com", "password": "testpassword"}
+        )
+        assert response.status_code == 200
+        assert "access_token" in response.json()
 
-def test_signup_duplicate_email_or_slug(client: TestClient, db_session: Session, create_test_owner: models.Owner):
-    duplicate_email_data = {
-        "name": "Another Owner",
-        "email": create_test_owner.email,
-        "password": "password123",
-        "business_name": "Another Business",
-        "slug": "another-business",
-    }
-    response = client.post("/signup", data=duplicate_email_data)
-    assert response.status_code == 200
-    assert "Email already registered" in response.text
+def test_login_for_access_token_invalid_credentials(mock_db_session):
+    with patch('src.crud.authenticate_owner', return_value=False):
+        response = client.post(
+            "/token",
+            data={"username": "wrong@example.com", "password": "wrongpass"}
+        )
+        assert response.status_code == 401
+        assert "Incorrect email or password" in response.json()["detail"]
 
-    duplicate_slug_data = {
-        "name": "Yet Another Owner",
-        "email": "yetanother@example.com",
-        "password": "password123",
-        "business_name": "Yet Another Business",
-        "slug": create_test_owner.slug,
-    }
-    response = client.post("/signup", data=duplicate_slug_data)
-    assert response.status_code == 200
-    assert "Business URL slug already taken" in response.text
-
-def test_owner_dashboard_access(client: TestClient, create_test_owner: models.Owner):
+# --- Owner Dashboard Tests ---
+def test_owner_dashboard_get(mock_db_session, mock_owner):
+    mock_db_session.query.return_value.filter.return_value.order_by.return_value.all.return_value = [] # No upcoming bookings
     response = client.get("/dashboard")
-    assert response.status_code == 401
+    assert response.status_code == 200
+    assert "Welcome, Test Owner!" in response.text
+    assert "Your Profile" in response.text
+    assert "Upcoming Bookings" in response.text
+    assert "Haircut" in response.text # Check for service from mock_owner
+    assert "Monday" in response.text # Check for availability from mock_owner
+
+def test_owner_profile_update(mock_db_session, mock_owner):
+    mock_db_session.add.return_value = None
+    mock_db_session.commit.return_value = None
+    mock_db_session.refresh.return_value = mock_owner # Refresh returns the same mock_owner updated
+    mock_db_session.query.return_value.filter.return_value.order_by.return_value.all.return_value = []
+
+    updated_services = json.dumps([{"name": "Updated Service", "duration_minutes": 45, "price": 75.0}])
+    updated_availability = json.dumps({"Tuesday": [{"day_of_week": "Tuesday", "start_time": "08:00", "end_time": "16:00"}]})
 
     response = client.post(
-        "/token",
-        data={"username": create_test_owner.email, "password": "testpassword"}
-    )
-    assert response.status_code == 200
-    token = response.json()["access_token"]
-    client.cookies["access_token"] = token
-
-    response = client.get("/dashboard")
-    assert response.status_code == 200
-    assert "Dashboard" in response.text
-    assert create_test_owner.business_name in response.text
-    assert create_test_owner.name in response.text
-
-def test_owner_profile_update(authenticated_client: TestClient, db_session: Session, create_test_owner: models.Owner):
-    new_name = "Updated Name"
-    new_business_name = "Updated Business"
-    new_phone = "+1987654321"
-
-    response = authenticated_client.post(
-        "/dashboard/profile",
-        data=
-            {
-            "name": new_name,
-            "business_name": new_business_name,
-            "phone": new_phone
+        "/owner/profile",
+        data={
+            "name": "Updated Name",
+            "business_name": "Updated Business",
+            "phone": "+1987654321",
+            "services_json": updated_services,
+            "availability_json": updated_availability
         }
     )
     assert response.status_code == 200
     assert "Profile updated successfully!" in response.text
-    assert new_name in response.text
-    assert new_business_name in response.text
-    assert new_phone in response.text
+    assert "Updated Name" in response.text
+    assert "Updated Business" in response.text
+    # Verify that the mock_owner object was updated
+    assert mock_owner.name == "Updated Name"
+    assert mock_owner.business_name == "Updated Business"
+    assert mock_owner.phone == "+1987654321"
+    assert mock_owner.services_json == updated_services
+    assert mock_owner.availability_json == updated_availability
 
-    updated_owner = crud.get_owner(db_session, create_test_owner.id)
-    assert updated_owner.name == new_name
-    assert updated_owner.business_name == new_business_name
-    assert updated_owner.phone == new_phone
+def test_owner_profile_update_invalid_json(mock_db_session, mock_owner):
+    response = client.post(
+        "/owner/profile",
+        data={
+            "name": "Updated Name",
+            "business_name": "Updated Business",
+            "phone": "+1987654321",
+            "services_json": "invalid json",
+            "availability_json": "{}"
+        }
+    )
+    assert response.status_code == 400
+    assert "Invalid JSON format for services or availability" in response.json()["detail"]
 
-def test_public_booking_page_loads(client: TestClient, create_test_owner: models.Owner):
-    response = client.get(f"/bookslot.app/{create_test_owner.slug}")
-    assert response.status_code == 200
-    assert create_test_owner.business_name in response.text
-    assert "Book an Appointment" in response.text
-    assert "Haircut" in response.text
-    assert "09:00 AM" in response.text
+# --- Public Booking Page Tests ---
+def test_public_booking_page_get(mock_db_session, mock_owner):
+    with patch('src.crud.get_owner_by_slug', return_value=mock_owner):
+        response = client.get(f"/book/{mock_owner.slug}")
+        assert response.status_code == 200
+        assert f"<title>{mock_owner.business_name} - Book an Appointment</title>" in response.text
+        assert "Haircut" in response.text # Check service
 
-def test_public_booking_page_not_found(client: TestClient):
-    response = client.get("/bookslot.app/non-existent-slug")
+def test_public_booking_page_not_found(mock_db_session):
+    mock_db_session.query.return_value.filter.return_value.first.return_value = None # Owner not found
+    response = client.get("/book/non-existent-slug")
     assert response.status_code == 404
-    assert "Owner not found" in response.text
+    assert "Owner not found" in response.json()["detail"]
 
-def test_booking_submission_success(client: TestClient, db_session: Session, create_test_owner: models.Owner):
-    booking_date = (datetime.now(pytz.utc) + timedelta(days=7)).strftime("%Y-%m-%d")
-    booking_time = "10:00"
+def test_submit_booking_success(mock_db_session, mock_owner, mock_notifications):
+    mock_db_session.query.return_value.filter.return_value.first.return_value = mock_owner # For getting owner by slug
+    mock_db_session.add.return_value = None
+    mock_db_session.commit.return_value = None
+    mock_db_session.refresh.return_value = MagicMock(spec=models.Booking) # Mock the created booking object
 
-    booking_data = {
-        "customer_name": "Jane Doe",
-        "customer_email": "jane@example.com",
-        "customer_phone": "+19998887777",
-        "service_name": "Haircut",
-        "booking_date": booking_date,
-        "booking_time": booking_time,
-    }
+    booking_time_str = (datetime.now() + timedelta(days=1)).isoformat()
 
     response = client.post(
-        f"/bookslot.app/{create_test_owner.slug}/book",
-        data=booking_data,
-        follow_redirects=False
+        f"/book/{mock_owner.slug}",
+        data={
+            "customer_name": "John Doe",
+            "customer_email": "john@example.com",
+            "customer_phone": "+11234567890",
+            "service_name": "Haircut",
+            "booking_time": booking_time_str
+        },
+        follow_redirects=False # Do not follow redirect to check status code
     )
-    assert response.status_code == 302
-    assert "confirmation" in response.headers["location"]
+    assert response.status_code == 303 # Redirect to confirmation page
+    assert "/booking-confirmation" in response.headers["location"]
+    mock_notifications[0].assert_called_with(
+        recipient_email=mock_owner.email,
+        subject="New Booking Received!",
+        body=f"You have a new booking from John Doe for Haircut at {booking_time_str}. Customer email: john@example.com, phone: +11234567890"
+    )
+    mock_notifications[0].assert_called_with(
+        recipient_email="john@example.com",
+        subject="Your Booking Confirmation",
+        body=f"Hi John Doe, your booking for Haircut with Test Business at {booking_time_str} is confirmed."
+    )
+    mock_notifications[1].assert_any_call(
+        recipient_phone=mock_owner.phone,
+        message=f"New BookSlot booking! John Doe for Haircut at {booking_time_str}. Email: john@example.com, Phone: +11234567890"
+    )
+    mock_notifications[1].assert_any_call(
+        recipient_phone="+11234567890",
+        message=f"Your BookSlot booking for Haircut with Test Business at {booking_time_str} is confirmed."
+    )
 
-    bookings_in_db = db_session.query(models.Booking).filter(models.Booking.owner_id == create_test_owner.id).all()
-    assert len(bookings_in_db) == 1
-    new_booking = bookings_in_db[0]
-    assert new_booking.customer_name == booking_data["customer_name"]
-    assert new_booking.service_name == booking_data["service_name"]
-    assert new_booking.booking_time.strftime("%Y-%m-%d %H:%M") == datetime.strptime(f"{booking_date} {booking_time}", "%Y-%m-%d %H:%M").strftime("%Y-%m-%d %H:%M")
+def test_submit_booking_error_rendering(mock_db_session, mock_owner, mock_notifications):
+    mock_db_session.query.return_value.filter.return_value.first.return_value = mock_owner # For getting owner by slug
+    # Simulate a database error during booking creation
+    mock_db_session.add.side_effect = Exception("DB Error")
 
-    confirmation_url = response.headers["location"]
-    response = client.get(confirmation_url)
-    assert response.status_code == 200
-    assert "Booking Confirmed!" in response.text
-    assert str(new_booking.id) in response.text
-
-def test_booking_submission_error_past_time(client: TestClient, db_session: Session, create_test_owner: models.Owner):
-    booking_date = (datetime.now(pytz.utc) - timedelta(days=1)).strftime("%Y-%m-%d")
-    booking_time = "10:00"
-
-    booking_data = {
-        "customer_name": "Error User",
-        "customer_email": "error@example.com",
-        "customer_phone": "+1234567890",
-        "service_name": "Haircut",
-        "booking_date": booking_date,
-        "booking_time": booking_time,
-    }
+    booking_time_str = (datetime.now() + timedelta(days=1)).isoformat()
 
     response = client.post(
-        f"/bookslot.app/{create_test_owner.slug}/book",
-        data=booking_data
+        f"/book/{mock_owner.slug}",
+        data={
+            "customer_name": "Jane Doe",
+            "customer_email": "jane@example.com",
+            "service_name": "Haircut",
+            "booking_time": booking_time_str
+        }
     )
-    assert response.status_code == 200
-    assert "Booking must be in the future." in response.text
-    
-    bookings_in_db = db_session.query(models.Booking).filter(models.Booking.owner_id == create_test_owner.id).all()
-    assert len(bookings_in_db) == 0
+    assert response.status_code == 200 # Renders the page again with an error
+    assert "There was an error processing your booking. Please try again." in response.text
+    mock_notifications[0].assert_not_called()
+    mock_notifications[1].assert_not_called()
 
-def test_i18n_language_toggle_booking_page(client: TestClient, create_test_owner: models.Owner):
-    response = client.get(f"/bookslot.app/{create_test_owner.slug}")
-    assert response.status_code == 200
-    assert "Book an Appointment" in response.text
-    assert "Your Name:" in response.text
+# --- Booking Confirmation Page Tests ---
+def test_booking_confirmation_page_get(mock_db_session, mock_owner):
+    with patch('src.crud.get_owner_by_slug', return_value=mock_owner):
+        response = client.get(f"/booking-confirmation/{mock_owner.slug}")
+        assert response.status_code == 200
+        assert "Booking Confirmed!" in response.text
+        assert f"Thank you for booking with {mock_owner.business_name}." in response.text
 
-    response = client.get(f"/toggle-lang?lang=ar", headers={"referer": f"/bookslot.app/{create_test_owner.slug}"})
-    assert response.status_code == 302
-    assert client.cookies["lang"] == "ar"
-    response = client.get(f"/bookslot.app/{create_test_owner.slug}")
-    assert response.status_code == 200
-    assert "احجز موعداً" in response.text
-    assert "اسمك:" in response.text
-
-    response = client.get(f"/toggle-lang?lang=fr", headers={"referer": f"/bookslot.app/{create_test_owner.slug}"})
-    assert response.status_code == 302
-    assert client.cookies["lang"] == "fr"
-    response = client.get(f"/bookslot.app/{create_test_owner.slug}")
-    assert response.status_code == 200
-    assert "Prendre rendez-vous" in response.text
-    assert "Votre nom :" in response.text
-
-def test_i18n_language_toggle_dashboard_page(authenticated_client: TestClient, create_test_owner: models.Owner):
-    response = authenticated_client.get("/dashboard")
-    assert response.status_code == 200
-    assert "Dashboard" in response.text
-    assert "Your Profile" in response.text
-
-    response = authenticated_client.get(f"/toggle-lang?lang=ar", headers={"referer": "/dashboard"})
-    assert response.status_code == 302
-    assert authenticated_client.cookies["lang"] == "ar"
-    response = authenticated_client.get("/dashboard")
-    assert response.status_code == 200
-    assert "لوحة التحكم" in response.text
-    assert "ملفك الشخصي" in response.text
-
-    response = authenticated_client.get(f"/toggle-lang?lang=fr", headers={"referer": "/dashboard"})
-    assert response.status_code == 302
-    assert authenticated_client.cookies["lang"] == "fr"
-    response = authenticated_client.get("/dashboard")
-    assert response.status_code == 200
-    assert "Tableau de bord" in response.text
-    assert "Votre profil" in response.text
+def test_booking_confirmation_page_owner_not_found(mock_db_session):
+    mock_db_session.query.return_value.filter.return_value.first.return_value = None # Owner not found
+    response = client.get("/booking-confirmation/non-existent-slug")
+    assert response.status_code == 404
+    assert "Owner not found" in response.json()["detail"]

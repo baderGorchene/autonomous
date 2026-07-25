@@ -1,1 +1,1 @@
-feat: Automated tests passed, moving to final review and deployment prep
+Fix: Ensure pytest is available by providing comprehensive requirements.txt

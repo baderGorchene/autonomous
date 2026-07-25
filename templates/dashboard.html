@@ -1,68 +1,222 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="{{ current_lang }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% trans %}Dashboard{% endtrans %} - {{ owner.business_name }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; }
+        .container { max-width: 900px; }
+        .card { background-color: #ffffff; border-radius: 0.5rem; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06); }
+        .language-toggle a { padding: 5px 10px; border-radius: 5px; background-color: #e2e8f0; }
+        .language-toggle a.active { background-color: #a0aec0; color: white; }
+        {% if current_lang == 'ar' %}
+            body { direction: rtl; text-align: right; }
+            .language-toggle { direction: ltr; }
+        {% endif %}
+    </style>
+</head>
+<body class="flex flex-col items-center min-h-screen p-4">
+    <div class="container w-full bg-white shadow-xl rounded-lg p-6 md:p-8 border border-gray-200 mt-8">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl md:text-4xl font-extrabold text-gray-800">{% trans %}Welcome{% endtrans %}, {{ owner.name }}!</h1>
+            <div class="language-toggle flex space-x-2">
+                <a href="{{ request.url|urlencode('lang', 'en') }}" class="{% if current_lang == 'en' %}active{% endif %}">EN</a>
+                <a href="{{ request.url|urlencode('lang', 'ar') }}" class="{% if current_lang == 'ar' %}active{% endif %}">AR</a>
+                <a href="{{ request.url|urlencode('lang', 'fr') }}" class="{% if current_lang == 'fr' %}active{% endif %}">FR</a>
+            </div>
+        </div>
+        
+        <p class="text-gray-600 mb-8 text-lg">{% trans %}Your public booking page:{% endtrans %} <a href="/book/{{ owner.slug }}?lang={{ current_lang }}" class="text-blue-600 hover:underline">bookslot.app/{{ owner.slug }}</a></p>
 
-{% block title %}{{ _('Dashboard') }} - BookSlot{% endblock %}
+        {% if message %}
+            <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-6" role="alert">
+                <strong class="font-bold">{% trans %}Success!{% endtrans %}</strong>
+                <span class="block sm:inline">{{ message }}</span>
+            </div>
+        {% endif %}
 
-{% block head %}
-<style>
-    .service-item, .availability-item {
-        border: 1px solid #ddd;
-        padding: 10px;
-        margin-bottom: 10px;
-        border-radius: 5px;
-        background-color: #f9f9f9;
-    }
-    .service-item .btn, .availability-item .btn {
-        margin-left: 5px;
-    }
-</style>
-{% endblock %}
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Profile Update Section -->
+            <div class="card p-6">
+                <h2 class="text-2xl font-bold text-gray-700 mb-4">{% trans %}Your Profile{% endtrans %}</h2>
+                <form action="/owner/profile?lang={{ current_lang }}" method="POST" class="space-y-4">
+                    <div>
+                        <label for="name" class="block text-sm font-medium text-gray-700">{% trans %}Your Name{% endtrans %}</label>
+                        <input type="text" id="name" name="name" value="{{ owner.name }}" required
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="business_name" class="block text-sm font-medium text-gray-700">{% trans %}Business Name{% endtrans %}</label>
+                        <input type="text" id="business_name" name="business_name" value="{{ owner.business_name }}" required
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="phone" class="block text-sm font-medium text-gray-700">{% trans %}Phone Number (for WhatsApp notifications){% endtrans %}</label>
+                        <input type="tel" id="phone" name="phone" value="{{ owner.phone if owner.phone else '' }}"
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    </div>
+                    
+                    <h3 class="text-xl font-semibold text-gray-700 mt-6 mb-3">{% trans %}Your Services{% endtrans %}</h3>
+                    <div id="services-list" class="space-y-3">
+                        <!-- Existing services will be rendered here by JS -->
+                    </div>
+                    <button type="button" id="add-service-btn" class="mt-3 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                        {% trans %}Add Service{% endtrans %}
+                    </button>
 
-{% block content %}
-<h1 class="mb-4">{{ _('Welcome, %s!') % owner.name }}</h1>
+                    <h3 class="text-xl font-semibold text-gray-700 mt-6 mb-3">{% trans %}Your Availability{% endtrans %}</h3>
+                    <div id="availability-list" class="space-y-3">
+                        <!-- Existing availability will be rendered here by JS -->
+                    </div>
+                    <button type="button" id="add-availability-btn" class="mt-3 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                        {% trans %}Add Availability{% endtrans %}
+                    </button>
 
-<div class="card mb-4">
-    <div class="card-header">
-        <h5 class="mb-0">{{ _('Your Public Booking Page') }}</h5>
-    </div>
-    <div class="card-body">
-        <p>{{ _('Share this link with your customers to let them book appointments easily:') }}</p>
-        <div class="input-group mb-3">
-            <input type="text" class="form-control" value="bookslot.app/{{ owner.slug }}" readonly>
-            <button class="btn btn-outline-secondary" type="button" onclick="navigator.clipboard.writeText('bookslot.app/{{ owner.slug }}')">{{ _('Copy Link') }}</button>
+                    <input type="hidden" name="services_json" id="services_json_input">
+                    <input type="hidden" name="availability_json" id="availability_json_input">
+
+                    <button type="submit" class="w-full mt-6 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-md shadow-lg transition duration-300 ease-in-out">
+                        {% trans %}Update Profile{% endtrans %}
+                    </button>
+                </form>
+            </div>
+
+            <!-- Upcoming Bookings Section -->
+            <div class="card p-6">
+                <h2 class="text-2xl font-bold text-gray-700 mb-4">{% trans %}Upcoming Bookings{% endtrans %}</h2>
+                {% if upcoming_bookings %}
+                    <ul class="divide-y divide-gray-200">
+                        {% for booking in upcoming_bookings %}
+                            <li class="py-4">
+                                <p class="text-lg font-semibold text-gray-800">{{ booking.service_name }}</p>
+                                <p class="text-gray-600">{% trans %}With{% endtrans %}: {{ booking.customer_name }} ({{ booking.customer_email }})</p>
+                                <p class="text-gray-600">{% trans %}Phone{% endtrans %}: {{ booking.customer_phone if booking.customer_phone else 'N/A' }}</p>
+                                <p class="text-gray-600">{% trans %}When{% endtrans %}: {{ booking.booking_time.strftime('%Y-%m-%d %H:%M') }}</p>
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">{{ booking.status }}</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-gray-500">{% trans %}No upcoming bookings.{% endtrans %}</p>
+                {% endif %}
+            </div>
         </div>
     </div>
-</div>
 
-<div class="card mb-4">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">{{ _('Upcoming Bookings') }}</h5>
-    </div>
-    <div class="card-body">
-        {% if upcoming_bookings %}
-        <ul class="list-group">
-            {% for booking in upcoming_bookings %}
-            <li class="list-group-item">
-                <strong>{{ booking.service_name }}</strong> {{ _('with') }} {{ booking.customer_name }}<br>
-                {{ _('Date:') }} {{ booking.booking_date.strftime('%Y-%m-%d') }} {{ _('at') }} {{ booking.booking_time }}<br>
-                {{ _('Customer Email:') }} {{ booking.customer_email }}<br>
-                {{ _('Customer Phone:') }} {{ booking.customer_phone or _('N/A') }}
-            </li>
-            {% endfor %}
-        </ul>
-        {% else %}
-        <p>{{ _('No upcoming bookings yet.') }}</p>
-        {% endif %}
-    </div>
-</div>
+    <script>
+        const servicesData = {{ services | tojson }};
+        const availabilityData = {{ availability | tojson }};
 
-<div class="card mb-4">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">{{ _('Your Profile and Settings') }}</h5>
-    </div>
-    <div class="card-body">
-        <p>{{ _('Manage your services, availability, and contact information.') }}</p>
-        <a href="/profile" class="btn btn-primary">{{ _('Edit Profile') }}</a>
-    </div>
-</div>
+        const servicesList = document.getElementById('services-list');
+        const addServiceBtn = document.getElementById('add-service-btn');
+        const servicesJsonInput = document.getElementById('services_json_input');
 
-{% endblock %}
+        const availabilityList = document.getElementById('availability-list');
+        const addAvailabilityBtn = document.getElementById('add-availability-btn');
+        const availabilityJsonInput = document.getElementById('availability_json_input');
+
+        function renderServices() {
+            servicesList.innerHTML = '';
+            servicesData.forEach((service, index) => {
+                const div = document.createElement('div');
+                div.className = 'flex items-center space-x-2';
+                div.innerHTML = `
+                    <input type="text" class="block w-1/2 px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm" placeholder="Service Name" value="${service.name}" onchange="updateServicesData(${index}, 'name', this.value)">
+                    <input type="number" class="block w-1/4 px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm" placeholder="Duration (min)" value="${service.duration_minutes}" onchange="updateServicesData(${index}, 'duration_minutes', parseInt(this.value))">
+                    <input type="number" step="0.01" class="block w-1/4 px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm" placeholder="Price" value="${service.price}" onchange="updateServicesData(${index}, 'price', parseFloat(this.value))">
+                    <button type="button" onclick="removeService(${index})" class="text-red-600 hover:text-red-800">X</button>
+                `;
+                servicesList.appendChild(div);
+            });
+            servicesJsonInput.value = JSON.stringify(servicesData);
+        }
+
+        function updateServicesData(index, field, value) {
+            servicesData[index][field] = value;
+            servicesJsonInput.value = JSON.stringify(servicesData);
+        }
+
+        function addService() {
+            servicesData.push({ name: '', duration_minutes: 30, price: 0.00 });
+            renderServices();
+        }
+
+        function removeService(index) {
+            servicesData.splice(index, 1);
+            renderServices();
+        }
+
+        function renderAvailability() {
+            availabilityList.innerHTML = '';
+            const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+            
+            daysOfWeek.forEach(day => {
+                const daySlots = availabilityData[day] || [];
+                daySlots.forEach((slot, index) => {
+                    const div = document.createElement('div');
+                    div.className = 'flex items-center space-x-2';
+                    div.innerHTML = `
+                        <select class="block w-1/3 px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm" onchange="updateAvailabilityData('${day}', ${index}, 'day_of_week', this.value)">
+                            ${daysOfWeek.map(d => `<option value="${d}" ${d === day ? 'selected' : ''}>${d}</option>`).join('')}
+                        </select>
+                        <input type="time" class="block w-1/3 px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm" value="${slot.start_time}" onchange="updateAvailabilityData('${day}', ${index}, 'start_time', this.value)">
+                        <input type="time" class="block w-1/3 px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm" value="${slot.end_time}" onchange="updateAvailabilityData('${day}', ${index}, 'end_time', this.value)">
+                        <button type="button" onclick="removeAvailability('${day}', ${index})" class="text-red-600 hover:text-red-800">X</button>
+                    `;
+                    availabilityList.appendChild(div);
+                });
+            });
+
+            // Add a dropdown for adding new availability for a specific day
+            const addDiv = document.createElement('div');
+            addDiv.className = 'flex items-center space-x-2 mt-4';
+            addDiv.innerHTML = `
+                <select id="new-availability-day" class="block w-1/3 px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm">
+                    ${daysOfWeek.map(d => `<option value="${d}">${d}</option>`).join('')}
+                </select>
+                <button type="button" onclick="addAvailability()" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    {% trans %}Add Slot{% endtrans %}
+                </button>
+            `;
+            availabilityList.appendChild(addDiv);
+
+            availabilityJsonInput.value = JSON.stringify(availabilityData);
+        }
+
+        function updateAvailabilityData(day, index, field, value) {
+            if (!availabilityData[day]) {
+                availabilityData[day] = [];
+            }
+            availabilityData[day][index][field] = value;
+            availabilityJsonInput.value = JSON.stringify(availabilityData);
+        }
+
+        function addAvailability() {
+            const day = document.getElementById('new-availability-day').value;
+            if (!availabilityData[day]) {
+                availabilityData[day] = [];
+            }
+            availabilityData[day].push({ day_of_week: day, start_time: '09:00', end_time: '17:00' });
+            renderAvailability();
+        }
+
+        function removeAvailability(day, index) {
+            if (availabilityData[day]) {
+                availabilityData[day].splice(index, 1);
+                if (availabilityData[day].length === 0) {
+                    delete availabilityData[day]; // Remove day if no slots left
+                }
+            }
+            renderAvailability();
+        }
+
+        addServiceBtn.addEventListener('click', addService);
+        addAvailabilityBtn.addEventListener('click', addAvailability);
+
+        renderServices();
+        renderAvailability();
+    </script>
+</body>
+</html>
