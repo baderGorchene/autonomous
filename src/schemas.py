@@ -1,46 +1,31 @@
 from pydantic import BaseModel, EmailStr, Field
-from typing import List, Optional, Dict, Any
-from datetime import datetime
+from typing import List, Dict, Any, Optional
+import datetime
 
-class Service(BaseModel):
-    name: str = Field(..., min_length=1, max_length=100)
-    duration_minutes: int = Field(..., gt=0)
-    price: float = Field(..., ge=0)
+class Token(BaseModel):
+    access_token: str
+    token_type: str
 
-class AvailabilitySlot(BaseModel):
-    start_time: str
-    end_time: str
-
-class DayAvailability(BaseModel):
-    is_available: bool
-    slots: List[AvailabilitySlot] = []
+class TokenData(BaseModel):
+    email: Optional[str] = None
 
 class OwnerBase(BaseModel):
-    name: str
     email: EmailStr
+    name: str
     business_name: str
     slug: str
 
 class OwnerCreate(OwnerBase):
     password: str
-    phone: Optional[str] = None
-
-class OwnerUpdate(BaseModel):
-    name: Optional[str] = None
-    email: Optional[EmailStr] = None
-    business_name: Optional[str] = None
-    phone: Optional[str] = None
-    services: Optional[List[Service]] = None
-    availability: Optional[Dict[str, DayAvailability]] = None
 
 class OwnerProfileUpdate(BaseModel):
     name: str
     business_name: str
     phone: Optional[str] = None
-    services: List[Service]
-    availability: Dict[str, DayAvailability]
+    services: List[Dict[str, Any]] = Field(default_factory=list)
+    availability: Dict[str, Any] = Field(default_factory=dict)
 
-class OwnerInDB(OwnerBase):
+class Owner(OwnerBase):
     id: int
     is_active: bool
     services_json: str
@@ -50,15 +35,25 @@ class OwnerInDB(OwnerBase):
     class Config:
         from_attributes = True
 
-class Owner(OwnerInDB):
-    pass
+class Service(BaseModel):
+    name: str
+    duration: int # in minutes
+    price: Optional[float] = None
+    description: Optional[str] = None
+
+class AvailabilitySlot(BaseModel):
+    day: str # e.g., "Monday"
+    start_time: str # e.g., "09:00"
+    end_time: str # e.g., "17:00"
 
 class BookingBase(BaseModel):
     customer_name: str
     customer_email: EmailStr
     customer_phone: Optional[str] = None
     service_name: str
-    booking_time: datetime
+    booking_date: datetime.date
+    booking_time: str # HH:MM string
+    notes: Optional[str] = None
 
 class BookingCreate(BookingBase):
     pass
@@ -66,40 +61,7 @@ class BookingCreate(BookingBase):
 class Booking(BookingBase):
     id: int
     owner_id: int
-    created_at: datetime
+    created_at: datetime.datetime
 
     class Config:
         from_attributes = True
-
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-
-class TokenData(BaseModel):
-    email: Optional[str] = None
-
-class LoginForm(BaseModel):
-    email: EmailStr
-    password: str
-
-class SignupForm(BaseModel):
-    name: str
-    email: EmailStr
-    password: str
-    business_name: str
-    slug: str
-    phone: Optional[str] = None
-
-class BookingForm(BaseModel):
-    customer_name: str
-    customer_email: EmailStr
-    customer_phone: Optional[str] = None
-    service_name: str
-    booking_date: str
-    booking_time: str
-
-class ServiceUpdateForm(BaseModel):
-    services: List[Service]
-
-class AvailabilityUpdateForm(BaseModel):
-    availability: Dict[str, DayAvailability]

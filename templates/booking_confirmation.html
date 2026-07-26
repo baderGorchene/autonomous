@@ -1,37 +1,47 @@
 <!DOCTYPE html>
-<html lang="{{ request.cookies.get('locale', 'en') }}">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _('Booking Confirmed!') }}</title>
+    <title>{{ _("Booking Confirmed!") }}</title>
     <link rel="stylesheet" href="/static/style.css">
 </head>
-<body class="confirmation-page">
+<body>
     <header>
         <div class="container">
             <h1>{{ owner.business_name }}</h1>
+            <nav>
+                <div class="language-toggle">
+                    <a href="{{ request.url|urlencode('locale', 'en') }}">EN</a> |
+                    <a href="{{ request.url|urlencode('locale', 'ar') }}">AR</a> |
+                    <a href="{{ request.url|urlencode('locale', 'fr') }}">FR</a>
+                </div>
+            </nav>
         </div>
     </header>
-
     <main class="container">
-        <div class="confirmation-message">
-            <h2>{{ _('Booking Confirmed!') }} 🎉</h2>
-            <p>{{ _('Thank you for your booking with') }} {{ owner.business_name }}.</p>
-            <p>{{ _('A confirmation email has been sent to your inbox.') }}</p>
-            <p>{{ _('We look forward to seeing you!') }}</p>
-            <a href="/bookslot.app/{{ owner.slug }}" class="button">{{ _('Book another service') }}</a>
-        </div>
-    </main>
+        <h2>{{ _("Booking Confirmed!") }}</h2>
+        {% if success_message %}
+            <p class="success-message">{{ success_message }}</p>
+        {% endif %}
 
+        <div class="confirmation-details">
+            <p><strong>{{ _("Service:") }}</strong> {{ booking.service_name }}</p>
+            <p><strong>{{ _("Date:") }}</strong> {{ booking.booking_date.strftime('%Y-%m-%d') }}</p>
+            <p><strong>{{ _("Time:") }}</strong> {{ booking.booking_time }}</p>
+            <p><strong>{{ _("With:") }}</strong> {{ owner.business_name }}</p>
+            <p>{{ _("A confirmation email has been sent to") }} {{ booking.customer_email }}.</p>
+            {% if booking.customer_phone %}
+                <p>{{ _("You will also receive a WhatsApp message at") }} {{ booking.customer_phone }}.</p>
+            {% endif %}
+        </div>
+        <p><a href="/{{ owner.slug }}" class="button secondary">{{ _("Book another appointment") }}</a></p>
+        <p><a href="/" class="button secondary">{{ _("Go to Home") }}</a></p>
+    </main>
     <footer>
-        <p>&copy; 2024 BookSlot. {{ _('All rights reserved.') }}</p>
+        <div class="container">
+            <p>&copy; 2024 BookSlot. {{ _("All rights reserved.") }}</p>
+        </div>
     </footer>
-    <form action="/set-locale" method="post" style="text-align: center; margin-top: 20px;">
-        <select name="locale" onchange="this.form.submit()">
-            <option value="en" {% if request.cookies.get('locale') == 'en' %}selected{% endif %}>English</option>
-            <option value="ar" {% if request.cookies.get('locale') == 'ar' %}selected{% endif %}>العربية</option>
-            <option value="fr" {% if request.cookies.get('locale') == 'fr' %}selected{% endif %}>Français</option>
-        </select>
-    </form>
 </body>
 </html>

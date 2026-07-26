@@ -1,45 +1,52 @@
 <!DOCTYPE html>
-<html lang="{{ request.cookies.get('locale', 'en') }}">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _('BookSlot - Dead-simple booking page') }}</title>
+    <title>BookSlot - Simple Booking Page</title>
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
     <header>
-        <h1>{{ _('BookSlot') }}</h1>
-        <nav>
-            <a href="/login">{{ _('Login') }}</a>
-            <a href="/signup">{{ _('Sign Up') }}</a>
-            <form action="/set-locale" method="post" style="display: inline;">
-                <select name="locale" onchange="this.form.submit()">
-                    <option value="en" {% if request.cookies.get('locale') == 'en' %}selected{% endif %}>English</option>
-                    <option value="ar" {% if request.cookies.get('locale') == 'ar' %}selected{% endif %}>العربية</option>
-                    <option value="fr" {% if request.cookies.get('locale') == 'fr' %}selected{% endif %}>Français</option>
-                </select>
-            </form>
-        </nav>
+        <div class="container">
+            <h1>BookSlot</h1>
+            <nav>
+                {% if current_owner %}
+                    <a href="/dashboard">Dashboard</a>
+                    <a href="/logout">Logout</a>
+                {% else %}
+                    <a href="/login">Login</a>
+                    <a href="/register">Register</a>
+                {% endif %}
+                <div class="language-toggle">
+                    <a href="{{ request.url|urlencode('locale', 'en') }}">EN</a> |
+                    <a href="{{ request.url|urlencode('locale', 'ar') }}">AR</a> |
+                    <a href="{{ request.url|urlencode('locale', 'fr') }}">FR</a>
+                </div>
+            </nav>
+        </div>
     </header>
-    <main>
-        <section class="hero">
-            <h2>{{ _('Say Goodbye to WhatsApp Chaos') }}</h2>
-            <p>{{ _('BookSlot offers a dead-simple booking page for local service businesses.') }}</p>
-            <a href="/signup" class="button">{{ _('Get Started Free') }}</a>
-        </section>
-        <section class="features">
-            <h3>{{ _('Features') }}</h3>
-            <ul>
-                <li>{{ _('Shareable booking link') }}</li>
-                <li>{{ _('Customer self-booking') }}</li>
-                <li>{{ _('WhatsApp/Email notifications') }}</li>
-                <li>{{ _('No customer accounts needed') }}</li>
-                <li>{{ _('Bilingual support (English + Arabic/French)') }}</li>
-            </ul>
-        </section>
+    <main class="container">
+        <h2>{{ _("Welcome to BookSlot!") }}</h2>
+        <p>{{ _("Your dead-simple booking page for local service businesses.") }}</p>
+        <p>{{ _("Manage appointments with ease, say goodbye to WhatsApp chaos.") }}</p>
+        
+        {% if not current_owner %}
+        <div class="cta-buttons">
+            <a href="/register" class="button primary">{{ _("Get Started - It's Free!") }}</a>
+            <a href="/login" class="button secondary">{{ _("Already a member? Login") }}</a>
+        </div>
+        {% else %}
+        <div class="cta-buttons">
+            <a href="/dashboard" class="button primary">{{ _("Go to your Dashboard") }}</a>
+            <p>{{ _("Your public booking page:") }} <a href="/{{ current_owner.slug }}" target="_blank">bookslot.app/{{ current_owner.slug }}</a></p>
+        </div>
+        {% endif %}
     </main>
     <footer>
-        <p>&copy; 2024 BookSlot. {{ _('All rights reserved.') }}</p>
+        <div class="container">
+            <p>&copy; 2024 BookSlot. {{ _("All rights reserved.") }}</p>
+        </div>
     </footer>
 </body>
 </html>
