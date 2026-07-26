@@ -1,18 +1,14 @@
-# Use an official Python runtime as a parent image
-FROM python:3.11-slim-buster
-
-# Set the working directory in the container
+FROM python:3.9-slim-buster AS builder
 WORKDIR /app
-
-# Copy the current directory contents into the container at /app
-COPY . /app
-
-# Install any needed packages specified in requirements.txt
+RUN apt-get update && apt-get install -y --no-install-recommends gcc && rm -rf /var/lib/apt/lists/*
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Expose port 8000 for the Uvicorn server
+FROM python:3.9-slim-buster
+WORKDIR /app
+COPY --from=builder /usr/local/lib/python3.9/site-packages /usr/local/lib/python3.9/site-packages
+COPY --from=builder /usr/local/bin/gunicorn /usr/local/bin/gunicorn
+COPY --from=builder /usr/local/bin/uvicorn /usr/local/bin/uvicorn
+COPY . /app
 EXPOSE 8000
-
-# Run the application using Gunicorn with Uvicorn workers
-# Assuming `main.py` is in the `src` directory
-CMD ["gunicorn", "-w", "4", "-k", "uvicorn.workers.UvicornWorker", "src.main:app", "-b", "0.0.0.0:8000"]
+CMD ["gunicorn", "src.main:app", "--workers", "4", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000"]
