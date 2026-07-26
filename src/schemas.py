@@ -2,18 +2,22 @@ from pydantic import BaseModel, EmailStr, Field
 from typing import List, Dict, Any, Optional
 import datetime
 
-class Token(BaseModel):
-    access_token: str
-    token_type: str
+class Service(BaseModel):
+    name: str
+    duration: int # minutes
+    price: float
+    description: Optional[str] = None
 
-class TokenData(BaseModel):
-    email: Optional[str] = None
+class Availability(BaseModel):
+    day_of_week: int # 0-6 for Monday-Sunday
+    start_time: str # HH:MM
+    end_time: str # HH:MM
 
 class OwnerBase(BaseModel):
-    email: EmailStr
     name: str
+    email: EmailStr
     business_name: str
-    slug: str
+    slug: str = Field(..., regex="^[a-z0-9-]+$") # URL-friendly slug
 
 class OwnerCreate(OwnerBase):
     password: str
@@ -22,29 +26,17 @@ class OwnerProfileUpdate(BaseModel):
     name: str
     business_name: str
     phone: Optional[str] = None
-    services: List[Dict[str, Any]] = Field(default_factory=list)
-    availability: Dict[str, Any] = Field(default_factory=dict)
+    services: List[Service]
+    availability: List[Availability]
 
-class Owner(OwnerBase):
+class OwnerInDB(OwnerBase):
     id: int
-    is_active: bool
+    phone: Optional[str] = None
     services_json: str
     availability_json: str
-    phone: Optional[str] = None
 
     class Config:
         from_attributes = True
-
-class Service(BaseModel):
-    name: str
-    duration: int # in minutes
-    price: Optional[float] = None
-    description: Optional[str] = None
-
-class AvailabilitySlot(BaseModel):
-    day: str # e.g., "Monday"
-    start_time: str # e.g., "09:00"
-    end_time: str # e.g., "17:00"
 
 class BookingBase(BaseModel):
     customer_name: str
@@ -52,16 +44,23 @@ class BookingBase(BaseModel):
     customer_phone: Optional[str] = None
     service_name: str
     booking_date: datetime.date
-    booking_time: str # HH:MM string
-    notes: Optional[str] = None
+    booking_time: str # HH:MM
 
 class BookingCreate(BookingBase):
     pass
 
-class Booking(BookingBase):
+class BookingInDB(BookingBase):
     id: int
     owner_id: int
+    status: str
     created_at: datetime.datetime
 
     class Config:
         from_attributes = True
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class TokenData(BaseModel):
+    email: Optional[str] = None

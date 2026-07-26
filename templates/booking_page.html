@@ -1,127 +1,112 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ owner.business_name }} - {{ _("Book an Appointment") }}</title>
-    <link rel="stylesheet" href="/static/style.css">
-</head>
-<body>
-    <header>
-        <div class="container">
-            <h1>{{ owner.business_name }}</h1>
-            <nav>
-                <div class="language-toggle">
-                    <a href="{{ request.url|urlencode('locale', 'en') }}">EN</a> |
-                    <a href="{{ request.url|urlencode('locale', 'ar') }}">AR</a> |
-                    <a href="{{ request.url|urlencode('locale', 'fr') }}">FR</a>
-                </div>
-            </nav>
-        </div>
-    </header>
-    <main class="container">
-        <h2>{{ _("Book an Appointment with") }} {{ owner.business_name }}</h2>
+{% extends "base.html" %}
+{% block title %}{{ _("Book with ") }}{{ owner.business_name }}{% endblock %}
+{% block content %}
+<div class="container booking-page">
+    <h1>{{ _("Book your slot with ") }}{{ owner.business_name }}</h1>
+    {% if owner.description %}
+        <p>{{ owner.description }}</p>
+    {% endif %}
 
-        {% if error %}
-            <p class="error-message">{{ error }}</p>
-        {% endif %}
-        {% if success %}
-            <p class="success-message">{{ success }}</p>
-        {% endif %}
-
-        <form action="/{{ owner.slug }}/book" method="post" class="booking-form">
+    <form action="/book/{{ owner.slug }}/submit" method="post">
+        <div class="form-group">
             <label for="customer_name">{{ _("Your Name") }}:</label>
-            <input type="text" id="customer_name" name="customer_name" value="{{ customer_name or '' }}" required>
-
+            <input type="text" id="customer_name" name="customer_name" required>
+        </div>
+        <div class="form-group">
             <label for="customer_email">{{ _("Your Email") }}:</label>
-            <input type="email" id="customer_email" name="customer_email" value="{{ customer_email or '' }}" required>
+            <input type="email" id="customer_email" name="customer_email" required>
+        </div>
+        <div class="form-group">
+            <label for="customer_phone">{{ _("Your Phone Number (optional, for WhatsApp notifications)") }}:</label>
+            <input type="text" id="customer_phone" name="customer_phone">
+        </div>
 
-            <label for="customer_phone">{{ _("Your Phone Number (optional, for WhatsApp confirmation)") }}:</label>
-            <input type="tel" id="customer_phone" name="customer_phone" value="{{ customer_phone or '' }}">
-
-            <label for="service_name">{{ _("Select Service") }}:</label>
+        <div class="form-group">
+            <label for="service_name">{{ _("Select a Service") }}:</label>
             <select id="service_name" name="service_name" required>
-                <option value="">{{ _("Choose a service...") }}</option>
+                <option value="">{{ _("-- Please choose a service --") }}</option>
                 {% for service in services %}
-                    <option value="{{ service.name }}" {% if service_name == service.name %}selected{% endif %}>
-                        {{ service.name }} ({{ service.duration }} {{ _("minutes") }})
-                        {% if service.price %} - {{ service.price }} {{ _("AED") }} {% endif %}
-                    </option>
+                    <option value="{{ service.name }}">{{ service.name }} ({{ service.duration }} min, {{ service.price }} USD)</option>
                 {% endfor %}
             </select>
-
-            <label for="booking_date">{{ _("Select Date") }}:</label>
-            <input type="date" id="booking_date" name="booking_date" value="{{ booking_date_str or '' }}" required>
-
-            <label for="booking_time">{{ _("Select Time Slot") }}:</label>
-            <select id="booking_time" name="booking_time" required disabled>
-                <option value="">{{ _("Select a date first") }}</option>
-            </select>
-
-            <label for="notes">{{ _("Notes (optional)") }}:</label>
-            <textarea id="notes" name="notes" rows="4">{{ notes or '' }}</textarea>
-
-            <button type="submit" class="button primary">{{ _("Book Now") }}</button>
-        </form>
-    </main>
-    <footer>
-        <div class="container">
-            <p>&copy; 2024 BookSlot. {{ _("All rights reserved.") }}</p>
         </div>
-    </footer>
-    <script>
-        const availableSlots = {{ available_slots | tojson }};
-        const bookingDateInput = document.getElementById('booking_date');
-        const bookingTimeSelect = document.getElementById('booking_time');
-        const currentSelectedTime = "{{ booking_time or '' }}";
 
-        function updateTimeSlots() {
-            const selectedDate = bookingDateInput.value;
-            const slotsForDate = availableSlots[selectedDate] || [];
+        <div class="form-group">
+            <label for="booking_date_str">{{ _("Select a Date") }}:</label>
+            <input type="date" id="booking_date_str" name="booking_date_str" required>
+        </div>
 
-            bookingTimeSelect.innerHTML = '';
-            if (slotsForDate.length === 0) {
+        <div class="form-group">
+            <label for="booking_time">{{ _("Select a Time Slot") }}:</label>
+            <select id="booking_time" name="booking_time" required>
+                <option value="">{{ _("-- Please choose a time --") }}</option>
+                <!-- Options will be populated by JavaScript based on date and availability -->
+            </select>
+        </div>
+
+        <button type="submit">{{ _("Book Now") }}</button>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // This is a simplified client-side logic.
+    // A real implementation would fetch availability dynamically from the server.
+    const availabilityData = JSON.parse('{{ availability | tojson }}'); // Assuming availability is passed as JSON string
+    const servicesData = JSON.parse('{{ services | tojson }}');
+    const bookingDateInput = document.getElementById('booking_date_str');
+    const bookingTimeSelect = document.getElementById('booking_time');
+
+    function getDayOfWeek(dateString) {
+        const date = new Date(dateString);
+        return date.getDay(); // 0 for Sunday, 1 for Monday, etc.
+    }
+
+    function populateTimeSlots() {
+        const selectedDate = bookingDateInput.value;
+        bookingTimeSelect.innerHTML = '<option value="">{{ _("-- Please choose a time --") }}</option>';
+
+        if (!selectedDate) return;
+
+        const dayOfWeek = getDayOfWeek(selectedDate);
+        const dayAvailability = availabilityData[dayOfWeek.toString()];
+
+        if (dayAvailability && dayAvailability.length > 0) {
+            const start = dayAvailability[0].start_time;
+            const end = dayAvailability[0].end_time;
+            
+            // Simple time slot generation (e.g., every 30 mins)
+            let currentTime = new Date(`2000-01-01T${start}:00`);
+            const endTime = new Date(`2000-01-01T${end}:00`);
+
+            while (currentTime < endTime) {
+                const timeString = currentTime.toTimeString().slice(0, 5);
                 const option = document.createElement('option');
-                option.value = '';
-                option.textContent = "{{ _('No slots available for this date') }}";
+                option.value = timeString;
+                option.textContent = timeString;
                 bookingTimeSelect.appendChild(option);
-                bookingTimeSelect.disabled = true;
-            } else {
-                const defaultOption = document.createElement('option');
-                defaultOption.value = '';
-                defaultOption.textContent = "{{ _('Choose a time...') }}";
-                bookingTimeSelect.appendChild(defaultOption);
-
-                slotsForDate.forEach(slot => {
-                    const option = document.createElement('option');
-                    option.value = slot;
-                    option.textContent = slot;
-                    if (slot === currentSelectedTime) {
-                        option.selected = true;
-                    }
-                    bookingTimeSelect.appendChild(option);
-                });
-                bookingTimeSelect.disabled = false;
+                currentTime.setMinutes(currentTime.getMinutes() + 30); // 30 minute intervals
             }
-        }
-
-        bookingDateInput.addEventListener('change', updateTimeSlots);
-
-        // Set min date to today
-        const today = new Date();
-        const yyyy = today.getFullYear();
-        const mm = String(today.getMonth() + 1).padStart(2, '0');
-        const dd = String(today.getDate()).padStart(2, '0');
-        bookingDateInput.min = `${yyyy}-${mm}-${dd}`;
-
-        // Initial update if a date is pre-filled (e.g., after form submission with error)
-        if (bookingDateInput.value) {
-            updateTimeSlots();
         } else {
-            // If no date is pre-filled, set it to today by default for initial load
-            bookingDateInput.value = `${yyyy}-${mm}-${dd}`;
-            updateTimeSlots();
+            const option = document.createElement('option');
+            option.value = '';
+            option.textContent = '{{ _("No availability for this day") }}';
+            bookingTimeSelect.appendChild(option);
         }
-    </script>
-</body>
-</html>
+    }
+
+    bookingDateInput.addEventListener('change', populateTimeSlots);
+
+    // Set min date to today
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0'); // Months start at 0!
+    const dd = String(today.getDate()).padStart(2, '0');
+    bookingDateInput.min = `${yyyy}-${mm}-${dd}`;
+
+    // Initial population if a date is pre-selected (e.g., on error re-render)
+    populateTimeSlots();
+
+</script>
+{% endblock %}

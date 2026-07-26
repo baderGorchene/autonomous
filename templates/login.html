@@ -1,46 +1,18 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _("Login - BookSlot") }}</title>
-    <link rel="stylesheet" href="/static/style.css">
-</head>
-<body>
-    <header>
-        <div class="container">
-            <h1>BookSlot</h1>
-            <nav>
-                <a href="/">{{ _("Home") }}</a>
-                <a href="/register">{{ _("Register") }}</a>
-                <div class="language-toggle">
-                    <a href="{{ request.url|urlencode('locale', 'en') }}">EN</a> |
-                    <a href="{{ request.url|urlencode('locale', 'ar') }}">AR</a> |
-                    <a href="{{ request.url|urlencode('locale', 'fr') }}">FR</a>
-                </div>
-            </nav>
-        </div>
-    </header>
-    <main class="container">
-        <h2>{{ _("Login to BookSlot") }}</h2>
-        {% if error %}
-            <p class="error-message">{{ error }}</p>
-        {% endif %}
-        <form action="/login" method="post" class="auth-form">
-            <label for="username">{{ _("Email") }}:</label>
-            <input type="email" id="username" name="username" required>
-
-            <label for="password">{{ _("Password") }}:</label>
-            <input type="password" id="password" name="password" required>
-
-            <button type="submit" class="button primary">{{ _("Login") }}</button>
-        </form>
-        <p>{{ _("Don't have an account?") }} <a href="/register">{{ _("Register here") }}</a></p>
-    </main>
-    <footer>
-        <div class="container">
-            <p>&copy; 2024 BookSlot. {{ _("All rights reserved.") }}</p>
-        </div>
-    </footer>
-</body>
-</html>
+{% extends "base.html" %}
+{% block title %}{{ _("Login") }}{% endblock %}
+{% block content %}
+<div class="container">
+    <h1>{{ _("Login to your account") }}</h1>
+    {% if error %}
+        <p class="error-message">{{ error }}</p>
+    {% endif %}
+    <form action="/login" method="post">
+        <label for="email">{{ _("Email") }}:</label>
+        <input type="email" id="email" name="email" required>
+        <label for="password">{{ _("Password") }}:</label>
+        <input type="password" id="password" name="password" required>
+        <button type="submit">{{ _("Login") }}</button>
+    </form>
+    <p>{{ _("Don't have an account?") }} <a href="/register">{{ _("Register here") }}</a></p>
+</div>
+{% endblock %}

@@ -1,55 +1,29 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _("Register - BookSlot") }}</title>
-    <link rel="stylesheet" href="/static/style.css">
-</head>
-<body>
-    <header>
-        <div class="container">
-            <h1>BookSlot</h1>
-            <nav>
-                <a href="/">{{ _("Home") }}</a>
-                <a href="/login">{{ _("Login") }}</a>
-                <div class="language-toggle">
-                    <a href="{{ request.url|urlencode('locale', 'en') }}">EN</a> |
-                    <a href="{{ request.url|urlencode('locale', 'ar') }}">AR</a> |
-                    <a href="{{ request.url|urlencode('locale', 'fr') }}">FR</a>
-                </div>
-            </nav>
-        </div>
-    </header>
-    <main class="container">
-        <h2>{{ _("Register for BookSlot") }}</h2>
-        {% if error %}
-            <p class="error-message">{{ error }}</p>
-        {% endif %}
-        <form action="/register" method="post" class="auth-form">
-            <label for="name">{{ _("Your Name") }}:</label>
-            <input type="text" id="name" name="name" required>
+{% extends "base.html" %}
+{% block title %}{{ _("Register") }}{% endblock %}
+{% block content %}
+<div class="container">
+    <h1>{{ _("Create your BookSlot account") }}</h1>
+    {% if error %}
+        <p class="error-message">{{ error }}</p>
+    {% endif %}
+    <form action="/register" method="post">
+        <label for="name">{{ _("Your Name") }}:</label>
+        <input type="text" id="name" name="name" required>
 
-            <label for="business_name">{{ _("Business Name") }}:</label>
-            <input type="text" id="business_name" name="business_name" required>
+        <label for="email">{{ _("Email") }}:</label>
+        <input type="email" id="email" name="email" required>
 
-            <label for="slug">{{ _("Your Booking Page URL (e.g., bookslot.app/your-name)") }}:</label>
-            <input type="text" id="slug" name="slug" required pattern="[a-z0-9-]+" title="{{ _('Lowercase letters, numbers, and hyphens only') }}">
+        <label for="password">{{ _("Password") }}:</label>
+        <input type="password" id="password" name="password" required>
 
-            <label for="email">{{ _("Email") }}:</label>
-            <input type="email" id="email" name="email" required>
+        <label for="business_name">{{ _("Business Name") }}:</label>
+        <input type="text" id="business_name" name="business_name" required>
 
-            <label for="password">{{ _("Password") }}:</label>
-            <input type="password" id="password" name="password" required>
+        <label for="slug">{{ _("Your Booking Page URL (e.g., bookslot.app/your-name)") }}:</label>
+        <input type="text" id="slug" name="slug" pattern="^[a-z0-9-]+$" title="{{ _('Only lowercase letters, numbers, and hyphens') }}" required>
 
-            <button type="submit" class="button primary">{{ _("Register") }}</button>
-        </form>
-        <p>{{ _("Already have an account?") }} <a href="/login">{{ _("Login here") }}</a></p>
-    </main>
-    <footer>
-        <div class="container">
-            <p>&copy; 2024 BookSlot. {{ _("All rights reserved.") }}</p>
-        </div>
-    </footer>
-</body>
-</html>
+        <button type="submit">{{ _("Register") }}</button>
+    </form>
+    <p>{{ _("Already have an account?") }} <a href="/login">{{ _("Login here") }}</a></p>
+</div>
+{% endblock %}

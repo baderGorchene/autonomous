@@ -1,51 +1,39 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: BookSlot\n"
-"POT-Creation-Date: 2024-05-15 10:00+0000\n"
-"PO-Revision-Date: 2024-05-15 10:00+0000\n"
+"POT-Creation-Date: 2023-11-20 10:00+0000\n"
+"PO-Revision-Date: 2023-11-20 10:00+0000\n"
 "Last-Translator: \n"
-"Language-Team: Arabic <LL@li.org>\n"
+"Language-Team: Arabic <ar@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.15.0\n"
 "Language: ar\n"
-
-msgid "Welcome to BookSlot!"
-msgstr "مرحباً بك في BookSlot!"
-
-msgid "Your dead-simple booking page for local service businesses."
-msgstr "صفحة حجزك السهلة للخدمات المحلية."
-
-msgid "Manage appointments with ease, say goodbye to WhatsApp chaos."
-msgstr "إدارة المواعيد بسهولة، وداعاً لفوضى الواتساب."
-
-msgid "Get Started - It's Free!"
-msgstr "ابدأ الآن - إنه مجاني!"
-
-msgid "Already a member? Login"
-msgstr "هل أنت عضو بالفعل؟ تسجيل الدخول"
-
-msgid "Go to your Dashboard"
-msgstr "اذهب إلى لوحة التحكم الخاصة بك"
-
-msgid "Your public booking page:"
-msgstr "صفحة الحجز العامة الخاصة بك:"
-
-msgid "All rights reserved."
-msgstr "جميع الحقوق محفوظة."
-
-msgid "Register - BookSlot"
-msgstr "التسجيل - BookSlot"
-
-msgid "Home"
-msgstr "الرئيسية"
+"X-Generator: Pybabel 2.13.0\n"
 
 msgid "Login"
 msgstr "تسجيل الدخول"
 
-msgid "Register for BookSlot"
-msgstr "التسجيل في BookSlot"
+msgid "Login to your account"
+msgstr "تسجيل الدخول إلى حسابك"
+
+msgid "Email"
+msgstr "البريد الإلكتروني"
+
+msgid "Password"
+msgstr "كلمة المرور"
+
+msgid "Don't have an account?"
+msgstr "ليس لديك حساب؟"
+
+msgid "Register here"
+msgstr "سجل هنا"
+
+msgid "Register"
+msgstr "تسجيل"
+
+msgid "Create your BookSlot account"
+msgstr "أنشئ حسابك في BookSlot"
 
 msgid "Your Name"
 msgstr "اسمك"
@@ -54,49 +42,49 @@ msgid "Business Name"
 msgstr "اسم العمل"
 
 msgid "Your Booking Page URL (e.g., bookslot.app/your-name)"
-msgstr "رابط صفحة الحجز الخاصة بك (مثال: bookslot.app/your-name)"
+msgstr "رابط صفحة الحجز الخاصة بك (مثال: bookslot.app/اسمك)"
 
-msgid "Lowercase letters, numbers, and hyphens only"
-msgstr "أحرف صغيرة، أرقام، وشرطات فقط"
-
-msgid "Email"
-msgstr "البريد الإلكتروني"
-
-msgid "Password"
-msgstr "كلمة المرور"
-
-msgid "Register"
-msgstr "تسجيل"
+msgid "Only lowercase letters, numbers, and hyphens"
+msgstr "أحرف صغيرة وأرقام وواصلات فقط"
 
 msgid "Already have an account?"
 msgstr "هل لديك حساب بالفعل؟"
 
 msgid "Login here"
-msgstr "سجل الدخول من هنا"
+msgstr "سجل الدخول هنا"
 
-msgid "Login to BookSlot"
-msgstr "تسجيل الدخول إلى BookSlot"
+msgid "Email already registered"
+msgstr "البريد الإلكتروني مسجل بالفعل"
 
-msgid "Don't have an account?"
-msgstr "ليس لديك حساب؟"
+msgid "Business URL (slug) already taken"
+msgstr "رابط العمل (slug) مأخوذ بالفعل"
 
-msgid "Dashboard - BookSlot"
-msgstr "لوحة التحكم - BookSlot"
+msgid "Incorrect email or password"
+msgstr "البريد الإلكتروني أو كلمة المرور غير صحيحة"
 
-msgid "Dashboard"
-msgstr "لوحة التحكم"
+msgid "Welcome, "
+msgstr "أهلاً بك، "
 
-msgid "Logout"
-msgstr "تسجيل الخروج"
+msgid "Your public booking page link:"
+msgstr "رابط صفحة الحجز العامة الخاصة بك:"
 
-msgid "Welcome,"
-msgstr "أهلاً بك،"
+msgid "Upcoming Bookings"
+msgstr "الحجوزات القادمة"
 
-msgid "Your Profile"
-msgstr "ملفك الشخصي"
+msgid "No upcoming bookings."
+msgstr "لا توجد حجوزات قادمة."
 
-msgid "Your Phone Number (for WhatsApp notifications)"
-msgstr "رقم هاتفك (لتلقي إشعارات واتساب)"
+msgid "Customer Email:"
+msgstr "بريد العميل الإلكتروني:"
+
+msgid "Customer Phone:"
+msgstr "هاتف العميل:"
+
+msgid "Your Profile & Services"
+msgstr "ملفك الشخصي وخدماتك"
+
+msgid "Phone Number (for WhatsApp notifications)"
+msgstr "رقم الهاتف (لإشعارات واتساب)"
 
 msgid "Your Services"
 msgstr "خدماتك"
@@ -107,17 +95,23 @@ msgstr "اسم الخدمة"
 msgid "Duration (minutes)"
 msgstr "المدة (بالدقائق)"
 
-msgid "Price (optional)"
-msgstr "السعر (اختياري)"
+msgid "Price"
+msgstr "السعر"
 
 msgid "Description (optional)"
 msgstr "الوصف (اختياري)"
+
+msgid "Remove"
+msgstr "إزالة"
 
 msgid "Add Service"
 msgstr "إضافة خدمة"
 
 msgid "Your Availability"
-msgstr "أوقات تواجدك"
+msgstr "توفرك"
+
+msgid "Set your weekly availability. Use HH:MM format."
+msgstr "حدد توفرك الأسبوعي. استخدم تنسيق الساعة:الدقيقة."
 
 msgid "Monday"
 msgstr "الاثنين"
@@ -140,92 +134,86 @@ msgstr "السبت"
 msgid "Sunday"
 msgstr "الأحد"
 
-msgid "Add Slot"
-msgstr "إضافة فترة"
-
 msgid "Update Profile"
 msgstr "تحديث الملف الشخصي"
 
-msgid "Upcoming Bookings"
-msgstr "الحجوزات القادمة"
+msgid "Invalid JSON for services or availability."
+msgstr "JSON غير صالح للخدمات أو التوفر."
 
-msgid "No upcoming bookings."
-msgstr "لا توجد حجوزات قادمة."
+msgid "An error occurred while updating your profile."
+msgstr "حدث خطأ أثناء تحديث ملفك الشخصي."
 
-msgid "Customer:"
-msgstr "العميل:"
+msgid "Book with "
+msgstr "احجز مع "
 
-msgid "Notes:"
-msgstr "ملاحظات:"
+msgid "Book your slot with "
+msgstr "احجز موعدك مع "
 
-msgid "Book an Appointment"
-msgstr "احجز موعداً"
+msgid "Your Phone Number (optional, for WhatsApp notifications)"
+msgstr "رقم هاتفك (اختياري، لإشعارات واتساب)"
 
-msgid "Book an Appointment with"
-msgstr "احجز موعداً مع"
+msgid "Select a Service"
+msgstr "اختر خدمة"
 
-msgid "Your Email"
-msgstr "بريدك الإلكتروني"
+msgid "-- Please choose a service --"
+msgstr "-- الرجاء اختيار خدمة --"
 
-msgid "Your Phone Number (optional, for WhatsApp confirmation)"
-msgstr "رقم هاتفك (اختياري، لتأكيد الواتساب)"
+msgid "Select a Date"
+msgstr "اختر تاريخاً"
 
-msgid "Select Service"
-msgstr "اختر الخدمة"
+msgid "Select a Time Slot"
+msgstr "اختر فترة زمنية"
 
-msgid "Choose a service..."
-msgstr "اختر خدمة..."
-
-msgid "minutes"
-msgstr "دقيقة"
-
-msgid "AED"
-msgstr "درهم إماراتي"
-
-msgid "Select Date"
-msgstr "اختر التاريخ"
-
-msgid "Select Time Slot"
-msgstr "اختر الوقت"
-
-msgid "Select a date first"
-msgstr "اختر تاريخاً أولاً"
-
-msgid "No slots available for this date"
-msgstr "لا توجد أوقات متاحة لهذا التاريخ"
-
-msgid "Notes (optional)"
-msgstr "ملاحظات (اختياري)"
+msgid "-- Please choose a time --"
+msgstr "-- الرجاء اختيار وقت --"
 
 msgid "Book Now"
 msgstr "احجز الآن"
 
+msgid "No availability for this day"
+msgstr "لا يوجد توفر لهذا اليوم"
+
+msgid "Owner not found"
+msgstr "لم يتم العثور على المالك"
+
+msgid "Invalid date format."
+msgstr "تنسيق التاريخ غير صالح."
+
+msgid "Cannot book in the past."
+msgstr "لا يمكن الحجز في الماضي."
+
+msgid "An error occurred while processing your booking."
+msgstr "حدث خطأ أثناء معالجة حجزك."
+
 msgid "Booking Confirmed!"
 msgstr "تم تأكيد الحجز!"
 
-msgid "Service:"
-msgstr "الخدمة:"
+msgid "Thank you, "
+msgstr "شكراً لك، "
 
-msgid "Date:"
-msgstr "التاريخ:"
+msgid "Your booking for "
+msgstr "حجزك لـ "
 
-msgid "Time:"
-msgstr "الوقت:"
+msgid " with "
+msgstr " مع "
 
-msgid "With:"
-msgstr "مع:"
+msgid " on "
+msgstr " في "
 
-msgid "A confirmation email has been sent to"
-msgstr "تم إرسال بريد إلكتروني للتأكيد إلى"
+msgid " at "
+msgstr " الساعة "
 
-msgid "You will also receive a WhatsApp message at"
-msgstr "ستتلقى أيضاً رسالة واتساب على"
+msgid " has been confirmed."
+msgstr " تم تأكيده."
 
-msgid "Book another appointment"
+msgid "A confirmation email has been sent to "
+msgstr "تم إرسال بريد إلكتروني للتأكيد إلى "
+
+msgid "You will also receive a WhatsApp message at "
+msgstr "ستتلقى أيضاً رسالة واتساب على "
+
+msgid "Book another slot"
 msgstr "احجز موعداً آخر"
 
-msgid "Go to Home"
-msgstr "اذهب إلى الرئيسية"
-
-msgid "Your booking has been successfully confirmed!"
-msgstr "تم تأكيد حجزك بنجاح!"
+msgid "Go to homepage"
+msgstr "الذهاب إلى الصفحة الرئيسية"

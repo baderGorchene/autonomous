@@ -1,47 +1,15 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _("Booking Confirmed!") }}</title>
-    <link rel="stylesheet" href="/static/style.css">
-</head>
-<body>
-    <header>
-        <div class="container">
-            <h1>{{ owner.business_name }}</h1>
-            <nav>
-                <div class="language-toggle">
-                    <a href="{{ request.url|urlencode('locale', 'en') }}">EN</a> |
-                    <a href="{{ request.url|urlencode('locale', 'ar') }}">AR</a> |
-                    <a href="{{ request.url|urlencode('locale', 'fr') }}">FR</a>
-                </div>
-            </nav>
-        </div>
-    </header>
-    <main class="container">
-        <h2>{{ _("Booking Confirmed!") }}</h2>
-        {% if success_message %}
-            <p class="success-message">{{ success_message }}</p>
-        {% endif %}
-
-        <div class="confirmation-details">
-            <p><strong>{{ _("Service:") }}</strong> {{ booking.service_name }}</p>
-            <p><strong>{{ _("Date:") }}</strong> {{ booking.booking_date.strftime('%Y-%m-%d') }}</p>
-            <p><strong>{{ _("Time:") }}</strong> {{ booking.booking_time }}</p>
-            <p><strong>{{ _("With:") }}</strong> {{ owner.business_name }}</p>
-            <p>{{ _("A confirmation email has been sent to") }} {{ booking.customer_email }}.</p>
-            {% if booking.customer_phone %}
-                <p>{{ _("You will also receive a WhatsApp message at") }} {{ booking.customer_phone }}.</p>
-            {% endif %}
-        </div>
-        <p><a href="/{{ owner.slug }}" class="button secondary">{{ _("Book another appointment") }}</a></p>
-        <p><a href="/" class="button secondary">{{ _("Go to Home") }}</a></p>
-    </main>
-    <footer>
-        <div class="container">
-            <p>&copy; 2024 BookSlot. {{ _("All rights reserved.") }}</p>
-        </div>
-    </footer>
-</body>
-</html>
+{% extends "base.html" %}
+{% block title %}{{ _("Booking Confirmed!") }}{% endblock %}
+{% block content %}
+<div class="container confirmation-page">
+    <h1>{{ _("Booking Confirmed!") }}</h1>
+    <p>{{ _("Thank you, ") }}{{ booking.customer_name }}!</p>
+    <p>{{ _("Your booking for ") }}<strong>{{ booking.service_name }}</strong> {{ _(" with ") }}<strong>{{ owner.business_name }}</strong> {{ _(" on ") }}<strong>{{ booking.booking_date.strftime('%Y-%m-%d') }}</strong> {{ _(" at ") }}<strong>{{ booking.booking_time }}</strong> {{ _(" has been confirmed.") }}</p>
+    <p>{{ _("A confirmation email has been sent to ") }}{{ booking.customer_email }}.</p>
+    {% if booking.customer_phone %}
+        <p>{{ _("You will also receive a WhatsApp message at ") }}{{ booking.customer_phone }}.</p>
+    {% endif %}
+    <p><a href="/book/{{ owner.slug }}">{{ _("Book another slot") }}</a></p>
+    <p><a href="/">{{ _("Go to homepage") }}</a></p>
+</div>
+{% endblock %}
