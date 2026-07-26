@@ -1,14 +1,12 @@
 version: '3.8'
 
 services:
-  bookslot:
-    build:
-      context: .
-      dockerfile: Dockerfile
+  bookslot_app:
+    build: .
     ports:
       - "8000:8000"
-    volumes:
-      - .:/app  # Mount the current directory into the container
     env_file:
-      - ./.env # Load environment variables from .env file
-    restart: unless-stopped # Restart policy
+      - .env
+    volumes:
+      - .:/app
+    command: ["gunicorn", "-w", "4", "-b", "0.0.0.0:8000", "src.main:app"]
