@@ -1,1 +1,1 @@
-Fix: Ensure pytest is available by providing comprehensive requirements.txt
+Fix: Ensure comprehensive requirements.txt to resolve pytest import error
