@@ -1,1 +1,1 @@
-Fix: Persistent 'No module named pytest' error by re-providing full project structure for deployment and testing
+Fix: Ensure pytest is available by providing comprehensive requirements.txt
