@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}{{ request.state.gettext('Welcome to BookSlot') }}{% endblock %}
+{% block content %}
+    <h2>{{ request.state.gettext('Welcome to BookSlot') }}</h2>
+    <p>{{ request.state.gettext('Your dead-simple booking page for local service businesses.') }}</p>
+    <p><a href="/signup">{{ request.state.gettext('Sign Up') }}</a> | <a href="/login">{{ request.state.gettext('Login') }}</a></p>
+{% endblock %}

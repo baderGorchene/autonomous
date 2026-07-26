@@ -1,126 +1,37 @@
 {% extends "base.html" %}
-{% block title %}{{ _("Dashboard") }}{% endblock %}
+{% block title %}{{ request.state.gettext('Dashboard') }}{% endblock %}
 {% block content %}
-<div class="container">
-    <h1>{{ _("Welcome, ") }}{{ owner.name }}!</h1>
-    <p>{{ _("Your public booking page link:") }} <a href="/book/{{ owner.slug }}" target="_blank">bookslot.app/{{ owner.slug }}</a></p>
+    <h2>{{ request.state.gettext('Welcome,') }} {{ owner.name }}!</h2>
+    <p>{{ request.state.gettext('Your booking page link:') }} <a href="/{{ owner.slug }}">{{ request.state.gettext('bookslot.app/') }}{{ owner.slug }}</a></p>
 
-    <h2>{{ _("Upcoming Bookings") }}</h2>
-    {% if bookings %}
+    <h3>{{ request.state.gettext('Your Profile') }}</h3>
+    <form action="/dashboard/profile" method="post">
+        <label for="name">{{ request.state.gettext('Your Name:') }}</label>
+        <input type="text" id="name" name="name" value="{{ owner.name }}" required><br>
+        <label for="business_name">{{ request.state.gettext('Business Name:') }}</label>
+        <input type="text" id="business_name" name="business_name" value="{{ owner.business_name }}" required><br>
+        <label for="phone">{{ request.state.gettext('Phone (for WhatsApp notifications):') }}</label>
+        <input type="text" id="phone" name="phone" value="{{ owner.phone or '' }}"><br>
+        
+        <h4>{{ request.state.gettext('Services Offered (JSON):') }}</h4>
+        <textarea id="services_json" name="services_json" rows="5" cols="50" placeholder='[{"id": 1, "name": "Haircut", "duration": 30}]'>{{ owner.services_json }}</textarea><br>
+        
+        <h4>{{ request.state.gettext('Availability (JSON):') }}</h4>
+        <textarea id="availability_json" name="availability_json" rows="5" cols="50" placeholder='{"monday": [{"start": "09:00", "end": "17:00"}]}'>{{ owner.availability_json }}</textarea><br>
+        
+        <button type="submit">{{ request.state.gettext('Update Profile') }}</button>
+    </form>
+
+    <h3>{{ request.state.gettext('Upcoming Bookings') }}</h3>
+    {% if upcoming_bookings %}
         <ul>
-            {% for booking in bookings %}
+            {% for booking in upcoming_bookings %}
                 <li>
-                    <strong>{{ booking.customer_name }}</strong> - {{ booking.service_name }} on {{ booking.booking_date.strftime('%Y-%m-%d') }} at {{ booking.booking_time }}
-                    <br>{{ _("Customer Email:") }} {{ booking.customer_email }}
-                    {% if booking.customer_phone %}<br>{{ _("Customer Phone:") }} {{ booking.customer_phone }}{% endif %}
+                    {{ booking.booking_time.strftime('%Y-%m-%d %H:%M') }} - {{ booking.service_name }} by {{ booking.customer_name }} ({{ booking.customer_email }})
                 </li>
             {% endfor %}
         </ul>
     {% else %}
-        <p>{{ _("No upcoming bookings.") }}</p>
+        <p>{{ request.state.gettext('No upcoming bookings.') }}</p>
     {% endif %}
-
-    <h2>{{ _("Your Profile & Services") }}</h2>
-    <form action="/dashboard/profile" method="post">
-        <label for="name">{{ _("Your Name") }}:</label>
-        <input type="text" id="name" name="name" value="{{ owner.name }}" required>
-
-        <label for="business_name">{{ _("Business Name") }}:</label>
-        <input type="text" id="business_name" name="business_name" value="{{ owner.business_name }}" required>
-
-        <label for="phone">{{ _("Phone Number (for WhatsApp notifications)") }}:</label>
-        <input type="text" id="phone" name="phone" value="{{ owner.phone or '' }}">
-
-        <h3>{{ _("Your Services") }}</h3>
-        <div id="services-list">
-            {% if services %}
-                {% for service in services %}
-                    <div class="service-item">
-                        <input type="text" name="service_name[]" value="{{ service.name }}" placeholder="{{ _('Service Name') }}" required>
-                        <input type="number" name="service_duration[]" value="{{ service.duration }}" placeholder="{{ _('Duration (minutes)') }}" required>
-                        <input type="number" name="service_price[]" value="{{ service.price }}" placeholder="{{ _('Price') }}" step="0.01" required>
-                        <textarea name="service_description[]" placeholder="{{ _('Description (optional)') }}">{{ service.description or '' }}</textarea>
-                        <button type="button" onclick="removeService(this)">{{ _("Remove") }}</button>
-                    </div>
-                {% endfor %}
-            {% else %}
-                <div class="service-item">
-                    <input type="text" name="service_name[]" placeholder="{{ _('Service Name') }}" required>
-                    <input type="number" name="service_duration[]" placeholder="{{ _('Duration (minutes)') }}" required>
-                    <input type="number" name="service_price[]" placeholder="{{ _('Price') }}" step="0.01" required>
-                    <textarea name="service_description[]" placeholder="{{ _('Description (optional)') }}"></textarea>
-                    <button type="button" onclick="removeService(this)">{{ _("Remove") }}</button>
-                </div>
-            {% endif %}
-        </div>
-        <button type="button" onclick="addService()">{{ _("Add Service") }}</button>
-        <input type="hidden" id="services_json" name="services_json">
-
-        <h3>{{ _("Your Availability") }}</h3>
-        <p>{{ _("Set your weekly availability. Use HH:MM format.") }}</p>
-        <div id="availability-list">
-            {% set days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] %}
-            {% for i in range(7) %}
-                <div>
-                    <strong>{{ _(days[i]) }}</strong>
-                    <input type="time" name="avail_start_time_{{ i }}" value="{{ availability[i|string][0].start_time if availability[i|string] else '' }}">
-                    <span> - </span>
-                    <input type="time" name="avail_end_time_{{ i }}" value="{{ availability[i|string][0].end_time if availability[i|string] else '' }}">
-                </div>
-            {% endfor %}
-        </div>
-        <input type="hidden" id="availability_json" name="availability_json">
-
-        <button type="submit">{{ _("Update Profile") }}</button>
-    </form>
-</div>
-{% endblock %}
-
-{% block scripts %}
-<script>
-    function addService() {
-        const servicesList = document.getElementById('services-list');
-        const newServiceItem = document.createElement('div');
-        newServiceItem.className = 'service-item';
-        newServiceItem.innerHTML = `
-            <input type="text" name="service_name[]" placeholder="{{ _('Service Name') }}" required>
-            <input type="number" name="service_duration[]" placeholder="{{ _('Duration (minutes)') }}" required>
-            <input type="number" name="service_price[]" placeholder="{{ _('Price') }}" step="0.01" required>
-            <textarea name="service_description[]" placeholder="{{ _('Description (optional)') }}"></textarea>
-            <button type="button" onclick="removeService(this)">{{ _("Remove") }}</button>
-        `;
-        servicesList.appendChild(newServiceItem);
-    }
-
-    function removeService(button) {
-        button.closest('.service-item').remove();
-    }
-
-    document.querySelector('form').addEventListener('submit', function(event) {
-        // Collect services data
-        const services = [];
-        document.querySelectorAll('#services-list .service-item').forEach(item => {
-            const name = item.querySelector('input[name^="service_name"]').value;
-            const duration = parseInt(item.querySelector('input[name^="service_duration"]').value);
-            const price = parseFloat(item.querySelector('input[name^="service_price"]').value);
-            const description = item.querySelector('textarea[name^="service_description"]').value;
-            if (name && duration && price) {
-                services.push({ name, duration, price, description });
-            }
-        });
-        document.getElementById('services_json').value = JSON.stringify(services);
-
-        // Collect availability data
-        const availability = {};
-        const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-        for (let i = 0; i < 7; i++) {
-            const startTime = document.querySelector(`input[name="avail_start_time_${i}"]`).value;
-            const endTime = document.querySelector(`input[name="avail_end_time_${i}"]`).value;
-            if (startTime && endTime) {
-                availability[i] = [{ start_time: startTime, end_time: endTime }];
-            }
-        }
-        document.getElementById('availability_json').value = JSON.stringify(availability);
-    });
-</script>
 {% endblock %}

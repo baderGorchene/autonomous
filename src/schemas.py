@@ -1,23 +1,12 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr
 from typing import List, Dict, Any, Optional
-import datetime
-
-class Service(BaseModel):
-    name: str
-    duration: int # minutes
-    price: float
-    description: Optional[str] = None
-
-class Availability(BaseModel):
-    day_of_week: int # 0-6 for Monday-Sunday
-    start_time: str # HH:MM
-    end_time: str # HH:MM
+from datetime import datetime
 
 class OwnerBase(BaseModel):
     name: str
     email: EmailStr
     business_name: str
-    slug: str = Field(..., regex="^[a-z0-9-]+$") # URL-friendly slug
+    slug: str
 
 class OwnerCreate(OwnerBase):
     password: str
@@ -26,15 +15,14 @@ class OwnerProfileUpdate(BaseModel):
     name: str
     business_name: str
     phone: Optional[str] = None
-    services: List[Service]
-    availability: List[Availability]
+    # services_json and availability_json are handled as raw JSON strings in the form submission
 
-class OwnerInDB(OwnerBase):
+class Owner(OwnerBase):
     id: int
+    services_json: Optional[str] = "[]"
+    availability_json: Optional[str] = "{}"
     phone: Optional[str] = None
-    services_json: str
-    availability_json: str
-
+    
     class Config:
         from_attributes = True
 
@@ -43,17 +31,16 @@ class BookingBase(BaseModel):
     customer_email: EmailStr
     customer_phone: Optional[str] = None
     service_name: str
-    booking_date: datetime.date
-    booking_time: str # HH:MM
+    booking_time: datetime
+    service_duration_minutes: int
 
 class BookingCreate(BookingBase):
     pass
 
-class BookingInDB(BookingBase):
+class Booking(BookingBase):
     id: int
     owner_id: int
-    status: str
-    created_at: datetime.datetime
+    created_at: datetime
 
     class Config:
         from_attributes = True
@@ -63,4 +50,4 @@ class Token(BaseModel):
     token_type: str
 
 class TokenData(BaseModel):
-    email: Optional[str] = None
+    owner_id: Optional[int] = None

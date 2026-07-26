@@ -1,15 +1,10 @@
 {% extends "base.html" %}
-{% block title %}{{ _("Booking Confirmed!") }}{% endblock %}
+{% block title %}{{ request.state.gettext('Booking Confirmed!') }}{% endblock %}
 {% block content %}
-<div class="container confirmation-page">
-    <h1>{{ _("Booking Confirmed!") }}</h1>
-    <p>{{ _("Thank you, ") }}{{ booking.customer_name }}!</p>
-    <p>{{ _("Your booking for ") }}<strong>{{ booking.service_name }}</strong> {{ _(" with ") }}<strong>{{ owner.business_name }}</strong> {{ _(" on ") }}<strong>{{ booking.booking_date.strftime('%Y-%m-%d') }}</strong> {{ _(" at ") }}<strong>{{ booking.booking_time }}</strong> {{ _(" has been confirmed.") }}</p>
-    <p>{{ _("A confirmation email has been sent to ") }}{{ booking.customer_email }}.</p>
-    {% if booking.customer_phone %}
-        <p>{{ _("You will also receive a WhatsApp message at ") }}{{ booking.customer_phone }}.</p>
-    {% endif %}
-    <p><a href="/book/{{ owner.slug }}">{{ _("Book another slot") }}</a></p>
-    <p><a href="/">{{ _("Go to homepage") }}</a></p>
-</div>
+    <h2>{{ request.state.gettext('Booking Confirmed!') }}</h2>
+    <p>{{ request.state.gettext('Thank you,') }} {{ booking.customer_name }}!</p>
+    <p>{{ request.state.gettext('Your appointment for') }} <strong>{{ booking.service_name }}</strong> {{ request.state.gettext('with') }} <strong>{{ owner.business_name }}</strong> {{ request.state.gettext('is confirmed for:') }}</p>
+    <p><strong>{{ booking.booking_time.strftime('%Y-%m-%d %H:%M') }}</strong></p>
+    <p>{{ request.state.gettext('A confirmation email has been sent to') }} {{ booking.customer_email }}.</p>
+    <p><a href="/{{ owner.slug }}">{{ request.state.gettext('Book another appointment') }}</a></p>
 {% endblock %}
