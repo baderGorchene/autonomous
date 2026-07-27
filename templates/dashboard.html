@@ -1,67 +1,79 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _("BookSlot Dashboard") }}</title>
+    <title>{% trans %}Dashboard{% endtrans %}</title>
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
     <header>
-        <h1>{{ _("BookSlot Dashboard") }}</h1>
+        <h1>{% trans %}Welcome{% endtrans %}, {{ owner.name }}!</h1>
         <nav>
-            <a href="/logout">{{ _("Logout") }}</a>
-            <a href="{{ request.url|urlencode('lang', 'en') }}">EN</a>
-            <a href="{{ request.url|urlencode('lang', 'ar') }}">AR</a>
-            <a href="{{ request.url|urlencode('lang', 'fr') }}">FR</a>
+            <a href="/dashboard?lang=en">English</a> |
+            <a href="/dashboard?lang=ar">العربية</a> |
+            <a href="/dashboard?lang=fr">Français</a>
+            <a href="/logout">{% trans %}Logout{% endtrans %}</a>
         </nav>
     </header>
     <main>
-        <h2>{{ _("Welcome") }}, {{ owner.name }}!</h2>
-        {% if message %}<p class="success">{{ message }}</p>{% endif %}
-        {% if error %}<p class="error">{{ error }}</p>{% endif %}
+        <h2>{% trans %}Your Business{% endtrans %}: {{ owner.business_name }}</h2>
+        <p>{% trans %}Your Booking Page Link{% endtrans %}: <a href="/{{ owner.slug }}" target="_blank">bookslot.app/{{ owner.slug }}</a></p>
 
-        <h3>{{ _("Your Public Booking Page Link") }}</h3>
-        <p><a href="/book/{{ slug }}" target="_blank">bookslot.app/book/{{ slug }}</a></p>
-
-        <h3>{{ _("Upcoming Bookings") }}</h3>
-        {% if upcoming_bookings %}
-            <ul>
-                {% for booking in upcoming_bookings %}
-                    <li>
-                        <strong>{{ booking.booking_time.strftime("%Y-%m-%d %H:%M") }}</strong>: {{ booking.service_name }} {{ _("with") }} {{ booking.customer_name }} ({{ booking.customer_email }})
-                        {% if booking.customer_phone %}({{ booking.customer_phone }}){% endif %}
-                    </li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p>{{ _("No upcoming bookings.") }}</p>
+        {% if success_message %}
+            <p style="color: green;">{{ success_message }}</p>
+        {% endif %}
+        {% if error_message %}
+            <p style="color: red;">{{ error_message }}</p>
         {% endif %}
 
-        <h3>{{ _("Update Your Profile") }}</h3>
-        <form action="/dashboard/profile" method="post">
-            <label for="name">{{ _("Your Name") }}</label>
-            <input type="text" id="name" name="name" value="{{ owner.name }}" required>
-            
-            <label for="business_name">{{ _("Business Name") }}</label>
-            <input type="text" id="business_name" name="business_name" value="{{ owner.business_name }}" required>
+        <section>
+            <h3>{% trans %}Update Profile{% endtrans %}</h3>
+            <form action="/dashboard/profile" method="post">
+                <label for="name">{% trans %}Your Name{% endtrans %}:</label>
+                <input type="text" id="name" name="name" value="{{ owner.name }}" required><br>
 
-            <label for="phone">{{ _("Phone Number (for WhatsApp notifications)") }}</label>
-            <input type="tel" id="phone" name="phone" value="{{ owner.phone or '' }}">
-            
-            <label for="services_json">{{ _("Services (JSON Array)") }}</label>
-            <textarea id="services_json" name="services_json" rows="5" required>{{ services | tojson }}</textarea>
-            <small>{{ _("Example: [{ \"name\": \"Haircut\", \"duration\": 30, \"price\": \"$30\" }]") }}</small>
-            
-            <label for="availability_json">{{ _("Availability (JSON Object)") }}</label>
-            <textarea id="availability_json" name="availability_json" rows="5" required>{{ availability | tojson }}</textarea>
-            <small>{{ _("Example: { \"Monday\": [\"09:00\", \"17:00\"], \"Tuesday\": [\"10:00\", \"18:00\"] }") }}</small>
-            
-            <button type="submit">{{ _("Update Profile") }}</button>
-        </form>
+                <label for="business_name">{% trans %}Business Name{% endtrans %}:</label>
+                <input type="text" id="business_name" name="business_name" value="{{ owner.business_name }}" required><br>
+
+                <label for="phone">{% trans %}Phone (for WhatsApp notifications){% endtrans %}:</label>
+                <input type="text" id="phone" name="phone" value="{{ owner.phone or '' }}"><br>
+
+                <h4>{% trans %}Services{% endtrans %}</h4>
+                <div id="services-list">
+                    <!-- Services will be managed by JS or rendered from server side -->
+                    <textarea name="services_json" id="services_json" rows="5" cols="50">{{ owner.services_json }}</textarea>
+                </div>
+                
+                <h4>{% trans %}Availability{% endtrans %}</h4>
+                <div id="availability-list">
+                    <!-- Availability will be managed by JS or rendered from server side -->
+                    <textarea name="availability_json" id="availability_json" rows="5" cols="50">{{ owner.availability_json }}</textarea>
+                </div>
+
+                <button type="submit">{% trans %}Update Profile{% endtrans %}</button>
+            </form>
+        </section>
+
+        <section>
+            <h3>{% trans %}Upcoming Bookings{% endtrans %}</h3>
+            {% if upcoming_bookings %}
+                <ul>
+                    {% for booking in upcoming_bookings %}
+                        <li>
+                            <strong>{{ booking.service_name }}</strong> {% trans %}with{% endtrans %} {{ booking.customer_name }} ({{ booking.customer_email }})
+                            <br>{% trans %}on{% endtrans %} {{ booking.booking_time.strftime('%Y-%m-%d %H:%M') }}
+                            {% if booking.customer_phone %}
+                            <br>{% trans %}Customer Phone{% endtrans %}: {{ booking.customer_phone }}
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>{% trans %}No upcoming bookings.{% endtrans %}</p>
+            {% endif %}
+        </section>
     </main>
-    <footer>
-        <p>&copy; 2023 BookSlot</p>
-    </footer>
+    <script src="/static/js/dashboard.js"></script>
 </body>
 </html>

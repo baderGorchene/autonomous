@@ -2,41 +2,15 @@ import os
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 from twilio.rest import Client
-from jinja2 import Environment, FileSystemLoader
-import gettext
-import json
-
 from .config import settings
-from . import models, schemas
+import logging
+import gettext # Added import
 
-current_file_dir = os.path.dirname(os.path.abspath(__file__))
-PROJECT_ROOT = os.path.abspath(os.path.join(current_file_dir, os.pardir))
-TEMPLATES_DIR = os.path.join(PROJECT_ROOT, 'templates')
-LOCALES_DIR = os.path.join(PROJECT_ROOT, 'locales')
-
-def get_email_jinja_env(locale='en'):
-    env = Environment(loader=FileSystemLoader(TEMPLATES_DIR), extensions=['jinja2.ext.i18n'])
-    
-    if not os.path.exists(LOCALES_DIR):
-        print(f"Warning: Locales directory not found at {LOCALES_DIR} for email templates.")
-        translate = gettext.NullTranslations()
-    else:
-        try:
-            translate = gettext.translation('messages', LOCALES_DIR, languages=[locale], fallback=True)
-        except Exception as e:
-            print(f"Warning: Could not load translations for email locale '{locale}': {e}")
-            translate = gettext.NullTranslations()
-            
-    env.install_gettext_translations(translate)
-    return env
+logger = logging.getLogger(__name__)
 
 def send_email(to_email: str, subject: str, html_content: str):
-    if not settings.SENDGRID_API_KEY:
-        print("SendGrid API key not configured. Skipping email.")
-        return
-
     message = Mail(
-        from_email='no-reply@bookslot.app',
+        from_email='no-reply@bookslot.app', # Replace with your verified sender
         to_emails=to_email,
         subject=subject,
         html_content=html_content
@@ -44,81 +18,109 @@ def send_email(to_email: str, subject: str, html_content: str):
     try:
         sendgrid_client = SendGridAPIClient(settings.SENDGRID_API_KEY)
         response = sendgrid_client.send(message)
-        print(f"Email sent to {to_email}. Status Code: {response.status_code}")
+        logger.info(f"Email sent to {to_email}. Status Code: {response.status_code}")
+        return True
     except Exception as e:
-        print(f"Error sending email to {to_email}: {e}")
+        logger.error(f"Error sending email to {to_email}: {e}")
+        return False
 
-def send_whatsapp_message(to_phone_number: str, message_body: str):
-    if not settings.TWILIO_ACCOUNT_SID or not settings.TWILIO_AUTH_TOKEN or not settings.TWILIO_WHATSAPP_NUMBER:
-        print("Twilio credentials not fully configured. Skipping WhatsApp message.")
-        return
-    
-    if not to_phone_number.startswith('+'):
-        print(f"Warning: WhatsApp number {to_phone_number} does not start with '+'. Attempting to prepend '+'.")
-        to_phone_number = '+' + to_phone_number.lstrip('0')
-
+def send_whatsapp_message(to_number: str, message_body: str):
     try:
         client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
         message = client.messages.create(
             from_=f'whatsapp:{settings.TWILIO_WHATSAPP_NUMBER}',
-            body=message_body,
-            to=f'whatsapp:{to_phone_number}'
+            to=f'whatsapp:{to_number}',
+            body=message_body
         )
-        print(f"WhatsApp message sent to {to_phone_number}. SID: {message.sid}")
+        logger.info(f"WhatsApp message sent to {to_number}. SID: {message.sid}")
+        return True
     except Exception as e:
-        print(f"Error sending WhatsApp message to {to_phone_number}: {e}")
+        logger.error(f"Error sending WhatsApp message to {to_number}: {e}")
+        return False
 
-def send_owner_notification(owner: models.Owner, booking: models.Booking, locale: str = 'en'):
-    templates = get_email_jinja_env(locale)
-    template = templates.get_template("email/owner_notification.html")
-    
-    services = json.loads(owner.services_json) if owner.services_json else []
-    service_details = next((s for s in services if s.get('name') == booking.service_name), {'description': ''})
+def format_booking_details(booking_data: dict, owner_name: str, business_name: str, locale: str = 'en'):
+    # This function would be more sophisticated with actual i18n
+    # For now, it's a placeholder.
+    # In a real app, you'd use gettext for these strings.
+    if locale == 'ar':
+        # Example Arabic translation - needs actual translation strings
+        return (
+            f"تم تأكيد حجزك مع {owner_name} - {business_name}\n"
+            f"الخدمة: {booking_data['service_name']}\n"
+            f"الوقت: {booking_data['booking_time'].strftime('%Y-%m-%d %H:%M')}\n"
+            f"المدة: {booking_data['duration_minutes']} دقيقة\n"
+            f"العميل: {booking_data['customer_name']}\n"
+            f"الهاتف: {booking_data['customer_phone'] or 'غير متوفر'}"
+        )
+    elif locale == 'fr':
+        # Example French translation
+        return (
+            f"Votre réservation est confirmée avec {owner_name} - {business_name}\n"
+            f"Service: {booking_data['service_name']}\n"
+            f"Heure: {booking_data['booking_time'].strftime('%Y-%m-%d %H:%M')}\n"
+            f"Durée: {booking_data['duration_minutes']} minutes\n"
+            f"Client: {booking_data['customer_name']}\n"
+            f"Téléphone: {booking_data['customer_phone'] or 'Non disponible'}"
+        )
+    else: # English fallback
+        return (
+            f"Your booking with {owner_name} - {business_name} is confirmed!\n"
+            f"Service: {booking_data['service_name']}\n"
+            f"Time: {booking_data['booking_time'].strftime('%Y-%m-%d %H:%M')}\n"
+            f"Duration: {booking_data['duration_minutes']} minutes\n"
+            f"Customer: {booking_data['customer_name']}\n"
+            f"Phone: {booking_data['customer_phone'] or 'N/A'}"
+        )
 
-    html_content = template.render(
-        owner=owner,
-        booking=booking,
-        service_details=service_details,
-        booking_time_str=booking.booking_time.strftime("%Y-%m-%d %H:%M")
-    )
-    
-    _ = templates.get_translations().gettext
-    subject = _("New Booking Received for %(service_name)s!", service_name=booking.service_name)
-    
-    send_email(owner.email, subject, html_content)
-    
-    if owner.phone:
-        whatsapp_body = _("Hello %(owner_name)s, you have a new booking for %(service_name)s at %(booking_time_str)s with %(customer_name)s (%(customer_phone)s).",
-                          owner_name=owner.name,
-                          service_name=booking.service_name,
-                          booking_time_str=booking.booking_time.strftime("%Y-%m-%d %H:%M"),
-                          customer_name=booking.customer_name,
-                          customer_phone=booking.customer_phone or "N/A")
-        send_whatsapp_message(owner.phone, whatsapp_body)
+# Placeholder for email templates - in a real app these would be Jinja2 templates
+def get_owner_booking_email_html(booking_details: dict, owner_name: str, business_name: str, customer_email: str, locale: str = 'en'):
+    # This should ideally load a Jinja2 template
+    _ = lambda x: x # Placeholder for gettext
+    try:
+        if locale == 'ar':
+            _ = gettext.translation('messages', settings.LOCALES_DIR, languages=['ar'], fallback=True).gettext
+        elif locale == 'fr':
+            _ = gettext.translation('messages', settings.LOCALES_DIR, languages=['fr'], fallback=True).gettext
+    except Exception:
+        pass # Fallback to default if translation fails
 
-def send_customer_confirmation(owner: models.Owner, booking: models.Booking, locale: str = 'en'):
-    templates = get_email_jinja_env(locale)
-    template = templates.get_template("email/customer_confirmation.html")
-    
-    services = json.loads(owner.services_json) if owner.services_json else []
-    service_details = next((s for s in services if s.get('name') == booking.service_name), {'description': ''})
+    return f"""
+    <html>
+        <body>
+            <p>{_('New Booking for your Business!')}</p>
+            <p><strong>{_('Business Name')}:</strong> {business_name}</p>
+            <p><strong>{_('Service')}:</strong> {booking_details['service_name']}</p>
+            <p><strong>{_('Time')}:</strong> {booking_details['booking_time'].strftime('%Y-%m-%d %H:%M')}</p>
+            <p><strong>{_('Duration')}:</strong> {booking_details['duration_minutes']} {_('minutes')}</p>
+            <p><strong>{_('Customer Name')}:</strong> {booking_details['customer_name']}</p>
+            <p><strong>{_('Customer Email')}:</strong> {customer_email}</p>
+            <p><strong>{_('Customer Phone')}:</strong> {booking_details.get('customer_phone', _('N/A'))}</p>
+            <p>{_('Manage your bookings in your dashboard.')}</p>
+        </body>
+    </html>
+    """
 
-    html_content = template.render(
-        owner=owner,
-        booking=booking,
-        service_details=service_details,
-        booking_time_str=booking.booking_time.strftime("%Y-%m-%d %H:%M")
-    )
-    
-    _ = templates.get_translations().gettext
-    subject = _("Your Booking for %(service_name)s is Confirmed!", service_name=booking.service_name)
-    
-    send_email(booking.customer_email, subject, html_content)
-    
-    if booking.customer_phone:
-        whatsapp_body = _("Hi %(customer_name)s, your booking for %(service_name)s with %(business_name)s is confirmed for %(booking_time_str)s. See you then!",
-                          customer_name=booking.customer_name,
-                          service_name=booking.service_name,
-                          business_name=owner.business_name,
-                          booking_time_str=booking.booking_time.strftime("%Y-%m-%d %H:%M"))
-        send_whatsapp_message(booking.customer_phone, whatsapp_body)
+def get_customer_confirmation_email_html(booking_details: dict, owner_name: str, business_name: str, locale: str = 'en'):
+    # This should ideally load a Jinja2 template
+    _ = lambda x: x # Placeholder for gettext
+    try:
+        if locale == 'ar':
+            _ = gettext.translation('messages', settings.LOCALES_DIR, languages=['ar'], fallback=True).gettext
+        elif locale == 'fr':
+            _ = gettext.translation('messages', settings.LOCALES_DIR, languages=['fr'], fallback=True).gettext
+    except Exception:
+        pass # Fallback to default if translation fails
+
+    return f"""
+    <html>
+        <body>
+            <p>{_('Your Booking is Confirmed!')}</p>
+            <p>{_('Hello')} {booking_details['customer_name']},</p>
+            <p>{_('Your booking with')} <strong>{owner_name} - {business_name}</strong> {_('is confirmed.')}</p>
+            <p><strong>{_('Service')}:</strong> {booking_details['service_name']}</p>
+            <p><strong>{_('Time')}:</strong> {booking_details['booking_time'].strftime('%Y-%m-%d %H:%M')}</p>
+            <p><strong>{_('Duration')}:</strong> {booking_details['duration_minutes']} {_('minutes')}</p>
+            <p>{_('We look forward to seeing you!')}</p>
+        </body>
+    </html>
+    """

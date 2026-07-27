@@ -1,35 +1,25 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _("Booking Confirmed!") }}</title>
+    <title>{% trans %}Booking Confirmed!{% endtrans %}</title>
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
     <header>
-        <h1>{{ owner.business_name }}</h1>
+        <h1>{% trans %}Booking Confirmed!{% endtrans %}</h1>
+        <p>{% trans %}Thank you for booking with{% endtrans %} {{ owner.business_name }}!</p>
         <nav>
-            <a href="{{ request.url|urlencode('lang', 'en') }}">EN</a>
-            <a href="{{ request.url|urlencode('lang', 'ar') }}">AR</a>
-            <a href="{{ request.url|urlencode('lang', 'fr') }}">FR</a>
+            <a href="?lang=en">English</a> |
+            <a href="?lang=ar">العربية</a> |
+            <a href="?lang=fr">Français</a>
         </nav>
     </header>
     <main>
-        <h2>{{ _("Your Booking is Confirmed!") }}</h2>
-        <p>{{ _("Thank you,") }} {{ booking.customer_name }}! {{ _("Your appointment for") }} <strong>{{ booking.service_name }}</strong> {{ _("with") }} <strong>{{ owner.business_name }}</strong> {{ _("has been successfully booked.") }}</p>
-        <p>{{ _("You will receive a confirmation email shortly.") }}</p>
-        <h3>{{ _("Booking Details") }}</h3>
-        <ul>
-            <li><strong>{{ _("Service") }}:</strong> {{ booking.service_name }}</li>
-            <li><strong>{{ _("Date & Time") }}:</strong> {{ booking.booking_time.strftime("%Y-%m-%d %H:%M") }}</li>
-            <li><strong>{{ _("Business") }}:</strong> {{ owner.business_name }}</li>
-            <li><strong>{{ _("Business Contact") }}:</strong> {{ owner.email }}</li>
-        </ul>
-        <p><a href="/book/{{ owner.slug }}">{{ _("Book another appointment") }}</a></p>
+        <p>{% trans %}Your appointment has been successfully scheduled.{% endtrans %}</p>
+        <p>{% trans %}A confirmation email has been sent to you.{% endtrans %}</p>
+        <p><a href="/{{ owner.slug }}">{% trans %}Book another slot{% endtrans %}</a></p>
     </main>
-    <footer>
-        <p>&copy; 2023 {{ owner.business_name }}</p>
-    </footer>
 </body>
 </html>

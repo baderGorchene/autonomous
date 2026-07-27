@@ -1,43 +1,43 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _("Sign Up for BookSlot") }}</title>
+    <title>{% trans %}Sign Up{% endtrans %}</title>
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
     <header>
-        <h1>{{ _("BookSlot") }}</h1>
+        <h1>{% trans %}Sign Up for BookSlot{% endtrans %}</h1>
         <nav>
-            <a href="/login">{{ _("Login") }}</a>
-            <a href="{{ request.url|urlencode('lang', 'en') }}">EN</a>
-            <a href="{{ request.url|urlencode('lang', 'ar') }}">AR</a>
-            <a href="{{ request.url|urlencode('lang', 'fr') }}">FR</a>
+            <a href="?lang=en">English</a> |
+            <a href="?lang=ar">العربية</a> |
+            <a href="?lang=fr">Français</a>
         </nav>
     </header>
     <main>
-        <h2>{{ _("Create Your Account") }}</h2>
-        {% if error %}<p class="error">{{ error }}</p>{% endif %}
+        {% if error %}
+            <p style="color: red;">{{ error }}</p>
+        {% endif %}
         <form action="/signup" method="post">
-            <label for="name">{{ _("Your Name") }}</label>
-            <input type="text" id="name" name="name" required>
-            
-            <label for="business_name">{{ _("Business Name") }}</label>
-            <input type="text" id="business_name" name="business_name" required>
-            
-            <label for="email">{{ _("Email") }}</label>
-            <input type="email" id="email" name="email" required>
-            
-            <label for="password">{{ _("Password") }}</label>
-            <input type="password" id="password" name="password" required>
-            
-            <button type="submit">{{ _("Sign Up") }}</button>
+            <label for="name">{% trans %}Your Name{% endtrans %}:</label>
+            <input type="text" id="name" name="name" required><br>
+
+            <label for="email">{% trans %}Email{% endtrans %}:</label>
+            <input type="email" id="email" name="email" required><br>
+
+            <label for="business_name">{% trans %}Business Name{% endtrans %}:</label>
+            <input type="text" id="business_name" name="business_name" required><br>
+
+            <label for="slug">{% trans %}Your BookSlot URL (e.g., your-name){% endtrans %}:</label>
+            <input type="text" id="slug" name="slug" pattern="^[a-z0-9-]+$" title="{% trans %}Lowercase letters, numbers, and hyphens only.{% endtrans %}" required><br>
+
+            <label for="password">{% trans %}Password{% endtrans %}:</label>
+            <input type="password" id="password" name="password" required><br>
+
+            <button type="submit">{% trans %}Sign Up{% endtrans %}</button>
         </form>
-        <p>{{ _("Already have an account?") }} <a href="/login">{{ _("Login here") }}</a></p>
+        <p>{% trans %}Already have an account?{% endtrans %} <a href="/login">{% trans %}Login{% endtrans %}</a></p>
     </main>
-    <footer>
-        <p>&copy; 2023 BookSlot</p>
-    </footer>
 </body>
 </html>

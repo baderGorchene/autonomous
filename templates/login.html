@@ -1,37 +1,37 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _("Login to BookSlot") }}</title>
+    <title>{% trans %}Login{% endtrans %}</title>
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
     <header>
-        <h1>{{ _("BookSlot") }}</h1>
+        <h1>{% trans %}Login to BookSlot{% endtrans %}</h1>
         <nav>
-            <a href="/signup">{{ _("Sign Up") }}</a>
-            <a href="{{ request.url|urlencode('lang', 'en') }}">EN</a>
-            <a href="{{ request.url|urlencode('lang', 'ar') }}">AR</a>
-            <a href="{{ request.url|urlencode('lang', 'fr') }}">FR</a>
+            <a href="?lang=en">English</a> |
+            <a href="?lang=ar">العربية</a> |
+            <a href="?lang=fr">Français</a>
         </nav>
     </header>
     <main>
-        <h2>{{ _("Login to Your Dashboard") }}</h2>
-        {% if error %}<p class="error">{{ error }}</p>{% endif %}
+        {% if error %}
+            <p style="color: red;">{{ error }}</p>
+        {% endif %}
+        {% if message == 'signup_success' %}
+            <p style="color: green;">{% trans %}Account created successfully! Please log in.{% endtrans %}</p>
+        {% endif %}
         <form action="/login" method="post">
-            <label for="email">{{ _("Email") }}</label>
-            <input type="email" id="email" name="email" required>
-            
-            <label for="password">{{ _("Password") }}</label>
-            <input type="password" id="password" name="password" required>
-            
-            <button type="submit">{{ _("Login") }}</button>
+            <label for="username">{% trans %}Email{% endtrans %}:</label>
+            <input type="email" id="username" name="username" required><br>
+
+            <label for="password">{% trans %}Password{% endtrans %}:</label>
+            <input type="password" id="password" name="password" required><br>
+
+            <button type="submit">{% trans %}Login{% endtrans %}</button>
         </form>
-        <p>{{ _("Don't have an account?") }} <a href="/signup">{{ _("Sign up here") }}</a></p>
+        <p>{% trans %}Don't have an account?{% endtrans %} <a href="/signup">{% trans %}Sign Up{% endtrans %}</a></p>
     </main>
-    <footer>
-        <p>&copy; 2023 BookSlot</p>
-    </footer>
 </body>
 </html>

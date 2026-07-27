@@ -1,29 +1,25 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _("BookSlot - Simple Booking Page") }}</title>
+    <title>{% trans %}BookSlot - Simple Booking Page{% endtrans %}</title>
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
     <header>
-        <h1>{{ _("BookSlot") }}</h1>
+        <h1>BookSlot</h1>
+        <p>{% trans %}Your dead-simple booking page.{% endtrans %}</p>
         <nav>
-            <a href="/signup">{{ _("Sign Up") }}</a>
-            <a href="/login">{{ _("Login") }}</a>
-            <a href="{{ request.url|urlencode('lang', 'en') }}">EN</a>
-            <a href="{{ request.url|urlencode('lang', 'ar') }}">AR</a>
-            <a href="{{ request.url|urlencode('lang', 'fr') }}">FR</a>
+            <a href="?lang=en">English</a> |
+            <a href="?lang=ar">العربية</a> |
+            <a href="?lang=fr">Français</a>
         </nav>
     </header>
     <main>
-        <h2>{{ _("Your Dead-Simple Booking Page") }}</h2>
-        <p>{{ _("Manage appointments without WhatsApp chaos.") }}</p>
-        <p><a href="/signup" class="button">{{ _("Get Started Free") }}</a></p>
+        <p>{% trans %}Manage your appointments with ease, no more WhatsApp chaos!{% endtrans %}</p>
+        <p><a href="/signup">{% trans %}Get Started - Sign Up Now!{% endtrans %}</a></p>
+        <p><a href="/login">{% trans %}Already a member? Login{% endtrans %}</a></p>
     </main>
-    <footer>
-        <p>&copy; 2023 BookSlot</p>
-    </footer>
 </body>
 </html>
