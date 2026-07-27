@@ -1,134 +1,156 @@
 # BookSlot
 
-BookSlot is a dead-simple $19/month booking page for local service businesses (salons, clinics, tutors, mechanics, coaches) who currently manage appointments via WhatsApp chaos. The owner gets a shareable link (bookslot.app/their-name), customers book themselves, and the owner gets a WhatsApp/email notification with the booking details. No accounts needed for customers. Bilingual (English + Arabic/French) from day one to target the underserved MENA and North Africa market.
+**A dead-simple $19/month booking page for local service businesses.**
 
-## Features (MVP)
+BookSlot aims to eliminate the WhatsApp chaos for solo service providers by offering a streamlined, shareable booking page.
+Customers can self-book, and owners receive instant notifications, all without requiring customer accounts.
 
-1.  **Owner Signup & Service Setup**: Business owners can create an account, define their services, and set their availability.
-2.  **Public Booking Page**: A clean, mobile-first booking page accessible via a unique slug (e.g., `bookslot.app/their-name`).
-3.  **Time Slot Availability**: Customers can see available time slots based on the owner's defined schedule.
-4.  **Email Confirmation**: Automated email notifications to both the customer and the owner upon successful booking.
-5.  **Simple Dashboard**: Owners can view upcoming bookings and manage their profile.
-6.  **Bilingual Support**: English, Arabic, and French from day one.
+## 
+Business Idea
 
-## Getting Started
+Local service businesses (salons, clinics, tutors, mechanics, coaches) often manage appointments through chaotic WhatsApp messages. BookSlot provides a simple, affordable solution:
+
+*   **Shareable Link:** Owners get a unique link (e.g., `bookslot.app/their-name`).
+*   **Self-Booking:** Customers book appointments themselves.
+*   **Instant Notifications:** Owners receive WhatsApp/email notifications with booking details.
+*   **No Customer Accounts:** Frictionless experience for customers.
+*   **Bilingual Support:** English + Arabic/French from day one, targeting underserved MENA and North Africa markets.
+
+## 
+MVP Features
+
+1.  **Owner Signup & Service Setup:** Business owners can create an account, define their services, and set up their availability.
+2.  **Public Booking Page:** A mobile-first, beautiful page for customers to view services and book slots.
+3.  **Time Slot Availability:** Owners can specify available time slots.
+4.  **Email Confirmation:** Automated email confirmations sent to both the owner and the customer upon booking.
+5.  **Simple Dashboard:** Owners can view upcoming bookings and manage their profile.
+
+## 
+Monetization
+
+*   **Free Tier:** Up to 20 bookings/month.
+*   **Premium Tier:** $19/month for unlimited bookings.
+
+**Target Audience:** Solo service providers with 10-50 clients/week who are overwhelmed by WhatsApp appointment management.
+
+## 
+Technologies Used
+
+*   **Backend:** FastAPI (Python)
+*   **Database:** SQLite (development), PostgreSQL (production)
+*   **ORM:** SQLAlchemy
+*   **Templating:** Jinja2
+*   **Styling:** CSS (custom, responsive)
+*   **Email Notifications:** SendGrid
+*   **WhatsApp Notifications:** Twilio
+*   **Internationalization:** `gettext`
+*   **Deployment:** Docker, Gunicorn, Uvicorn, Kubernetes (planned)
+*   **Testing:** Pytest
+
+## 
+Setup (Local Development)
 
 ### Prerequisites
 
-*   Python 3.11+
-*   pip
-*   (Optional for local development) virtualenv
+*   Python 3.12+
+*   `pip`
+*   `git`
 
-### Installation
-
-1.  **Clone the repository**:
-    ```bash
-    git clone https://github.com/your-username/bookslot.git
-    cd bookslot
-    ```
-
-2.  **Create and activate a virtual environment**:
-    ```bash
-    python -m venv venv
-    source venv/bin/activate  # On Windows: `venv\Scripts\activate`
-    ```
-
-3.  **Install dependencies**:
-    ```bash
-    pip install -r requirements.txt
-    ```
-
-4.  **Set up environment variables**:
-    Create a `.env` file in the project root based on `.env.example`.
-
-    ```ini
-    # .env
-    SECRET_KEY="your-super-secret-key-for-jwt"
-    ALGORITHM="HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES=30
-
-    SENDGRID_API_KEY="your_sendgrid_api_key"
-    TWILIO_ACCOUNT_SID="your_twilio_account_sid"
-    TWILIO_AUTH_TOKEN="your_twilio_auth_token"
-    TWILIO_WHATSAPP_NUMBER="+1xxxxxxxxxx" # Your Twilio WhatsApp enabled number, e.g., +15017122661
-
-    DATABASE_URL="sqlite:///./sql_app.db"
-    # For PostgreSQL: DATABASE_URL="postgresql://user:password@host:port/dbname"
-    ```
-    *   `SECRET_KEY`: A strong, random string for JWT token signing.
-    *   `SENDGRID_API_KEY`: Your API key for SendGrid to send emails.
-    *   `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_WHATSAPP_NUMBER`: Your Twilio credentials for WhatsApp notifications.
-    *   `DATABASE_URL`: Connection string for your database. For local development, `sqlite:///./sql_app.db` is sufficient.
-
-5.  **Compile translations**:
-    ```bash
-    python -m babel compile -d locales
-    ```
-
-### Running the Application
+### 1. Clone the Repository
 
 ```bash
-uvicorn src.main:app --reload
+git clone https://github.com/your-username/bookslot.git
+cd bookslot
 ```
-The application will be available at `http://127.0.0.1:8000`.
 
-### Running Tests
+### 2. Create a Virtual Environment
+
+```bash
+python -m venv venv
+source venv/bin/activate # On Windows: .\venv\Scripts\activate
+```
+
+### 3. Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Environment Variables
+
+Create a `.env` file in the project root based on `.env.example` and fill in your credentials:
+
+```bash
+cp .env.example .env
+```
+Edit `.env` with your specific values. `DATABASE_URL` can be `sqlite:///./sql_app.db` for local development.
+
+### 5. Database Setup (Initial)
+
+For local development with SQLite, the database will be created automatically.
+For production, you'll need to set up a PostgreSQL database.
+
+_**Future:** Database migrations will be handled using Alembic. For now, ensure your `src/models.py` schema matches your database._
+
+### 6. Run the Application
+
+```bash
+uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
+```
+The application will be accessible at `http://localhost:8000`.
+
+## 
+Running Tests
 
 ```bash
 pytest
 ```
 
-## Deployment
+## 
+Internationalization
 
-A basic `Dockerfile` is provided for containerized deployment.
+The application supports English, Arabic, and French. You can toggle the language on the public booking page and owner dashboard. Translation files are located in the `locales/` directory.
+
+## 
+Deployment (Production)
+
+### 1. Docker Build
+
+Ensure you have Docker installed.
 
 ```bash
-docker build -t bookslot .
-docker run -p 8000:8000 bookslot
+docker build -t bookslot:latest .
 ```
-Ensure your `.env` variables are correctly configured for the production environment (e.g., using environment variables directly in Docker or Kubernetes, rather than a `.env` file).
 
-## Project Structure
+### 2. Running with Docker & Gunicorn
 
+For production, it's recommended to run the application using Gunicorn with a `uvicorn.workers.UvicornWorker`. The `Dockerfile` is configured to use `gunicorn.conf.py`.
+
+```bash
+# Ensure your .env file is correctly configured for production settings
+# For example, DATABASE_URL should point to your production PostgreSQL instance.
+docker run -p 8000:8000 --env-file ./.env bookslot:latest
 ```
-.
-├── src/
-│   ├── __init__.py
-│   ├── config.py             # Application settings and environment variables
-│   ├── crud.py               # Database Create, Read, Update, Delete operations
-│   ├── database.py           # SQLAlchemy engine and session setup
-│   ├── i18n_config.py        # Jinja2 and Gettext internationalization setup
-│   ├── main.py               # FastAPI application entry point, routes, and dependencies
-│   ├── models.py             # SQLAlchemy ORM models
-│   ├── notifications.py      # Email and WhatsApp notification logic
-│   ├── schemas.py            # Pydantic schemas for data validation
-│   └── security.py           # Password hashing and JWT token management
-├── templates/
-│   ├── base.html             # Base template for all pages
-│   ├── booking_confirmation.html # Booking success page
-│   ├── booking_page.html     # Public booking page for customers
-│   ├── dashboard.html        # Owner dashboard
-│   ├── home.html             # Landing page
-│   ├── login.html            # Owner login page
-│   └── signup.html           # Owner signup page
-├── locales/
-│   ├── ar/
-│   │   └── LC_MESSAGES/
-│   │       ├── messages.po   # Arabic translation file
-│   │       └── messages.mo   # Compiled Arabic translation
-│   └── fr/
-│       └── LC_MESSAGES/
-│           ├── messages.po   # French translation file
-│           └── messages.mo   # Compiled French translation
-├── static/
-│   ├── css/
-│   │   └── style.css         # Main stylesheet
-│   └── js/
-│       └── main.js           # Main JavaScript file
-├── tests/
-│   └── test_main.py          # Automated tests for core functionality
-├── .env.example              # Example environment variables
-├── Dockerfile                # Docker configuration for deployment
-├── README.md                 # Project documentation
-└── requirements.txt          # Python dependencies
+Replace `.env` with your production environment file.
+
+### 3. Environment Variables
+
+In a production environment, it's best practice to pass environment variables directly to your container orchestration system (e.g., Kubernetes, Docker Compose, systemd) rather than relying on an `.env` file inside the container.
+
+### 4. Database Migrations
+
+_**Note:** This project is designed for future integration with Alembic for robust database migrations. For initial deployments, ensure your database schema is created manually or via `Base.metadata.create_all(engine)` in a setup script._
+
+### 5. Kubernetes Deployment (Example)
+
+An example Kubernetes Deployment and Service configuration is provided for reference:
+
+```yaml
+# See the 'gunicorn' section in the live documentation for example Kubernetes YAMLs.
+# You will need to adapt these to your specific cluster and image registry.
 ```
+
+## 
+Contact
+
+For support or inquiries, please contact [your-email@example.com](mailto:your-email@example.com).
