@@ -1,31 +1,61 @@
-{% extends "base.html" %}
-{% block title %}{{ owner.business_name }} - {{ request.state.gettext('Book an Appointment') }}{% endblock %}
-{% block content %}
-    <h2>{{ request.state.gettext('Book an Appointment with') }} {{ owner.business_name }}</h2>
-    <p>{{ request.state.gettext('Managed by:') }} {{ owner.name }}</p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ owner.business_name }} - {{ _("Book an Appointment") }}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <header>
+        <h1>{{ owner.business_name }}</h1>
+        <nav>
+            <a href="{{ request.url|urlencode('lang', 'en') }}">EN</a>
+            <a href="{{ request.url|urlencode('lang', 'ar') }}">AR</a>
+            <a href="{{ request.url|urlencode('lang', 'fr') }}">FR</a>
+        </nav>
+    </header>
+    <main>
+        <h2>{{ _("Book Your Service") }}</h2>
+        {% if error %}<p class="error">{{ error }}</p>{% endif %}
+        <form action="/book/{{ owner.slug }}" method="post">
+            <label for="customer_name">{{ _("Your Name") }}</label>
+            <input type="text" id="customer_name" name="customer_name" required>
+            
+            <label for="customer_email">{{ _("Your Email") }}</label>
+            <input type="email" id="customer_email" name="customer_email" required>
 
-    <form action="/{{ owner.slug }}/book" method="post">
-        <label for="customer_name">{{ request.state.gettext('Your Name:') }}</label>
-        <input type="text" id="customer_name" name="customer_name" required><br>
-        
-        <label for="customer_email">{{ request.state.gettext('Your Email:') }}</label>
-        <input type="email" id="customer_email" name="customer_email" required><br>
-        
-        <label for="customer_phone">{{ request.state.gettext('Your Phone (optional):') }}</label>
-        <input type="text" id="customer_phone" name="customer_phone"><br>
-        
-        <label for="service_id">{{ request.state.gettext('Select a Service:') }}</label>
-        <select id="service_id" name="service_id" required>
+            <label for="customer_phone">{{ _("Your Phone (WhatsApp preferred)") }}</label>
+            <input type="tel" id="customer_phone" name="customer_phone">
+            
+            <label for="service_name">{{ _("Select Service") }}</label>
+            <select id="service_name" name="service_name" required>
+                {% for service in services %}
+                    <option value="{{ service.name }}">{{ service.name }} - {{ service.duration }} {{ _("minutes") }}</option>
+                {% endfor %}
+            </select>
+            
+            <label for="booking_date">{{ _("Select Date") }}</label>
+            <input type="date" id="booking_date" name="booking_date" required>
+            
+            <label for="booking_time">{{ _("Select Time") }}</label>
+            <input type="time" id="booking_time" name="booking_time" required>
+            
+            <button type="submit">{{ _("Book Now") }}</button>
+        </form>
+        <h3>{{ _("Our Services") }}</h3>
+        <ul>
             {% for service in services %}
-                <option value="{{ service.id }}">{{ service.name }} ({{ service.duration }} {{ request.state.gettext('minutes') }})</option>
-            {% else %}
-                <option value="">{{ request.state.gettext('No services available.') }}</option>
+                <li>{{ service.name }} ({{ service.duration }} {{ _("minutes") }}) - {{ service.price }}</li>
             {% endfor %}
-        </select><br>
-        
-        <label for="booking_time_str">{{ request.state.gettext('Select Date and Time:') }}</label>
-        <input type="datetime-local" id="booking_time_str" name="booking_time_str" required><br>
-        
-        <button type="submit">{{ request.state.gettext('Book Now') }}</button>
-    </form>
-{% endblock %}
+        </ul>
+        <h3>{{ _("Availability") }}</h3>
+        <p>{{ _("Please choose a time slot based on the owner's availability.") }}</p>
+        <pre>{{ availability | tojson }}</pre>
+
+    </main>
+    <footer>
+        <p>&copy; 2023 {{ owner.business_name }}</p>
+    </footer>
+</body>
+</html>

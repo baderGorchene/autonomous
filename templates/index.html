@@ -3,50 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BookSlot - Simple Booking Page</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <title>{{ _("BookSlot - Simple Booking Page") }}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
     <header>
-        <div class="container">
-            <h1>BookSlot</h1>
-            <nav>
-                {% if current_owner %}
-                    <a href="/dashboard">Dashboard</a>
-                    <a href="/logout">Logout</a>
-                {% else %}
-                    <a href="/login">Login</a>
-                    <a href="/register">Register</a>
-                {% endif %}
-                <div class="language-toggle">
-                    <a href="{{ request.url|urlencode('locale', 'en') }}">EN</a> |
-                    <a href="{{ request.url|urlencode('locale', 'ar') }}">AR</a> |
-                    <a href="{{ request.url|urlencode('locale', 'fr') }}">FR</a>
-                </div>
-            </nav>
-        </div>
+        <h1>{{ _("BookSlot") }}</h1>
+        <nav>
+            <a href="/signup">{{ _("Sign Up") }}</a>
+            <a href="/login">{{ _("Login") }}</a>
+            <a href="{{ request.url|urlencode('lang', 'en') }}">EN</a>
+            <a href="{{ request.url|urlencode('lang', 'ar') }}">AR</a>
+            <a href="{{ request.url|urlencode('lang', 'fr') }}">FR</a>
+        </nav>
     </header>
-    <main class="container">
-        <h2>{{ _("Welcome to BookSlot!") }}</h2>
-        <p>{{ _("Your dead-simple booking page for local service businesses.") }}</p>
-        <p>{{ _("Manage appointments with ease, say goodbye to WhatsApp chaos.") }}</p>
-        
-        {% if not current_owner %}
-        <div class="cta-buttons">
-            <a href="/register" class="button primary">{{ _("Get Started - It's Free!") }}</a>
-            <a href="/login" class="button secondary">{{ _("Already a member? Login") }}</a>
-        </div>
-        {% else %}
-        <div class="cta-buttons">
-            <a href="/dashboard" class="button primary">{{ _("Go to your Dashboard") }}</a>
-            <p>{{ _("Your public booking page:") }} <a href="/{{ current_owner.slug }}" target="_blank">bookslot.app/{{ current_owner.slug }}</a></p>
-        </div>
-        {% endif %}
+    <main>
+        <h2>{{ _("Your Dead-Simple Booking Page") }}</h2>
+        <p>{{ _("Manage appointments without WhatsApp chaos.") }}</p>
+        <p><a href="/signup" class="button">{{ _("Get Started Free") }}</a></p>
     </main>
     <footer>
-        <div class="container">
-            <p>&copy; 2024 BookSlot. {{ _("All rights reserved.") }}</p>
-        </div>
+        <p>&copy; 2023 BookSlot</p>
     </footer>
 </body>
 </html>

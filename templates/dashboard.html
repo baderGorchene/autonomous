@@ -1,37 +1,67 @@
-{% extends "base.html" %}
-{% block title %}{{ request.state.gettext('Dashboard') }}{% endblock %}
-{% block content %}
-    <h2>{{ request.state.gettext('Welcome,') }} {{ owner.name }}!</h2>
-    <p>{{ request.state.gettext('Your booking page link:') }} <a href="/{{ owner.slug }}">{{ request.state.gettext('bookslot.app/') }}{{ owner.slug }}</a></p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ _("BookSlot Dashboard") }}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <header>
+        <h1>{{ _("BookSlot Dashboard") }}</h1>
+        <nav>
+            <a href="/logout">{{ _("Logout") }}</a>
+            <a href="{{ request.url|urlencode('lang', 'en') }}">EN</a>
+            <a href="{{ request.url|urlencode('lang', 'ar') }}">AR</a>
+            <a href="{{ request.url|urlencode('lang', 'fr') }}">FR</a>
+        </nav>
+    </header>
+    <main>
+        <h2>{{ _("Welcome") }}, {{ owner.name }}!</h2>
+        {% if message %}<p class="success">{{ message }}</p>{% endif %}
+        {% if error %}<p class="error">{{ error }}</p>{% endif %}
 
-    <h3>{{ request.state.gettext('Your Profile') }}</h3>
-    <form action="/dashboard/profile" method="post">
-        <label for="name">{{ request.state.gettext('Your Name:') }}</label>
-        <input type="text" id="name" name="name" value="{{ owner.name }}" required><br>
-        <label for="business_name">{{ request.state.gettext('Business Name:') }}</label>
-        <input type="text" id="business_name" name="business_name" value="{{ owner.business_name }}" required><br>
-        <label for="phone">{{ request.state.gettext('Phone (for WhatsApp notifications):') }}</label>
-        <input type="text" id="phone" name="phone" value="{{ owner.phone or '' }}"><br>
-        
-        <h4>{{ request.state.gettext('Services Offered (JSON):') }}</h4>
-        <textarea id="services_json" name="services_json" rows="5" cols="50" placeholder='[{"id": 1, "name": "Haircut", "duration": 30}]'>{{ owner.services_json }}</textarea><br>
-        
-        <h4>{{ request.state.gettext('Availability (JSON):') }}</h4>
-        <textarea id="availability_json" name="availability_json" rows="5" cols="50" placeholder='{"monday": [{"start": "09:00", "end": "17:00"}]}'>{{ owner.availability_json }}</textarea><br>
-        
-        <button type="submit">{{ request.state.gettext('Update Profile') }}</button>
-    </form>
+        <h3>{{ _("Your Public Booking Page Link") }}</h3>
+        <p><a href="/book/{{ slug }}" target="_blank">bookslot.app/book/{{ slug }}</a></p>
 
-    <h3>{{ request.state.gettext('Upcoming Bookings') }}</h3>
-    {% if upcoming_bookings %}
-        <ul>
-            {% for booking in upcoming_bookings %}
-                <li>
-                    {{ booking.booking_time.strftime('%Y-%m-%d %H:%M') }} - {{ booking.service_name }} by {{ booking.customer_name }} ({{ booking.customer_email }})
-                </li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p>{{ request.state.gettext('No upcoming bookings.') }}</p>
-    {% endif %}
-{% endblock %}
+        <h3>{{ _("Upcoming Bookings") }}</h3>
+        {% if upcoming_bookings %}
+            <ul>
+                {% for booking in upcoming_bookings %}
+                    <li>
+                        <strong>{{ booking.booking_time.strftime("%Y-%m-%d %H:%M") }}</strong>: {{ booking.service_name }} {{ _("with") }} {{ booking.customer_name }} ({{ booking.customer_email }})
+                        {% if booking.customer_phone %}({{ booking.customer_phone }}){% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>{{ _("No upcoming bookings.") }}</p>
+        {% endif %}
+
+        <h3>{{ _("Update Your Profile") }}</h3>
+        <form action="/dashboard/profile" method="post">
+            <label for="name">{{ _("Your Name") }}</label>
+            <input type="text" id="name" name="name" value="{{ owner.name }}" required>
+            
+            <label for="business_name">{{ _("Business Name") }}</label>
+            <input type="text" id="business_name" name="business_name" value="{{ owner.business_name }}" required>
+
+            <label for="phone">{{ _("Phone Number (for WhatsApp notifications)") }}</label>
+            <input type="tel" id="phone" name="phone" value="{{ owner.phone or '' }}">
+            
+            <label for="services_json">{{ _("Services (JSON Array)") }}</label>
+            <textarea id="services_json" name="services_json" rows="5" required>{{ services | tojson }}</textarea>
+            <small>{{ _("Example: [{ \"name\": \"Haircut\", \"duration\": 30, \"price\": \"$30\" }]") }}</small>
+            
+            <label for="availability_json">{{ _("Availability (JSON Object)") }}</label>
+            <textarea id="availability_json" name="availability_json" rows="5" required>{{ availability | tojson }}</textarea>
+            <small>{{ _("Example: { \"Monday\": [\"09:00\", \"17:00\"], \"Tuesday\": [\"10:00\", \"18:00\"] }") }}</small>
+            
+            <button type="submit">{{ _("Update Profile") }}</button>
+        </form>
+    </main>
+    <footer>
+        <p>&copy; 2023 BookSlot</p>
+    </footer>
+</body>
+</html>

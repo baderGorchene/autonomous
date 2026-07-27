@@ -1,10 +1,35 @@
-{% extends "base.html" %}
-{% block title %}{{ request.state.gettext('Booking Confirmed!') }}{% endblock %}
-{% block content %}
-    <h2>{{ request.state.gettext('Booking Confirmed!') }}</h2>
-    <p>{{ request.state.gettext('Thank you,') }} {{ booking.customer_name }}!</p>
-    <p>{{ request.state.gettext('Your appointment for') }} <strong>{{ booking.service_name }}</strong> {{ request.state.gettext('with') }} <strong>{{ owner.business_name }}</strong> {{ request.state.gettext('is confirmed for:') }}</p>
-    <p><strong>{{ booking.booking_time.strftime('%Y-%m-%d %H:%M') }}</strong></p>
-    <p>{{ request.state.gettext('A confirmation email has been sent to') }} {{ booking.customer_email }}.</p>
-    <p><a href="/{{ owner.slug }}">{{ request.state.gettext('Book another appointment') }}</a></p>
-{% endblock %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ _("Booking Confirmed!") }}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <header>
+        <h1>{{ owner.business_name }}</h1>
+        <nav>
+            <a href="{{ request.url|urlencode('lang', 'en') }}">EN</a>
+            <a href="{{ request.url|urlencode('lang', 'ar') }}">AR</a>
+            <a href="{{ request.url|urlencode('lang', 'fr') }}">FR</a>
+        </nav>
+    </header>
+    <main>
+        <h2>{{ _("Your Booking is Confirmed!") }}</h2>
+        <p>{{ _("Thank you,") }} {{ booking.customer_name }}! {{ _("Your appointment for") }} <strong>{{ booking.service_name }}</strong> {{ _("with") }} <strong>{{ owner.business_name }}</strong> {{ _("has been successfully booked.") }}</p>
+        <p>{{ _("You will receive a confirmation email shortly.") }}</p>
+        <h3>{{ _("Booking Details") }}</h3>
+        <ul>
+            <li><strong>{{ _("Service") }}:</strong> {{ booking.service_name }}</li>
+            <li><strong>{{ _("Date & Time") }}:</strong> {{ booking.booking_time.strftime("%Y-%m-%d %H:%M") }}</li>
+            <li><strong>{{ _("Business") }}:</strong> {{ owner.business_name }}</li>
+            <li><strong>{{ _("Business Contact") }}:</strong> {{ owner.email }}</li>
+        </ul>
+        <p><a href="/book/{{ owner.slug }}">{{ _("Book another appointment") }}</a></p>
+    </main>
+    <footer>
+        <p>&copy; 2023 {{ owner.business_name }}</p>
+    </footer>
+</body>
+</html>
