@@ -15,7 +15,7 @@ def get_owners(db: Session, skip: int = 0, limit: int = 100):
 
 def create_owner(db: Session, owner: schemas.OwnerCreate):
     hashed_password = security.get_password_hash(owner.password)
-    db_owner = models.Owner(name=owner.name, email=owner.email, hashed_password=hashed_password, business_name=owner.business_name, slug=owner.slug, services_json="[]", availability_json="{}")
+    db_owner = models.Owner(name=owner.name, email=owner.email, hashed_password=hashed_password, business_name=owner.business_name, slug=owner.slug, services_json="[]", availability_json="{}", phone=owner.phone)
     db.add(db_owner)
     db.commit()
     db.refresh(db_owner)

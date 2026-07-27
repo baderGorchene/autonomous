@@ -1,118 +1,180 @@
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from src.main import app, get_db, models
-from src.database import Base
+from src.main import app
 from src.config import settings
-from src import security # Import security for password hashing
-import os
+from unittest.mock import patch, MagicMock
+import json
+from src import crud, schemas, models
 
-# Override the DATABASE_URL for testing
-TEST_DATABASE_URL = "sqlite:///./test_bookslot.db"
-engine = create_engine(TEST_DATABASE_URL, connect_args={"check_same_thread": False})
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+# Create a test client
+client = TestClient(app)
 
-@pytest.fixture(name="db_session")
-def db_session_fixture():
-    Base.metadata.create_all(bind=engine)
-    db = TestingSessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-        Base.metadata.drop_all(bind=engine)
+# Mock SendGrid and Twilio to prevent actual external calls during tests
+@pytest.fixture(autouse=True)
+def mock_notifications():
+    with patch('src.notifications.SendGridAPIClient') as mock_sendgrid, \
+         patch('src.notifications.Client') as mock_twilio:
+        yield mock_sendgrid, mock_twilio
 
-@pytest.fixture(name="client")
-def client_fixture(db_session):
-    def override_get_db():
-        yield db_session
-    app.dependency_overrides[get_db] = override_get_db
-    with TestClient(app) as client:
-        yield client
-    app.dependency_overrides.clear()
+# Override settings for testing (e.g., use an in-memory SQLite database)
+@pytest.fixture(name="test_db")
+def override_get_db_fixture():
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+    from src.database import Base, get_db
+    
+    SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db" # Use a temporary test database
+    engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
+    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    
+    Base.metadata.create_all(bind=engine) # Create tables
+    
+    def get_test_db():
+        try:
+            db = TestingSessionLocal()
+            yield db
+        finally:
+            db.close()
+    
+    app.dependency_overrides[get_db] = get_test_db # Override the dependency
+    yield
+    app.dependency_overrides.pop(get_db) # Clean up the override
+    Base.metadata.drop_all(bind=engine) # Drop tables after tests
 
-def test_i18n_dashboard_language_toggle(client, db_session):
-    # Create a dummy owner for login
-    owner_data = {
+@pytest.fixture(name="auth_client")
+def authenticated_client(test_db):
+    # This fixture handles owner signup and login to provide an authenticated client
+    db = next(app.dependency_overrides[app.dependency_overrides.get(lambda: None, lambda: None)]())
+    existing_owner = db.query(models.Owner).filter(models.Owner.email == "test@example.com").first()
+    if existing_owner:
+        db.delete(existing_owner)
+        db.commit()
+
+    # Signup a test owner
+    signup_response = client.post("/signup", data={
         "name": "Test Owner",
         "email": "test@example.com",
+        "password": "testpassword",
         "business_name": "Test Business",
         "slug": "test-business",
-        "password": "testpassword"
-    }
-    owner = models.Owner(
-        **owner_data,
-        hashed_password=security.get_password_hash(owner_data["password"]),
-        services_json="[]",
-        availability_json="{}"
+        "phone": "+1234567890"
+    }, follow_redirects=False)
+    assert signup_response.status_code == 302 # Redirect to dashboard
+
+    # Extract session cookie from signup response
+    session_cookie = signup_response.cookies.get("session")
+    assert session_cookie is not None
+
+    # Use the session cookie for subsequent requests
+    client.cookies.set("session", session_cookie)
+    return client
+
+def test_language_toggle_on_login_page():
+    response = client.get("/login")
+    assert response.status_code == 200
+    assert "EN" in response.text
+    assert "AR" in response.text
+    assert "FR" in response.text
+
+    # Test setting locale via /set_locale endpoint
+    response = client.get("/set_locale/ar", follow_redirects=False)
+    assert response.status_code == 302
+    # The referer header isn't available in direct client.get, so it redirects to /
+    # Let's assume it redirects to a page that will then use the session locale
+    
+    # Now request the login page again, it should use the 'ar' locale
+    response = client.get("/login")
+    assert response.status_code == 200
+    assert "تسجيل الدخول إلى BookSlot" in response.text # Check for Arabic translation
+
+    response = client.get("/set_locale/fr", follow_redirects=False)
+    response = client.get("/login")
+    assert response.status_code == 200
+    assert "Connexion à BookSlot" in response.text # Check for French translation
+
+def test_language_toggle_on_booking_page(test_db):
+    # First, create an owner to have a booking page
+    db = next(app.dependency_overrides[app.dependency_overrides.get(lambda: None, lambda: None)]())
+    owner_in = schemas.OwnerCreate(
+        name="Booking Page Owner",
+        email="booking@example.com",
+        password="securepassword",
+        business_name="Booking Biz",
+        slug="booking-biz",
+        phone=None
     )
-    db_session.add(owner)
-    db_session.commit()
-    db_session.refresh(owner)
+    crud.create_owner(db, owner_in)
 
-    # Login to get a cookie
-    login_response = client.post("/login", data={"username": owner_data["email"], "password": owner_data["password"]})
-    assert login_response.status_code == 303
-    assert "access_token" in login_response.cookies
+    response = client.get("/bookslot/booking-biz")
+    assert response.status_code == 200
+    assert "EN" in response.text
+    assert "AR" in response.text
+    assert "FR" in response.text
+    assert "Book an Appointment" in response.text # Default English
 
-    cookies = {"access_token": login_response.cookies["access_token"]}
+    # Set locale to Arabic and check booking page
+    client.get("/set_locale/ar", follow_redirects=False)
+    response = client.get("/bookslot/booking-biz")
+    assert response.status_code == 200
+    assert "احجز موعدا" in response.text # Arabic translation
 
-    # Test English dashboard
-    response_en = client.get("/dashboard?lang=en", cookies=cookies)
-    assert response_en.status_code == 200
-    assert "Dashboard" in response_en.text
-    assert "Upcoming Bookings" in response_en.text
+    # Set locale to French and check booking page
+    client.get("/set_locale/fr", follow_redirects=False)
+    response = client.get("/bookslot/booking-biz")
+    assert response.status_code == 200
+    assert "Prendre un rendez-vous" in response.text # French translation
 
-    # Test Arabic dashboard
-    response_ar = client.get("/dashboard?lang=ar", cookies=cookies)
-    assert response_ar.status_code == 200
-    # These would need to be present in locales/ar/LC_MESSAGES/messages.po and compiled.
-    assert "لوحة التحكم" in response_ar.text or "Dashboard" in response_ar.text # Fallback if translation not compiled
-    assert "الحجوزات القادمة" in response_ar.text or "Upcoming Bookings" in response_ar.text # Fallback
+def test_language_toggle_on_dashboard(auth_client):
+    # Ensure client is authenticated from auth_client fixture
+    response = auth_client.get("/dashboard")
+    assert response.status_code == 200
+    assert "EN" in response.text
+    assert "AR" in response.text
+    assert "FR" in response.text
+    assert "Dashboard" in response.text # Default English
 
-    # Test French dashboard
-    response_fr = client.get("/dashboard?lang=fr", cookies=cookies)
-    assert response_fr.status_code == 200
-    assert "Tableau de bord" in response_fr.text or "Dashboard" in response_fr.text # Fallback
-    assert "Réservations à venir" in response_fr.text or "Upcoming Bookings" in response_fr.text # Fallback
+    # Set locale to Arabic and check dashboard
+    auth_client.get("/set_locale/ar", follow_redirects=False)
+    response = auth_client.get("/dashboard")
+    assert response.status_code == 200
+    assert "لوحة التحكم" in response.text # Arabic translation
 
+    # Set locale to French and check dashboard
+    auth_client.get("/set_locale/fr", follow_redirects=False)
+    response = auth_client.get("/dashboard")
+    assert response.status_code == 200
+    assert "Tableau de Bord" in response.text # French translation
 
-def test_i18n_booking_page_language_toggle(client, db_session):
-    # Create a dummy owner with a slug
-    owner_data = {
-        "name": "Public Owner",
-        "email": "public@example.com",
-        "business_name": "Public Business",
-        "slug": "public-biz",
-        "password": "publicpassword"
-    }
-    owner = models.Owner(
-        **owner_data,
-        hashed_password=security.get_password_hash(owner_data["password"]),
-        services_json='[{"name": "Haircut", "duration_minutes": 30}]',
-        availability_json='{"0": [{"start_time": "09:00", "end_time": "17:00"}]}'
+def test_translation_of_dynamic_strings_in_booking_page_calendar(test_db):
+    db = next(app.dependency_overrides[app.dependency_overrides.get(lambda: None, lambda: None)]())
+    owner_in = schemas.OwnerCreate(
+        name="Cal Owner",
+        email="cal@example.com",
+        password="securepassword",
+        business_name="Cal Biz",
+        slug="cal-biz",
+        phone=None
     )
-    db_session.add(owner)
-    db_session.commit()
-    db_session.refresh(owner)
+    db_owner = crud.create_owner(db, owner_in)
+    
+    # Update owner's services and availability so that calendar can render
+    db_owner.services_json = json.dumps([{"name": "Haircut", "description": "Standard haircut", "duration_minutes": 30, "price": 25.0}])
+    db_owner.availability_json = json.dumps({
+        "Monday": [{"day_of_week": "Monday", "start_time": "09:00", "end_time": "17:00"}],
+        "Tuesday": [{"day_of_week": "Tuesday", "start_time": "09:00", "end_time": "17:00"}]
+    })
+    db.add(db_owner)
+    db.commit()
+    db.refresh(db_owner)
 
-    # Test English booking page
-    response_en = client.get(f"/{owner.slug}?lang=en")
-    assert response_en.status_code == 200
-    assert "Book your slot" in response_en.text
-    assert "Select a service" in response_en.text
+    # Set locale to French
+    client.get("/set_locale/fr", follow_redirects=False)
+    response = client.get("/bookslot/cal-biz")
+    assert response.status_code == 200
+    assert "Lun" in response.text # Check for French short day name
 
-    # Test Arabic booking page
-    response_ar = client.get(f"/{owner.slug}?lang=ar")
-    assert response_ar.status_code == 200
-    # Assuming 'احجز موعدك' for 'Book your slot' and 'اختر خدمة' for 'Select a service'
-    assert "احجز موعدك" in response_ar.text or "Book your slot" in response_ar.text # Fallback
-    assert "اختر خدمة" in response_ar.text or "Select a service" in response_ar.text # Fallback
-
-    # Test French booking page
-    response_fr = client.get(f"/{owner.slug}?lang=fr")
-    assert response_fr.status_code == 200
-    # Assuming 'Réservez votre créneau' for 'Book your slot' and 'Sélectionnez un service' for 'Select a service'
-    assert "Réservez votre créneau" in response_fr.text or "Book your slot" in response_fr.text # Fallback
-    assert "Sélectionnez un service" in response_fr.text or "Select a service" in response_fr.text # Fallback"
+    # Set locale to Arabic
+    client.get("/set_locale/ar", follow_redirects=False)
+    response = client.get("/bookslot/cal-biz")
+    assert response.status_code == 200
+    assert "الاثنين" in response.text # Check for Arabic full day name (or short if designed)

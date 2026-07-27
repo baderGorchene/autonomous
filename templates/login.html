@@ -1,37 +1,48 @@
 <!DOCTYPE html>
-<html lang="{{ locale }}">
+<html lang="{{ request.session.get('locale', 'en') }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% trans %}Login{% endtrans %}</title>
-    <link rel="stylesheet" href="/static/css/style.css">
+    <title>{{ _('Login') }} - BookSlot</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
-<body>
-    <header>
-        <h1>{% trans %}Login to BookSlot{% endtrans %}</h1>
-        <nav>
-            <a href="?lang=en">English</a> |
-            <a href="?lang=ar">العربية</a> |
-            <a href="?lang=fr">Français</a>
-        </nav>
-    </header>
-    <main>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+    <div class="max-w-md w-full bg-white p-8 rounded-lg shadow-md">
+        <div class="flex justify-end mb-4">
+            <a href="{{ url_for('set_locale', locale_code='en') }}" class="text-blue-500 hover:underline mx-1">EN</a> |
+            <a href="{{ url_for('set_locale', locale_code='ar') }}" class="text-blue-500 hover:underline mx-1">AR</a> |
+            <a href="{{ url_for('set_locale', locale_code='fr') }}" class="text-blue-500 hover:underline mx-1">FR</a>
+        </div>
+        <h2 class="text-3xl font-bold text-center text-gray-800 mb-6">{{ _('Login to BookSlot') }}</h2>
+        
         {% if error %}
-            <p style="color: red;">{{ error }}</p>
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+            <strong class="font-bold">{{ _('Error!') }}</strong>
+            <span class="block sm:inline">{{ error }}</span>
+        </div>
         {% endif %}
-        {% if message == 'signup_success' %}
-            <p style="color: green;">{% trans %}Account created successfully! Please log in.{% endtrans %}</p>
-        {% endif %}
-        <form action="/login" method="post">
-            <label for="username">{% trans %}Email{% endtrans %}:</label>
-            <input type="email" id="username" name="username" required><br>
 
-            <label for="password">{% trans %}Password{% endtrans %}:</label>
-            <input type="password" id="password" name="password" required><br>
-
-            <button type="submit">{% trans %}Login{% endtrans %}</button>
+        <form action="/login" method="POST">
+            <div class="mb-4">
+                <label for="email" class="block text-gray-700 text-sm font-bold mb-2">{{ _('Email') }}:</label>
+                <input type="email" id="email" name="email" required
+                       class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+            </div>
+            <div class="mb-6">
+                <label for="password" class="block text-gray-700 text-sm font-bold mb-2">{{ _('Password') }}:</label>
+                <input type="password" id="password" name="password" required
+                       class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline">
+            </div>
+            <div class="flex items-center justify-between">
+                <button type="submit"
+                        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                    {{ _('Login') }}
+                </button>
+                <a class="inline-block align-baseline font-bold text-sm text-blue-500 hover:text-blue-800" href="/signup">
+                    {{ _('Don\'t have an account? Sign Up') }}
+                </a>
+            </div>
         </form>
-        <p>{% trans %}Don't have an account?{% endtrans %} <a href="/signup">{% trans %}Sign Up{% endtrans %}</a></p>
-    </main>
+    </div>
 </body>
 </html>
