@@ -1,123 +1,90 @@
 # BookSlot
 
-BookSlot is a dead-simple booking page solution for local service businesses. It allows business owners to create a shareable booking link, enabling their customers to self-book appointments. Owners receive WhatsApp/email notifications for new bookings, and customers don't need accounts. The platform supports bilingual (English + Arabic/French) functionality from day one, targeting underserved markets.
+BookSlot is a dead-simple $19/month booking page for local service businesses. It allows owners to create a shareable booking link, customers to book themselves without accounts, and provides notifications to the owner. It supports bilingual (English + Arabic/French) operation from day one.
 
-## Features (MVP)
+## Features
 
-*   **Owner Signup & Service Setup:** Business owners can register and configure their services and availability.
-*   **Public Booking Page:** A mobile-first, beautiful public page (`bookslot.app/their-name`) where customers can view services and book appointments.
-*   **Time Slot Availability:** Owners define their availability, and customers can only book within those slots.
-*   **Email Confirmations:** Both the owner and the customer receive email confirmations with booking details.
-*   **WhatsApp Notifications:** Optional WhatsApp notifications for owners and customers.
-*   **Simple Dashboard:** Owners get a dashboard to view upcoming bookings and manage their profile.
-*   **Bilingual Support:** English, Arabic, and French languages are supported.
-
-## Monetization
-
-*   Free for up to 20 bookings/month.
-*   $19/month for unlimited bookings.
-
-## Technology Stack
-
-*   **Backend:** FastAPI (Python)
-*   **Database:** SQLAlchemy (ORM) with SQLite (for MVP, easily swappable)
-*   **Frontend:** Jinja2 (templating), Tailwind CSS (for styling), Vanilla JavaScript
-*   **Authentication:** JWT (JSON Web Tokens)
-*   **Notifications:** SendGrid (Email), Twilio (WhatsApp)
-*   **Internationalization:** gettext, Babel
-*   **Deployment:** Docker, Gunicorn, Uvicorn
+- Owner signup and service setup
+- Public booking page
+- Time slot availability management
+- Email confirmations to both parties
+- Simple dashboard for upcoming bookings
+- Bilingual support (English, Arabic, French)
 
 ## Setup and Installation
 
 ### Prerequisites
 
-*   Python 3.8+
-*   pip
-*   Git
-*   Docker (optional, for containerized deployment)
+- Python 3.9+
+- pip
+- Docker (optional, for containerized deployment)
 
-### 1. Clone the repository
+### Local Development
 
-```bash
-git clone https://github.com/your-username/bookslot.git
-cd bookslot
-```
+1.  **Clone the repository:**
+    ```bash
+    git clone <repository-url>
+    cd bookslot
+    ```
 
-### 2. Create and activate a virtual environment
+2.  **Create a virtual environment and activate it:**
+    ```bash
+    python -m venv venv
+    source venv/bin/activate  # On Windows: `venv\Scripts\activate`
+    ```
 
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: `venv\Scripts\activate`
-```
+3.  **Install dependencies:**
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-### 3. Install dependencies
+4.  **Set up environment variables:**
+    Create a `.env` file in the project root based on `.env.example`.
 
-```bash
-pip install -r requirements.txt
-```
+    ```ini
+    # .env
+    SECRET_KEY="your-super-secret-key-for-jwt"
+    ALGORITHM="HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES=30
 
-### 4. Environment Variables
+    SENDGRID_API_KEY="your-sendgrid-api-key"
+    TWILIO_ACCOUNT_SID="your-twilio-account-sid"
+    TWILIO_AUTH_TOKEN="your-twilio-auth-token"
+    TWILIO_WHATSAPP_NUMBER="whatsapp:+1234567890" # e.g., whatsapp:+14155238886
+    GEMINI_API_KEY="" # Optional, if not used
 
-Create a `.env` file in the project root based on `.env.example`:
+    DATABASE_URL="sqlite:///./sql_app.db" # For local development, or a PostgreSQL connection string
+    ```
 
-```bash
-cp .env.example .env
-```
+5.  **Run database migrations (if applicable):**
+    If using Alembic or similar, run migration commands here. For SQLite, `uvicorn` will create the `sql_app.db` file automatically on first run if models are defined and `Base.metadata.create_all(engine)` is called.
 
-Edit the `.env` file with your actual credentials:
+6.  **Run the application:**
+    ```bash
+    uvicorn src.main:app --reload
+    ```
+    The application will be available at `http://127.0.0.1:8000`.
 
-```ini
-SECRET_KEY="your_super_secret_key_here"
-SENDGRID_API_KEY="your_sendgrid_api_key_here"
-TWILIO_ACCOUNT_SID="your_twilio_account_sid_here"
-TWILIO_AUTH_TOKEN="your_twilio_auth_token_here"
-TWILIO_WHATSAPP_NUMBER="whatsapp:+14155238886" # Your Twilio WhatsApp Sandbox number
-GEMINI_API_KEY="" # Optional: If you plan to integrate Gemini API
-DATABASE_URL="sqlite:///./bookslot.db" # Or your PostgreSQL/MySQL URL
-```
-
-### 5. Run Database Migrations (if using Alembic, not explicitly set up in MVP)
-
-For SQLite, tables are created on app startup in `main.py`. For production, consider using Alembic for migrations.
-
-### 6. Compile Translations
-
-Ensure `babel` is installed (`pip install babel`).
-```bash
-python -m babel compile -d locales
-```
-
-### 7. Run the application
-
-```bash
-uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-The application will be available at `http://127.0.0.1:8000`.
-
-### 8. Accessing the Application
-
-*   **Owner Signup:** `http://127.0.0.1:8000/signup`
-*   **Owner Login:** `http://127.0.0.1:8000/login`
-*   **Dashboard:** `http://127.0.0.1:8000/dashboard`
-*   **Public Booking Page:** `http://127.0.0.1:8000/bookslot/{your-business-slug}` (e.g., `http://127.0.0.1:8000/bookslot/my-salon`)
-
-## Running Tests
+### Running Tests
 
 ```bash
 pytest
 ```
 
-## Docker Deployment
+### Docker Deployment
 
-To build and run the application using Docker:
+1.  **Build the Docker image:**
+    ```bash
+    docker build -t bookslot .
+    ```
 
-```bash
-docker build -t bookslot .
-docker run -p 8000:8000 --env-file ./.env bookslot
-```
+2.  **Run the Docker container:**
+    Ensure you have your `.env` variables available to the container. You can pass them directly or mount the `.env` file.
 
-This will build a Docker image and run a container, making the application accessible on `http://localhost:8000`.
+    ```bash
+    docker run -d -p 8000:8000 --env-file ./.env bookslot
+    ```
+    The application will be available at `http://localhost:8000`.
 
 ## Project Structure
 
@@ -129,31 +96,25 @@ This will build a Docker image and run a container, making the application acces
 │   ├── crud.py
 │   ├── database.py
 │   ├── i18n_config.py
-│   ├── main.py
-│   ├── models.py
-│   ├── notifications.py
-│   ├── schemas.py
-│   └── security.py
-├── templates/
-│   ├── booking_page.html
-│   ├── booking_confirmation.html
-│   ├── dashboard.html
-│   ├── login.html
-│   ├── owner_signup.html
-│   └── profile.html
-├── locales/
-│   ├── ar/
-│   │   └── LC_MESSAGES/
-│   │       └── messages.po
-│   └── fr/
-│       └── LC_MESSAGES/
-│           └── messages.po
-├── tests/
-│   ├── __init__.py
-│   ├── test_i18n.py
-│   └── test_main.py
-├── .env.example
-├── Dockerfile
-├── README.md
-└── requirements.txt
+│   ├── main.py             # Main FastAPI application
+│   ├── models.py           # SQLAlchemy models
+│   ├── notifications.py    # Email/WhatsApp notifications
+│   ├── schemas.py          # Pydantic schemas
+│   └── security.py         # Authentication utilities
+├── templates/              # Jinja2 templates (booking_page.html, dashboard.html etc.)
+├── static/                 # Static files (CSS, JS, images)
+├── locales/                # Translation files (ar/LC_MESSAGES/messages.po, fr/LC_MESSAGES/messages.po)
+├── tests/                  # Automated tests
+├── .env.example            # Example environment variables
+├── Dockerfile              # Docker configuration
+├── README.md               # Project documentation
+└── requirements.txt        # Python dependencies
 ```
+
+## Contributing
+
+... (Guidelines for contribution)
+
+## License
+
+... (License information)
