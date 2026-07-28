@@ -1,21 +1,21 @@
-# Use an official Python runtime as a parent image
-FROM python:3.11-slim-buster
+FROM python:3.9-slim-buster
 
-# Set the working directory in the container
 WORKDIR /app
 
-# Copy the requirements file into the container at /app
-COPY requirements.txt .
+# Install system dependencies for psycopg2 (if using PostgreSQL)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install any needed packages specified in requirements.txt
+COPY ./requirements.txt /app/requirements.txt
+
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the application code into the container at /app
-COPY . .
+COPY . /app
 
-# Expose the port the app runs on
+ENV PYTHONPATH=/app
+
 EXPOSE 8000
 
-# Run the application using Gunicorn with Uvicorn workers
-# Assuming the main FastAPI application object is named 'app' in 'src/main.py'
 CMD ["gunicorn", "src.main:app", "--workers", "4", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000"]
