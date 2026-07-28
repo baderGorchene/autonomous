@@ -1,1 +1,1 @@
-Fix: Ensure pytest and all dependencies are available via requirements.txt
+Fix: Ensure pytest is available by providing comprehensive requirements.txt at project root
