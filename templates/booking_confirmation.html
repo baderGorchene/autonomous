@@ -1,29 +1,23 @@
 <!DOCTYPE html>
-<html lang="{{ request.session.get('locale', 'en') }}">
+<html lang="{{ lang }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _('Booking Confirmed!') }}</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <title>{{ _('Booking Confirmed') }} - BookSlot</title>
+    <link rel="stylesheet" href="/static/css/style.css">
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col items-center justify-center py-8">
-    <div class="max-w-md w-full bg-white p-8 rounded-lg shadow-md text-center">
-        <h1 class="text-4xl font-bold text-green-600 mb-4">{{ _('Booking Confirmed!') }} 🎉</h1>
-        <p class="text-lg text-gray-800 mb-6">{{ _('Thank you,') }} {{ customer_name }}!</p>
-        <p class="text-gray-700 mb-2">{{ _('Your appointment with') }} <strong>{{ owner.business_name }}</strong> {{ _('has been successfully booked.') }}</p>
-        <p class="text-gray-700 mb-6">{{ _('A confirmation email has been sent to your inbox.') }}</p>
-        
-        <div class="bg-blue-50 border-l-4 border-blue-400 text-blue-800 p-4 mb-6" role="alert">
-            <p class="font-bold">{{ _('Booking Details:') }}</p>
-            <p><strong>{{ _('Service') }}:</strong> {{ booking.service_name }}</p>
-            <p><strong>{{ _('Date') }}:</strong> {{ booking.booking_date }}</p>
-            <p><strong>{{ _('Time') }}:</strong> {{ booking.booking_time }}</p>
+<body>
+    <div class="container">
+        <h1>{{ _('Booking Confirmed!') }}</h1>
+        <p>{{ _('Thank you, %s!') % booking.customer_name }}</p>
+        <p>{{ _('Your booking for %s with %s on %s at %s has been successfully received.') % (booking.service_name, owner.business_name, booking.booking_time.strftime('%Y-%m-%d'), booking.booking_time.strftime('%H:%M')) }}</p>
+        <p>{{ _('A confirmation email has been sent to %s.') % booking.customer_email }}</p>
+        <p><a href="/{{ owner.slug }}">{{ _('Book another slot') }}</a></p>
+        <div class="language-toggle">
+            <a href="{{ current_url|urlencode('lang', 'en') }}">English</a>
+            <a href="{{ current_url|urlencode('lang', 'ar') }}">العربية</a>
+            <a href="{{ current_url|urlencode('lang', 'fr') }}">Français</a>
         </div>
-
-        <a href="{{ url_for('public_booking_page', owner_slug=owner.slug) }}"
-           class="inline-block bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-            {{ _('Book Another Appointment') }}
-        </a>
     </div>
 </body>
 </html>
