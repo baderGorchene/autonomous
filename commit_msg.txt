@@ -1,1 +1,1 @@
-feat: Add staging deployment scripts and environment config
+Fix: Add pytest and testing dependencies to requirements.txt

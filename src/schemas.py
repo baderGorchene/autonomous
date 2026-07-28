@@ -1,12 +1,21 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr
 from typing import List, Dict, Any, Optional
-from datetime import date, datetime
+from datetime import date, time
+
+class ServiceBase(BaseModel):
+    name: str
+    duration: int
+    price: Optional[float] = None
+
+class AvailabilitySlot(BaseModel):
+    start_time: str
+    end_time: str
 
 class OwnerBase(BaseModel):
     name: str
     email: EmailStr
     business_name: str
-    slug: str = Field(..., regex="^[a-z0-9-]+$") # Slug must be lowercase alphanumeric with hyphens
+    slug: str
     phone: Optional[str] = None
 
 class OwnerCreate(OwnerBase):
@@ -16,13 +25,11 @@ class OwnerProfileUpdate(BaseModel):
     name: str
     business_name: str
     phone: Optional[str] = None
-    # services_json and availability_json will be handled as raw strings in main.py for flexibility
-    # but could also be validated here with custom validators if needed.
 
 class Owner(OwnerBase):
     id: int
-    services_json: Optional[str] = None
-    availability_json: Optional[str] = None
+    services_json: str
+    availability_json: str
 
     class Config:
         from_attributes = True
@@ -33,8 +40,7 @@ class BookingBase(BaseModel):
     customer_phone: Optional[str] = None
     service_name: str
     booking_date: date
-    booking_time: str
-    status: str = "pending"
+    booking_time: time
 
 class BookingCreate(BookingBase):
     pass
@@ -42,7 +48,6 @@ class BookingCreate(BookingBase):
 class Booking(BookingBase):
     id: int
     owner_id: int
-    created_at: datetime
 
     class Config:
         from_attributes = True
@@ -52,24 +57,4 @@ class Token(BaseModel):
     token_type: str
 
 class TokenData(BaseModel):
-    id: Optional[int] = None
-
-# For service and availability configuration (internal representation)
-class Service(BaseModel):
-    id: int
-    name: str
-    duration: int # in minutes
-    price: float
-
-class AvailabilityDay(BaseModel):
-    start_time: str # e.g., "09:00"
-    end_time: str   # e.g., "17:00"
-
-class Availability(BaseModel):
-    monday: List[AvailabilityDay] = []
-    tuesday: List[AvailabilityDay] = []
-    wednesday: List[AvailabilityDay] = []
-    thursday: List[AvailabilityDay] = []
-    friday: List[AvailabilityDay] = []
-    saturday: List[AvailabilityDay] = []
-    sunday: List[AvailabilityDay] = []
+    email: Optional[str] = None

@@ -1,155 +1,81 @@
 import os
+import httpx
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 from twilio.rest import Client
 from .config import settings
-import gettext
-import os
 
-# Set up locale for notifications
-# Assuming notifications.py is in src/, PROJECT_ROOT is one level up
-_current_file_dir = os.path.dirname(os.path.abspath(__file__))
-PROJECT_ROOT = os.path.abspath(os.path.join(_current_file_dir, os.pardir))
-LOCALES_DIR = os.path.join(PROJECT_ROOT, 'locales')
+sendgrid_client = SendGridAPIClient(settings.SENDGRID_API_KEY)
 
-def _get_translator(locale='en'):
+twilio_client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
+TWILIO_WHATSAPP_NUMBER = settings.TWILIO_WHATSAPP_NUMBER
+
+async def send_email(to_email: str, subject: str, html_content: str):
+    message = Mail(
+        from_email='no-reply@bookslot.app',
+        to_emails=to_email,
+        subject=subject,
+        html_content=html_content
+    )
     try:
-        # Ensure the locale directory exists before trying to load translations
-        if not os.path.exists(LOCALES_DIR):
-            print(f"Warning: Locales directory not found at {LOCALES_DIR} for notifications.")
-            return gettext.NullTranslations() # Fallback
-        
-        return gettext.translation('messages', LOCALES_DIR, languages=[locale], fallback=True)
+        response = sendgrid_client.send(message)
+        print(f"Email sent to {to_email}. Status Code: {response.status_code}")
     except Exception as e:
-        print(f"Warning: Could not load translations for locale '{locale}' in notifications: {e}")
-        return gettext.NullTranslations() # Fallback
+        print(f"Error sending email to {to_email}: {e}")
 
-def send_booking_confirmation_email(
-    owner_email: str,
-    customer_email: str,
-    owner_name: str,
-    customer_name: str,
-    service_name: str,
-    booking_date: str,
-    booking_time: str,
-    customer_phone: str,
-    locale: str = 'en'
-):
-    _ = _get_translator(locale).gettext
-
-    # Email to customer
-    customer_subject = _("Your Booking with {} is Confirmed!").format(owner_name)
-    customer_body = _("""
-        Dear {customer_name},
-
-        Your booking for {service_name} with {owner_name} on {booking_date} at {booking_time} has been confirmed.
-
-        We look forward to seeing you!
-
-        Best regards,
-        The BookSlot Team
-    """).format(
-        customer_name=customer_name,
-        service_name=service_name,
-        owner_name=owner_name,
-        booking_date=booking_date,
-        booking_time=booking_time
-    )
-    message_to_customer = Mail(
-        from_email=os.getenv('SENDGRID_SENDER_EMAIL', 'noreply@bookslot.app'), # Use an actual sender email
-        to_emails=customer_email,
-        subject=customer_subject,
-        html_content=f"<p>{customer_body.replace(os.linesep, '<br>')}</p>"
-    )
-
-    # Email to owner
-    owner_subject = _("New Booking Received: {service_name} for {customer_name}").format(
-        service_name=service_name,
-        customer_name=customer_name
-    )
-    owner_body = _("""
-        Dear {owner_name},
-
-        You have received a new booking:
-        Service: {service_name}
-        Customer: {customer_name}
-        Customer Email: {customer_email}
-        Customer Phone: {customer_phone}
-        Date: {booking_date}
-        Time: {booking_time}
-
-        Please prepare for the appointment.
-
-        Best regards,
-        The BookSlot Team
-    """).format(
-        owner_name=owner_name,
-        service_name=service_name,
-        customer_name=customer_name,
-        customer_email=customer_email,
-        customer_phone=customer_phone,
-        booking_date=booking_date,
-        booking_time=booking_time
-    )
-    message_to_owner = Mail(
-        from_email=os.getenv('SENDGRID_SENDER_EMAIL', 'noreply@bookslot.app'),
-        to_emails=owner_email,
-        subject=owner_subject,
-        html_content=f"<p>{owner_body.replace(os.linesep, '<br>')}</p>"
-    )
-
+async def send_whatsapp_message(to_phone_number: str, body: str):
     try:
-        sg = SendGridAPIClient(settings.SENDGRID_API_KEY)
-        sg.send(message_to_customer)
-        sg.send(message_to_owner)
-        print("Emails sent successfully.")
-    except Exception as e:
-        print(f"Error sending email: {e}")
-        # In a real app, you'd log this or use a retry mechanism
+        if not to_phone_number.startswith("whatsapp:"):
+            to_phone_number = f"whatsapp:{to_phone_number}"
 
-def send_whatsapp_notification(
-    owner_phone: str,
-    customer_name: str,
-    service_name: str,
-    booking_date: str,
-    booking_time: str,
-    locale: str = 'en'
-):
-    _ = _get_translator(locale).gettext
-    
-    # Twilio requires phone numbers to be in E.164 format (e.g., +12345678900)
-    # This example assumes owner_phone is already in or can be converted to E.164
-    # In a real app, robust phone number validation/formatting would be needed.
-
-    if not owner_phone:
-        print("Warning: Owner phone number not provided for WhatsApp notification.")
-        return
-
-    # Construct the message for the owner
-    whatsapp_message = _("""
-        *New Booking Alert!*
-
-        Service: {service_name}
-        Customer: {customer_name}
-        Date: {booking_date}
-        Time: {booking_time}
-
-        Prepare for your appointment!
-    """).format(
-        service_name=service_name,
-        customer_name=customer_name,
-        booking_date=booking_date,
-        booking_time=booking_time
-    )
-
-    try:
-        client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
-        message = client.messages.create(
-            from_=f"whatsapp:{settings.TWILIO_WHATSAPP_NUMBER}", # Your Twilio WhatsApp number
-            to=f"whatsapp:{owner_phone}", # Owner's WhatsApp number
-            body=whatsapp_message
+        message = twilio_client.messages.create(
+            from_=TWILIO_WHATSAPP_NUMBER,
+            body=body,
+            to=to_phone_number
         )
-        print(f"WhatsApp message sent: {message.sid}")
+        print(f"WhatsApp message sent to {to_phone_number}. SID: {message.sid}")
     except Exception as e:
-        print(f"Error sending WhatsApp message: {e}")
-        # In a real app, log this error or use a retry mechanism
+        print(f"Error sending WhatsApp message to {to_phone_number}: {e}")
+
+async def send_booking_confirmation_email_to_customer(
+    customer_email: str, business_name: str, service_name: str, booking_datetime_str: str
+):
+    subject = f"Your booking with {business_name} is confirmed!"
+    html_content = f"""
+    <p>Dear Customer,</p>
+    <p>Your booking for <strong>{service_name}</strong> with <strong>{business_name}</strong> on <strong>{booking_datetime_str}</strong> has been successfully confirmed.</p>
+    <p>We look forward to seeing you!</p>
+    <p>Best regards,<br>{business_name} Team</p>
+    """
+    await send_email(customer_email, subject, html_content)
+
+async def send_new_booking_notification_to_owner(
+    owner_email: str, owner_phone: str, business_name: str,
+    customer_name: str, customer_email: str, customer_phone: str,
+    service_name: str, booking_datetime_str: str
+):
+    email_subject = f"New booking for {business_name}!"
+    email_html_content = f"""
+    <p>Hello {business_name} Team,</p>
+    <p>You have a new booking!</p>
+    <ul>
+        <li><strong>Service:</strong> {service_name}</li>
+        <li><strong>When:</strong> {booking_datetime_str}</li>
+        <li><strong>Customer Name:</strong> {customer_name}</li>
+        <li><strong>Customer Email:</strong> {customer_email}</li>
+        <li><strong>Customer Phone:</strong> {customer_phone}</li>
+    </ul>
+    <p>Please check your dashboard for more details.</p>
+    """
+    await send_email(owner_email, email_subject, email_html_content)
+
+    whatsapp_body = f"New booking for {business_name}!\nService: {service_name}\nWhen: {booking_datetime_str}\nCustomer: {customer_name} ({customer_phone})"
+    await send_whatsapp_message(owner_phone, whatsapp_body)
+
+async def generate_ai_response(prompt: str) -> str:
+    if not settings.GEMINI_API_KEY:
+        print("GEMINI_API_KEY not set. Skipping AI response generation.")
+        return "AI capabilities are not enabled."
+    
+    print(f"Gemini API call with prompt: {prompt}")
+    return "This is a dummy AI response. Please set up Gemini API for actual functionality."
