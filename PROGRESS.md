@@ -1,3 +1,8 @@
+## Iteration 222
+_2026-07-28 19:26 UTC_
+
+Added `pytest`, `httpx`, and `pytest-asyncio` to `requirements.txt` along with other core application dependencies, ensuring all necessary packages for running tests are explicitly listed for installation in the staging environment.
+
 ## Iteration 221
 _2026-07-28 17:29 UTC_
 

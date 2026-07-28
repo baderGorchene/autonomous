@@ -1,23 +1,24 @@
 #!/bin/bash
+
 set -e
-echo "Starting deployment to staging environment..."
-IMAGE_TAG="bookslot-app-staging:$(date +%Y%m%d%H%M%S)"
-docker build -t $IMAGE_TAG .
-echo "Docker image $IMAGE_TAG built successfully."
-CONTAINER_NAME="bookslot-staging"
-echo "Stopping and removing existing container (if any): $CONTAINER_NAME..."
-docker stop $CONTAINER_NAME || true
-docker rm $CONTAINER_NAME || true
-echo "Existing container stopped and removed."
-echo "Running new container: $CONTAINER_NAME..."
-if [ ! -f .env ]; then
-    echo "Warning: .env file not found. Using environment variables directly or default values."
-    echo "Please create a .env file or set environment variables before running in production."
-else
-    echo "Loading environment variables from .env file..."
-    ENV_VARS=$(cat .env | grep -v '^#' | xargs -I {} echo -e "-e {}")
-    docker run -d --name $CONTAINER_NAME -p 80:8000 $ENV_VARS $IMAGE_TAG
-fi
-echo "New container $CONTAINER_NAME started successfully on port 80."
-echo "Deployment to staging complete. Application should be accessible at http://localhost (or your staging domain)."
-echo "Next step: Perform User Acceptance Testing (UAT)."
+
+IMAGE_NAME="bookslot-app-staging"
+
+echo "--- Building Docker image ---"
+docker build -t $IMAGE_NAME .
+
+echo "--- Stopping and removing existing container (if any) ---"
+docker stop $IMAGE_NAME || true
+docker rm $IMAGE_NAME || true
+
+echo "--- Running Docker container in detached mode ---"
+docker run -d --name $IMAGE_NAME --env-file .env -p 8000:8000 $IMAGE_NAME
+
+echo "--- Waiting for the application to start (optional, adjust as needed) ---"
+sleep 10
+
+echo "--- Running tests inside the Docker container ---"
+docker exec $IMAGE_NAME bash -c "pytest"
+
+echo "--- Deployment and testing complete ---"
+echo "Application should be running on http://localhost:8000"
