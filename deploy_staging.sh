@@ -1,24 +1,43 @@
 #!/bin/bash
 
+# Exit immediately if a command exits with a non-zero status.
 set -e
 
-IMAGE_NAME="bookslot-app-staging"
+echo "--- Starting Staging Deployment ---"
 
-echo "--- Building Docker image ---"
-docker build -t $IMAGE_NAME .
+# Define variables
+APP_NAME="bookslot-staging"
+DOCKER_IMAGE_NAME="bookslot-app-staging"
+DOCKER_REGISTRY="your-docker-registry.com" # Replace with your Docker registry, e.g., ghcr.io/your-username
+ENV_FILE=".env.staging" # Assuming a separate .env file for staging
 
-echo "--- Stopping and removing existing container (if any) ---"
-docker stop $IMAGE_NAME || true
-docker rm $IMAGE_NAME || true
+# Ensure .env.staging exists
+if [ ! -f "$ENV_FILE" ]; then
+  echo "Error: Staging environment file '$ENV_FILE' not found."
+  echo "Please create it with necessary environment variables."
+  exit 1
+fi
 
-echo "--- Running Docker container in detached mode ---"
-docker run -d --name $IMAGE_NAME --env-file .env -p 8000:8000 $IMAGE_NAME
+echo "Building Docker image..."
+docker build -t $DOCKER_IMAGE_NAME .
 
-echo "--- Waiting for the application to start (optional, adjust as needed) ---"
-sleep 10
+# Tag the image for your registry if you are pushing
+# docker tag $DOCKER_IMAGE_NAME $DOCKER_REGISTRY/$DOCKER_IMAGE_NAME:latest
 
-echo "--- Running tests inside the Docker container ---"
-docker exec $IMAGE_NAME bash -c "pytest"
+# Push the image to your registry if applicable
+# echo "Pushing Docker image to registry..."
+# docker push $DOCKER_REGISTRY/$DOCKER_IMAGE_NAME:latest
 
-echo "--- Deployment and testing complete ---"
-echo "Application should be running on http://localhost:8000"
+echo "Stopping and removing any existing container for $APP_NAME..."
+docker stop $APP_NAME || true
+docker rm $APP_NAME || true
+
+echo "Running new container for $APP_NAME..."
+docker run -d \
+  --name $APP_NAME \
+  --env-file $ENV_FILE \
+  -p 80:8000 \
+  $DOCKER_IMAGE_NAME:latest
+
+echo "--- Staging Deployment Complete ---"
+echo "Application should now be running on port 80."

@@ -1,6 +1,7 @@
-from sqlalchemy import Column, Integer, String, Text, Date, Time, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 from .database import Base
+import datetime
 
 class Owner(Base):
     __tablename__ = "owners"
@@ -10,10 +11,10 @@ class Owner(Base):
     email = Column(String, unique=True, index=True)
     hashed_password = Column(String)
     business_name = Column(String)
-    slug = Column(String, unique=True, index=True)
-    phone = Column(String, nullable=True)
-    services_json = Column(Text)
-    availability_json = Column(Text)
+    slug = Column(String, unique=True, index=True) # For public booking page
+    services_json = Column(Text) # JSON string of services offered
+    availability_json = Column(Text) # JSON string of availability
+    phone = Column(String, nullable=True) # Owner's phone number
 
     bookings = relationship("Booking", back_populates="owner")
 
@@ -24,9 +25,11 @@ class Booking(Base):
     owner_id = Column(Integer, ForeignKey("owners.id"))
     customer_name = Column(String)
     customer_email = Column(String)
-    customer_phone = Column(String, nullable=True)
+    customer_phone = Column(String, nullable=True) # Customer's phone number
     service_name = Column(String)
-    booking_date = Column(Date)
-    booking_time = Column(Time)
-    
+    booking_date = Column(DateTime)
+    booking_time = Column(String) # e.g., "10:00 AM"
+    status = Column(String, default="pending") # e.g., "pending", "confirmed", "cancelled"
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
     owner = relationship("Owner", back_populates="bookings")
