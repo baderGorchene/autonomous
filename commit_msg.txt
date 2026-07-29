@@ -1,1 +1,1 @@
-Fix: Add comprehensive dependencies to requirements.txt to resolve 'No module named pytest'
+Add comprehensive requirements.txt to resolve pytest module not found error
