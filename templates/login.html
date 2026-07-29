@@ -1,29 +1,23 @@
 {% extends "base.html" %}
-
-{% block title %}{{ _("Login") }}{% endblock %}
-
+{% block title %}{{ _('Login') }} - BookSlot{% endblock %}
 {% block content %}
-<div class="max-w-md mx-auto bg-white p-8 rounded-lg shadow-md mt-10">
-    <h2 class="text-3xl font-bold text-center text-gray-800 mb-6">{{ _("Login to your BookSlot account") }}</h2>
-    <form action="/login" method="post" class="space-y-4">
-        <div>
-            <label for="email" class="block text-sm font-medium text-gray-700">{{ _("Email Address") }}</label>
-            <input type="email" id="email" name="email" required
-                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+    <h2>{{ _('Login to your BookSlot account') }}</h2>
+    {% if error %}
+        <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
+    {% if message %}
+        <div class="alert alert-success">{{ message }}</div>
+    {% endif %}
+    <form action="/login" method="post">
+        <div class="form-group">
+            <label for="email">{{ _('Email') }}:</label>
+            <input type="email" id="email" name="email" required>
         </div>
-        <div>
-            <label for="password" class="block text-sm font-medium text-gray-700">{{ _("Password") }}</label>
-            <input type="password" id="password" name="password" required
-                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+        <div class="form-group">
+            <label for="password">{{ _('Password') }}:</label>
+            <input type="password" id="password" name="password" required>
         </div>
-        <button type="submit"
-                class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-            {{ _("Login") }}
-        </button>
+        <button type="submit" class="btn">{{ _('Login') }}</button>
     </form>
-    <p class="mt-6 text-center text-sm text-gray-600">
-        {{ _("Don't have an account?") }}
-        <a href="/signup" class="font-medium text-blue-600 hover:text-blue-500">{{ _("Sign up here") }}</a>
-    </p>
-</div>
+    <p>{{ _('Don\'t have an account?') }} <a href="/signup">{{ _('Sign Up') }}</a></p>
 {% endblock %}

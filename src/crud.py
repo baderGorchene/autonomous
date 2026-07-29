@@ -45,3 +45,6 @@ def update_owner_profile(db: Session, current_owner: models.Owner, owner_update:
     db.commit()
     db.refresh(current_owner)
     return current_owner
+
+def get_owner_bookings(db: Session, owner_id: int):
+    return db.query(models.Booking).filter(models.Booking.owner_id == owner_id).order_by(models.Booking.booking_date, models.Booking.booking_time).all()

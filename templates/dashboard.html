@@ -1,60 +1,28 @@
 {% extends "base.html" %}
-
-{% block title %}{{ _("Dashboard") }}{% endblock %}
-
+{% block title %}{{ _('Dashboard') }} - BookSlot{% endblock %}
 {% block content %}
-<div class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-md mt-10">
-    <div class="flex justify-between items-center mb-6">
-        <h2 class="text-3xl font-bold text-gray-800">{{ _("Welcome, {}!").format(current_owner.name) }}</h2>
-        <a href="/logout" class="text-blue-600 hover:text-blue-800">{{ _("Logout") }}</a>
-    </div>
+    <nav>
+        <a href="/dashboard">{{ _('Dashboard') }}</a>
+        <a href="/profile">{{ _('Profile & Services') }}</a>
+        <a href="/logout">{{ _('Logout') }}</a>
+    </nav>
+    <h2>{{ _('Welcome') }}, {{ owner.name }}!</h2>
+    <p>{{ _('Your public booking page:') }} <a href="/book/{{ owner.slug }}" target="_blank">bookslot.app/{{ owner.slug }}</a></p>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <div class="bg-gray-50 p-4 rounded-lg shadow-sm">
-            <h3 class="text-xl font-semibold text-gray-700 mb-2">{{ _("Your Business") }}</h3>
-            <p><strong>{{ _("Business Name:") }}</strong> {{ current_owner.business_name }}</p>
-            <p><strong>{{ _("Booking Page:") }}</strong> <a href="/bookslot/{{ current_owner.slug }}" target="_blank" class="text-blue-600 hover:underline">bookslot.app/{{ current_owner.slug }}</a></p>
-            <a href="/profile" class="mt-4 inline-block bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">{{ _("Manage Profile & Services") }}</a>
-        </div>
-        <div class="bg-gray-50 p-4 rounded-lg shadow-sm">
-            <h3 class="text-xl font-semibold text-gray-700 mb-2">{{ _("Account Information") }}</h3>
-            <p><strong>{{ _("Email:") }}</strong> {{ current_owner.email }}</p>
-            <p><strong>{{ _("Phone:") }}</strong> {{ current_owner.phone or _("Not set") }}</p>
-        </div>
-    </div>
-
-    <h3 class="text-2xl font-bold text-gray-800 mb-4">{{ _("Upcoming Bookings") }}</h3>
-    {% if upcoming_bookings %}
-        <div class="overflow-x-auto">
-            <table class="min-w-full bg-white border border-gray-200 rounded-lg shadow-sm">
-                <thead>
-                    <tr class="bg-gray-100 text-left text-gray-600 text-sm leading-4 tracking-wider">
-                        <th class="py-3 px-4 border-b">{{ _("Date") }}</th>
-                        <th class="py-3 px-4 border-b">{{ _("Time") }}</th>
-                        <th class="py-3 px-4 border-b">{{ _("Service") }}</th>
-                        <th class="py-3 px-4 border-b">{{ _("Customer Name") }}</th>
-                        <th class="py-3 px-4 border-b">{{ _("Customer Email") }}</th>
-                        <th class="py-3 px-4 border-b">{{ _("Customer Phone") }}</th>
-                        <th class="py-3 px-4 border-b">{{ _("Status") }}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for booking in upcoming_bookings %}
-                    <tr class="hover:bg-gray-50">
-                        <td class="py-3 px-4 border-b text-sm text-gray-800">{{ booking.booking_date.strftime('%Y-%m-%d') }}</td>
-                        <td class="py-3 px-4 border-b text-sm text-gray-800">{{ booking.booking_time }}</td>
-                        <td class="py-3 px-4 border-b text-sm text-gray-800">{{ booking.service_name }}</td>
-                        <td class="py-3 px-4 border-b text-sm text-gray-800">{{ booking.customer_name }}</td>
-                        <td class="py-3 px-4 border-b text-sm text-gray-800">{{ booking.customer_email }}</td>
-                        <td class="py-3 px-4 border-b text-sm text-gray-800">{{ booking.customer_phone or _("N/A") }}</td>
-                        <td class="py-3 px-4 border-b text-sm text-gray-800 capitalize">{{ _(booking.status) }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+    <h3>{{ _('Upcoming Bookings') }}</h3>
+    {% if bookings %}
+        {% for booking in bookings %}
+            <div class="booking-card">
+                <h3>{{ booking.service_name }}</h3>
+                <p><strong>{{ _('Date') }}:</strong> {{ booking.booking_date }}</p>
+                <p><strong>{{ _('Time') }}:</strong> {{ booking.booking_time }}</p>
+                <p><strong>{{ _('Customer') }}:</strong> {{ booking.customer_name }}</p>
+                <p><strong>{{ _('Email') }}:</strong> {{ booking.customer_email }}</p>
+                <p><strong>{{ _('Phone') }}:</strong> {{ booking.customer_phone if booking.customer_phone else _('N/A') }}</p>
+                <p><strong>{{ _('Status') }}:</strong> {{ booking.status }}</p>
+            </div>
+        {% endfor %}
     {% else %}
-        <p class="text-gray-600">{{ _("No upcoming bookings.") }}</p>
+        <p>{{ _('No upcoming bookings.') }}</p>
     {% endif %}
-</div>
 {% endblock %}

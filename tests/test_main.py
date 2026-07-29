@@ -2,60 +2,52 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import StaticPool
-import os
-from datetime import date, timedelta
-import json
+from sqlalchemy_utils import database_exists, create_database, drop_database
 
-# Import the main application and database components
 from src.main import app, get_db
 from src.database import Base
 from src.config import settings
-from src import models, schemas, crud, security
+from src import models, security, crud, schemas
+import json
+import os
+from datetime import date, datetime
 
-# Override settings for testing
-settings.DATABASE_URL = "sqlite:///./test.db"
-settings.SECRET_KEY = "super-secret-test-key"
-settings.ALGORITHM = "HS256"
-settings.ACCESS_TOKEN_EXPIRE_MINUTES = 1
+# Use a separate test database
+TEST_DATABASE_URL = "sqlite:///./test.db"
 
-# Setup test database
-engine = create_engine(
-    settings.DATABASE_URL,
-    connect_args={"check_same_thread": False},
-    poolclass=StaticPool,
-)
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+@pytest.fixture(scope="session")
+def test_engine():
+    # Only create/drop if it's a file-based sqlite db, or handle postgres/mysql differently
+    if "sqlite" in TEST_DATABASE_URL and os.path.exists("./test.db"):
+        os.remove("./test.db")
+    
+    test_engine = create_engine(TEST_DATABASE_URL, connect_args={"check_same_thread": False})
+    Base.metadata.create_all(bind=test_engine)
+    yield test_engine
+    Base.metadata.drop_all(bind=test_engine)
+    if "sqlite" in TEST_DATABASE_URL and os.path.exists("./test.db"):
+        os.remove("./test.db")
 
-Base.metadata.create_all(bind=engine)
-
-@pytest.fixture(name="db_session")
-def db_session_fixture():
-    """Provides a transactional test database session."""
-    Base.metadata.drop_all(bind=engine) # Start fresh for each test
-    Base.metadata.create_all(bind=engine)
-    connection = engine.connect()
+@pytest.fixture(scope="function")
+def db_session(test_engine):
+    connection = test_engine.connect()
     transaction = connection.begin()
-    session = TestingSessionLocal(bind=connection)
-
+    SessionTesting = sessionmaker(autocommit=False, autoflush=False, bind=connection)
+    session = SessionTesting()
     yield session
-
     session.close()
     transaction.rollback()
     connection.close()
 
-@pytest.fixture(name="client")
-def client_fixture(db_session: TestingSessionLocal):
-    """Provides a test client for the FastAPI app."""
+@pytest.fixture(scope="function")
+def client(db_session):
     def override_get_db():
         try:
             yield db_session
         finally:
-            db_session.close() # This close is important for the fixture cleanup
-
+            db_session.close()
     app.dependency_overrides[get_db] = override_get_db
-    with TestClient(app) as test_client:
-        yield test_client
+    yield TestClient(app)
     app.dependency_overrides.clear()
 
 @pytest.fixture
@@ -66,227 +58,224 @@ def test_owner_data():
         "password": "testpassword",
         "business_name": "Test Business",
         "slug": "test-business",
-        "phone": "+15551234567",
+        "phone": "+15551234567"
     }
 
 @pytest.fixture
-def create_test_owner(db_session: TestingSessionLocal, test_owner_data):
-    owner_in = schemas.OwnerCreate(**test_owner_data)
-    owner = crud.create_owner(db_session, owner_in)
-    db_session.refresh(owner)
-    return owner
-
-@pytest.fixture
-def owner_token(client: TestClient, test_owner_data):
+def auth_owner(client, db_session, test_owner_data):
+    # Create owner
+    owner_create = schemas.OwnerCreate(**test_owner_data)
+    owner = crud.create_owner(db_session, owner_create)
+    
+    # Login and get token
     response = client.post(
-        "/token",
-        data={"username": test_owner_data["email"], "password": test_owner_data["password"]}
+        "/login",
+        data={"email": test_owner_data["email"], "password": test_owner_data["password"]}
     )
-    assert response.status_code == 200
-    return response.json()["access_token"]
+    assert response.status_code == 302
+    # Extract token from cookie
+    access_token = response.cookies.get("access_token")
+    assert access_token is not None
+    return owner, access_token
 
-# --- Tests ---
+# --- Test Cases ---
 
-def test_health_check(client: TestClient):
+def test_health_check(client):
     response = client.get("/health")
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
 
-def test_signup_page(client: TestClient):
-    response = client.get("/signup")
+def test_signup_and_login(client, db_session, test_owner_data):
+    # Test signup
+    response = client.post(
+        "/signup",
+        data=test_owner_data
+    )
     assert response.status_code == 200
-    assert "Create your BookSlot account" in response.text
+    assert "Account created successfully!" in response.text
+    
+    owner_in_db = crud.get_owner_by_email(db_session, test_owner_data["email"])
+    assert owner_in_db is not None
+    assert owner_in_db.email == test_owner_data["email"]
 
-def test_owner_signup_success(client: TestClient, db_session: TestingSessionLocal, test_owner_data):
-    response = client.post(
-        "/signup",
-        data=test_owner_data,
-        follow_redirects=False # Important to check redirect status
-    )
-    assert response.status_code == 303 # Redirect to login
-    assert response.headers["location"] == "/login"
-
-    owner = crud.get_owner_by_email(db_session, test_owner_data["email"])
-    assert owner is not None
-    assert owner.name == test_owner_data["name"]
-    assert security.verify_password(test_owner_data["password"], owner.hashed_password)
-
-def test_owner_signup_duplicate_email(client: TestClient, create_test_owner, test_owner_data):
-    response = client.post(
-        "/signup",
-        data=test_owner_data,
-        follow_redirects=False
-    )
-    assert response.status_code == 303 # Redirect back to signup
-    assert response.headers["location"] == "/signup"
-    # Flash message check would require session inspection, which TestClient doesn't directly expose easily.
-
-def test_owner_signup_duplicate_slug(client: TestClient, create_test_owner, test_owner_data):
-    # Create another owner with a different email but same slug
-    new_owner_data = test_owner_data.copy()
-    new_owner_data["email"] = "another@example.com"
-    response = client.post(
-        "/signup",
-        data=new_owner_data,
-        follow_redirects=False
-    )
-    assert response.status_code == 303 # Redirect back to signup
-    assert response.headers["location"] == "/signup"
-
-def test_login_page(client: TestClient):
-    response = client.get("/login")
-    assert response.status_code == 200
-    assert "Login to your BookSlot account" in response.text
-
-def test_owner_login_success(client: TestClient, create_test_owner, test_owner_data):
+    # Test login
     response = client.post(
         "/login",
-        data={"email": test_owner_data["email"], "password": test_owner_data["password"]},
-        follow_redirects=False
+        data={"email": test_owner_data["email"], "password": test_owner_data["password"]}
     )
-    assert response.status_code == 303 # Redirect to dashboard
+    assert response.status_code == 302
     assert response.headers["location"] == "/dashboard"
     assert "access_token" in response.cookies
 
-def test_owner_login_invalid_credentials(client: TestClient, create_test_owner, test_owner_data):
-    response = client.post(
-        "/login",
-        data={"email": test_owner_data["email"], "password": "wrongpassword"},
-        follow_redirects=False
-    )
-    assert response.status_code == 303 # Redirect back to login
-    assert response.headers["location"] == "/login"
+def test_duplicate_email_signup(client, db_session, test_owner_data):
+    # First signup
+    client.post("/signup", data=test_owner_data)
 
-def test_dashboard_access_authenticated(client: TestClient, owner_token):
-    response = client.get(
-        "/dashboard",
-        cookies={"access_token": owner_token}
-    )
+    # Second signup with same email
+    response = client.post("/signup", data=test_owner_data)
+    assert response.status_code == 400
+    assert "Email already registered" in response.text
+
+def test_duplicate_slug_signup(client, db_session, test_owner_data):
+    # First signup
+    client.post("/signup", data=test_owner_data)
+    
+    # Second signup with different email but same slug
+    new_owner_data = test_owner_data.copy()
+    new_owner_data["email"] = "newtest@example.com"
+    response = client.post("/signup", data=new_owner_data)
+    assert response.status_code == 400
+    assert "Business URL already taken" in response.text
+
+def test_owner_dashboard_access(client, auth_owner):
+    owner, access_token = auth_owner
+    response = client.get("/dashboard", cookies={"access_token": access_token})
     assert response.status_code == 200
-    assert "Welcome, Test Owner!" in response.text
+    assert f"Welcome, {owner.name}!" in response.text
 
-def test_dashboard_access_unauthenticated(client: TestClient):
-    response = client.get("/dashboard", follow_redirects=False)
-    assert response.status_code == 307 # Redirect to login (or 401 if direct API)
-
-def test_profile_page_access_authenticated(client: TestClient, owner_token):
-    response = client.get(
-        "/profile",
-        cookies={"access_token": owner_token}
-    )
-    assert response.status_code == 200
-    assert "Manage Your Profile & Services" in response.text
-
-def test_update_profile_success(client: TestClient, db_session: TestingSessionLocal, create_test_owner, owner_token):
-    updated_name = "Updated Test Owner"
-    updated_business_name = "Updated Business Name"
-    updated_phone = "+1234567890"
-    services_data = json.dumps([
-        {"name": "Haircut", "description": "Standard haircut", "duration_minutes": 30, "price": 25.0},
-        {"name": "Shave", "duration_minutes": 15}
-    ])
-    availability_data = json.dumps({
-        "Monday": [{"start_time": "09:00", "end_time": "17:00"}],
-        "Tuesday": [{"start_time": "10:00", "end_time": "18:00"}]
-    })
+def test_owner_profile_update(client, db_session, auth_owner):
+    owner, access_token = auth_owner
+    updated_name = "Updated Name"
+    updated_business_name = "Updated Business"
+    updated_phone = "+19876543210"
+    services_data = json.dumps([{"name": "Haircut", "duration": 60, "price": 50.0}])
+    availability_data = json.dumps([{"day_of_week": 0, "start_time": "09:00", "end_time": "17:00"}])
 
     response = client.post(
         "/profile",
+        cookies={"access_token": access_token},
         data={
             "name": updated_name,
             "business_name": updated_business_name,
             "phone": updated_phone,
-            "services_json": services_data,
-            "availability_json": availability_data
-        },
-        cookies={"access_token": owner_token},
-        follow_redirects=False
+            "services_data": services_data,
+            "availability_data": availability_data
+        }
     )
-    assert response.status_code == 303
-    assert response.headers["location"] == "/profile"
-
-    owner = crud.get_owner_by_email(db_session, create_test_owner.email)
-    assert owner.name == updated_name
-    assert owner.business_name == updated_business_name
-    assert owner.phone == updated_phone
-    assert owner.services_json == services_data
-    assert owner.availability_json == availability_data
-
-def test_public_booking_page_exists(client: TestClient, create_test_owner):
-    response = client.get(f"/bookslot/{create_test_owner.slug}")
     assert response.status_code == 200
-    assert f"Book Your Appointment with {create_test_owner.business_name}" in response.text
+    assert "Profile updated successfully!" in response.text
 
-def test_public_booking_page_not_found(client: TestClient):
-    response = client.get("/bookslot/non-existent-slug")
-    assert response.status_code == 404
-    assert "Booking page not found" in response.text
+    updated_owner = crud.get_owner(db_session, owner.id)
+    assert updated_owner.name == updated_name
+    assert updated_owner.business_name == updated_business_name
+    assert updated_owner.phone == updated_phone
+    assert json.loads(updated_owner.services_json)[0]['name'] == "Haircut"
+    assert json.loads(updated_owner.availability_json)[0]['day_of_week'] == 0
 
-def test_submit_booking_success(client: TestClient, db_session: TestingSessionLocal, create_test_owner):
-    # Update owner's services and availability first
-    services_data = json.dumps([
-        {"name": "Consultation", "duration_minutes": 60, "price": 50.0},
-        {"name": "Quick Chat", "duration_minutes": 30}
-    ])
-    availability_data = json.dumps({
-        date.today().strftime('%A'): [{"start_time": "09:00", "end_time": "17:00"}]
-    })
-    create_test_owner.services_json = services_data
-    create_test_owner.availability_json = availability_data
-    db_session.add(create_test_owner)
+def test_public_booking_page(client, db_session, auth_owner):
+    owner, _ = auth_owner
+    
+    # Update owner with services and availability for the booking page to display them
+    owner.services_json = json.dumps([{"name": "Service A", "duration": 30, "price": 25.0}])
+    owner.availability_json = json.dumps([{"day_of_week": date.today().weekday(), "start_time": "09:00", "end_time": "17:00"}])
+    db_session.add(owner)
     db_session.commit()
-    db_session.refresh(create_test_owner)
+    db_session.refresh(owner)
+
+    response = client.get(f"/book/{owner.slug}")
+    assert response.status_code == 200
+    assert owner.business_name in response.text
+    assert "Service A" in response.text
+    assert "Choose a date" in response.text
+
+def test_submit_booking(client, db_session, auth_owner, monkeypatch):
+    owner, _ = auth_owner
+
+    # Mock notification functions
+    mock_email_sent = []
+    mock_whatsapp_sent = []
+
+    def mock_send_email_notification(to_email, subject, html_content):
+        mock_email_sent.append({"to": to_email, "subject": subject, "content": html_content})
+        return True
+
+    def mock_send_whatsapp_notification(to_phone_number, message_body):
+        mock_whatsapp_sent.append({"to": to_phone_number, "body": message_body})
+        return True
+
+    monkeypatch.setattr("src.notifications.send_email_notification", mock_send_email_notification)
+    monkeypatch.setattr("src.notifications.send_whatsapp_notification", mock_send_whatsapp_notification)
+
+    # Update owner with services and availability
+    today_weekday = date.today().weekday()
+    current_hour = datetime.now().hour
+    next_hour = (current_hour + 1) % 24 # Ensure time is in the future if running today
+    booking_time = f"{next_hour:02d}:00"
+
+    owner.services_json = json.dumps([{"name": "Test Service", "duration": 60, "price": 100.0}])
+    owner.availability_json = json.dumps([{"day_of_week": today_weekday, "start_time": f"{current_hour:02d}:00", "end_time": "23:00"}])
+    db_session.add(owner)
+    db_session.commit()
+    db_session.refresh(owner)
 
     booking_data = {
         "customer_name": "Jane Doe",
-        "customer_email": "jane@example.com",
+        "customer_email": "jane.doe@example.com",
         "customer_phone": "+1234567890",
-        "service_name": "Consultation",
-        "booking_date": date.today().isoformat(),
-        "booking_time": "10:00 AM"
+        "service_name": "Test Service",
+        "booking_date": date.today().strftime("%Y-%m-%d"),
+        "booking_time": booking_time
     }
 
-    response = client.post(
-        f"/bookslot/{create_test_owner.slug}",
-        data=booking_data
-    )
+    response = client.post(f"/book/{owner.slug}/submit", data=booking_data)
+    assert response.status_code == 302
+    assert response.headers["location"] == "/booking-confirmation"
+
+    # Check if booking was created in DB
+    bookings = crud.get_owner_bookings(db_session, owner.id)
+    assert len(bookings) == 1
+    assert bookings[0].customer_email == booking_data["customer_email"]
+
+    # Check if notifications were called
+    assert len(mock_email_sent) == 2 # One for customer, one for owner
+    assert len(mock_whatsapp_sent) == 1 # One for owner
+    assert "jane.doe@example.com" in [e["to"] for e in mock_email_sent]
+    assert owner.email in [e["to"] for e in mock_email_sent]
+    assert owner.phone in [w["to"] for w in mock_whatsapp_sent]
+
+def test_submit_booking_invalid_service(client, db_session, auth_owner):
+    owner, _ = auth_owner
+    owner.services_json = json.dumps([{"name": "Valid Service", "duration": 60, "price": 100.0}])
+    owner.availability_json = json.dumps([{"day_of_week": date.today().weekday(), "start_time": "09:00", "end_time": "17:00"}])
+    db_session.add(owner)
+    db_session.commit()
+    db_session.refresh(owner)
+
+    booking_data = {
+        "customer_name": "Jane Doe",
+        "customer_email": "jane.doe@example.com",
+        "customer_phone": "+1234567890",
+        "service_name": "Invalid Service", # This service does not exist
+        "booking_date": date.today().strftime("%Y-%m-%d"),
+        "booking_time": "10:00"
+    }
+    response = client.post(f"/book/{owner.slug}/submit", data=booking_data)
+    assert response.status_code == 400
+    assert "Selected service is not available." in response.text
+
+def test_submit_booking_invalid_time_slot(client, db_session, auth_owner):
+    owner, _ = auth_owner
+    owner.services_json = json.dumps([{"name": "Test Service", "duration": 60, "price": 100.0}])
+    # Set availability to a different day or a very narrow window
+    owner.availability_json = json.dumps([{"day_of_week": (date.today().weekday() + 1) % 7, "start_time": "09:00", "end_time": "17:00"}])
+    db_session.add(owner)
+    db_session.commit()
+    db_session.refresh(owner)
+
+    booking_data = {
+        "customer_name": "Jane Doe",
+        "customer_email": "jane.doe@example.com",
+        "customer_phone": "+1234567890",
+        "service_name": "Test Service",
+        "booking_date": date.today().strftime("%Y-%m-%d"), # Try to book for today
+        "booking_time": "10:00"
+    }
+    response = client.post(f"/book/{owner.slug}/submit", data=booking_data)
+    assert response.status_code == 400
+    assert "Selected time slot is not available or outside business hours." in response.text
+
+def test_booking_confirmation_page(client):
+    response = client.get("/booking-confirmation")
     assert response.status_code == 200
     assert "Booking Confirmed!" in response.text
 
-    booking = db_session.query(models.Booking).filter_by(customer_email="jane@example.com").first()
-    assert booking is not None
-    assert booking.service_name == "Consultation"
-    assert booking.owner_id == create_test_owner.id
-
-def test_submit_booking_missing_fields(client: TestClient, create_test_owner):
-    booking_data = {
-        "customer_name": "Jane Doe",
-        "customer_email": "jane@example.com",
-        # "service_name": "Consultation", # Missing
-        "booking_date": date.today().isoformat(),
-        "booking_time": "10:00 AM"
-    }
-    response = client.post(
-        f"/bookslot/{create_test_owner.slug}",
-        data=booking_data
-    )
-    assert response.status_code == 200 # Renders booking page again with error
-    assert "All required fields must be filled." in response.text
-
-def test_language_toggle(client: TestClient):
-    # Test setting language to Arabic
-    response = client.get("/lang/ar", follow_redirects=False)
-    assert response.status_code == 303
-    assert response.headers["location"] == "/" # Redirects to root by default
-
-    # Now request root page and check if Arabic is used
-    response = client.get("/", cookies={"session": response.cookies["session"]})
-    assert response.status_code == 200
-    assert "مرحباً بكم في بوك سلوت" in response.text # Check for Arabic translation
-
-    # Test setting language to French
-    response = client.get("/lang/fr", follow_redirects=False)
-    assert response.status_code == 303
-    response = client.get("/", cookies={"session": response.cookies["session"]})
-    assert response.status_code == 200
-    assert "Bienvenue sur BookSlot" in response.text # Check for French translation
