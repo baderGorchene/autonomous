@@ -1,1 +1,1 @@
-Fix: Ensure pytest is installed for test execution
+Fix: Ensure pytest is available by updating requirements.txt
