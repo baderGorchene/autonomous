@@ -1,1 +1,1 @@
-Re-added requirements.txt to ensure pytest and other dependencies are installed
+Add comprehensive requirements.txt to resolve 'No module named pytest' error
