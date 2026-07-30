@@ -1,1 +1,1 @@
-Add comprehensive requirements.txt to ensure all dependencies, including pytest, are installed.
+Fix: Ensure pytest and all core dependencies are explicitly in requirements.txt
