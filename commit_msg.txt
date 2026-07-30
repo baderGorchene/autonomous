@@ -1,1 +1,1 @@
-Fix: Ensure pytest and all project dependencies are correctly specified in requirements.txt
+Add comprehensive requirements.txt to ensure all dependencies, including pytest, are installed.
