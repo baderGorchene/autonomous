@@ -2,24 +2,25 @@ from jinja2 import Environment, FileSystemLoader
 from jinja2.ext import i18n
 import gettext
 import os
+import logging
+from src.config import settings
 
-current_file_dir = os.path.dirname(os.path.abspath(__file__))
-PROJECT_ROOT = os.path.abspath(os.path.join(current_file_dir, os.pardir))
+logger = logging.getLogger(__name__)
 
-TEMPLATES_DIR = os.path.join(PROJECT_ROOT, 'templates')
-LOCALES_DIR = os.path.join(PROJECT_ROOT, 'locales')
+TEMPLATES_DIR = os.path.join(settings.PROJECT_ROOT, 'templates')
+LOCALES_DIR = settings.LOCALES_DIR
 
 def get_jinja_env(locale='en'):
     env = Environment(loader=FileSystemLoader(TEMPLATES_DIR), extensions=[i18n])
     
     if not os.path.exists(LOCALES_DIR):
-        print(f"Warning: Locales directory not found at {LOCALES_DIR}")
+        logger.warning(f"Locales directory not found at {LOCALES_DIR}")
         translate = gettext.NullTranslations()
     else:
         try:
             translate = gettext.translation('messages', LOCALES_DIR, languages=[locale], fallback=True)
         except Exception as e:
-            print(f"Warning: Could not load translations for locale '{locale}': {e}")
+            logger.warning(f"Could not load translations for locale '{locale}': {e}")
             translate = gettext.NullTranslations()
             
     env.install_gettext_translations(translate)
