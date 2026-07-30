@@ -1,1 +1,1 @@
-Fix: Re-provide comprehensive requirements.txt to ensure pytest is recognized
+Infra: Ready for dependency installation and test execution
