@@ -1,24 +1,58 @@
 <!DOCTYPE html>
-<html lang="{{ locale }}">
+<html lang="{{ request.cookies.get('lang', 'en') }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}BookSlot{% endblock %}</title>
-    <link rel="stylesheet" href="/static/css/style.css">
+    <title>{% block title %}{{ _("BookSlot App") }}{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    {% block head_extra %}{% endblock %}
 </head>
-<body>
-    <div class="container">
-        <header>
-            <h1>BookSlot</h1>
-            <div class="locale-switcher">
-                <a href="{{ request.url|urlencode('locale', 'en') }}">English</a> |
-                <a href="{{ request.url|urlencode('locale', 'ar') }}">العربية</a> |
-                <a href="{{ request.url|urlencode('locale', 'fr') }}">Français</a>
-            </div>
-        </header>
-        <main>
-            {% block content %}{% endblock %}
-        </main>
-    </div>
+<body class="bg-gray-100 font-sans antialiased flex flex-col min-h-screen">
+    <header class="bg-white shadow-sm p-4">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="/" class="text-2xl font-bold text-indigo-600">BookSlot</a>
+            <nav>
+                <a href="/dashboard" class="text-gray-600 hover:text-indigo-600 mx-2">{{ _("Dashboard") }}</a>
+                <a href="/login" class="text-gray-600 hover:text-indigo-600 mx-2">{{ _("Login") }}</a>
+                <a href="/signup" class="text-gray-600 hover:text-indigo-600 mx-2">{{ _("Signup") }}</a>
+                <div class="inline-block relative">
+                    <button class="text-gray-600 hover:text-indigo-600 mx-2 focus:outline-none" onclick="toggleLanguageDropdown()">{{ _("Language") }}</button>
+                    <div id="languageDropdown" class="absolute right-0 mt-2 w-28 bg-white rounded-md shadow-lg hidden">
+                        <a href="{{ request.url|urlencode('lang', 'en') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">English</a>
+                        <a href="{{ request.url|urlencode('lang', 'ar') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">العربية</a>
+                        <a href="{{ request.url|urlencode('lang', 'fr') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Français</a>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto p-4">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="bg-white shadow-sm p-4 mt-auto">
+        <div class="container mx-auto text-center text-gray-500 text-sm">
+            &copy; {{ now().year }} BookSlot. {{ _("All rights reserved.") }}
+        </div>
+    </footer>
+
+    <script>
+        function toggleLanguageDropdown() {
+            document.getElementById("languageDropdown").classList.toggle("hidden");
+        }
+        window.onclick = function(event) {
+            if (!event.target.matches('button')) {
+                var dropdowns = document.getElementsByClassName("absolute");
+                for (var i = 0; i < dropdowns.length; i++) {
+                    var openDropdown = dropdowns[i];
+                    if (!openDropdown.classList.contains('hidden')) {
+                        openDropdown.classList.add('hidden');
+                    }
+                }
+            }
+        }
+    </script>
+    {% block scripts %}{% endblock %}
 </body>
 </html>

@@ -1,35 +1,11 @@
 {% extends "base.html" %}
-
 {% block title %}{{ _("Welcome to BookSlot") }}{% endblock %}
-
 {% block content %}
-<div class="text-center py-10">
-    <h2 class="text-4xl font-extrabold text-gray-900 mb-4">{{ _("BookSlot: Dead-simple booking for your business") }}</h2>
-    <p class="text-lg text-gray-600 mb-8">{{ _("Manage appointments without the WhatsApp chaos. Get your shareable booking page today!") }}</p>
-    <div class="space-x-4">
-        <a href="/signup" class="bg-blue-600 text-white px-6 py-3 rounded-lg text-lg hover:bg-blue-700 transition duration-300">{{ _("Get Started - It's Free!") }}</a>
-        <a href="/login" class="bg-gray-200 text-gray-800 px-6 py-3 rounded-lg text-lg hover:bg-gray-300 transition duration-300">{{ _("Login") }}</a>
-    </div>
-</div>
-
-<div class="grid md:grid-cols-2 gap-8 my-10">
-    <div class="bg-white p-6 rounded-lg shadow-md">
-        <h3 class="text-2xl font-semibold text-gray-800 mb-3">{{ _("For Business Owners") }}</h3>
-        <ul class="list-disc list-inside text-gray-700 space-y-2">
-            <li>{{ _("Create your personalized booking page (bookslot.app/your-name)") }}</li>
-            <li>{{ _("Set up your services and availability") }}</li>
-            <li>{{ _("Receive instant WhatsApp/email notifications for new bookings") }}</li>
-            <li>{{ _("Simple dashboard to view upcoming appointments") }}</li>
-        </ul>
-    </div>
-    <div class="bg-white p-6 rounded-lg shadow-md">
-        <h3 class="text-2xl font-semibold text-gray-800 mb-3">{{ _("For Your Customers") }}</h3>
-        <ul class="list-disc list-inside text-gray-700 space-y-2">
-            <li>{{ _("No accounts needed, book in seconds") }}</li>
-            <li>{{ _("Easy-to-use mobile-first booking experience") }}</li>
-            <li>{{ _("Receive email confirmation with booking details") }}</li>
-            <li>{{ _("Available in English, Arabic, and French") }}</li>
-        </ul>
-    </div>
+<div class="text-center py-20">
+    <h1 class="text-5xl font-extrabold text-gray-900 mb-4">{{ _("BookSlot") }}</h1>
+    <p class="text-xl text-gray-600 mb-8">{{ _("Dead-simple booking pages for local service businesses.") }}</p>
+    <a href="/signup" class="bg-indigo-600 text-white px-8 py-3 rounded-lg text-lg hover:bg-indigo-700 transition duration-300">
+        {{ _("Get Started - It's Free!") }}
+    </a>
 </div>
 {% endblock %}

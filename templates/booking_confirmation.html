@@ -1,10 +1,30 @@
 {% extends "base.html" %}
-{% block title %}{{ _('Booking Confirmed') }} - BookSlot{% endblock %}
+{% block title %}{{ _("Booking Confirmed!") }}{% endblock %}
 {% block content %}
-    <h2>{{ _('Booking Confirmed!') }}</h2>
-    <div class="alert alert-success">
-        <p>{{ _('Your booking has been successfully placed. You will receive a confirmation email shortly.') }}</p>
-        <p>{{ _('Thank you for using BookSlot!') }}</p>
+<div class="max-w-md mx-auto bg-white p-8 rounded-lg shadow-md mt-10 text-center">
+    <svg class="mx-auto h-16 w-16 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+    </svg>
+    <h2 class="text-3xl font-bold text-gray-800 mt-4 mb-2">{{ _("Booking Confirmed!") }}</h2>
+    <p class="text-gray-600 mb-6">{{ _("Thank you,") }} {{ booking.customer_name }}! {{ _("Your appointment has been successfully booked.") }}</p>
+
+    <div class="border-t border-gray-200 pt-6 text-left">
+        <p class="text-lg font-semibold text-gray-700 mb-2">{{ _("Booking Details:") }}</p>
+        <ul class="space-y-2 text-gray-600">
+            <li><strong>{{ _("Business:") }}</strong> {{ owner.business_name }}</li>
+            <li><strong>{{ _("Service:") }}</strong> {{ booking.service_name }}</li>
+            <li><strong>{{ _("Date:") }}</strong> {{ booking.booking_date.strftime('%Y-%m-%d') }}</li>
+            <li><strong>{{ _("Time:") }}</strong> {{ booking.booking_time }}</li>
+            <li><strong>{{ _("Your Email:") }}</strong> {{ booking.customer_email }}</li>
+            {% if booking.customer_phone %}
+            <li><strong>{{ _("Your Phone:") }}</strong> {{ booking.customer_phone }}</li>
+            {% endif %}
+        </ul>
     </div>
-    <p><a href="/">{{ _('Go to Home') }}</a></p>
+
+    <p class="mt-8 text-gray-600">{{ _("A confirmation email has been sent to") }} {{ booking.customer_email }}.</p>
+    <a href="/book/{{ owner.slug }}" class="mt-6 inline-block bg-indigo-600 text-white px-6 py-3 rounded-lg text-lg hover:bg-indigo-700 transition duration-300">
+        {{ _("Book Another Appointment") }}
+    </a>
+</div>
 {% endblock %}

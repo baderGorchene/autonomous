@@ -1,126 +1,191 @@
 {% extends "base.html" %}
-{% block title %}{{ _('Profile & Services') }} - BookSlot{% endblock %}
+{% block title %}{{ _("Profile Settings") }} - {{ owner.business_name }}{% endblock %}
+{% block head_extra %}
+<style>
+    .time-slot-input {
+        width: 100px; /* Adjust as needed */
+    }
+    .service-input {
+        width: calc(100% - 100px); /* Adjust as needed */
+    }
+</style>
+{% endblock %}
 {% block content %}
-    <nav>
-        <a href="/dashboard">{{ _('Dashboard') }}</a>
-        <a href="/profile">{{ _('Profile & Services') }}</a>
-        <a href="/logout">{{ _('Logout') }}</a>
-    </nav>
-    <h2>{{ _('Your Profile and Services') }}</h2>
-    {% if error %}
-        <div class="alert alert-danger">{{ error }}</div>
-    {% endif %}
+<div class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-md mt-10">
+    <h2 class="text-3xl font-bold text-center text-gray-800 mb-6">{{ _("Your Profile & Business Settings") }}</h2>
+
     {% if message %}
-        <div class="alert alert-success">{{ message }}</div>
+    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
+        <span class="block sm:inline">{{ message }}</span>
+    </div>
     {% endif %}
-    <form action="/profile" method="post">
-        <div class="form-group">
-            <label for="name">{{ _('Your Name') }}:</label>
-            <input type="text" id="name" name="name" value="{{ owner.name }}" required>
-        </div>
-        <div class="form-group">
-            <label for="business_name">{{ _('Business Name') }}:</label>
-            <input type="text" id="business_name" name="business_name" value="{{ owner.business_name }}" required>
-        </div>
-        <div class="form-group">
-            <label for="phone">{{ _('Phone Number (for WhatsApp notifications)') }}:</label>
-            <input type="tel" id="phone" name="phone" value="{{ owner.phone if owner.phone else '' }}" placeholder="+1234567890">
-        </div>
+    {% if error %}
+    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+        <span class="block sm:inline">{{ error }}</span>
+    </div>
+    {% endif %}
 
-        <h3>{{ _('Your Services') }}</h3>
-        <div id="services-container">
-            {% for service in services %}
-                <div class="service-item" data-index="{{ loop.index0 }}">
-                    <input type="text" name="service_name_{{ loop.index0 }}" placeholder="{{ _('Service Name') }}" value="{{ service.name }}" required>
-                    <input type="number" name="service_duration_{{ loop.index0 }}" placeholder="{{ _('Duration (minutes)') }}" value="{{ service.duration }}" required>
-                    <input type="number" name="service_price_{{ loop.index0 }}" placeholder="{{ _('Price') }}" value="{{ service.price }}" step="0.01" required>
-                    <button type="button" onclick="removeService(this)">{{ _('Remove') }}</button>
+    <form action="/profile" method="post" class="space-y-6">
+        <!-- Basic Info -->
+        <div class="border-b border-gray-200 pb-6">
+            <h3 class="text-xl font-semibold text-gray-900 mb-4">{{ _("Basic Information") }}</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="name" class="block text-sm font-medium text-gray-700">{{ _("Your Name") }}</label>
+                    <input type="text" id="name" name="name" value="{{ owner.name }}" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
                 </div>
-            {% endfor %}
-        </div>
-        <button type="button" onclick="addService()" class="btn">{{ _('Add Service') }}</button>
-
-        <h3>{{ _('Your Availability') }}</h3>
-        <div id="availability-container">
-            {% for slot in availability %}
-                <div class="availability-item" data-index="{{ loop.index0 }}">
-                    <select name="availability_day_{{ loop.index0 }}" required>
-                        <option value="0" {% if slot.day_of_week == 0 %}selected{% endif %}>{{ _('Monday') }}</option>
-                        <option value="1" {% if slot.day_of_week == 1 %}selected{% endif %}>{{ _('Tuesday') }}</option>
-                        <option value="2" {% if slot.day_of_week == 2 %}selected{% endif %}>{{ _('Wednesday') }}</option>
-                        <option value="3" {% if slot.day_of_week == 3 %}selected{% endif %}>{{ _('Thursday') }}</option>
-                        <option value="4" {% if slot.day_of_week == 4 %}selected{% endif %}>{{ _('Friday') }}</option>
-                        <option value="5" {% if slot.day_of_week == 5 %}selected{% endif %}>{{ _('Saturday') }}</option>
-                        <option value="6" {% if slot.day_of_week == 6 %}selected{% endif %}>{{ _('Sunday') }}</option>
-                    </select>
-                    <input type="time" name="availability_start_{{ loop.index0 }}" value="{{ slot.start_time }}" required>
-                    <input type="time" name="availability_end_{{ loop.index0 }}" value="{{ slot.end_time }}" required>
-                    <button type="button" onclick="removeAvailability(this)">{{ _('Remove') }}</button>
+                <div>
+                    <label for="business_name" class="block text-sm font-medium text-gray-700">{{ _("Business Name") }}</label>
+                    <input type="text" id="business_name" name="business_name" value="{{ owner.business_name }}" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
                 </div>
-            {% endfor %}
+                <div class="md:col-span-2">
+                    <label for="phone" class="block text-sm font-medium text-gray-700">{{ _("Phone Number (for WhatsApp notifications)") }}</label>
+                    <input type="tel" id="phone" name="phone" value="{{ owner.phone or '' }}" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    <p class="mt-1 text-sm text-gray-500">{{ _("Include country code (e.g., +1234567890).") }}</p>
+                </div>
+            </div>
         </div>
-        <button type="button" onclick="addAvailability()" class="btn">{{ _('Add Availability') }}</button>
 
-        <input type="hidden" id="services_data" name="services_data">
-        <input type="hidden" id="availability_data" name="availability_data">
+        <!-- Services Setup -->
+        <div class="border-b border-gray-200 pb-6">
+            <h3 class="text-xl font-semibold text-gray-900 mb-4 flex justify-between items-center">
+                {{ _("Services Offered") }}
+                <button type="button" onclick="addService()" class="ml-4 px-3 py-1 bg-indigo-600 text-white text-sm rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    {{ _("Add Service") }}
+                </button>
+            </h3>
+            <div id="services-list" class="space-y-3">
+                {% for service in services %}
+                <div class="flex items-center space-x-2 service-item" data-index="{{ loop.index0 }}">
+                    <input type="text" name="service_name_{{ loop.index0 }}" placeholder="{{ _('Service Name') }}" value="{{ service.name }}" required class="flex-grow px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm">
+                    <input type="number" name="service_duration_{{ loop.index0 }}" placeholder="{{ _('Duration (min)') }}" value="{{ service.duration_minutes }}" required class="w-24 px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm">
+                    <input type="number" step="0.01" name="service_price_{{ loop.index0 }}" placeholder="{{ _('Price') }}" value="{{ service.price }}" required class="w-24 px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm">
+                    <button type="button" onclick="removeService(this)" class="text-red-600 hover:text-red-800">{{ _("Remove") }}</button>
+                </div>
+                {% endfor %}
+            </div>
+            <input type="hidden" id="services_json" name="services_json" value="{{ services|tojson }}">
+        </div>
 
-        <button type="submit" class="btn" onclick="prepareForm()">{{ _('Save Profile') }}</button>
+        <!-- Availability Setup -->
+        <div>
+            <h3 class="text-xl font-semibold text-gray-900 mb-4">{{ _("Your Weekly Availability") }}</h3>
+            <div class="space-y-4">
+                {% for day in days_of_week %}
+                <div class="border border-gray-200 rounded-md p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <h4 class="font-medium text-gray-700">{{ _(day) }}</h4>
+                        <button type="button" onclick="addTimeSlot('{{ day }}')" class="px-3 py-1 bg-indigo-600 text-white text-sm rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            {{ _("Add Slot") }}
+                        </button>
+                    </div>
+                    <div id="availability-{{ day }}" class="space-y-2">
+                        {% for slot in availability.get(day, []) %}
+                        <div class="flex items-center space-x-2 time-slot-item">
+                            <input type="time" value="{{ slot.start_time }}" required class="px-3 py-2 border border-gray-300 rounded-md shadow-sm time-slot-input">
+                            <span>-</span>
+                            <input type="time" value="{{ slot.end_time }}" required class="px-3 py-2 border border-gray-300 rounded-md shadow-sm time-slot-input">
+                            <button type="button" onclick="removeTimeSlot(this)" class="text-red-600 hover:text-red-800">{{ _("Remove") }}</button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <input type="hidden" id="availability_json" name="availability" value="{{ availability|tojson }}">
+        </div>
+
+        <div class="mt-8">
+            <button type="submit" onclick="prepareFormData()" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-lg font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                {{ _("Save Changes") }}
+            </button>
+        </div>
     </form>
+</div>
 
-    <script>
-        let serviceIndex = {{ services|length }};
-        let availabilityIndex = {{ availability|length }};
+{% block scripts %}
+<script>
+    let serviceIndex = {{ services|length }};
 
-        function addService() {
-            const container = document.getElementById('services-container');
-            const div = document.createElement('div');
-            div.className = 'service-item';
-            div.setAttribute('data-index', serviceIndex);
-            div.innerHTML = `\n                <input type="text" name="service_name_${serviceIndex}" placeholder="{{ _('Service Name') }}" required>\n                <input type="number" name="service_duration_${serviceIndex}" placeholder="{{ _('Duration (minutes)') }}" required>\n                <input type="number" name="service_price_${serviceIndex}" placeholder="{{ _('Price') }}" step="0.01" required>\n                <button type="button" onclick="removeService(this)">{{ _('Remove') }}</button>\n            `;
-            container.appendChild(div);
-            serviceIndex++;
-        }
+    function addService() {
+        const servicesList = document.getElementById('services-list');
+        const newItem = document.createElement('div');
+        newItem.classList.add('flex', 'items-center', 'space-x-2', 'service-item');
+        newItem.setAttribute('data-index', serviceIndex);
+        newItem.innerHTML = `
+            <input type="text" name="service_name_${serviceIndex}" placeholder="{{ _('Service Name') }}" required class="flex-grow px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm">
+            <input type="number" name="service_duration_${serviceIndex}" placeholder="{{ _('Duration (min)') }}" required class="w-24 px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm">
+            <input type="number" step="0.01" name="service_price_${serviceIndex}" placeholder="{{ _('Price') }}" required class="w-24 px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm">
+            <button type="button" onclick="removeService(this)" class="text-red-600 hover:text-red-800">{{ _("Remove") }}</button>
+        `;
+        servicesList.appendChild(newItem);
+        serviceIndex++;
+    }
 
-        function removeService(button) {
-            button.closest('.service-item').remove();
-        }
+    function removeService(button) {
+        button.closest('.service-item').remove();
+    }
 
-        function addAvailability() {
-            const container = document.getElementById('availability-container');
-            const div = document.createElement('div');
-            div.className = 'availability-item';
-            div.setAttribute('data-index', availabilityIndex);
-            div.innerHTML = `\n                <select name="availability_day_${availabilityIndex}" required>\n                    <option value="0">{{ _('Monday') }}</option>\n                    <option value="1">{{ _('Tuesday') }}</option>\n                    <option value="2">{{ _('Wednesday') }}</option>\n                    <option value="3">{{ _('Thursday') }}</option>\n                    <option value="4">{{ _('Friday') }}</option>\n                    <option value="5">{{ _('Saturday') }}</option>\n                    <option value="6">{{ _('Sunday') }}</option>\n                </select>\n                <input type="time" name="availability_start_${availabilityIndex}" required>\n                <input type="time" name="availability_end_${availabilityIndex}" required>\n                <button type="button" onclick="removeAvailability(this)">{{ _('Remove') }}</button>\n            `;
-            container.appendChild(div);
-            availabilityIndex++;
-        }
+    function addTimeSlot(day) {
+        const availabilityList = document.getElementById(`availability-${day}`);
+        const newItem = document.createElement('div');
+        newItem.classList.add('flex', 'items-center', 'space-x-2', 'time-slot-item');
+        newItem.innerHTML = `
+            <input type="time" value="09:00" required class="px-3 py-2 border border-gray-300 rounded-md shadow-sm time-slot-input">
+            <span>-</span>
+            <input type="time" value="17:00" required class="px-3 py-2 border border-gray-300 rounded-md shadow-sm time-slot-input">
+            <button type="button" onclick="removeTimeSlot(this)" class="text-red-600 hover:text-red-800">{{ _("Remove") }}</button>
+        `;
+        availabilityList.appendChild(newItem);
+    }
 
-        function removeAvailability(button) {
-            button.closest('.availability-item').remove();
-        }
+    function removeTimeSlot(button) {
+        button.closest('.time-slot-item').remove();
+    }
 
-        function prepareForm() {
-            const services = [];
-            document.querySelectorAll('#services-container .service-item').forEach(item => {
-                const index = item.getAttribute('data-index');
-                services.push({
-                    name: item.querySelector(`[name="service_name_${index}"]`).value,
-                    duration: parseInt(item.querySelector(`[name="service_duration_${index}"]`).value),
-                    price: parseFloat(item.querySelector(`[name="service_price_${index}"]`).value)
+    function prepareFormData() {
+        // Collect services data
+        const servicesData = [];
+        document.querySelectorAll('.service-item').forEach(item => {
+            const nameInput = item.querySelector('input[name^="service_name_"]');
+            const durationInput = item.querySelector('input[name^="service_duration_"]');
+            const priceInput = item.querySelector('input[name^="service_price_"]');
+            
+            if (nameInput && durationInput && priceInput && nameInput.value && durationInput.value && priceInput.value) {
+                servicesData.push({
+                    name: nameInput.value,
+                    duration_minutes: parseInt(durationInput.value),
+                    price: parseFloat(priceInput.value)
                 });
-            });
-            document.getElementById('services_data').value = JSON.stringify(services);
+            }
+        });
+        document.getElementById('services_json').value = JSON.stringify(servicesData);
 
-            const availability = [];
-            document.querySelectorAll('#availability-container .availability-item').forEach(item => {
-                const index = item.getAttribute('data-index');
-                availability.push({
-                    day_of_week: parseInt(item.querySelector(`[name="availability_day_${index}"]`).value),
-                    start_time: item.querySelector(`[name="availability_start_${index}"]`).value,
-                    end_time: item.querySelector(`[name="availability_end_${index}"]`).value
-                });
+        // Collect availability data
+        const availabilityData = {};
+        const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+        daysOfWeek.forEach(day => {
+            const slots = [];
+            document.querySelectorAll(`#availability-${day} .time-slot-item`).forEach(item => {
+                const startInput = item.querySelectorAll('input[type="time"]')[0];
+                const endInput = item.querySelectorAll('input[type="time"]')[1];
+                if (startInput && endInput && startInput.value && endInput.value) {
+                    slots.push({
+                        day: day,
+                        start_time: startInput.value,
+                        end_time: endInput.value
+                    });
+                }
             });
-            document.getElementById('availability_data').value = JSON.stringify(availability);
-        }
-    </script>
+            if (slots.length > 0) {
+                availabilityData[day] = slots;
+            }
+        });
+        document.getElementById('availability_json').value = JSON.stringify(availabilityData);
+    }
+
+    // Call prepareFormData before form submission
+    document.querySelector('form').addEventListener('submit', prepareFormData);
+</script>
+{% endblock %}
 {% endblock %}
