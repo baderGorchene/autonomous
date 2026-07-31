@@ -1,1 +1,1 @@
-Fix: Ensure pytest and dependencies are correctly installed and discoverable
+Fix: Ensure pytest is installed and discoverable

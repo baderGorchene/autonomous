@@ -1,2 +1,4 @@
-def test_placeholder_true_is_true():
+import pytest
+
+def test_placeholder():
     assert True
