@@ -1,1 +1,1 @@
-Fix: Ensure pytest is installed and discoverable
+Fix: Ensure `requirements.txt` and placeholder test file are present to resolve 'No module named pytest'
