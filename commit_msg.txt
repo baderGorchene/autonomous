@@ -1,1 +1,1 @@
-Ran initial test suite and identified DB setup issues
+Fix: Database setup for testing and reconstruct missing core files

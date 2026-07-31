@@ -6,12 +6,14 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
-    SENDGRID_API_KEY: str
-    TWILIO_ACCOUNT_SID: str
-    TWILIO_AUTH_TOKEN: str
-    TWILIO_WHATSAPP_NUMBER: str
+    SENDGRID_API_KEY: str = "" # Made optional for dev/test without actual keys
+    TWILIO_ACCOUNT_SID: str = "" # Made optional for dev/test without actual keys
+    TWILIO_AUTH_TOKEN: str = "" # Made optional for dev/test without actual keys
+    TWILIO_WHATSAPP_NUMBER: str = "" # Made optional for dev/test without actual keys
     GEMINI_API_KEY: str = ""
-    DATABASE_URL: str
+
+    DATABASE_URL: str # This will be overridden for tests
+    TESTING: bool = False # New flag to indicate testing environment
 
     _current_file_dir = os.path.dirname(os.path.abspath(__file__))
     PROJECT_ROOT = os.path.abspath(os.path.join(_current_file_dir, os.pardir))
