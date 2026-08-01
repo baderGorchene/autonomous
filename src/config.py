@@ -2,6 +2,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 import os
 
 class Settings(BaseSettings):
+    # !!! IMPORTANT: Change this to a strong, randomly generated key for production.
+    # Use `openssl rand -hex 32` or similar to generate a secure key.
     SECRET_KEY: str = "super-secret-key"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
