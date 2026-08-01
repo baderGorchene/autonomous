@@ -1,30 +1,29 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ request.cookies.get('lang', 'en') }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ _('Login') }} - BookSlot</title>
-    <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-    <div class="container">
-        <h1>{{ _('Login to BookSlot') }}</h1>
-        {% if error %}
-            <p style="color: red;">{{ error }}</p>
-        {% endif %}
-        <form action="/login" method="post">
-            <label for="email">{{ _('Email') }}:</label>
-            <input type="email" id="email" name="email" required>
-            <label for="password">{{ _('Password') }}:</label>
-            <input type="password" id="password" name="password" required>
-            <button type="submit">{{ _('Login') }}</button>
-        </form>
-        <p>{{ _('Don\'t have an account?') }} <a href="/signup">{{ _('Sign Up here') }}</a></p>
-        <div class="language-toggle">
-            <a href="{{ request.url|urlencode('locale', 'en') }}">English</a> |
-            <a href="{{ request.url|urlencode('locale', 'ar') }}">العربية</a> |
-            <a href="{{ request.url|urlencode('locale', 'fr') }}">Français</a>
-        </div>
-    </div>
+    <h1>{{ _('Login to BookSlot') }}</h1>
+    {% if error_message %}
+        <p style="color: red;">{{ error_message }}</p>
+    {% endif %}
+    <form action="/login" method="post">
+        <label for="email">{{ _('Email:') }}</label><br>
+        <input type="email" id="email" name="email" required><br><br>
+        
+        <label for="password">{{ _('Password:') }}</label><br>
+        <input type="password" id="password" name="password" required><br><br>
+        
+        <input type="submit" value="{{ _('Login') }}">
+    </form>
+    <p>{{ _('Don\'t have an account?') }} <a href="/signup">{{ _('Sign Up here') }}</a></p>
+    <p>
+        <a href="/set_lang/en">English</a> |
+        <a href="/set_lang/ar">العربية</a> |
+        <a href="/set_lang/fr">Français</a>
+    </p>
 </body>
 </html>

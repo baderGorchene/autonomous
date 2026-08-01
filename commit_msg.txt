@@ -1,1 +1,1 @@
-Fix: Resolve 'No module named pytest' by full application and test reconstruction
+Reconstruct: Full application, templates, locales, and tests to fix pytest import error

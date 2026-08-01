@@ -1,38 +1,41 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ request.cookies.get('lang', 'en') }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ _('Sign Up') }} - BookSlot</title>
-    <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-    <div class="container">
-        <h1>{{ _('Sign Up for BookSlot') }}</h1>
-        {% if error %}
-            <p style="color: red;">{{ error }}</p>
-        {% endif %}
-        <form action="/signup" method="post">
-            <label for="name">{{ _('Your Name') }}:</label>
-            <input type="text" id="name" name="name" required>
-            <label for="email">{{ _('Email') }}:</label>
-            <input type="email" id="email" name="email" required>
-            <label for="password">{{ _('Password') }}:</label>
-            <input type="password" id="password" name="password" required>
-            <label for="business_name">{{ _('Business Name') }}:</label>
-            <input type="text" id="business_name" name="business_name" required>
-            <label for="slug">{{ _('Your Booking Page URL Slug') }} (e.g., bookslot.app/<b>your-slug</b>):</label>
-            <input type="text" id="slug" name="slug" pattern="[a-z0-9-]+" title="{{ _('Lowercase letters, numbers, and hyphens only') }}" required>
-            <label for="phone">{{ _('Phone (optional, for WhatsApp notifications)') }}:</label>
-            <input type="text" id="phone" name="phone" placeholder="{{ _('+1234567890') }}">
-            <button type="submit">{{ _('Sign Up') }}</button>
-        </form>
-        <p>{{ _('Already have an account?') }} <a href="/login">{{ _('Login here') }}</a></p>
-        <div class="language-toggle">
-            <a href="{{ request.url|urlencode('locale', 'en') }}">English</a> |
-            <a href="{{ request.url|urlencode('locale', 'ar') }}">العربية</a> |
-            <a href="{{ request.url|urlencode('locale', 'fr') }}">Français</a>
-        </div>
-    </div>
+    <h1>{{ _('Sign Up for BookSlot') }}</h1>
+    {% if error_message %}
+        <p style="color: red;">{{ error_message }}</p>
+    {% endif %}
+    <form action="/signup" method="post">
+        <label for="name">{{ _('Your Name:') }}</label><br>
+        <input type="text" id="name" name="name" required><br><br>
+        
+        <label for="email">{{ _('Email:') }}</label><br>
+        <input type="email" id="email" name="email" required><br><br>
+        
+        <label for="password">{{ _('Password:') }}</label><br>
+        <input type="password" id="password" name="password" required><br><br>
+        
+        <label for="business_name">{{ _('Business Name:') }}</label><br>
+        <input type="text" id="business_name" name="business_name" required><br><br>
+        
+        <label for="slug">{{ _('Desired Booking URL (e.g., your-name):') }} bookslot.app/</label><br>
+        <input type="text" id="slug" name="slug" required><br><br>
+
+        <label for="phone">{{ _('Phone (optional, for WhatsApp notifications):') }}</label><br>
+        <input type="tel" id="phone" name="phone"><br><br>
+        
+        <input type="submit" value="{{ _('Sign Up') }}">
+    </form>
+    <p>{{ _('Already have an account?') }} <a href="/login">{{ _('Login here') }}</a></p>
+    <p>
+        <a href="/set_lang/en">English</a> |
+        <a href="/set_lang/ar">العربية</a> |
+        <a href="/set_lang/fr">Français</a>
+    </p>
 </body>
 </html>

@@ -1,11 +1,24 @@
-<p>Dear {{ owner_name }},</p>
-<p>You have a new booking!</p>
-<ul>
-    <li>Customer: {{ customer_name }}</li>
-    <li>Service: {{ service_name }}</li>
-    <li>Date: {{ booking_date }}</li>
-    <li>Time: {{ booking_time }}</li>
-</ul>
-<p>Please check your dashboard for more details.</p>
-<p>Thank you,</p>
-<p>BookSlot Team</p>
+<!DOCTYPE html>
+<html lang="{{ locale }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ _('New Booking for {business_name}!') .format(business_name=owner.business_name) }}</title>
+</head>
+<body>
+    <h1>{{ _('New Booking for {business_name}!') .format(business_name=owner.business_name) }}</h1>
+    <p>{{ _('You have a new booking:') }}</p>
+    <ul>
+        <li><strong>{{ _('Service:') }}</strong> {{ booking.service_name }}</li>
+        <li><strong>{{ _('Date:') }}</strong> {{ booking.booking_date.strftime('%Y-%m-%d') }}</li>
+        <li><strong>{{ _('Time:') }}</strong> {{ booking.booking_time }}</li>
+        <li><strong>{{ _('Customer Name:') }}</strong> {{ booking.customer_name }}</li>
+        <li><strong>{{ _('Customer Email:') }}</strong> {{ booking.customer_email }}</li>
+        {% if booking.customer_phone %}
+            <li><strong>{{ _('Customer Phone:') }}</strong> {{ booking.customer_phone }}</li>
+        {% endif %}
+    </ul>
+    <p>{{ _('Please check your dashboard for more details.') }}</p>
+    <p><a href="https://bookslot.app/dashboard">{{ _('Go to Dashboard') }}</a></p>
+</body>
+</html>

@@ -1,26 +1,43 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ request.cookies.get('lang', 'en') }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ _('Booking Confirmed') }} - BookSlot</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        body { font-family: sans-serif; margin: 0; padding: 0; background-color: #f4f7f6; color: #333; }
+        .container { max-width: 600px; margin: 50px auto; padding: 30px; background-color: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); text-align: center; }
+        h1 { color: #28a745; margin-bottom: 20px; }
+        p { margin-bottom: 10px; }
+        .details { text-align: left; background-color: #e6ffe6; padding: 20px; border-radius: 5px; margin-top: 20px; }
+        .details strong { color: #1e7e34; }
+        .back-link { display: inline-block; margin-top: 30px; padding: 10px 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px; }
+        .back-link:hover { background-color: #0056b3; }
+        .language-toggle { text-align: center; margin-bottom: 20px; }
+        .language-toggle a { margin: 0 5px; color: #007bff; text-decoration: none; }
+        .language-toggle a:hover { text-decoration: underline; }
+    </style>
 </head>
 <body>
     <div class="container">
-        <h1>{{ _('Booking Confirmed!') }}</h1>
-        <p>{{ _('Thank you,') }} {{ booking.customer_name }}!</p>
-        <p>{{ _('Your appointment with') }} <strong>{{ owner.business_name }}</strong> {{ _('for') }} <strong>{{ booking.service_name }}</strong> {{ _('is confirmed.') }}</p>
-        <p><strong>{{ _('Date') }}:</strong> {{ booking.booking_date }}</p>
-        <p><strong>{{ _('Time') }}:</strong> {{ booking.booking_time }}</p>
-        <p>{{ _('A confirmation email has been sent to') }} {{ booking.customer_email }}.</p>
-        <p>{{ _('We look forward to seeing you!') }}</p>
         <div class="language-toggle">
-            <a href="{{ request.url|urlencode('locale', 'en') }}">English</a> |
-            <a href="{{ request.url|urlencode('locale', 'ar') }}">العربية</a> |
-            <a href="{{ request.url|urlencode('locale', 'fr') }}">Français</a>
+            <a href="{{ request.url|urlencode('lang', 'en') }}">English</a> |
+            <a href="{{ request.url|urlencode('lang', 'ar') }}">العربية</a> |
+            <a href="{{ request.url|urlencode('lang', 'fr') }}">Français</a>
         </div>
-        <p><a href="/{{ owner.slug }}">{{ _('Book another appointment') }}</a></p>
+        <h1>{{ _('Booking Confirmed!') }} &#10003;</h1>
+        <p>{{ _('Thank you, %s! Your appointment has been successfully booked.') % booking.customer_name }}</p>
+        <p>{{ _('A confirmation email has been sent to %s.') % booking.customer_email }}</p>
+
+        <div class="details">
+            <p><strong>{{ _('Business:') }}</strong> {{ owner.business_name }}</p>
+            <p><strong>{{ _('Service:') }}</strong> {{ booking.service_name }}</p>
+            <p><strong>{{ _('Date:') }}</strong> {{ booking.booking_date.strftime('%Y-%m-%d') }}</p>
+            <p><strong>{{ _('Time:') }}</strong> {{ booking.booking_time }}</p>
+            <p><strong>{{ _('Your Contact:') }}</strong> {{ booking.customer_email }} {% if booking.customer_phone %}/ {{ booking.customer_phone }}{% endif %}</p>
+        </div>
+
+        <a href="/bookslot.app/{{ owner.slug }}" class="back-link">{{ _('Book Another Appointment') }}</a>
     </div>
 </body>
 </html>

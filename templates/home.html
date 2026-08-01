@@ -1,7 +1,18 @@
-{% extends "base.html" %}
-{% block title %}{{ request.state.gettext('Welcome to BookSlot') }}{% endblock %}
-{% block content %}
-    <h2>{{ request.state.gettext('Welcome to BookSlot') }}</h2>
-    <p>{{ request.state.gettext('Your dead-simple booking page for local service businesses.') }}</p>
-    <p><a href="/signup">{{ request.state.gettext('Sign Up') }}</a> | <a href="/login">{{ request.state.gettext('Login') }}</a></p>
-{% endblock %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BookSlot - Simple Booking Page</title>
+</head>
+<body>
+    <h1>Welcome to BookSlot!</h1>
+    <p>A dead-simple booking page for local service businesses.</p>
+    <a href="/signup">Sign Up</a> | <a href="/login">Login</a>
+    <p>
+        <a href="/set_lang/en">English</a> |
+        <a href="/set_lang/ar">العربية</a> |
+        <a href="/set_lang/fr">Français</a>
+    </p>
+</body>
+</html>

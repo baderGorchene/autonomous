@@ -1,10 +1,29 @@
-<p>Dear {{ customer_name }},</p>
-<p>Your booking with {{ business_name }} is confirmed!</p>
-<ul>
-    <li>Service: {{ service_name }}</li>
-    <li>Date: {{ booking_date }}</li>
-    <li>Time: {{ booking_time }}</li>
-</ul>
-<p>We look forward to seeing you.</p>
-<p>Best regards,</p>
-<p>{{ business_name }} Team</p>
+<!DOCTYPE html>
+<html lang="{{ locale }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ _('Your Booking Confirmation with {business_name}').format(business_name=owner.business_name) }}</title>
+</head>
+<body>
+    <h1>{{ _('Your Booking Confirmation with {business_name}').format(business_name=owner.business_name) }}</h1>
+    <p>{{ _('Dear {customer_name},').format(customer_name=booking.customer_name) }}</p>
+    <p>{{ _('Your booking for {service_name} with {business_name} has been confirmed.').format(
+        service_name=booking.service_name,
+        business_name=owner.business_name
+    ) }}</p>
+    <p>{{ _('Booking Details:') }}</p>
+    <ul>
+        <li><strong>{{ _('Service:') }}</strong> {{ booking.service_name }}</li>
+        <li><strong>{{ _('Date:') }}</strong> {{ booking.booking_date.strftime('%Y-%m-%d') }}</li>
+        <li><strong>{{ _('Time:') }}</strong> {{ booking.booking_time }}</li>
+        <li><strong>{{ _('Business:') }}</strong> {{ owner.business_name }}</li>
+        <li><strong>{{ _('Contact Email:') }}</strong> {{ owner.email }}</li>
+        {% if owner.phone %}
+            <li><strong>{{ _('Contact Phone:') }}</strong> {{ owner.phone }}</li>
+        {% endif %}
+    </ul>
+    <p>{{ _('We look forward to seeing you!') }}</p>
+    <p>{{ _('The {business_name} Team').format(business_name=owner.business_name) }}</p>
+</body>
+</html>

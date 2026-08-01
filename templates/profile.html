@@ -1,191 +1,151 @@
-{% extends "base.html" %}
-{% block title %}{{ _("Profile Settings") }} - {{ owner.business_name }}{% endblock %}
-{% block head_extra %}
-<style>
-    .time-slot-input {
-        width: 100px; /* Adjust as needed */
-    }
-    .service-input {
-        width: calc(100% - 100px); /* Adjust as needed */
-    }
-</style>
-{% endblock %}
-{% block content %}
-<div class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-md mt-10">
-    <h2 class="text-3xl font-bold text-center text-gray-800 mb-6">{{ _("Your Profile & Business Settings") }}</h2>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ _('Profile & Settings - BookSlot') }}</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>{{ _('Profile & Settings') }}</h1>
+            <nav>
+                <a href="/dashboard">{{ _('Dashboard') }}</a>
+                <a href="/profile">{{ _('Profile & Settings') }}</a>
+                <a href="/logout">{{ _('Logout') }}</a>
+            </nav>
+        </header>
 
-    {% if message %}
-    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
-        <span class="block sm:inline">{{ message }}</span>
-    </div>
-    {% endif %}
-    {% if error %}
-    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-        <span class="block sm:inline">{{ error }}</span>
-    </div>
-    {% endif %}
+        {% if message %}
+            <p class="success">{{ message }}</p>
+        {% endif %}
+        {% if error %}
+            <p class="error">{{ error }}</p>
+        {% endif %}
 
-    <form action="/profile" method="post" class="space-y-6">
-        <!-- Basic Info -->
-        <div class="border-b border-gray-200 pb-6">
-            <h3 class="text-xl font-semibold text-gray-900 mb-4">{{ _("Basic Information") }}</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label for="name" class="block text-sm font-medium text-gray-700">{{ _("Your Name") }}</label>
-                    <input type="text" id="name" name="name" value="{{ owner.name }}" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                </div>
-                <div>
-                    <label for="business_name" class="block text-sm font-medium text-gray-700">{{ _("Business Name") }}</label>
-                    <input type="text" id="business_name" name="business_name" value="{{ owner.business_name }}" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                </div>
-                <div class="md:col-span-2">
-                    <label for="phone" class="block text-sm font-medium text-gray-700">{{ _("Phone Number (for WhatsApp notifications)") }}</label>
-                    <input type="tel" id="phone" name="phone" value="{{ owner.phone or '' }}" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                    <p class="mt-1 text-sm text-gray-500">{{ _("Include country code (e.g., +1234567890).") }}</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Services Setup -->
-        <div class="border-b border-gray-200 pb-6">
-            <h3 class="text-xl font-semibold text-gray-900 mb-4 flex justify-between items-center">
-                {{ _("Services Offered") }}
-                <button type="button" onclick="addService()" class="ml-4 px-3 py-1 bg-indigo-600 text-white text-sm rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    {{ _("Add Service") }}
-                </button>
-            </h3>
-            <div id="services-list" class="space-y-3">
-                {% for service in services %}
-                <div class="flex items-center space-x-2 service-item" data-index="{{ loop.index0 }}">
-                    <input type="text" name="service_name_{{ loop.index0 }}" placeholder="{{ _('Service Name') }}" value="{{ service.name }}" required class="flex-grow px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm">
-                    <input type="number" name="service_duration_{{ loop.index0 }}" placeholder="{{ _('Duration (min)') }}" value="{{ service.duration_minutes }}" required class="w-24 px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm">
-                    <input type="number" step="0.01" name="service_price_{{ loop.index0 }}" placeholder="{{ _('Price') }}" value="{{ service.price }}" required class="w-24 px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm">
-                    <button type="button" onclick="removeService(this)" class="text-red-600 hover:text-red-800">{{ _("Remove") }}</button>
-                </div>
-                {% endfor %}
-            </div>
-            <input type="hidden" id="services_json" name="services_json" value="{{ services|tojson }}">
-        </div>
-
-        <!-- Availability Setup -->
-        <div>
-            <h3 class="text-xl font-semibold text-gray-900 mb-4">{{ _("Your Weekly Availability") }}</h3>
-            <div class="space-y-4">
-                {% for day in days_of_week %}
-                <div class="border border-gray-200 rounded-md p-4">
-                    <div class="flex items-center justify-between mb-2">
-                        <h4 class="font-medium text-gray-700">{{ _(day) }}</h4>
-                        <button type="button" onclick="addTimeSlot('{{ day }}')" class="px-3 py-1 bg-indigo-600 text-white text-sm rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                            {{ _("Add Slot") }}
-                        </button>
-                    </div>
-                    <div id="availability-{{ day }}" class="space-y-2">
-                        {% for slot in availability.get(day, []) %}
-                        <div class="flex items-center space-x-2 time-slot-item">
-                            <input type="time" value="{{ slot.start_time }}" required class="px-3 py-2 border border-gray-300 rounded-md shadow-sm time-slot-input">
-                            <span>-</span>
-                            <input type="time" value="{{ slot.end_time }}" required class="px-3 py-2 border border-gray-300 rounded-md shadow-sm time-slot-input">
-                            <button type="button" onclick="removeTimeSlot(this)" class="text-red-600 hover:text-red-800">{{ _("Remove") }}</button>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-            <input type="hidden" id="availability_json" name="availability" value="{{ availability|tojson }}">
-        </div>
-
-        <div class="mt-8">
-            <button type="submit" onclick="prepareFormData()" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-lg font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                {{ _("Save Changes") }}
-            </button>
-        </div>
-    </form>
-</div>
-
-{% block scripts %}
-<script>
-    let serviceIndex = {{ services|length }};
-
-    function addService() {
-        const servicesList = document.getElementById('services-list');
-        const newItem = document.createElement('div');
-        newItem.classList.add('flex', 'items-center', 'space-x-2', 'service-item');
-        newItem.setAttribute('data-index', serviceIndex);
-        newItem.innerHTML = `
-            <input type="text" name="service_name_${serviceIndex}" placeholder="{{ _('Service Name') }}" required class="flex-grow px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm">
-            <input type="number" name="service_duration_${serviceIndex}" placeholder="{{ _('Duration (min)') }}" required class="w-24 px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm">
-            <input type="number" step="0.01" name="service_price_${serviceIndex}" placeholder="{{ _('Price') }}" required class="w-24 px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm">
-            <button type="button" onclick="removeService(this)" class="text-red-600 hover:text-red-800">{{ _("Remove") }}</button>
-        `;
-        servicesList.appendChild(newItem);
-        serviceIndex++;
-    }
-
-    function removeService(button) {
-        button.closest('.service-item').remove();
-    }
-
-    function addTimeSlot(day) {
-        const availabilityList = document.getElementById(`availability-${day}`);
-        const newItem = document.createElement('div');
-        newItem.classList.add('flex', 'items-center', 'space-x-2', 'time-slot-item');
-        newItem.innerHTML = `
-            <input type="time" value="09:00" required class="px-3 py-2 border border-gray-300 rounded-md shadow-sm time-slot-input">
-            <span>-</span>
-            <input type="time" value="17:00" required class="px-3 py-2 border border-gray-300 rounded-md shadow-sm time-slot-input">
-            <button type="button" onclick="removeTimeSlot(this)" class="text-red-600 hover:text-red-800">{{ _("Remove") }}</button>
-        `;
-        availabilityList.appendChild(newItem);
-    }
-
-    function removeTimeSlot(button) {
-        button.closest('.time-slot-item').remove();
-    }
-
-    function prepareFormData() {
-        // Collect services data
-        const servicesData = [];
-        document.querySelectorAll('.service-item').forEach(item => {
-            const nameInput = item.querySelector('input[name^="service_name_"]');
-            const durationInput = item.querySelector('input[name^="service_duration_"]');
-            const priceInput = item.querySelector('input[name^="service_price_"]');
+        <form action="/profile" method="post">
+            <h2>{{ _('Basic Information') }}</h2>
+            <label for="name">{{ _('Your Name:') }}</label>
+            <input type="text" id="name" name="name" value="{{ owner.name }}" required>
             
-            if (nameInput && durationInput && priceInput && nameInput.value && durationInput.value && priceInput.value) {
-                servicesData.push({
-                    name: nameInput.value,
-                    duration_minutes: parseInt(durationInput.value),
-                    price: parseFloat(priceInput.value)
-                });
-            }
-        });
-        document.getElementById('services_json').value = JSON.stringify(servicesData);
+            <label for="business_name">{{ _('Business Name:') }}</label>
+            <input type="text" id="business_name" name="business_name" value="{{ owner.business_name }}" required>
+            
+            <label for="phone">{{ _('Phone (for WhatsApp notifications):') }}</label>
+            <input type="tel" id="phone" name="phone" value="{{ owner.phone or '' }}" placeholder="+12345678900">
 
-        // Collect availability data
-        const availabilityData = {};
-        const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-        daysOfWeek.forEach(day => {
-            const slots = [];
-            document.querySelectorAll(`#availability-${day} .time-slot-item`).forEach(item => {
-                const startInput = item.querySelectorAll('input[type="time"]')[0];
-                const endInput = item.querySelectorAll('input[type="time"]')[1];
-                if (startInput && endInput && startInput.value && endInput.value) {
-                    slots.push({
-                        day: day,
-                        start_time: startInput.value,
-                        end_time: endInput.value
-                    });
+            <h2>{{ _('Services Offered') }}</h2>
+            <div id="services-list">
+                <!-- Services will be managed by JavaScript -->
+            </div>
+            <button type="button" id="add-service">{{ _('Add Service') }}</button>
+            <input type="hidden" name="services_json" id="services_json">
+
+            <h2>{{ _('Availability') }}</h2>
+            <div id="availability-list">
+                <!-- Availability will be managed by JavaScript -->
+                <p>{{ _('Set your daily working hours (e.g., 09:00-17:00). Leave blank if unavailable.') }}</p>
+                {% set days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] %}
+                {% for day in days %}
+                    <label for="{{ day | lower }}-availability">{{ _(day) }}:</label>
+                    <input type="text" id="{{ day | lower }}-availability" 
+                           class="availability-input" data-day="{{ day }}" 
+                           placeholder="HH:MM-HH:MM (e.g., 09:00-17:00)">
+                {% endfor %}
+            </div>
+            <input type="hidden" name="availability_json" id="availability_json">
+            
+            <button type="submit">{{ _('Save Profile') }}</button>
+        </form>
+        {% include 'language_toggle.html' %}
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const servicesList = document.getElementById('services-list');
+            const addServiceBtn = document.getElementById('add-service');
+            const servicesJsonInput = document.getElementById('services_json');
+            const availabilityJsonInput = document.getElementById('availability_json');
+            const availabilityInputs = document.querySelectorAll('.availability-input');
+
+            let services = JSON.parse('{{ services_json | safe }}');
+            let availability = JSON.parse('{{ availability_json | safe }}');
+
+            function renderServices() {
+                servicesList.innerHTML = '';
+                services.forEach((service, index) => {
+                    const div = document.createElement('div');
+                    div.className = 'service-item';
+                    div.innerHTML = `
+                        <input type="text" placeholder="{{ _('Service Name') }}" value="${service.name}" data-index="${index}" data-field="name" required>
+                        <input type="number" placeholder="{{ _('Duration (minutes)') }}" value="${service.duration}" data-index="${index}" data-field="duration" required>
+                        <input type="number" step="0.01" placeholder="{{ _('Price') }}" value="${service.price}" data-index="${index}" data-field="price" required>
+                        <button type="button" class="remove-service" data-index="${index}">{{ _('Remove') }}</button>
+                    `;
+                    servicesList.appendChild(div);
+                });
+                updateServicesJson();
+            }
+
+            function updateServicesJson() {
+                services = [];
+                document.querySelectorAll('.service-item').forEach(item => {
+                    const nameInput = item.querySelector('[data-field="name"]');
+                    const durationInput = item.querySelector('[data-field="duration"]');
+                    const priceInput = item.querySelector('[data-field="price"]');
+                    if (nameInput && durationInput && priceInput && nameInput.value && durationInput.value && priceInput.value) {
+                        services.push({
+                            name: nameInput.value,
+                            duration: parseInt(durationInput.value),
+                            price: parseFloat(priceInput.value)
+                        });
+                    }
+                });
+                servicesJsonInput.value = JSON.stringify(services);
+            }
+
+            function updateAvailabilityJson() {
+                const currentAvailability = {};
+                availabilityInputs.forEach(input => {
+                    const day = input.dataset.day;
+                    const value = input.value.trim();
+                    if (value) {
+                        currentAvailability[day] = value;
+                    }
+                });
+                availabilityJsonInput.value = JSON.stringify(currentAvailability);
+            }
+
+            addServiceBtn.addEventListener('click', () => {
+                services.push({ name: '', duration: 0, price: 0 });
+                renderServices();
+            });
+
+            servicesList.addEventListener('input', (event) => {
+                const target = event.target;
+                if (target.matches('input[data-field]')) {
+                    updateServicesJson();
                 }
             });
-            if (slots.length > 0) {
-                availabilityData[day] = slots;
-            }
-        });
-        document.getElementById('availability_json').value = JSON.stringify(availabilityData);
-    }
 
-    // Call prepareFormData before form submission
-    document.querySelector('form').addEventListener('submit', prepareFormData);
-</script>
-{% endblock %}
-{% endblock %}
+            servicesList.addEventListener('click', (event) => {
+                if (event.target.classList.contains('remove-service')) {
+                    const index = parseInt(event.target.dataset.index);
+                    services.splice(index, 1);
+                    renderServices();
+                }
+            });
+
+            availabilityInputs.forEach(input => {
+                const day = input.dataset.day;
+                input.value = availability[day] || '';
+                input.addEventListener('input', updateAvailabilityJson);
+            });
+
+            renderServices();
+            updateAvailabilityJson(); // Initial update
+        });
+    </script>
+</body>
+</html>
