@@ -1,1 +1,9 @@
-<!DOCTYPE html><html><head><meta charset="UTF-8"><title>{{ _('New Booking Received!') }}</title></head><body><h1>{{ _('Hello,') }} {{ owner.name }}!</h1><p>{{ _('You have received a new booking for your business,') }} {{ owner.business_name }}.</p><p><strong>{{ _('Booking Details:') }}</strong></p><ul><li><strong>{{ _('Customer Name:') }}</strong> {{ booking.customer_name }}</li><li><strong>{{ _('Customer Email:') }}</strong> {{ booking.customer_email }}</li>{% if booking.customer_phone %}<li><strong>{{ _('Customer Phone:') }}</strong> {{ booking.customer_phone }}</li>{% endif %}<li><strong>{{ _('Service:') }}</strong> {{ booking.service_name }}</li><li><strong>{{ _('Date:') }}</strong> {{ booking.booking_date.strftime('%Y-%m-%d') }}</li><li><strong>{{ _('Time:') }}</strong> {{ booking.booking_time }}</li></ul><p>{{ _('You can view all your bookings on your dashboard:') }} <a href="http://localhost:8000/dashboard">{{ _('Go to Dashboard') }}</a></p><p>{{ _('Thank you for using BookSlot!') }}</p></body></html>
+<p>{{ _('Dear %s,') % owner.name }}</p>
+<p>{{ _('You have a new booking!') }}</p>
+<p>{{ _('Service:') }} {{ booking.service_name }}</p>
+<p>{{ _('Date:') }} {{ booking.booking_date.strftime('%Y-%m-%d') }}</p>
+<p>{{ _('Time:') }} {{ booking.booking_time }}</p>
+<p>{{ _('Customer Name:') }} {{ booking.customer_name }}</p>
+<p>{{ _('Customer Email:') }} {{ booking.customer_email }}</p>
+{% if booking.customer_phone %}<p>{{ _('Customer Phone:') }} {{ booking.customer_phone }}</p>{% endif %}
+<p>{{ _('Please check your dashboard for more details.') }}</p>

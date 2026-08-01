@@ -1,212 +1,61 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ current_lang }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _('Book an Appointment with') }} {{ owner.business_name }}</title>
-    <style>
-        body { font-family: sans-serif; margin: 20px; background-color: #f4f7f6; color: #333; }
-        .container { max-width: 600px; margin: auto; padding: 30px; background-color: #fff; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        h1, h2 { text-align: center; color: #007bff; margin-bottom: 20px; }
-        .language-toggle { text-align: center; margin-bottom: 20px; }
-        .language-toggle a { margin: 0 10px; text-decoration: none; color: #007bff; }
-        .language-toggle a:hover { text-decoration: underline; }
-        .messages { margin-bottom: 15px; padding: 10px; border-radius: 5px; }
-        .messages.success { background-color: #d4edda; color: #155724; border-color: #c3e6cb; }
-        .messages.error { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 8px; font-weight: bold; color: #555; }
-        input[type="text"], input[type="email"], input[type="tel"], input[type="date"], input[type="time"], select, textarea {
-            width: 100%; padding: 12px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 5px; font-size: 1rem;
-            transition: border-color 0.3s ease;
-        }
-        input[type="text"]:focus, input[type="email"]:focus, input[type="tel"]:focus, input[type="date"]:focus, input[type="time"]:focus, select:focus, textarea:focus {
-            border-color: #007bff; outline: none;
-        }
-        button[type="submit"] {
-            width: 100%; padding: 12px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;
-            font-size: 1.1rem; font-weight: bold; transition: background-color 0.3s ease;
-        }
-        button[type="submit"]:hover { background-color: #0056b3; }
-        .business-info { text-align: center; margin-bottom: 30px; }
-        .business-info p { margin: 5px 0; color: #666; }
-        .service-details { margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px; }
-        .service-details h3 { color: #007bff; }
-        .service-details p { margin-bottom: 5px; }
-    </style>
+    <title>{{ _('Book with %s') % owner.business_name }}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css">
 </head>
-<body>
-    <div class="container">
-        <div class="language-toggle">
-            <a href="{{ request.url|urlencode('lang', 'en') }}">{{ _('English') }}</a>
-            <a href="{{ request.url|urlencode('lang', 'ar') }}">{{ _('Arabic') }}</a>
-            <a href="{{ request.url|urlencode('lang', 'fr') }}">{{ _('French') }}</a>
+<body class="bg-gray-100 font-sans leading-normal tracking-normal">
+    <div class="container mx-auto p-4 max-w-md bg-white shadow-md rounded-lg mt-10">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-bold text-center w-full">{{ _('Book with %s') % owner.business_name }}</h1>
+            <div>
+                <a href="{{ request.url|urlencode('lang', 'en') }}" class="text-blue-500 hover:underline mx-2">English</a>
+                <a href="{{ request.url|urlencode('lang', 'ar') }}" class="text-blue-500 hover:underline mx-2">العربية</a>
+                <a href="{{ request.url|urlencode('lang', 'fr') }}" class="text-blue-500 hover:underline mx-2">Français</a>
+            </div>
         </div>
 
-        <h1>{{ _('Book an Appointment') }}</h1>
-        <div class="business-info">
-            <h2>{{ owner.business_name }}</h2>
-            <p>{{ owner.name }}</p>
-            {% if owner.phone %}<p>{{ owner.phone }}</p>{% endif %}
-            <p>{{ owner.email }}</p>
+        {% if error_message %}
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+            <span class="block sm:inline">{{ error_message }}</span>
         </div>
-
-        {% if messages %}
-            {% for message in messages %}
-                <div class="messages {{ message.type }}">{{ message.content }}</div>
-            {% endfor %}
         {% endif %}
 
-        <form action="/book/{{ owner.slug }}" method="POST">
-            <div class="form-group">
-                <label for="customer_name">{{ _('Your Name') }}:</label>
-                <input type="text" id="customer_name" name="customer_name" required>
+        <form action="/{{ owner.slug }}/book?lang={{ current_lang }}" method="POST" class="space-y-4">
+            <div>
+                <label for="customer_name" class="block text-sm font-medium text-gray-700">{{ _('Your Name') }}</label>
+                <input type="text" id="customer_name" name="customer_name" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" required>
             </div>
-            <div class="form-group">
-                <label for="customer_email">{{ _('Your Email') }}:</label>
-                <input type="email" id="customer_email" name="customer_email" required>
+            <div>
+                <label for="customer_email" class="block text-sm font-medium text-gray-700">{{ _('Your Email') }}</label>
+                <input type="email" id="customer_email" name="customer_email" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" required>
             </div>
-            <div class="form-group">
-                <label for="customer_phone">{{ _('Your Phone Number (WhatsApp preferred)') }}:</label>
-                <input type="tel" id="customer_phone" name="customer_phone" placeholder="+1234567890" required>
+            <div>
+                <label for="customer_phone" class="block text-sm font-medium text-gray-700">{{ _('Your Phone Number (optional)') }}</label>
+                <input type="text" id="customer_phone" name="customer_phone" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
             </div>
-            <div class="form-group">
-                <label for="service_name">{{ _('Select a Service') }}:</label>
-                <select id="service_name" name="service_name" required onchange="updateServiceDetails()">
-                    <option value="">{{ _('Choose a service') }}</option>
+            <div>
+                <label for="service_name" class="block text-sm font-medium text-gray-700">{{ _('Select Service') }}</label>
+                <select id="service_name" name="service_name" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" required>
                     {% for service in services %}
-                        <option value="{{ service.name }}" data-duration="{{ service.duration }}" data-price="{{ service.price }}" data-description="{{ service.description }}">{{ service.name }} ({{ service.duration }} {{ _('min') }} / {{ service.price }} USD)</option>
+                        <option value="{{ service.name }}">{{ service.name }} - {{ service.duration }} {{ _('mins') }} - ${{ service.price }}</option>
+                    {% else %}
+                        <option value="">{{ _('No services available') }}</option>
                     {% endfor %}
                 </select>
             </div>
-            <div id="service-details" class="service-details" style="display: none;">
-                <h3>{{ _('Service Details') }}</h3>
-                <p><strong>{{ _('Duration') }}:</strong> <span id="detail-duration"></span> {{ _('minutes') }}</p>
-                <p><strong>{{ _('Price') }}:</strong> <span id="detail-price"></span> USD</p>
-                <p><strong>{{ _('Description') }}:</strong> <span id="detail-description"></span></p>
+            <div>
+                <label for="booking_date" class="block text-sm font-medium text-gray-700">{{ _('Select Date') }}</label>
+                <input type="date" id="booking_date" name="booking_date" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" required>
             </div>
-            <div class="form-group">
-                <label for="booking_date">{{ _('Select Date') }}:</label>
-                <input type="date" id="booking_date" name="booking_date" required onchange="checkAvailability()">
+            <div>
+                <label for="booking_time" class="block text-sm font-medium text-gray-700">{{ _('Select Time') }}</label>
+                <input type="time" id="booking_time" name="booking_time" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" required>
             </div>
-            <div class="form-group">
-                <label for="booking_time">{{ _('Select Time') }}:</label>
-                <select id="booking_time" name="booking_time" required>
-                    <option value="">{{ _('Choose a date first') }}</option>
-                </select>
-            </div>
-
-            <button type="submit">{{ _('Book Now') }}</button>
+            <button type="submit" class="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">{{ _('Book Now') }}</button>
         </form>
     </div>
-
-    <script>
-        const ownerAvailability = {{ availability | tojson }};
-        const currentLocale = "{{ request.cookies.get('lang', 'en') }}";
-
-        function updateServiceDetails() {
-            const select = document.getElementById('service_name');
-            const selectedOption = select.options[select.selectedIndex];
-            const serviceDetailsDiv = document.getElementById('service-details');
-
-            if (selectedOption.value) {
-                document.getElementById('detail-duration').textContent = selectedOption.dataset.duration;
-                document.getElementById('detail-price').textContent = selectedOption.dataset.price;
-                document.getElementById('detail-description').textContent = selectedOption.dataset.description || gettext("No description provided.");
-                serviceDetailsDiv.style.display = 'block';
-            } else {
-                serviceDetailsDiv.style.display = 'none';
-            }
-        }
-
-        function gettext(msgid) {
-            // This is a simplified client-side gettext. In a real app, you'd load translations via AJAX.
-            // For now, it just returns the original string.
-            // A more robust solution involves compiling JS translation catalogs.
-            const translations = {
-                // Example for Arabic
-                "ar": {
-                    "Choose a date first": "اختر تاريخًا أولاً",
-                    "Choose a service": "اختر خدمة",
-                    "minutes": "دقيقة",
-                    "No description provided.": "لا يوجد وصف."
-                    // ... other translations
-                },
-                // Example for French
-                "fr": {
-                    "Choose a date first": "Choisissez une date d'abord",
-                    "Choose a service": "Choisissez un service",
-                    "minutes": "minutes",
-                    "No description provided.": "Aucune description fournie."
-                    // ... other translations
-                }
-            };
-            return (translations[currentLocale] && translations[currentLocale][msgid]) || msgid;
-        }
-
-        function checkAvailability() {
-            const bookingDateInput = document.getElementById('booking_date');
-            const bookingTimeSelect = document.getElementById('booking_time');
-            bookingTimeSelect.innerHTML = `<option value="">${gettext('Choose a date first')}</option>`; // Clear previous times
-
-            const selectedDate = bookingDateInput.value;
-            if (!selectedDate) return;
-
-            const dateObj = new Date(selectedDate + 'T00:00:00'); // Use T00:00:00 to avoid timezone issues
-            const dayOfWeek = dateObj.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
-
-            const dayAvailability = ownerAvailability[dayOfWeek];
-
-            if (dayAvailability && dayAvailability.is_available) {
-                const startHour = parseInt(dayAvailability.start_time.split(':')[0]);
-                const startMinute = parseInt(dayAvailability.start_time.split(':')[1]);
-                const endHour = parseInt(dayAvailability.end_time.split(':')[0]);
-                const endMinute = parseInt(dayAvailability.end_time.split(':')[1]);
-
-                const now = new Date();
-                const today = now.toISOString().split('T')[0];
-                const currentHour = now.getHours();
-                const currentMinute = now.getMinutes();
-
-                let addedOptions = false;
-                for (let h = startHour; h < endHour; h++) {
-                    for (let m = 0; m < 60; m += 30) { // Assuming 30-minute slots
-                        const slotTime = new Date(dateObj);
-                        slotTime.setHours(h, m, 0, 0);
-
-                        // Only add slots that are in the future for today's date
-                        if (selectedDate === today && slotTime <= now) {
-                            continue;
-                        }
-
-                        if (slotTime.getHours() < endHour || (slotTime.getHours() === endHour && slotTime.getMinutes() < endMinute)) {
-                            const timeString = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-                            const option = document.createElement('option');
-                            option.value = timeString;
-                            option.textContent = timeString;
-                            bookingTimeSelect.appendChild(option);
-                            addedOptions = true;
-                        }
-                    }
-                }
-                if (!addedOptions) {
-                    const option = document.createElement('option');
-                    option.value = "";
-                    option.textContent = gettext("No available slots for this day.");
-                    bookingTimeSelect.appendChild(option);
-                }
-            } else {
-                const option = document.createElement('option');
-                option.value = "";
-                option.textContent = gettext("This day is not available for bookings.");
-                bookingTimeSelect.appendChild(option);
-            }
-        }
-
-        // Initial call to set up services details if a service is pre-selected (unlikely on first load)
-        updateServiceDetails();
-        // Initial call to populate time slots if a date is pre-selected (unlikely on first load)
-        checkAvailability();
-    </script>
 </body>
 </html>

@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Login - BookSlot') }}{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto bg-white p-8 rounded-lg shadow-md mt-10">
+    <h2 class="text-2xl font-bold text-center mb-6">{{ _('Log In to Your Account') }}</h2>
+    {% if error %}
+    <p class="text-red-500 text-center mb-4">{{ error }}</p>
+    {% endif %}
+    <form action="/login" method="post" class="space-y-4">
+        <div>
+            <label for="email" class="block text-sm font-medium text-gray-700">{{ _('Email Address') }}</label>
+            <input type="email" id="email" name="email" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+        </div>
+        <div>
+            <label for="password" class="block text-sm font-medium text-gray-700">{{ _('Password') }}</label>
+            <input type="password" id="password" name="password" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+        </div>
+        <div>
+            <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                {{ _('Log In') }}
+            </button>
+        </div>
+    </form>
+    <p class="mt-6 text-center text-sm text-gray-600">
+        {{ _("Don't have an account?") }}
+        <a href="/signup" class="font-medium text-indigo-600 hover:text-indigo-500">{{ _('Sign Up') }}</a>
+    </p>
+</div>
+{% endblock %}

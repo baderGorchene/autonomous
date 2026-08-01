@@ -1,180 +1,170 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ current_lang }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _('Dashboard') }}</title>
+    <title>{{ _('Dashboard') }} - {{ owner.business_name }}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <style>
-        body { font-family: sans-serif; margin: 20px; }
-        .container { max-width: 800px; margin: auto; }
-        .messages { margin-bottom: 15px; padding: 10px; border-radius: 5px; }
-        .messages.success { background-color: #d4edda; color: #155724; border-color: #c3e6cb; }
-        .messages.error { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; }
-        .form-group { margin-bottom: 10px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input[type="text"], input[type="email"], input[type="tel"], textarea {
-            width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;
-        }
-        button { padding: 10px 15px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
-        button:hover { background-color: #0056b3; }
-        .section { margin-top: 30px; padding: 20px; border: 1px solid #eee; border-radius: 8px; background-color: #f9f9f9; }
-        .availability-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        .availability-table th, .availability-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        .availability-table th { background-color: #f2f2f2; }
-        .service-item { border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; border-radius: 5px; }
-        .booking-item { border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; border-radius: 5px; }
-        .language-toggle a { margin-right: 10px; text-decoration: none; color: #007bff; }
-        .language-toggle a:hover { text-decoration: underline; }
+        [v-cloak] { display: none; }
     </style>
 </head>
-<body>
-    <div class="container">
-        <h1>{{ _('Welcome,') }} {{ owner.name }}!</h1>
-        <p><a href="/logout">{{ _('Logout') }}</a></p>
-        <div class="language-toggle">
-            <a href="{{ request.url|urlencode('lang', 'en') }}">{{ _('English') }}</a>
-            <a href="{{ request.url|urlencode('lang', 'ar') }}">{{ _('Arabic') }}</a>
-            <a href="{{ request.url|urlencode('lang', 'fr') }}">{{ _('French') }}</a>
+<body class="bg-gray-100 font-sans leading-normal tracking-normal">
+    <div class="container mx-auto p-4">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-bold">{{ _('Welcome, %s!') % owner.name }}</h1>
+            <div>
+                <a href="{{ request.url|urlencode('lang', 'en') }}" class="text-blue-500 hover:underline mx-2">English</a>
+                <a href="{{ request.url|urlencode('lang', 'ar') }}" class="text-blue-500 hover:underline mx-2">العربية</a>
+                <a href="{{ request.url|urlencode('lang', 'fr') }}" class="text-blue-500 hover:underline mx-2">Français</a>
+            </div>
+            <a href="/logout" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">{{ _('Logout') }}</a>
         </div>
 
-        {% if messages %}
-            {% for message in messages %}
-                <div class="messages {{ message.type }}">{{ message.content }}</div>
-            {% endfor %}
-        {% endif %}
-
-        <div class="section">
-            <h2>{{ _('Your Public Booking Page Link') }}</h2>
-            <p><a href="/book/{{ owner.slug }}" target="_blank">bookslot.app/{{ owner.slug }}</a></p>
-        </div>
-
-        <div class="section">
-            <h2>{{ _('Profile and Business Details') }}</h2>
-            <form action="/dashboard" method="POST">
-                <div class="form-group">
-                    <label for="name">{{ _('Your Name') }}:</label>
-                    <input type="text" id="name" name="name" value="{{ owner.name }}" required>
-                </div>
-                <div class="form-group">
-                    <label for="business_name">{{ _('Business Name') }}:</label>
-                    <input type="text" id="business_name" name="business_name" value="{{ owner.business_name }}" required>
-                </div>
-                <div class="form-group">
-                    <label for="phone">{{ _('Phone Number (for notifications)') }}:</label>
-                    <input type="tel" id="phone" name="phone" value="{{ owner.phone or '' }}">
-                </div>
-
-                <h3>{{ _('Services Offered') }}</h3>
-                <div id="services-list">
-                    {% for service in services %}
-                        <div class="service-item">
-                            <input type="text" name="service_name[]" value="{{ service.name }}" placeholder="{{ _('Service Name') }}" required>
-                            <input type="number" name="service_duration[]" value="{{ service.duration }}" placeholder="{{ _('Duration (minutes)') }}" required min="1">
-                            <input type="number" name="service_price[]" value="{{ service.price }}" placeholder="{{ _('Price (e.g., 25.00)') }}" step="0.01" required min="0">
-                            <textarea name="service_description[]" placeholder="{{ _('Description (optional)') }}">{{ service.description }}</textarea>
-                            <button type="button" onclick="removeService(this)">{{ _('Remove Service') }}</button>
-                        </div>
-                    {% endfor %}
-                </div>
-                <button type="button" onclick="addService()">{{ _('Add Service') }}</button>
-
-                <h3>{{ _('Availability') }}</h3>
-                <table class="availability-table">
-                    <thead>
-                        <tr>
-                            <th>{{ _('Day') }}</th>
-                            <th>{{ _('Available?') }}</th>
-                            <th>{{ _('Start Time') }}</th>
-                            <th>{{ _('End Time') }}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% set days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] %}
-                        {% for day in days %}
-                            {% set day_avail = availability[day] if availability[day] else {'is_available': false, 'start_time': '', 'end_time': ''} %}
-                            <tr>
-                                <td>{{ _(day.capitalize()) }}</td>
-                                <td><input type="checkbox" name="availability_{{ day }}_is_available" {{ 'checked' if day_avail.is_available else '' }}></td>
-                                <td><input type="time" name="availability_{{ day }}_start_time" value="{{ day_avail.start_time or '' }}"></td>
-                                <td><input type="time" name="availability_{{ day }}_end_time" value="{{ day_avail.end_time or '' }}"></td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-
-                <input type="hidden" id="services_json" name="services_json">
-                <input type="hidden" id="availability_json" name="availability_json">
-                <button type="submit" onclick="prepareFormData()">{{ _('Update Profile') }}</button>
-            </form>
-        </div>
-
-        <div class="section">
-            <h2>{{ _('Upcoming Bookings') }}</h2>
-            {% if bookings %}
-                {% for booking in bookings %}
-                    <div class="booking-item">
-                        <p><strong>{{ _('Service') }}:</strong> {{ booking.service_name }}</p>
-                        <p><strong>{{ _('Date') }}:</strong> {{ booking.booking_date.strftime('%Y-%m-%d') }}</p>
-                        <p><strong>{{ _('Time') }}:</strong> {{ booking.booking_time.strftime('%H:%M') }}</p>
-                        <p><strong>{{ _('Customer') }}:</strong> {{ booking.customer_name }} ({{ booking.customer_email }})</p>
-                        <p><strong>{{ _('Phone') }}:</strong> {{ booking.customer_phone or _('N/A') }}</p>
-                        <p><strong>{{ _('Status') }}:</strong> {{ _(booking.status.capitalize()) }}</p>
+        <div id="app" v-cloak class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Profile Section -->
+            <div class="lg:col-span-1 bg-white shadow-md rounded-lg p-6">
+                <h2 class="text-2xl font-semibold mb-4">{{ _('Your Profile') }}</h2>
+                <form @submit.prevent="updateProfile" class="space-y-4">
+                    <div>
+                        <label for="name" class="block text-sm font-medium text-gray-700">{{ _('Name') }}</label>
+                        <input type="text" id="name" v-model="profile.name" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" required>
                     </div>
-                {% endfor %}
-            {% else %}
-                <p>{{ _('No upcoming bookings.') }}</p>
-            {% endif %}
+                    <div>
+                        <label for="business_name" class="block text-sm font-medium text-gray-700">{{ _('Business Name') }}</label>
+                        <input type="text" id="business_name" v-model="profile.business_name" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" required>
+                    </div>
+                    <div>
+                        <label for="phone" class="block text-sm font-medium text-gray-700">{{ _('Phone Number') }}</label>
+                        <input type="text" id="phone" v-model="profile.phone" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                    </div>
+
+                    <h3 class="text-xl font-medium mt-6 mb-3">{{ _('Services') }}</h3>
+                    <div v-for="(service, index) in profile.services" :key="index" class="border p-4 rounded-md mb-2">
+                        <input type="text" v-model="service.name" placeholder="{{ _('Service Name') }}" class="block w-full border border-gray-300 rounded-md shadow-sm p-2 mb-2" required>
+                        <input type="number" v-model.number="service.duration" placeholder="{{ _('Duration (minutes)') }}" class="block w-full border border-gray-300 rounded-md shadow-sm p-2 mb-2" required>
+                        <input type="number" v-model.number="service.price" placeholder="{{ _('Price') }}" class="block w-full border border-gray-300 rounded-md shadow-sm p-2 mb-2" required>
+                        <textarea v-model="service.description" placeholder="{{ _('Description (optional)') }}" class="block w-full border border-gray-300 rounded-md shadow-sm p-2 mb-2"></textarea>
+                        <button type="button" @click="removeService(index)" class="bg-red-500 text-white p-2 rounded">{{ _('Remove Service') }}</button>
+                    </div>
+                    <button type="button" @click="addService" class="bg-green-500 text-white p-2 rounded">{{ _('Add Service') }}</button>
+
+                    <h3 class="text-xl font-medium mt-6 mb-3">{{ _('Availability') }}</h3>
+                    <div v-for="(slots, day) in profile.availability" :key="day" class="mb-4">
+                        <h4 class="font-semibold">{{ day }}</h4>
+                        <div v-for="(slot, index) in slots" :key="index" class="flex space-x-2 mb-2">
+                            <input type="time" v-model="slot.start_time" class="border p-2 rounded" required>
+                            <input type="time" v-model="slot.end_time" class="border p-2 rounded" required>
+                            <button type="button" @click="removeAvailabilitySlot(day, index)" class="bg-red-500 text-white p-2 rounded">{{ _('Remove') }}</button>
+                        </div>
+                        <button type="button" @click="addAvailabilitySlot(day)" class="bg-green-500 text-white p-2 rounded">{{ _('Add Slot') }}</button>
+                    </div>
+                    <!-- Add functionality to add new days if needed -->
+
+                    <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">{{ _('Update Profile') }}</button>
+                </form>
+            </div>
+
+            <!-- Upcoming Bookings Section -->
+            <div class="lg:col-span-2 bg-white shadow-md rounded-lg p-6">
+                <h2 class="text-2xl font-semibold mb-4">{{ _('Upcoming Bookings') }}</h2>
+                <div v-if="bookings.length === 0" class="text-gray-600">{{ _('No upcoming bookings.') }}</div>
+                <div v-else class="space-y-4">
+                    <div v-for="booking in bookings" :key="booking.id" class="border p-4 rounded-md shadow-sm">
+                        <p class="font-bold">{{ booking.service_name }}</p>
+                        <p>{{ _('Customer:') }} {{ booking.customer_name }} ({{ booking.customer_email }}) <span v-if="booking.customer_phone"> - {{ booking.customer_phone }}</span></p>
+                        <p>{{ _('Date:') }} {{ booking.booking_date_str }} {{ _('at') }} {{ booking.booking_time }}</p>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-        function addService() {
-            const servicesList = document.getElementById('services-list');
-            const newServiceDiv = document.createElement('div');
-            newServiceDiv.className = 'service-item';
-            newServiceDiv.innerHTML = `
-                <input type="text" name="service_name[]" placeholder="{{ _('Service Name') }}" required>
-                <input type="number" name="service_duration[]" placeholder="{{ _('Duration (minutes)') }}" required min="1">
-                <input type="number" name="service_price[]" placeholder="{{ _('Price (e.g., 25.00)') }}" step="0.01" required min="0">
-                <textarea name="service_description[]" placeholder="{{ _('Description (optional)') }}"></textarea>
-                <button type="button" onclick="removeService(this)">{{ _('Remove Service') }}</button>
-            `;
-            servicesList.appendChild(newServiceDiv);
-        }
+        const { createApp, ref, reactive, onMounted } = Vue;
 
-        function removeService(button) {
-            button.closest('.service-item').remove();
-        }
+        createApp({
+            setup() {
+                const ownerData = {{ owner|tojson }};
+                const bookingsData = {{ bookings|tojson }};
+                const currentLang = "{{ current_lang }}";
 
-        function prepareFormData() {
-            // Prepare services JSON
-            const services = [];
-            document.querySelectorAll('#services-list .service-item').forEach(item => {
-                const name = item.querySelector('[name="service_name[]"]').value;
-                const duration = parseInt(item.querySelector('[name="service_duration[]"]').value);
-                const price = parseFloat(item.querySelector('[name="service_price[]"]').value);
-                const description = item.querySelector('[name="service_description[]"]').value;
-                if (name && !isNaN(duration) && !isNaN(price)) {
-                    services.push({ name, duration, price, description });
-                }
-            });
-            document.getElementById('services_json').value = JSON.stringify(services);
+                const profile = reactive({
+                    name: ownerData.name,
+                    business_name: ownerData.business_name,
+                    phone: ownerData.phone,
+                    services: ownerData.services || [],
+                    availability: ownerData.availability || {
+                        "Monday": [], "Tuesday": [], "Wednesday": [], "Thursday": [], "Friday": [], "Saturday": [], "Sunday": []
+                    }
+                });
+                const bookings = ref(bookingsData);
 
-            // Prepare availability JSON
-            const availability = {};
-            const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-            days.forEach(day => {
-                const isAvailable = document.querySelector(`[name="availability_${day}_is_available"]`).checked;
-                const startTime = document.querySelector(`[name="availability_${day}_start_time"]`).value;
-                const endTime = document.querySelector(`[name="availability_${day}_end_time"]`).value;
-                availability[day] = {
-                    is_available: isAvailable,
-                    start_time: isAvailable ? startTime : null,
-                    end_time: isAvailable ? endTime : null
+                const gettext = (msgid) => {
+                    // This is a simplified client-side gettext.
+                    // For full functionality, you'd load .json translations or use a client-side library.
+                    // For now, it just returns the message id.
+                    return msgid;
                 };
-            });
-            document.getElementById('availability_json').value = JSON.stringify(availability);
-        }
+                
+                const updateProfile = async () => {
+                    const formData = new FormData();
+                    formData.append('name', profile.name);
+                    formData.append('business_name', profile.business_name);
+                    formData.append('phone', profile.phone || '');
+                    formData.append('services_json', JSON.stringify(profile.services));
+                    formData.append('availability_json', JSON.stringify(profile.availability));
+
+                    // Use the form action directly to handle redirect
+                    const response = await fetch('/owner/profile?lang=' + currentLang, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'Authorization': `Bearer {{ request.cookies.get('access_token') }}`
+                        }
+                    });
+
+                    if (response.redirected) {
+                        window.location.href = response.url;
+                    } else {
+                        const result = await response.json();
+                        alert(result.detail || gettext('Profile updated successfully!'));
+                        // Optionally re-fetch data or update UI
+                    }
+                };
+
+                const addService = () => {
+                    profile.services.push({ name: '', duration: 60, price: 0.0, description: '' });
+                };
+
+                const removeService = (index) => {
+                    profile.services.splice(index, 1);
+                };
+
+                const addAvailabilitySlot = (day) => {
+                    if (!profile.availability[day]) {
+                        profile.availability[day] = [];
+                    }
+                    profile.availability[day].push({ start_time: '09:00', end_time: '17:00' });
+                };
+
+                const removeAvailabilitySlot = (day, index) => {
+                    profile.availability[day].splice(index, 1);
+                };
+
+                return {
+                    profile,
+                    bookings,
+                    updateProfile,
+                    addService,
+                    removeService,
+                    addAvailabilitySlot,
+                    removeAvailabilitySlot,
+                    gettext
+                };
+            }
+        }).mount('#app');
     </script>
 </body>
 </html>

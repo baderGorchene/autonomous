@@ -1,6 +1,6 @@
-from pydantic import BaseModel, EmailStr, Field
-from typing import List, Optional, Dict
-from datetime import datetime, date, time
+from pydantic import BaseModel, EmailStr, Field, validator
+from typing import List, Dict, Any, Optional
+import datetime
 
 class Service(BaseModel):
     name: str
@@ -8,54 +8,50 @@ class Service(BaseModel):
     price: float
     description: Optional[str] = None
 
-class DayAvailability(BaseModel):
-    is_available: bool = True
-    start_time: Optional[str] = None # e.g., "09:00"
-    end_time: Optional[str] = None   # e.g., "17:00"
-
-class Availability(BaseModel):
-    monday: DayAvailability = Field(default_factory=DayAvailability)
-    tuesday: DayAvailability = Field(default_factory=DayAvailability)
-    wednesday: DayAvailability = Field(default_factory=DayAvailability)
-    thursday: DayAvailability = Field(default_factory=DayAvailability)
-    friday: DayAvailability = Field(default_factory=DayAvailability)
-    saturday: DayAvailability = Field(default_factory=DayAvailability)
-    sunday: DayAvailability = Field(default_factory=DayAvailability)
+class AvailabilitySlot(BaseModel):
+    day_of_week: str # "Monday", "Tuesday", etc.
+    start_time: str # "HH:MM"
+    end_time: str # "HH:MM"
 
 class OwnerBase(BaseModel):
-    email: EmailStr
     name: str
+    email: EmailStr
     business_name: str
-    slug: Optional[str] = None
+    slug: str
     phone: Optional[str] = None
 
 class OwnerCreate(OwnerBase):
     password: str
 
-class Owner(OwnerBase):
-    id: int
-    is_active: bool
-    services_json: str # JSON string
-    availability_json: str # JSON string
-
-    class Config:
-        orm_mode = True
-
 class OwnerProfileUpdate(BaseModel):
     name: str
     business_name: str
     phone: Optional[str] = None
-    services_json: str = "[]"
-    availability_json: str = "{}"
+    services: List[Service] = Field(default_factory=list)
+    availability: Dict[str, List[AvailabilitySlot]] = Field(default_factory=dict) # e.g., {"Monday": [{"start_time": "09:00", "end_time": "17:00"}]}
+
+class Owner(OwnerBase):
+    id: int
+    services_json: str
+    availability_json: str
+
+    class Config:
+        from_attributes = True
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class TokenData(BaseModel):
+    email: Optional[str] = None
 
 class BookingBase(BaseModel):
     customer_name: str
     customer_email: EmailStr
     customer_phone: Optional[str] = None
     service_name: str
-    booking_date: date
-    booking_time: time
-    status: str = "pending"
+    booking_date: datetime.date
+    booking_time: str # "HH:MM"
 
 class BookingCreate(BookingBase):
     pass
@@ -63,15 +59,14 @@ class BookingCreate(BookingBase):
 class Booking(BookingBase):
     id: int
     owner_id: int
-    created_at: datetime
+    status: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-    owner: Optional[Owner] = None # Include owner info on signup/login
+class OwnerBookings(BaseModel):
+    owner: Owner
+    bookings: List[Booking]
 
-class TokenData(BaseModel):
-    email: Optional[str] = None
+class Message(BaseModel):
+    message: str

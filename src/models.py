@@ -1,7 +1,7 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, Date, Time, ForeignKey, Text
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Text
 from sqlalchemy.orm import relationship
 from .database import Base
-from datetime import datetime
+import datetime
 
 class Owner(Base):
     __tablename__ = "owners"
@@ -11,11 +11,10 @@ class Owner(Base):
     email = Column(String, unique=True, index=True)
     hashed_password = Column(String)
     business_name = Column(String)
-    slug = Column(String, unique=True, index=True)
-    phone = Column(String, nullable=True) # Added for notifications
-    services_json = Column(Text, default="[]") # JSON string for list of services
-    availability_json = Column(Text, default="{}") # JSON string for weekly availability
-    is_active = Column(Boolean, default=True)
+    slug = Column(String, unique=True, index=True) # For public booking page URL
+    services_json = Column(Text) # JSON string of services offered
+    availability_json = Column(Text) # JSON string of weekly availability
+    phone = Column(String, nullable=True) # Owner's phone number
 
     bookings = relationship("Booking", back_populates="owner")
 
@@ -24,13 +23,13 @@ class Booking(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     owner_id = Column(Integer, ForeignKey("owners.id"))
-    customer_name = Column(String)
-    customer_email = Column(String)
-    customer_phone = Column(String, nullable=True) # Added for notifications
-    service_name = Column(String)
-    booking_date = Column(Date)
-    booking_time = Column(Time)
-    status = Column(String, default="pending") # e.g., pending, confirmed, cancelled
-    created_at = Column(DateTime, default=datetime.utcnow)
-
+    customer_name = Column(String, index=True)
+    customer_email = Column(String, index=True)
+    customer_phone = Column(String, nullable=True) # Customer's phone number
+    service_name = Column(String) # Name of the service booked
+    booking_date = Column(DateTime)
+    booking_time = Column(String) # e.g., "09:00"
+    status = Column(String, default="pending") # e.g., "pending", "confirmed", "cancelled"
+    
     owner = relationship("Owner", back_populates="bookings")
+

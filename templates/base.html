@@ -1,1 +1,38 @@
-<!DOCTYPE html><html lang="{{ lang }}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>{% block title %}{% endblock %}</title><link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet"><script src="https://unpkg.com/htmx.org@1.9.10" integrity="sha384-D1Kt99CQxQhEo2jJyrLFw8NgS7iR93NrXLhNG5HTFGTr5QkV4HtPimX+KrRzOukE" crossorigin="anonymous"></script><style>@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Poppins:wght@400;600&display=swap'); body { font-family: 'Poppins', sans-serif; } html[lang='ar'] body { font-family: 'Cairo', sans-serif; text-align: right; direction: rtl; } .text-right-rtl { text-align: right; } .text-left-rtl { text-align: left; } .flex-row-reverse-rtl { flex-direction: row-reverse; } </style></head><body class="bg-gray-100 flex flex-col min-h-screen"><header class="bg-white shadow-sm py-4"><div class="container mx-auto px-4 flex justify-between items-center"><h1 class="text-2xl font-bold text-indigo-600"><a href="/">BookSlot</a></h1><nav><div class="flex space-x-4"><a href="{{ request.url|urlencode('lang', 'en') }}" class="text-gray-600 hover:text-indigo-600 {% if lang == 'en' %}font-bold{% endif %}">English</a><a href="{{ request.url|urlencode('lang', 'ar') }}" class="text-gray-600 hover:text-indigo-600 {% if lang == 'ar' %}font-bold{% endif %}">العربية</a><a href="{{ request.url|urlencode('lang', 'fr') }}" class="text-gray-600 hover:text-indigo-600 {% if lang == 'fr' %}font-bold{% endif %}">Français</a></div></nav></div></header><main class="flex-grow container mx-auto px-4 py-8">{% block content %}{% endblock %}</main><footer class="bg-gray-200 py-4 text-center text-gray-600 text-sm">© 2023 BookSlot. All rights reserved.</footer></body></html>
+<!DOCTYPE html>
+<html lang="{{ request.cookies.get('locale', 'en') }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}BookSlot{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    {% if request.cookies.get('locale', 'en') == 'ar' %}
+    <style>
+        body { direction: rtl; text-align: right; }
+        .text-left { text-align: right; }
+        .text-right { text-align: left; }
+    </style>
+    {% endif %}
+</head>
+<body class="bg-gray-100 flex flex-col min-h-screen">
+    <header class="bg-white shadow-sm p-4">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="/" class="text-2xl font-bold text-indigo-600">BookSlot</a>
+            <nav>
+                <a href="/set_locale/en" class="text-gray-600 hover:text-indigo-600 mx-2">English</a>
+                <a href="/set_locale/ar" class="text-gray-600 hover:text-indigo-600 mx-2">العربية</a>
+                <a href="/set_locale/fr" class="text-gray-600 hover:text-indigo-600 mx-2">Français</a>
+            </nav>
+        </div>
+    </header>
+    <main class="flex-grow container mx-auto p-4">
+        {% block content %}{% endblock %}
+    </main>
+    <footer class="bg-white shadow-sm p-4 mt-8">
+        <div class="container mx-auto text-center text-gray-500">
+            &copy; {{ _('2023 BookSlot. All rights reserved.') }}
+        </div>
+    </footer>
+    {% block scripts %}{% endblock %}
+</body>
+</html>
