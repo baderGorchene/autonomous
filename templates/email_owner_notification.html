@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ _('New Booking Notification') }}</title>
+</head>
+<body>
+    <p>{{ _('Dear') }} {{ owner.name }},</p>
+    <p>{{ _('You have a new booking for your service:') }}</p>
+    <ul>
+        <li><strong>{{ _('Service') }}:</strong> {{ booking.service_name }}</li>
+        <li><strong>{{ _('Date') }}:</strong> {{ booking.booking_date }}</li>
+        <li><strong>{{ _('Time') }}:</strong> {{ booking.booking_time }}</li>
+        <li><strong>{{ _('Customer Name') }}:</strong> {{ booking.customer_name }}</li>
+        <li><strong>{{ _('Customer Email') }}:</strong> {{ booking.customer_email }}</li>
+        <li><strong>{{ _('Customer Phone') }}:</strong> {{ booking.customer_phone if booking.customer_phone else _('N/A') }}</li>
+    </ul>
+    <p>{{ _('Please check your dashboard for more details:') }} <a href="bookslot.app/dashboard">{{ _('Your Dashboard') }}</a></p>
+    <p>{{ _('Thank you,') }}<br>BookSlot Team</p>
+</body>
+</html>

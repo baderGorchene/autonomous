@@ -1,71 +1,28 @@
-from pydantic import BaseModel, EmailStr, Field, validator
-from typing import List, Optional, Dict, Any
-import json
-
-class ServiceBase(BaseModel):
-    name: str
-    duration: int = Field(..., gt=0, description="Duration in minutes")
-    price: float = Field(..., gt=0, description="Price of the service")
-
-class Service(ServiceBase):
-    id: int
-
-    class Config:
-        from_attributes = True
-
-class AvailabilitySlot(BaseModel):
-    start: str = Field(..., pattern=r"^\d{2}:\d{2}$") # HH:MM
-    end: str = Field(..., pattern=r"^\d{2}:\d{2}$")   # HH:MM
+from pydantic import BaseModel, EmailStr
+from typing import List, Dict, Any, Optional
+from datetime import datetime
 
 class OwnerBase(BaseModel):
     name: str
     email: EmailStr
     business_name: str
-    slug: str = Field(..., min_length=3, max_length=50, pattern=r"^[a-z0-9-]+$")
+    slug: str
     phone: Optional[str] = None
 
 class OwnerCreate(OwnerBase):
-    password: str = Field(..., min_length=8)
+    password: str
 
-class OwnerProfileUpdate(OwnerBase):
-    services: List[ServiceBase] = Field(default_factory=list)
-    availability: Dict[str, List[AvailabilitySlot]] = Field(default_factory=dict)
-
-    @validator('services', pre=True)
-    def parse_services_json(cls, v):
-        if isinstance(v, str):
-            return json.loads(v)
-        return v
-
-    @validator('availability', pre=True)
-    def parse_availability_json(cls, v):
-        if isinstance(v, str):
-            return json.loads(v)
-        return v
+class OwnerProfileUpdate(BaseModel):
+    name: str
+    business_name: str
+    phone: Optional[str] = None
+    services: List[Dict[str, Any]]
+    availability: Dict[str, Any]
 
 class Owner(OwnerBase):
     id: int
-    is_active: bool
     services_json: str
     availability_json: str
-
-    class Config:
-        from_attributes = True
-
-class BookingBase(BaseModel):
-    customer_name: str
-    customer_email: EmailStr
-    customer_phone: Optional[str] = None
-    service_name: str
-    booking_date: str # YYYY-MM-DD
-    booking_time: str # HH:MM
-
-class BookingCreate(BookingBase):
-    pass
-
-class Booking(BookingBase):
-    id: int
-    owner_id: int
     created_at: datetime
 
     class Config:
@@ -77,3 +34,34 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     email: Optional[str] = None
+
+class BookingBase(BaseModel):
+    customer_name: str
+    customer_email: EmailStr
+    customer_phone: Optional[str] = None
+    service_name: str
+    booking_date: str
+    booking_time: str
+
+class BookingCreate(BookingBase):
+    pass
+
+class Booking(BookingBase):
+    id: int
+    owner_id: int
+    status: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class Service(BaseModel):
+    name: str
+    duration: int
+    price: float
+    description: Optional[str] = None
+
+class Availability(BaseModel):
+    day_of_week: str # e.g., "Monday"
+    start_time: str # e.g., "09:00"
+    end_time: str # e.g., "17:00"

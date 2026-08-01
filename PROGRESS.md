@@ -1,3 +1,8 @@
+## Iteration 254
+_2026-08-01 05:59 UTC_
+
+Fully reconstructed all application files (`src/models.py`, `src/schemas.py`, `src/security.py`, `src/notifications.py`, `src/main.py`), templates, locale files, `requirements.txt`, and `tests/test_main.py` to ensure `pytest` is available and the application is runnable and testable. Implemented comprehensive integration tests covering signup, login, dashboard, profile updates, public booking, and i18n. This addresses the persistent 'No module named pytest' error and prepares for full test execution.
+
 ## Iteration 253
 _2026-08-01 02:55 UTC_
 

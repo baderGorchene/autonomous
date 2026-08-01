@@ -1,15 +1,16 @@
-{% extends "base.html" %}
-{% block title %}{{ _("Error") }} - {{ error_code }}{% endblock %}
-{% block content %}
-<div class="max-w-md mx-auto bg-white p-8 rounded-lg shadow-md mt-10 text-center">
-    <svg class="mx-auto h-16 w-16 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-    </svg>
-    <h2 class="text-3xl font-bold text-gray-800 mt-4 mb-2">{{ _("Oops! Something went wrong.") }}</h2>
-    <p class="text-gray-600 mb-4">{{ _("Error Code:") }} {{ error_code }}</p>
-    <p class="text-gray-700 text-lg mb-6">{{ error_detail }}</p>
-    <a href="/" class="mt-6 inline-block bg-indigo-600 text-white px-6 py-3 rounded-lg text-lg hover:bg-indigo-700 transition duration-300">
-        {{ _("Go to Homepage") }}
-    </a>
-</div>
-{% endblock %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ _('Error') }}</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>{{ _('Error') }}</h1>
+        <p>{{ detail }}</p>
+        <p><a href="/">{{ _('Go to Homepage') }}</a></p>
+    </div>
+</body>
+</html>

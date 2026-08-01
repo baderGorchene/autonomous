@@ -1,155 +1,257 @@
 <!DOCTYPE html>
-<html lang="{{ request.state.locale }}" dir="{{ 'rtl' if request.state.locale == 'ar' else 'ltr' }}">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ title }}</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css">
+    <title>{{ owner.business_name }} - {{ _('Book an Appointment') }}</title>
+    <link rel="stylesheet" href="/static/style.css">
     <style>
-        body { font-family: sans-serif; }
-        .lang-switcher { position: absolute; top: 1rem; right: 1rem; }
-        .rtl .lang-switcher { left: 1rem; right: auto; }
-        @media (max-width: 768px) {
-            .lang-switcher { top: 0.5rem; right: 0.5rem; }
+        /* Mobile-first styling */
+        body { font-family: sans-serif; margin: 0; padding: 0; background-color: #f4f7f6; color: #333; }
+        .container { max-width: 600px; margin: 20px auto; padding: 20px; background-color: #fff; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        h1, h2 { color: #007bff; text-align: center; margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; }
+        input[type="text"], input[type="email"], input[type="date"], input[type="time"], select, textarea {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 18px;
+            margin-top: 10px;
+        }
+        button:hover { background-color: #0056b3; }
+        .service-option {
+            border: 1px solid #e0e0e0;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            background-color: #fcfcfc;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+        .service-option:hover {
+            border-color: #007bff;
+            box-shadow: 0 2px 8px rgba(0,123,255,0.1);
+        }
+        .service-option.selected {
+            background-color: #e6f2ff;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px #007bff;
+        }
+        .service-option h3 { margin-top: 0; color: #333; }
+        .service-option p { margin: 5px 0; font-size: 0.9em; color: #555; }
+        .error-message { color: red; text-align: center; margin-bottom: 15px; }
+        .language-toggle { text-align: center; margin-top: 20px; }
+        .language-toggle a { margin: 0 5px; text-decoration: none; color: #007bff; }
+        .language-toggle a:hover { text-decoration: underline; }
+
+        /* Time slot grid */
+        #time-slots-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .time-slot-button {
+            background-color: #e0e0e0;
+            border: 1px solid #ccc;
+            padding: 10px 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            text-align: center;
+            transition: background-color 0.2s;
+        }
+        .time-slot-button:hover:not(.selected):not(.disabled) {
+            background-color: #d0d0d0;
+        }
+        .time-slot-button.selected {
+            background-color: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+        .time-slot-button.disabled {
+            background-color: #f8f8f8;
+            color: #aaa;
+            cursor: not-allowed;
+            text-decoration: line-through;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 480px) {
+            .container { margin: 10px; padding: 15px; }
+            input[type="text"], input[type="email"], input[type="date"], input[type="time"], select, textarea { width: calc(100% - 20px); }
+            button { padding: 10px; font-size: 16px; }
         }
     </style>
 </head>
-<body class="bg-gray-100 flex flex-col items-center min-h-screen">
-    <div class="lang-switcher">
-        <a href="{{ request.url|urlencode('lang', 'en') }}" class="text-blue-500 hover:underline mx-1">English</a>
-        <a href="{{ request.url|urlencode('lang', 'ar') }}" class="text-blue-500 hover:underline mx-1">العربية</a>
-        <a href="{{ request.url|urlencode('lang', 'fr') }}" class="text-blue-500 hover:underline mx-1">Français</a>
-    </div>
+<body>
+    <div class="container">
+        <h1>{{ owner.business_name }}</h1>
+        <p style="text-align: center;">{{ _('Book your appointment quickly and easily.') }}</p>
 
-    <div class="bg-white p-6 rounded-lg shadow-md w-full max-w-lg mt-8 md:mt-16 mx-4">
-        <h1 class="text-3xl font-bold text-center mb-6 text-blue-600">{{ owner.business_name }}</h1>
-        <p class="text-center text-gray-700 mb-8">{{ _("Book your appointment easily and quickly.") }}</p>
+        <div class="language-toggle">
+            <a href="{{ request.url|urlencode('locale', 'en') }}">English</a> |
+            <a href="{{ request.url|urlencode('locale', 'ar') }}">العربية</a> |
+            <a href="{{ request.url|urlencode('locale', 'fr') }}">Français</a>
+        </div>
 
-        {% if error_message %}
-            <p class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-                {{ error_message }}
-            </p>
+        {% if error %}
+            <p class="error-message">{{ error }}</p>
         {% endif %}
 
-        <form action="/bookslot/{{ owner.slug }}/submit" method="post" id="booking-form">
-            <div class="mb-4">
-                <label for="customer_name" class="block text-gray-700 text-sm font-bold mb-2">{{ _("Your Name") }}:</label>
-                <input type="text" id="customer_name" name="customer_name" value="{{ customer_name or '' }}" required
-                       class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-            </div>
-            <div class="mb-4">
-                <label for="customer_email" class="block text-gray-700 text-sm font-bold mb-2">{{ _("Your Email") }}:</label>
-                <input type="email" id="customer_email" name="customer_email" value="{{ customer_email or '' }}" required
-                       class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-            </div>
-            <div class="mb-4">
-                <label for="customer_phone" class="block text-gray-700 text-sm font-bold mb-2">{{ _("Your Phone Number (Optional)") }}:</label>
-                <input type="text" id="customer_phone" name="customer_phone" value="{{ customer_phone or '' }}"
-                       class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                <p class="text-xs text-gray-500 mt-1">{{ _("Include country code, e.g., +1234567890. For WhatsApp notifications.") }}</p>
-            </div>
+        <form action="/{{ owner_slug }}/book" method="post">
+            <label for="customer_name">{{ _('Your Name') }}:</label>
+            <input type="text" id="customer_name" name="customer_name" required>
 
-            <div class="mb-4">
-                <label for="service_name" class="block text-gray-700 text-sm font-bold mb-2">{{ _("Select Service") }}:</label>
-                <select id="service_name" name="service_name" required
-                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                    <option value="">{{ _("Choose a service") }}</option>
-                    {% for service in services %}
-                        <option value="{{ service.name }}" data-duration="{{ service.duration }}"
-                                {% if selected_service == service.name %}selected{% endif %}>
-                            {{ service.name }} ({{ service.duration }} {{ _("min") }} - ${{ "%.2f"|format(service.price) }})
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
+            <label for="customer_email">{{ _('Your Email') }}:</label>
+            <input type="email" id="customer_email" name="customer_email" required>
 
-            <div class="mb-4">
-                <label for="booking_date" class="block text-gray-700 text-sm font-bold mb-2">{{ _("Select Date") }}:</label>
-                <input type="date" id="booking_date" name="booking_date" value="{{ selected_date or '' }}" required
-                       class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-            </div>
+            <label for="customer_phone">{{ _('Your Phone (optional, for WhatsApp confirmation)') }}:</label>
+            <input type="text" id="customer_phone" name="customer_phone" placeholder="{{ _('+1234567890') }}">
 
-            <div class="mb-6">
-                <label for="booking_time" class="block text-gray-700 text-sm font-bold mb-2">{{ _("Select Time") }}:</label>
-                <select id="booking_time" name="booking_time" required
-                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                    <option value="">{{ _("Choose a time") }}</option>
-                    <!-- Times will be dynamically populated by JavaScript -->
-                </select>
+            <label for="service_name">{{ _('Select a Service') }}:</label>
+            <div id="service-options-container">
+                {% for service in services %}
+                <div class="service-option" data-service-name="{{ service.name }}" data-duration="{{ service.duration }}">
+                    <h3>{{ service.name }}</h3>
+                    <p>{{ _('Duration') }}: {{ service.duration }} {{ _('minutes') }}</p>
+                    <p>{{ _('Price') }}: ${{ service.price }}</p>
+                    {% if service.description %}<p>{{ service.description }}</p>{% endif %}
+                </div>
+                {% endfor %}
             </div>
+            <input type="hidden" id="selected_service_name" name="service_name" required>
 
-            <button type="submit"
-                    class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full">
-                {{ _("Book Now") }}
-            </button>
+            <label for="booking_date">{{ _('Select Date') }}:</label>
+            <input type="date" id="booking_date" name="booking_date" required min="{{ today_date }}">
+
+            <label for="booking_time">{{ _('Select Time') }}:</label>
+            <div id="time-slots-container">
+                <!-- Time slots will be dynamically generated here -->
+            </div>
+            <input type="hidden" id="selected_booking_time" name="booking_time" required>
+
+            <button type="submit">{{ _('Book Now') }}</button>
         </form>
     </div>
 
     <script>
-        const availabilityData = {{ availability | tojson }};
-        const serviceSelect = document.getElementById('service_name');
-        const bookingDateInput = document.getElementById('booking_date');
-        const bookingTimeSelect = document.getElementById('booking_time');
-        const selectedTime = "{{ selected_time or '' }}";
+        const ownerAvailability = {{ availability | tojson }};
+        const services = {{ services | tojson }};
+        const todayDate = new Date().toISOString().split('T')[0];
+        document.getElementById('booking_date').min = todayDate;
 
-        function populateTimeSlots() {
-            const selectedDateStr = bookingDateInput.value;
-            const selectedServiceOption = serviceSelect.options[serviceSelect.selectedIndex];
-            const serviceDuration = selectedServiceOption ? parseInt(selectedServiceOption.dataset.duration) : 0;
+        let selectedService = null;
+        let selectedDate = null;
 
-            bookingTimeSelect.innerHTML = '<option value="">{{ _("Choose a time") }}</option>';
-            if (!selectedDateStr || !serviceDuration) {
+        document.querySelectorAll('.service-option').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.service-option').forEach(opt => opt.classList.remove('selected'));
+                this.classList.add('selected');
+                selectedService = {
+                    name: this.dataset.serviceName,
+                    duration: parseInt(this.dataset.duration)
+                };
+                document.getElementById('selected_service_name').value = selectedService.name;
+                generateTimeSlots();
+            });
+        });
+
+        document.getElementById('booking_date').addEventListener('change', function() {
+            selectedDate = this.value;
+            generateTimeSlots();
+        });
+
+        function generateTimeSlots() {
+            const timeSlotsContainer = document.getElementById('time-slots-container');
+            timeSlotsContainer.innerHTML = '';
+            document.getElementById('selected_booking_time').value = '';
+
+            if (!selectedService || !selectedDate) {
+                timeSlotsContainer.innerHTML = '<p>{{ _("Please select a service and a date.") }}</p>';
                 return;
             }
 
-            const selectedDate = new Date(selectedDateStr + 'T00:00:00'); // Use T00:00:00 to avoid timezone issues
-            const dayOfWeek = selectedDate.toLocaleString('en-us', { weekday: 'long' }).toLowerCase();
+            const dateObj = new Date(selectedDate + 'T00:00:00'); // Use T00:00:00 to avoid timezone issues
+            const dayOfWeek = dateObj.toLocaleString('en-US', { weekday: 'long' }); // e.g., "Monday"
 
-            const dayAvailability = availabilityData[dayOfWeek] || [];
+            const availableSlotsForDay = ownerAvailability[dayOfWeek] || [];
+            
+            if (availableSlotsForDay.length === 0) {
+                timeSlotsContainer.innerHTML = '<p>{{ _("No availability for this day.") }}</p>';
+                return;
+            }
 
             const now = new Date();
             const today = now.toISOString().split('T')[0];
 
-            dayAvailability.forEach(slot => {
-                let [startHour, startMinute] = slot.start.split(':').map(Number);
-                let [endHour, endMinute] = slot.end.split(':').map(Number);
+            availableSlotsForDay.sort((a, b) => a.start_time.localeCompare(b.start_time));
 
-                let currentSlotTime = new Date(selectedDate);
-                currentSlotTime.setHours(startHour, startMinute, 0, 0);
+            availableSlotsForDay.forEach(slot => {
+                const slotStart = parseTime(slot.start_time); // Date object for slot start
+                const slotEnd = parseTime(slot.end_time);   // Date object for slot end
 
-                let endSlotTime = new Date(selectedDate);
-                endSlotTime.setHours(endHour, endMinute, 0, 0);
+                let currentSlotTime = new Date(dateObj);
+                currentSlotTime.setHours(slotStart.getHours(), slotStart.getMinutes(), 0, 0);
 
-                while (currentSlotTime.getTime() + (serviceDuration * 60 * 1000) <= endSlotTime.getTime()) {
-                    // Only add slots in the future
-                    if (selectedDateStr > today || (selectedDateStr === today && currentSlotTime.getTime() > now.getTime())) {
-                        const timeString = currentSlotTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
-                        const option = document.createElement('option');
-                        option.value = timeString;
-                        option.textContent = timeString;
-                        if (timeString === selectedTime) {
-                            option.selected = true;
-                        }
-                        bookingTimeSelect.appendChild(option);
+                while (currentSlotTime.getTime() + selectedService.duration * 60 * 1000 <= dateObj.getTime() + slotEnd.getHours() * 3600 * 1000 + slotEnd.getMinutes() * 60 * 1000) {
+                    const bookingTimeStr = formatTime(currentSlotTime);
+                    const bookingDateTime = new Date(selectedDate + 'T' + bookingTimeStr + ':00');
+
+                    const isPast = bookingDateTime < now;
+
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.classList.add('time-slot-button');
+                    button.textContent = bookingTimeStr;
+                    button.dataset.time = bookingTimeStr;
+
+                    if (isPast) {
+                        button.classList.add('disabled');
+                        button.disabled = true;
+                    } else {
+                        button.addEventListener('click', function() {
+                            document.querySelectorAll('.time-slot-button').forEach(btn => btn.classList.remove('selected'));
+                            this.classList.add('selected');
+                            document.getElementById('selected_booking_time').value = this.dataset.time;
+                        });
                     }
-                    currentSlotTime.setMinutes(currentSlotTime.getMinutes() + serviceDuration);
+                    timeSlotsContainer.appendChild(button);
+                    currentSlotTime.setMinutes(currentSlotTime.getMinutes() + selectedService.duration);
                 }
             });
+
+            if (timeSlotsContainer.innerHTML === '') {
+                timeSlotsContainer.innerHTML = '<p>{{ _("No available slots for the selected service and date.") }}</p>';
+            }
         }
 
-        serviceSelect.addEventListener('change', populateTimeSlots);
-        bookingDateInput.addEventListener('change', populateTimeSlots);
+        // Helper to parse "HH:MM" string into a Date object (with dummy date)
+        function parseTime(timeString) {
+            const [hours, minutes] = timeString.split(':').map(Number);
+            const date = new Date();
+            date.setHours(hours, minutes, 0, 0);
+            return date;
+        }
 
-        // Set min date for booking_date to today
-        const today = new Date().toISOString().split('T')[0];
-        bookingDateInput.setAttribute('min', today);
-
-        // Initial population on page load if values are pre-filled (e.g., after error)
-        document.addEventListener('DOMContentLoaded', () => {
-            if (bookingDateInput.value && serviceSelect.value) {
-                populateTimeSlots();
-            }
-        });
+        // Helper to format Date object into "HH:MM" string
+        function formatTime(date) {
+            const hours = date.getHours().toString().padStart(2, '0');
+            const minutes = date.getMinutes().toString().padStart(2, '0');
+            return `${hours}:${minutes}`;
+        }
     </script>
 </body>
 </html>

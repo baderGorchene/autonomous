@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ _('Booking Confirmation') }}</title>
+</head>
+<body>
+    <p>{{ _('Dear') }} {{ booking.customer_name }},</p>
+    <p>{{ _('Your booking with') }} <strong>{{ owner.business_name }}</strong> {{ _('is confirmed:') }}</p>
+    <ul>
+        <li><strong>{{ _('Service') }}:</strong> {{ booking.service_name }}</li>
+        <li><strong>{{ _('Date') }}:</strong> {{ booking.booking_date }}</li>
+        <li><strong>{{ _('Time') }}:</strong> {{ booking.booking_time }}</li>
+        <li><strong>{{ _('Business Contact Email') }}:</strong> {{ owner.email }}</li>
+        <li><strong>{{ _('Business Contact Phone') }}:</strong> {{ owner.phone if owner.phone else _('N/A') }}</li>
+    </ul>
+    <p>{{ _('We look forward to seeing you!') }}</p>
+    <p>{{ _('Best regards,') }}<br>{{ owner.business_name }}</p>
+</body>
+</html>

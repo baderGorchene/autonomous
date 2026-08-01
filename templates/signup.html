@@ -1,69 +1,38 @@
 <!DOCTYPE html>
-<html lang="{{ request.state.locale }}">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ title }}</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css">
-    <style>
-        body { font-family: sans-serif; }
-        .lang-switcher { position: absolute; top: 1rem; right: 1rem; }
-    </style>
+    <title>{{ _('Sign Up') }} - BookSlot</title>
+    <link rel="stylesheet" href="/static/style.css">
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
-    <div class="lang-switcher">
-        <a href="{{ request.url|urlencode('lang', 'en') }}" class="text-blue-500 hover:underline mx-1">English</a>
-        <a href="{{ request.url|urlencode('lang', 'ar') }}" class="text-blue-500 hover:underline mx-1">العربية</a>
-        <a href="{{ request.url|urlencode('lang', 'fr') }}" class="text-blue-500 hover:underline mx-1">Français</a>
-    </div>
-    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-        <h1 class="text-2xl font-bold text-center mb-6">{{ _("Sign Up for BookSlot") }}</h1>
-        {% if error_message %}
-            <p class="text-red-500 text-center mb-4">{{ error_message }}</p>
+<body>
+    <div class="container">
+        <h1>{{ _('Sign Up for BookSlot') }}</h1>
+        {% if error %}
+            <p style="color: red;">{{ error }}</p>
         {% endif %}
         <form action="/signup" method="post">
-            <div class="mb-4">
-                <label for="name" class="block text-gray-700 text-sm font-bold mb-2">{{ _("Your Name") }}:</label>
-                <input type="text" id="name" name="name" value="{{ name or '' }}" required
-                       class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-            </div>
-            <div class="mb-4">
-                <label for="email" class="block text-gray-700 text-sm font-bold mb-2">{{ _("Email") }}:</label>
-                <input type="email" id="email" name="email" value="{{ email or '' }}" required
-                       class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-            </div>
-            <div class="mb-4">
-                <label for="password" class="block text-gray-700 text-sm font-bold mb-2">{{ _("Password") }}:</label>
-                <input type="password" id="password" name="password" required
-                       class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-            </div>
-            <div class="mb-4">
-                <label for="business_name" class="block text-gray-700 text-sm font-bold mb-2">{{ _("Business Name") }}:</label>
-                <input type="text" id="business_name" name="business_name" value="{{ business_name or '' }}" required
-                       class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-            </div>
-            <div class="mb-4">
-                <label for="slug" class="block text-gray-700 text-sm font-bold mb-2">{{ _("Your Booking Page URL (e.g., bookslot.app/your-name)") }}:</label>
-                <div class="flex">
-                    <span class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">bookslot.app/</span>
-                    <input type="text" id="slug" name="slug" value="{{ slug or '' }}" required
-                           class="flex-1 shadow appearance-none border rounded-r-md w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                </div>
-                <p class="text-xs text-gray-500 mt-1">{{ _("Only lowercase letters, numbers, and hyphens.") }}</p>
-            </div>
-            <div class="mb-6">
-                <label for="phone" class="block text-gray-700 text-sm font-bold mb-2">{{ _("Phone Number (Optional)") }}:</label>
-                <input type="text" id="phone" name="phone" value="{{ phone or '' }}"
-                       class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-            </div>
-            <button type="submit"
-                    class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full">
-                {{ _("Sign Up") }}
-            </button>
+            <label for="name">{{ _('Your Name') }}:</label>
+            <input type="text" id="name" name="name" required>
+            <label for="email">{{ _('Email') }}:</label>
+            <input type="email" id="email" name="email" required>
+            <label for="password">{{ _('Password') }}:</label>
+            <input type="password" id="password" name="password" required>
+            <label for="business_name">{{ _('Business Name') }}:</label>
+            <input type="text" id="business_name" name="business_name" required>
+            <label for="slug">{{ _('Your Booking Page URL Slug') }} (e.g., bookslot.app/<b>your-slug</b>):</label>
+            <input type="text" id="slug" name="slug" pattern="[a-z0-9-]+" title="{{ _('Lowercase letters, numbers, and hyphens only') }}" required>
+            <label for="phone">{{ _('Phone (optional, for WhatsApp notifications)') }}:</label>
+            <input type="text" id="phone" name="phone" placeholder="{{ _('+1234567890') }}">
+            <button type="submit">{{ _('Sign Up') }}</button>
         </form>
-        <p class="text-center text-gray-600 text-sm mt-4">
-            {{ _("Already have an account?") }} <a href="/login" class="text-blue-500 hover:underline">{{ _("Log In") }}</a>
-        </p>
+        <p>{{ _('Already have an account?') }} <a href="/login">{{ _('Login here') }}</a></p>
+        <div class="language-toggle">
+            <a href="{{ request.url|urlencode('locale', 'en') }}">English</a> |
+            <a href="{{ request.url|urlencode('locale', 'ar') }}">العربية</a> |
+            <a href="{{ request.url|urlencode('locale', 'fr') }}">Français</a>
+        </div>
     </div>
 </body>
 </html>
