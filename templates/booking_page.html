@@ -1,171 +1,194 @@
 {% extends "base.html" %}
 
-{% block title %}{{ owner.business_name }} - {{ _('Book Now') }}{% endblock %}
+{% block title %}{{ owner.business_name }} - {{ _("Book an Appointment") }}{% endblock %}
 
-{% block head %}
+{% block head_extra %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <style>
-    /* Add any custom styles here if needed */
-    .service-card {
-        transition: transform 0.2s ease-in-out;
+    /* Custom styles for mobile-first design */
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f8f9fa;
+        color: #343a40;
     }
-    .service-card:hover {
-        transform: translateY(-5px);
+    .container {
+        max-width: 600px;
+        padding: 15px;
     }
-    .selected-service {
-        border-color: #3B82F6; /* blue-500 */
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+    .header-section {
+        background-color: #ffffff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,.05);
+        margin-bottom: 20px;
+        text-align: center;
     }
-    .selected-time-slot {
-        background-color: #3B82F6; /* blue-500 */
-        color: white;
+    .header-section h1 {
+        color: #007bff;
+        font-size: 1.8rem;
+        margin-bottom: 10px;
     }
-    .time-slot-button:hover:not(.selected-time-slot) {
-        background-color: #DBEAFE; /* blue-100 */
+    .header-section p {
+        font-size: 1rem;
+        color: #6c757d;
+    }
+    .booking-form-section {
+        background-color: #ffffff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,.05);
+    }
+    .form-label {
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    .form-control, .form-select {
+        border-radius: 5px;
+        padding: 10px;
+        font-size: 1rem;
+    }
+    .btn-primary {
+        background-color: #007bff;
+        border-color: #007bff;
+        padding: 10px 20px;
+        font-size: 1.1rem;
+        border-radius: 5px;
+        width: 100%;
+    }
+    .btn-primary:hover {
+        background-color: #0056b3;
+        border-color: #0056b3;
+    }
+    .error-message {
+        color: #dc3545;
+        background-color: #f8d7da;
+        border: 1px solid #f5c6cb;
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 15px;
     }
 </style>
-<script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.min.js"></script>
 {% endblock %}
 
 {% block content %}
-<div id="booking-app" class="max-w-3xl mx-auto bg-white p-6 md:p-8 rounded-lg shadow-md">
-    <h2 class="text-3xl font-bold text-gray-800 mb-2 text-center">{{ owner.business_name }}</h2>
-    <p class="text-gray-600 text-center mb-6">{{ _('Book your appointment quickly and easily!') }}</p>
-
+<div class="header-section">
+    <h1>{{ owner.business_name }}</h1>
+    <p>{{ _("Book your next appointment with ease!") }}</p>
     {% if error_message %}
-    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-        <strong class="font-bold">{{ _('Error!') }}</strong>
-        <span class="block sm:inline">{{ error_message }}</span>
-    </div>
+        <div class="error-message mt-3">{{ error_message }}</div>
     {% endif %}
-    {% if success_message %}
-    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
-        <strong class="font-bold">{{ _('Success!') }}</strong>
-        <span class="block sm:inline">{{ success_message }}</span>
-    </div>
-    {% endif %}
-
-    <form :action="'/bookslot.app/' + ownerSlug + '/submit'" method="post" class="space-y-6">
-        <!-- Step 1: Select Service -->
-        <div>
-            <h3 class="text-xl font-semibold text-gray-700 mb-4">{{ _('1. Select a Service') }}</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div v-for="service in services" :key="service.name"
-                     @click="selectService(service)"
-                     :class="{'selected-service': selectedService && selectedService.name === service.name}"
-                     class="service-card cursor-pointer border border-gray-300 rounded-lg p-4 hover:border-blue-500 transition duration-200 ease-in-out">
-                    <h4 class="font-bold text-lg mb-1">[[ service.name ]]</h4>
-                    <p class="text-gray-600 text-sm mb-2">[[ service.description || _('No description provided.') ]]</p>
-                    <p class="text-blue-600 font-semibold">[[ service.duration ]] {{ _('min') }} - [[ service.price ]] SAR</p>
-                </div>
-            </div>
-            <input type="hidden" name="service_name" :value="selectedService ? selectedService.name : ''" required>
-            <p v-if="!selectedService" class="text-red-500 text-sm mt-2">{{ _('Please select a service.') }}</p>
-        </div>
-
-        <!-- Step 2: Select Date -->
-        <div v-if="selectedService">
-            <h3 class="text-xl font-semibold text-gray-700 mb-4">{{ _('2. Select a Date') }}</h3>
-            <div class="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7">
-                <button type="button" v-for="(slots, date) in availableSlots" :key="date"
-                        @click="selectDate(date)"
-                        :class="{'bg-blue-600 text-white': selectedDate === date, 'bg-gray-200 hover:bg-gray-300': selectedDate !== date, 'opacity-50 cursor-not-allowed': slots.length === 0}"
-                        :disabled="slots.length === 0"
-                        class="p-3 rounded-lg text-center font-medium transition duration-200 ease-in-out">
-                    <span class="block text-sm">[[ formatDateShort(date) ]]</span>
-                    <span class="block text-xs">[[ formatDayOfWeek(date) ]]</span>
-                </button>
-            </div>
-            <input type="hidden" name="booking_date" :value="selectedDate" required>
-            <p v-if="!selectedDate" class="text-red-500 text-sm mt-2">{{ _('Please select a date.') }}</p>
-        </div>
-
-        <!-- Step 3: Select Time Slot -->
-        <div v-if="selectedService && selectedDate">
-            <h3 class="text-xl font-semibold text-gray-700 mb-4">{{ _('3. Select a Time Slot') }}</h3>
-            <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2">
-                <button type="button" v-for="timeSlot in availableSlots[selectedDate]" :key="timeSlot"
-                        @click="selectTimeSlot(timeSlot)"
-                        :class="{'selected-time-slot': selectedTimeSlot === timeSlot, 'bg-gray-200 hover:bg-gray-300': selectedTimeSlot !== timeSlot}"
-                        class="time-slot-button p-3 rounded-lg text-center font-medium transition duration-200 ease-in-out">
-                    [[ timeSlot ]]
-                </button>
-            </div>
-            <p v-if="availableSlots[selectedDate] && availableSlots[selectedDate].length === 0" class="text-gray-600 mt-2">{{ _('No available slots for this date.') }}</p>
-            <input type="hidden" name="booking_time" :value="selectedTimeSlot" required>
-            <p v-if="!selectedTimeSlot" class="text-red-500 text-sm mt-2">{{ _('Please select a time slot.') }}</p>
-        </div>
-
-        <!-- Step 4: Your Details -->
-        <div v-if="selectedService && selectedDate && selectedTimeSlot">
-            <h3 class="text-xl font-semibold text-gray-700 mb-4">{{ _('4. Your Details') }}</h3>
-            <div class="space-y-4">
-                <div>
-                    <label for="customer_name" class="block text-sm font-medium text-gray-700">{{ _('Your Name') }}</label>
-                    <input type="text" id="customer_name" name="customer_name" required
-                           class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                </div>
-                <div>
-                    <label for="customer_email" class="block text-sm font-medium text-gray-700">{{ _('Your Email') }}</label>
-                    <input type="email" id="customer_email" name="customer_email" required
-                           class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                </div>
-                <div>
-                    <label for="customer_phone" class="block text-sm font-medium text-gray-700">{{ _('Your Phone Number (Optional, for WhatsApp updates)') }}</label>
-                    <input type="tel" id="customer_phone" name="customer_phone"
-                           class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                </div>
-            </div>
-        </div>
-
-        <!-- Submit Button -->
-        <div v-if="selectedService && selectedDate && selectedTimeSlot">
-            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg text-lg transition duration-300">
-                {{ _('Confirm Booking') }}
-            </button>
-        </div>
-    </form>
 </div>
 
+<div class="booking-form-section">
+    <h2 class="mb-4 text-center">{{ _("Book an Appointment") }}</h2>
+    <form action="/{{ owner.slug }}/book?lang={{ locale }}" method="POST">
+        <div class="mb-3">
+            <label for="customer_name" class="form-label">{{ _("Your Name") }}</label>
+            <input type="text" class="form-control" id="customer_name" name="customer_name" required>
+        </div>
+        <div class="mb-3">
+            <label for="customer_email" class="form-label">{{ _("Your Email") }}</label>
+            <input type="email" class="form-control" id="customer_email" name="customer_email" required>
+        </div>
+        <div class="mb-3">
+            <label for="customer_phone" class="form-label">{{ _("Your Phone Number (Optional, for WhatsApp updates)") }}</label>
+            <input type="tel" class="form-control" id="customer_phone" name="customer_phone">
+        </div>
+        <div class="mb-3">
+            <label for="service_name" class="form-label">{{ _("Select Service") }}</label>
+            <select class="form-select" id="service_name" name="service_name" required>
+                <option value="">{{ _("-- Choose a service --") }}</option>
+                {% for service in services %}
+                    <option value="{{ service.name }}">{{ service.name }} ({{ service.duration_minutes }} {{ _("min") }} - {{ service.price }} {{ _("SAR") }})</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="booking_date" class="form-label">{{ _("Select Date") }}</label>
+            <input type="text" class="form-control" id="booking_date" name="booking_date" required>
+        </div>
+        <div class="mb-3">
+            <label for="booking_time" class="form-label">{{ _("Select Time") }}</label>
+            <select class="form-select" id="booking_time" name="booking_time" required>
+                <option value="">{{ _("-- Choose a time --") }}</option>
+                {# Time slots will be dynamically populated by JavaScript based on selected date and availability #}
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="notes" class="form-label">{{ _("Notes (Optional)") }}</label>
+            <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary mt-3">{{ _("Book Now") }}</button>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts_extra %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script>
-    new Vue({
-        el: '#booking-app',
-        delimiters: ['[[', ']]'],
-        data: {
-            ownerSlug: "{{ owner.slug }}",
-            services: JSON.parse('{{ services | tojson }}'),
-            availableSlots: JSON.parse('{{ available_slots | tojson }}'),
-            selectedService: null,
-            selectedDate: null,
-            selectedTimeSlot: null,
-            today: new Date()
-        },
-        methods: {
-            selectService(service) {
-                this.selectedService = service;
-                this.selectedDate = null; // Reset date and time when service changes
-                this.selectedTimeSlot = null;
-            },
-            selectDate(date) {
-                this.selectedDate = date;
-                this.selectedTimeSlot = null; // Reset time when date changes
-            },
-            selectTimeSlot(timeSlot) {
-                this.selectedTimeSlot = timeSlot;
-            },
-            formatDateShort(dateString) {
-                const date = new Date(dateString);
-                return date.toLocaleDateString('{{ lang }}', { month: 'short', day: 'numeric' });
-            },
-            formatDayOfWeek(dateString) {
-                const date = new Date(dateString);
-                return date.toLocaleDateString('{{ lang }}', { weekday: 'short' });
+    document.addEventListener('DOMContentLoaded', function() {
+        const bookingDateInput = document.getElementById('booking_date');
+        const bookingTimeSelect = document.getElementById('booking_time');
+        const ownerAvailability = {{ availability | tojson }}; // Jinja2 to JSON for JS
+        const locale = "{{ locale }}";
+
+        // Helper to convert time string (HH:MM) to minutes from midnight
+        function timeToMinutes(timeStr) {
+            const [hours, minutes] = timeStr.split(':').map(Number);
+            return hours * 60 + minutes;
+        }
+
+        // Helper to format minutes back to HH:MM string
+        function minutesToTime(totalMinutes) {
+            const hours = Math.floor(totalMinutes / 60);
+            const minutes = totalMinutes % 60;
+            return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+        }
+
+        // Initialize Flatpickr for date selection
+        flatpickr(bookingDateInput, {
+            dateFormat: "Y-m-d",
+            minDate: "today",
+            locale: locale, // Use locale for date picker
+            onChange: function(selectedDates, dateStr, instance) {
+                populateTimeSlots(dateStr);
             }
-        },
-        mounted() {
-            // Pre-select first service if available for better UX
-            if (this.services.length > 0) {
-                this.selectedService = this.services[0];
+        });
+
+        function populateTimeSlots(selectedDateStr) {
+            bookingTimeSelect.innerHTML = '<option value="">{{ _("-- Choose a time --") }}</option>';
+            if (!selectedDateStr) return;
+
+            const selectedDate = new Date(selectedDateStr);
+            const dayOfWeek = selectedDate.toLocaleString('en-US', { weekday: 'long' }); // Get English day name for matching
+
+            const availableSlotsForDay = ownerAvailability[dayOfWeek];
+
+            if (availableSlotsForDay && availableSlotsForDay.length > 0) {
+                availableSlotsForDay.forEach(slot => {
+                    const startMinutes = timeToMinutes(slot.start_time);
+                    const endMinutes = timeToMinutes(slot.end_time);
+                    const serviceDuration = 60; // TODO: Get actual service duration from selected service
+
+                    for (let i = startMinutes; i + serviceDuration <= endMinutes; i += 30) { // Increment by 30 mins
+                        const slotTime = minutesToTime(i);
+                        const option = document.createElement('option');
+                        option.value = slotTime;
+                        option.textContent = slotTime;
+                        bookingTimeSelect.appendChild(option);
+                    }
+                });
+            } else {
+                const option = document.createElement('option');
+                option.value = "";
+                option.textContent = "{{ _('No availability for this day') }}";
+                bookingTimeSelect.appendChild(option);
             }
+        }
+
+        // Initial population if a date is pre-selected (e.g., after an error)
+        if (bookingDateInput.value) {
+            populateTimeSlots(bookingDateInput.value);
         }
     });
 </script>

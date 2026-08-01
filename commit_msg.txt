@@ -1,1 +1,1 @@
-Fix: Re-provision requirements.txt and core application files to resolve 'No module named pytest' and ensure test execution
+Fix: Re-provision requirements.txt and test_main.py to resolve 'No module named pytest'

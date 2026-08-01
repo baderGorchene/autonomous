@@ -18,6 +18,7 @@ def get_jinja_env(locale='en'):
         translate = gettext.NullTranslations()
     else:
         try:
+            # Ensure the domain matches the .po file name (e.g., 'messages.po')
             translate = gettext.translation('messages', LOCALES_DIR, languages=[locale], fallback=True)
         except Exception as e:
             logger.warning(f"Could not load translations for locale '{locale}': {e}")

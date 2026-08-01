@@ -1,25 +1,63 @@
 {% extends "base.html" %}
 
-{% block title %}{{ _('Login to BookSlot') }}{% endblock %}
+{% block title %}{{ _("Login") }} - BookSlot{% endblock %}
 
 {% block content %}
-<div class="max-w-md mx-auto bg-white p-8 rounded-lg shadow-md">
-    <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">{{ _('Login') }}</h2>
-    <form action="/token" method="post" class="space-y-4">
-        <div>
-            <label for="username" class="block text-gray-700 text-sm font-bold mb-2">{{ _('Email') }}:</label>
-            <input type="email" id="username" name="username" required class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card mt-5">
+            <div class="card-header text-center">
+                <h3>{{ _("Owner Login") }}</h3>
+            </div>
+            <div class="card-body">
+                <form id="loginForm">
+                    <div class="mb-3">
+                        <label for="email" class="form-label">{{ _("Email address") }}</label>
+                        <input type="email" class="form-control" id="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">{{ _("Password") }}</label>
+                        <input type="password" class="form-control" id="password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">{{ _("Login") }}</button>
+                </form>
+                <div class="mt-3 text-center">
+                    {{ _("Don't have an account?") }} <a href="/signup?lang={{ locale }}">{{ _("Sign Up") }}</a>
+                </div>
+            </div>
         </div>
-        <div>
-            <label for="password" class="block text-gray-700 text-sm font-bold mb-2">{{ _('Password') }}:</label>
-            <input type="password" id="password" name="password" required class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline">
-        </div>
-        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full">
-            {{ _('Login') }}
-        </button>
-    </form>
-    <p class="mt-6 text-center text-gray-600">
-        {{ _('Don\'t have an account?') }} <a href="/signup" class="text-blue-600 hover:text-blue-800 font-bold">{{ _('Sign Up') }}</a>
-    </p>
+    </div>
 </div>
+{% endblock %}
+
+{% block scripts_extra %}
+<script>
+    document.getElementById('loginForm').addEventListener('submit', async function(event) {
+        event.preventDefault();
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+
+        try {
+            const response = await fetch('/token', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `username=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                localStorage.setItem('access_token', data.access_token);
+                window.location.href = '/dashboard?lang={{ locale }}';
+            } else {
+                const errorData = await response.json();
+                alert('Login failed: ' + (errorData.detail || 'Invalid credentials'));
+            }
+        } catch (error) {
+            console.error('Network error:', error);
+            alert('A network error occurred during login.');
+        }
+    });
+</script>
 {% endblock %}

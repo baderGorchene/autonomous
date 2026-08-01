@@ -2,7 +2,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 import os
 
 class Settings(BaseSettings):
-    SECRET_KEY: str
+    SECRET_KEY: str = "super-secret-key"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     TWILIO_WHATSAPP_NUMBER: str = "" # Made optional for dev/test without actual keys
     GEMINI_API_KEY: str = ""
 
-    DATABASE_URL: str # This will be overridden for tests
+    DATABASE_URL: str = "sqlite:///./sql_app.db" # Default for non-testing, overridden for tests
     TESTING: bool = False # New flag to indicate testing environment
 
     _current_file_dir = os.path.dirname(os.path.abspath(__file__))

@@ -1,14 +1,30 @@
 {% extends "base.html" %}
 
-{% block title %}{{ _('Booking Confirmed!') }}{% endblock %}
+{% block title %}{{ _("Booking Confirmed!") }} - BookSlot{% endblock %}
 
 {% block content %}
-<div class="max-w-md mx-auto bg-white p-8 rounded-lg shadow-md text-center">
-    <h2 class="text-3xl font-bold text-green-600 mb-4">{{ _('Booking Confirmed!') }} <i class="fas fa-check-circle"></i></h2>
-    <p class="text-gray-700 mb-6">{{ _('Thank you for your booking.') }}</p>
-    <p class="text-gray-700 mb-6">{{ _('You will receive a confirmation email shortly.') }}</p>
-    <a href="/" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg text-lg transition duration-300">
-        {{ _('Go to Home') }}
-    </a>
+<div class="text-center py-5">
+    <h1 class="display-4 text-success">{{ _("Booking Confirmed!") }}</h1>
+    <p class="lead">{{ _("Thank you for your booking with") }} <strong>{{ owner.business_name }}</strong>.</p>
+    <p>{{ _("A confirmation email has been sent to") }} <strong>{{ booking.customer_email }}</strong>.</p>
+    
+    <div class="card mt-4 mx-auto" style="max-width: 500px;">
+        <div class="card-header">
+            {{ _("Booking Details") }}
+        </div>
+        <ul class="list-group list-group-flush">
+            <li class="list-group-item"><strong>{{ _("Service") }}:</strong> {{ booking.service_name }}</li>
+            <li class="list-group-item"><strong>{{ _("Date") }}:</strong> {{ booking.booking_date.strftime('%Y-%m-%d') }}</li>
+            <li class="list-group-item"><strong>{{ _("Time") }}:</strong> {{ booking.booking_time.strftime('%H:%M') }}</li>
+            <li class="list-group-item"><strong>{{ _("Your Name") }}:</strong> {{ booking.customer_name }}</li>
+            <li class="list-group-item"><strong>{{ _("Your Email") }}:</strong> {{ booking.customer_email }}</li>
+            <li class="list-group-item"><strong>{{ _("Your Phone") }}:</strong> {{ booking.customer_phone or _("N/A") }}</li>
+            <li class="list-group-item"><strong>{{ _("Notes") }}:</strong> {{ booking.notes or _("N/A") }}</li>
+        </ul>
+    </div>
+
+    <p class="mt-4">
+        <a href="/{{ owner.slug }}?lang={{ locale }}" class="btn btn-primary">{{ _("Book Another Appointment") }}</a>
+    </p>
 </div>
 {% endblock %}

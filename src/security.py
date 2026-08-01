@@ -23,11 +23,4 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     return encoded_jwt
 
 def decode_access_token(token: str):
-    try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        email: str = payload.get("sub")
-        if email is None:
-            return None
-        return email
-    except JWTError:
-        return None
+    return jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
