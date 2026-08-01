@@ -1,47 +1,58 @@
 from pydantic import BaseModel, EmailStr
 from typing import List, Dict, Optional
-from datetime import datetime
+import datetime
 
 class OwnerBase(BaseModel):
     name: str
     email: EmailStr
     business_name: str
-    slug: str
     phone: Optional[str] = None
 
 class OwnerCreate(OwnerBase):
     password: str
+    slug: Optional[str] = None # Slug can be optional, generated if not provided
 
 class Owner(OwnerBase):
     id: int
-    services_json: str = "[]"
-    availability_json: str = "{}"
+    slug: str
+    services_json: str
+    availability_json: str
 
     class Config:
-        from_attributes = True
+        orm_mode = True
 
 class OwnerProfileUpdate(BaseModel):
     name: str
     business_name: str
     phone: Optional[str] = None
-    services_json: str = "[]" # To be validated and parsed in main.py
-    availability_json: str = "{}" # To be validated and parsed in main.py
+    services: List[Dict] = []
+    availability: Dict = {}
 
 class Token(BaseModel):
     access_token: str
     token_type: str
+    owner: Owner # Added owner to the token response
 
 class TokenData(BaseModel):
     email: Optional[str] = None
+
+class Service(BaseModel):
+    name: str
+    duration: int # in minutes
+    price: float
+
+class AvailabilitySlot(BaseModel):
+    day_of_week: int # 0-6 for Monday-Sunday
+    start_time: str # HH:MM
+    end_time: str # HH:MM
 
 class BookingBase(BaseModel):
     customer_name: str
     customer_email: EmailStr
     customer_phone: Optional[str] = None
     service_name: str
-    booking_date: str # YYYY-MM-DD
-    booking_time: str # HH:MM
-    notes: Optional[str] = None
+    booking_date: datetime.date
+    booking_time: str
 
 class BookingCreate(BookingBase):
     pass
@@ -49,7 +60,7 @@ class BookingCreate(BookingBase):
 class Booking(BookingBase):
     id: int
     owner_id: int
-    created_at: datetime
+    status: str
 
     class Config:
-        from_attributes = True
+        orm_mode = True
