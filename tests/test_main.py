@@ -1,5 +1,5 @@
 import pytest
-from fastapi.testclient import TestClient
+from httpx import AsyncClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from src.database import Base, get_db
@@ -7,40 +7,60 @@ from src.main import app
 from src.config import settings
 import os
 import json
-import datetime
+from datetime import date, timedelta
 
-# Setup a test database
-SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
-# Override the DATABASE_URL for testing
-settings.DATABASE_URL = SQLALCHEMY_DATABASE_URL
-settings.TESTING = True # Set testing flag
+# Override the database URL for testing to use an in-memory SQLite database
+# This ensures tests are isolated and don't affect a real database
+TEST_DATABASE_URL = "sqlite:///./test.db" # Use a file-based sqlite for persistence across test runs if needed, or :memory: for in-memory
 
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
-)
+# Ensure the test database file doesn't exist before starting tests if using file-based
+if TEST_DATABASE_URL != "sqlite:///:memory:" and os.path.exists(TEST_DATABASE_URL.replace("sqlite:///","")):
+    os.remove(TEST_DATABASE_URL.replace("sqlite:///",""))
+
+engine = create_engine(TEST_DATABASE_URL, connect_args={"check_same_thread": False})
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-@pytest.fixture(name="session")
-def session_fixture():
-    Base.metadata.drop_all(bind=engine) # Start fresh for each test
-    Base.metadata.create_all(bind=engine)
+# Dependency override for testing
+def override_get_db():
     db = TestingSessionLocal()
     try:
         yield db
     finally:
         db.close()
 
-@pytest.fixture(name="client")
-def client_fixture(session: TestingSessionLocal):
-    def override_get_db():
-        yield session
-    app.dependency_overrides[get_db] = override_get_db
-    yield TestClient(app)
-    app.dependency_overrides.clear() # Clean up overrides
+app.dependency_overrides[get_db] = override_get_db
 
-# --- Helper functions for tests ---
-def get_owner_token(client: TestClient, email, password):
-    response = client.post(
+@pytest.fixture(name="test_db")
+def test_db_fixture():
+    # Create tables
+    Base.metadata.create_all(bind=engine)
+    yield
+    # Drop tables after tests
+    Base.metadata.drop_all(bind=engine)
+
+@pytest.fixture(name="client")
+async def client_fixture(test_db):
+    async with AsyncClient(app=app, base_url="http://test") as client:
+        yield client
+
+# --- Helper functions for common operations ---
+async def signup_owner(client: AsyncClient, email: str, password: str, slug: str):
+    response = await client.post(
+        "/signup",
+        json={
+            "name": "Test Owner",
+            "email": email,
+            "password": password,
+            "business_name": "Test Business",
+            "slug": slug,
+            "phone": "+1234567890"
+        }
+    )
+    assert response.status_code == 200
+    return response.json()["access_token"]
+
+async def login_owner(client: AsyncClient, email: str, password: str):
+    response = await client.post(
         "/token",
         data={"username": email, "password": password}
     )
@@ -49,324 +69,391 @@ def get_owner_token(client: TestClient, email, password):
 
 # --- Tests ---
 
-def test_health_check(client: TestClient):
-    response = client.get("/health")
+@pytest.mark.asyncio
+async def test_health_check(client: AsyncClient):
+    response = await client.get("/health")
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
 
-def test_signup_owner(client: TestClient):
-    # Test successful signup
-    response = client.post(
-        "/signup",
-        data={
-            "name": "Test Owner",
-            "email": "test@example.com",
-            "password": "testpassword",
-            "business_name": "Test Business",
-            "slug": "test-business",
-            "phone": "+1234567890"
-        },
-        follow_redirects=False # Don't follow redirect to /login
-    )
-    assert response.status_code == 303 # Should redirect to login
-    assert response.headers["location"] == "/login"
+@pytest.mark.asyncio
+async def test_owner_signup_and_login(client: AsyncClient):
+    # Signup
+    email = "testowner@example.com"
+    password = "testpassword"
+    slug = "test-business-slug"
+    access_token = await signup_owner(client, email, password, slug)
+    assert access_token is not None
 
-    # Test duplicate email signup
-    response = client.post(
+    # Login with correct credentials
+    token = await login_owner(client, email, password)
+    assert token is not None
+
+    # Login with incorrect password
+    response = await client.post(
+        "/token",
+        data={"username": email, "password": "wrongpassword"}
+    )
+    assert response.status_code == 401
+
+    # Login with unregistered email
+    response = await client.post(
+        "/token",
+        data={"username": "nonexistent@example.com", "password": "anypassword"}
+    )
+    assert response.status_code == 401
+
+@pytest.mark.asyncio
+async def test_duplicate_email_signup(client: AsyncClient):
+    email = "duplicate@example.com"
+    password = "testpassword"
+    slug = "duplicate-slug"
+    await signup_owner(client, email, password, slug)
+
+    response = await client.post(
         "/signup",
-        data={
-            "name": "Another Owner",
-            "email": "test@example.com", # Duplicate email
-            "password": "anotherpassword",
+        json={
+            "name": "Another Test Owner",
+            "email": email, # Duplicate email
+            "password": password,
             "business_name": "Another Business",
-            "slug": "another-business",
+            "slug": "another-slug",
             "phone": "+1987654321"
         }
     )
-    assert response.status_code == 200 # Renders signup page with error
-    assert "Email already registered" in response.text
+    assert response.status_code == 400
+    assert "Email already registered" in response.json()["detail"]
 
-    # Test duplicate slug signup
-    response = client.post(
+@pytest.mark.asyncio
+async def test_duplicate_slug_signup(client: AsyncClient):
+    email = "slugtest@example.com"
+    password = "testpassword"
+    slug = "duplicate-slug-test"
+    await signup_owner(client, email, password, slug)
+
+    response = await client.post(
         "/signup",
-        data={
-            "name": "Yet Another Owner",
-            "email": "yet@example.com",
-            "password": "yetanotherpassword",
-            "business_name": "Yet Another Business",
-            "slug": "test-business", # Duplicate slug
-            "phone": "+1112223333"
+        json={
+            "name": "Another Test Owner",
+            "email": "anotheremail@example.com",
+            "password": password,
+            "business_name": "Another Business",
+            "slug": slug, # Duplicate slug
+            "phone": "+1987654321"
         }
     )
-    assert response.status_code == 200 # Renders signup page with error
-    assert "Business URL already taken" in response.text
+    assert response.status_code == 400
+    assert "Business slug already taken" in response.json()["detail"]
 
-def test_login_owner(client: TestClient):
-    # First, sign up an owner
-    client.post(
-        "/signup",
-        data={
-            "name": "Login Test",
-            "email": "login@example.com",
-            "password": "loginpassword",
-            "business_name": "Login Business",
-            "slug": "login-business",
-            "phone": "+1234567890"
-        },
-        follow_redirects=False
-    )
+@pytest.mark.asyncio
+async def test_dashboard_access(client: AsyncClient):
+    token = await signup_owner(client, "dashboard@example.com", "password", "dashboard-slug")
 
-    # Test successful login via form
-    response = client.post(
-        "/login",
-        data={"email": "login@example.com", "password": "loginpassword"},
-        follow_redirects=False
-    )
-    assert response.status_code == 303 # Should redirect to dashboard
-    assert response.headers["location"] == "/dashboard"
-    assert "access_token" in response.cookies
-
-    # Test invalid credentials
-    response = client.post(
-        "/login",
-        data={"email": "login@example.com", "password": "wrongpassword"}
-    )
-    assert response.status_code == 200 # Renders login page with error
-    assert "Incorrect email or password" in response.text
-
-def test_dashboard_access(client: TestClient):
-    # First, sign up and log in an owner
-    client.post(
-        "/signup",
-        data={
-            "name": "Dashboard Owner",
-            "email": "dashboard@example.com",
-            "password": "dashboardpassword",
-            "business_name": "Dashboard Business",
-            "slug": "dashboard-business",
-            "phone": "+1234567890"
-        },
-        follow_redirects=False
-    )
-    login_response = client.post(
-        "/login",
-        data={"email": "dashboard@example.com", "password": "dashboardpassword"},
-        follow_redirects=False
-    )
-    access_token = login_response.cookies["access_token"]
-
-    # Test authenticated access
-    response = client.get(
+    # Access dashboard with token
+    response = await client.get(
         "/dashboard",
-        cookies={"access_token": access_token}
+        headers={"Authorization": f"Bearer {token}"}
     )
     assert response.status_code == 200
-    assert "Welcome, Dashboard Owner!" in response.text
-    assert "Your Booking Page Link: <a href=\"/bookslot.app/dashboard-business\"" in response.text
+    assert "Welcome, Test Owner!" in response.text # Check for content in rendered template
 
-    # Test unauthenticated access (no token)
-    response = client.get("/dashboard")
-    assert response.status_code == 401 # Should be unauthorized due to Depends(get_current_owner)
+    # Access dashboard without token
+    response = await client.get("/dashboard")
+    assert response.status_code == 401 # Should redirect or return unauthorized
 
-def test_update_owner_profile(client: TestClient):
-    # Sign up and log in
-    client.post("/signup", data={"name": "Updater", "email": "updater@example.com", "password": "pass", "business_name": "OldBiz", "slug": "updater", "phone": ""}, follow_redirects=False)
-    login_response = client.post("/login", data={"email": "updater@example.com", "password": "pass"}, follow_redirects=False)
-    access_token = login_response.cookies["access_token"]
+@pytest.mark.asyncio
+async def test_profile_update(client: AsyncClient):
+    email = "profile@example.com"
+    password = "password"
+    slug = "profile-slug"
+    token = await signup_owner(client, email, password, slug)
 
-    updated_services = json.dumps([{"name": "New Service", "description": "Desc", "duration_minutes": 60, "price": 100.0}])
-    updated_availability = json.dumps({
-        "monday": {"is_available": True, "slots": [{"start_time": "09:00", "end_time": "17:00"}]},
-        "tuesday": {"is_available": False, "slots": []}
-    })
-
-    response = client.post(
-        "/dashboard/profile",
-        data={
-            "name": "Updated Updater",
-            "business_name": "New Business Name",
-            "phone": "+9876543210",
-            "services_data": updated_services,
-            "availability_data": updated_availability
-        },
-        cookies={"access_token": access_token}
-    )
-    assert response.status_code == 200
-    assert "Profile updated successfully!" in response.text
-    assert "Updated Updater" in response.text
-    assert "New Business Name" in response.text
-    assert "+9876543210" in response.text
-    assert "New Service" in response.text
-    assert "09:00" in response.text # Check for availability update
-
-    # Test with invalid JSON
-    response = client.post(
-        "/dashboard/profile",
-        data={
-            "name": "Updater",
-            "business_name": "OldBiz",
-            "phone": "",
-            "services_data": "invalid json",
-            "availability_data": "{}"
-        },
-        cookies={"access_token": access_token}
-    )
-    assert response.status_code == 200
-    assert "Invalid JSON format for services or availability." in response.text
-
-def test_public_booking_page(client: TestClient):
-    # Sign up an owner
-    client.post(
-        "/signup",
-        data={
-            "name": "Booker",
-            "email": "booker@example.com",
-            "password": "pass",
-            "business_name": "Booker's Spa",
-            "slug": "bookers-spa",
-            "phone": "+1112223333"
-        },
-        follow_redirects=False
-    )
-    # Update services and availability for the owner
-    login_response = client.post("/login", data={"email": "booker@example.com", "password": "pass"}, follow_redirects=False)
-    access_token = login_response.cookies["access_token"]
-    
-    services_data = json.dumps([{"name": "Massage", "description": "Relaxing", "duration_minutes": 60, "price": 80.0}])
-    availability_data = json.dumps({
-        "monday": {"is_available": True, "slots": [{"start_time": "09:00", "end_time": "17:00"}]},
-        "tuesday": {"is_available": False, "slots": []},
-        "wednesday": {"is_available": True, "slots": [{"start_time": "10:00", "end_time": "12:00"}]}
-    })
-    client.post(
-        "/dashboard/profile",
-        data={
-            "name": "Booker", "business_name": "Booker's Spa", "phone": "+1112223333",
-            "services_data": services_data, "availability_data": availability_data
-        },
-        cookies={"access_token": access_token}
-    )
-
-    # Test accessing public booking page
-    response = client.get("/bookslot.app/bookers-spa")
-    assert response.status_code == 200
-    assert "Booker's Spa" in response.text
-    assert "Massage" in response.text # Check if service is displayed
-
-    # Test non-existent slug
-    response = client.get("/bookslot.app/non-existent-slug")
-    assert response.status_code == 404
-    assert "Booking page not found" in response.json()["detail"]
-
-def test_submit_booking(client: TestClient):
-    # Sign up an owner (same as above for setup)
-    client.post(
-        "/signup",
-        data={
-            "name": "Booker",
-            "email": "booker_submit@example.com",
-            "password": "pass",
-            "business_name": "Booker's Spa",
-            "slug": "bookers-spa-submit",
-            "phone": "+1112223333"
-        },
-        follow_redirects=False
-    )
-    login_response = client.post("/login", data={"email": "booker_submit@example.com", "password": "pass"}, follow_redirects=False)
-    access_token = login_response.cookies["access_token"]
-    
-    services_data = json.dumps([{"name": "Massage", "description": "Relaxing", "duration_minutes": 60, "price": 80.0}])
-    # Ensure availability for a future date
-    tomorrow = (datetime.date.today() + datetime.timedelta(days=1)).strftime("%A").lower()
-    availability_data = json.dumps({
-        tomorrow: {"is_available": True, "slots": [{"start_time": "10:00", "end_time": "12:00"}]}
-    })
-    client.post(
-        "/dashboard/profile",
-        data={
-            "name": "Booker", "business_name": "Booker's Spa", "phone": "+1112223333",
-            "services_data": services_data, "availability_data": availability_data
-        },
-        cookies={"access_token": access_token}
-    )
-
-    booking_date = (datetime.date.today() + datetime.timedelta(days=1)).strftime("%Y-%m-%d")
-
-    # Test successful booking submission
-    response = client.post(
-        "/bookslot.app/bookers-spa-submit/book",
-        data={
-            "customer_name": "Jane Doe",
-            "customer_email": "jane@example.com",
-            "customer_phone": "+9988776655",
-            "service_name": "Massage",
-            "booking_date": booking_date,
-            "booking_time": "10:00 AM"
+    updated_profile_data = {
+        "name": "Updated Name",
+        "business_name": "Updated Business",
+        "phone": "+1122334455",
+        "services": [
+            {"name": "Haircut", "duration": 30, "price": 25.0, "description": "Standard haircut"},
+            {"name": "Shave", "duration": 15, "price": 10.0}
+        ],
+        "availability": {
+            "Monday": [{"start_time": "09:00", "end_time": "17:00"}],
+            "Wednesday": [{"start_time": "10:00", "end_time": "18:00"}]
         }
+    }
+
+    response = await client.post(
+        "/profile/update",
+        json=updated_profile_data,
+        headers={"Authorization": f"Bearer {token}"}
     )
     assert response.status_code == 200
-    assert "Booking Confirmed!" in response.text
-    assert "Jane Doe" in response.text
-    assert "Massage" in response.text
-    assert booking_date in response.text
-    assert "10:00 AM" in response.text
+    assert response.json()["name"] == "Updated Name"
+    assert response.json()["business_name"] == "Updated Business"
+    assert response.json()["phone"] == "+1122334455"
+    
+    # Verify services and availability are updated in the database by fetching dashboard
+    dashboard_response = await client.get(
+        "/dashboard",
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    assert "Haircut" in dashboard_response.text
+    assert "09:00" in dashboard_response.text
 
-    # Test booking with invalid date format
-    response = client.post(
-        "/bookslot.app/bookers-spa-submit/book",
+@pytest.mark.asyncio
+async def test_public_booking_page(client: AsyncClient):
+    email = "publicbooker@example.com"
+    password = "password"
+    slug = "bookslot-test-owner"
+    token = await signup_owner(client, email, password, slug)
+
+    # Update profile with services and availability for booking
+    updated_profile_data = {
+        "name": "BookSlot Test Owner",
+        "business_name": "BookSlot Salon",
+        "phone": "+1122334455",
+        "services": [
+            {"name": "Basic Haircut", "duration": 30, "price": 50.0},
+            {"name": "Coloring", "duration": 120, "price": 150.0}
+        ],
+        "availability": {
+            (date.today() + timedelta(days=1)).strftime("%A"): [{"start_time": "09:00", "end_time": "17:00"}]
+        }
+    }
+    await client.post("/profile/update", json=updated_profile_data, headers={"Authorization": f"Bearer {token}"})
+
+    response = await client.get(f"/bookslot.app/{slug}")
+    assert response.status_code == 200
+    assert "BookSlot Salon" in response.text
+    assert "Basic Haircut" in response.text
+    assert "Coloring" in response.text
+    assert (date.today() + timedelta(days=1)).strftime("%A") in response.text # Check for next day's availability
+
+@pytest.mark.asyncio
+async def test_booking_submission(client: AsyncClient):
+    email = "bookingowner@example.com"
+    password = "password"
+    slug = "booking-test-owner"
+    token = await signup_owner(client, email, password, slug)
+
+    # Update profile with services and availability for booking
+    booking_date = date.today() + timedelta(days=2) # Book for 2 days from now
+    updated_profile_data = {
+        "name": "Booking Test Owner",
+        "business_name": "Booking Clinic",
+        "phone": "+1234567890", # Ensure owner has phone for WhatsApp test
+        "services": [
+            {"name": "Consultation", "duration": 60, "price": 100.0}
+        ],
+        "availability": {
+            booking_date.strftime("%A"): [{"start_time": "09:00", "end_time": "17:00"}]
+        }
+    }
+    await client.post("/profile/update", json=updated_profile_data, headers={"Authorization": f"Bearer {token}"})
+
+    # Submit a booking
+    response = await client.post(
+        f"/bookslot.app/{slug}/submit",
         data={
-            "customer_name": "Invalid Date",
+            "customer_name": "John Doe",
+            "customer_email": "john.doe@example.com",
+            "customer_phone": "+1987654321",
+            "service_name": "Consultation",
+            "booking_date": booking_date.isoformat(),
+            "booking_time": "10:00"
+        },
+        follow_redirects=False # Do not follow redirect to check status code
+    )
+    assert response.status_code == 303 # Should redirect on success
+    assert "Booking confirmed!" in response.headers["location"]
+
+    # Verify booking appears in dashboard
+    dashboard_response = await client.get(
+        "/dashboard",
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    assert "John Doe" in dashboard_response.text
+    assert "Consultation" in dashboard_response.text
+    assert "10:00" in dashboard_response.text
+
+@pytest.mark.asyncio
+async def test_internationalization_dashboard(client: AsyncClient):
+    token = await signup_owner(client, "i18n@example.com", "password", "i18n-slug")
+
+    # Test Arabic
+    response_ar = await client.get(
+        "/dashboard?lang=ar",
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    assert response_ar.status_code == 200
+    assert "لوحة التحكم" in response_ar.text # Arabic for Dashboard
+    assert "مرحباً بك،" in response_ar.text # Arabic for Welcome,
+
+    # Test French
+    response_fr = await client.get(
+        "/dashboard?lang=fr",
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    assert response_fr.status_code == 200
+    assert "Tableau de bord" in response_fr.text # French for Dashboard
+    assert "Bienvenue," in response_fr.text # French for Welcome,
+
+    # Test English (default)
+    response_en = await client.get(
+        "/dashboard",
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    assert response_en.status_code == 200
+    assert "Dashboard" in response_en.text
+    assert "Welcome," in response_en.text
+
+@pytest.mark.asyncio
+async def test_internationalization_booking_page(client: AsyncClient):
+    email = "i18nbooker@example.com"
+    password = "password"
+    slug = "i18n-book-page"
+    token = await signup_owner(client, email, password, slug)
+    
+    # Update profile with services for booking page
+    updated_profile_data = {
+        "name": "I18n Booker",
+        "business_name": "I18n Service",
+        "phone": "+1122334455",
+        "services": [
+            {"name": "Test Service", "duration": 30, "price": 50.0}
+        ],
+        "availability": {}
+    }
+    await client.post("/profile/update", json=updated_profile_data, headers={"Authorization": f"Bearer {token}"})
+
+    # Test Arabic
+    response_ar = await client.get(f"/bookslot.app/{slug}?lang=ar")
+    assert response_ar.status_code == 200
+    assert "احجز الآن" in response_ar.text # Arabic for Book Now
+    assert "1. اختر خدمة" in response_ar.text # Arabic for 1. Select a Service
+
+    # Test French
+    response_fr = await client.get(f"/bookslot.app/{slug}?lang=fr")
+    assert response_fr.status_code == 200
+    assert "Réserver maintenant" in response_fr.text # French for Book Now
+    assert "1. Sélectionnez un service" in response_fr.text # French for 1. Select a Service
+
+@pytest.mark.asyncio
+async def test_error_handling_booking_submission(client: AsyncClient):
+    email = "errorowner@example.com"
+    password = "password"
+    slug = "error-test-owner"
+    token = await signup_owner(client, email, password, slug)
+
+    # Update profile with services and availability
+    booking_date = date.today() + timedelta(days=1)
+    updated_profile_data = {
+        "name": "Error Test Owner",
+        "business_name": "Error Clinic",
+        "phone": "+1234567890",
+        "services": [
+            {"name": "Consultation", "duration": 60, "price": 100.0}
+        ],
+        "availability": {
+            booking_date.strftime("%A"): [{"start_time": "09:00", "end_time": "17:00"}]
+        }
+    }
+    await client.post("/profile/update", json=updated_profile_data, headers={"Authorization": f"Bearer {token}"})
+
+    # Missing required field (customer_name)
+    response = await client.post(
+        f"/bookslot.app/{slug}/submit",
+        data={
             "customer_email": "invalid@example.com",
-            "customer_phone": "+9988776655",
-            "service_name": "Massage",
-            "booking_date": "2023/10/27", # Invalid format
-            "booking_time": "10:00 AM"
-        }
-    )
-    assert response.status_code == 200 # Renders booking page with error
-    assert "Invalid date or time format." in response.text
-
-def test_language_toggle(client: TestClient):
-    # Test setting language to Arabic on root
-    response = client.get("/set_lang/ar", follow_redirects=False)
-    assert response.status_code == 303
-    assert response.cookies["lang"] == "ar"
-
-    # Access signup page with Arabic cookie
-    response = client.get("/signup", cookies={"lang": "ar"})
-    assert response.status_code == 200
-    assert "التسجيل" in response.text # Check for Arabic translation of "Sign Up"
-
-    # Test setting language to French on root
-    response = client.get("/set_lang/fr", follow_redirects=False)
-    assert response.status_code == 303
-    assert response.cookies["lang"] == "fr"
-
-    # Access signup page with French cookie
-    response = client.get("/signup", cookies={"lang": "fr"})
-    assert response.status_code == 200
-    assert "S'inscrire" in response.text # Check for French translation of "Sign Up"
-
-    # Test language toggle on dashboard
-    client.post(
-        "/signup",
-        data={
-            "name": "Lang Tester",
-            "email": "lang@example.com",
-            "password": "langpass",
-            "business_name": "Lang Business",
-            "slug": "lang-business",
-            "phone": ""
+            "service_name": "Consultation",
+            "booking_date": booking_date.isoformat(),
+            "booking_time": "10:00"
         },
         follow_redirects=False
     )
-    login_response = client.post("/login", data={"email": "lang@example.com", "password": "langpass"}, follow_redirects=False)
-    access_token = login_response.cookies["access_token"]
+    assert response.status_code == 422 # FastAPI Pydantic validation error for missing form field
+    # The actual HTML form submission might result in 400 with a custom message,
+    # but direct POST to endpoint will be 422 for Pydantic validation
 
-    response = client.get("/dashboard", cookies={"access_token": access_token, "lang": "fr"})
-    assert response.status_code == 200
-    assert "Tableau de bord" in response.text # Check French translation
+    # Invalid email format
+    response = await client.post(
+        f"/bookslot.app/{slug}/submit",
+        data={
+            "customer_name": "Invalid Email",
+            "customer_email": "invalid-email", # Invalid email
+            "service_name": "Consultation",
+            "booking_date": booking_date.isoformat(),
+            "booking_time": "10:00"
+        },
+        follow_redirects=False
+    )
+    assert response.status_code == 422
 
-    response = client.get("/dashboard", cookies={"access_token": access_token, "lang": "ar"})
-    assert response.status_code == 200
-    assert "لوحة التحكم" in response.text # Check Arabic translation
+@pytest.mark.asyncio
+async def test_error_handling_profile_update(client: AsyncClient):
+    email = "updateerror@example.com"
+    password = "password"
+    slug = "update-error-slug"
+    token = await signup_owner(client, email, password, slug)
+
+    # Invalid services format (not a list)
+    invalid_services_data = {
+        "name": "Test Name",
+        "business_name": "Test Business",
+        "phone": "+1234567890",
+        "services": "not a list", # Invalid
+        "availability": {}
+    }
+    response = await client.post(
+        "/profile/update",
+        json=invalid_services_data,
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    assert response.status_code == 422 # Pydantic validation error
+
+    # Invalid service item format (missing name)
+    invalid_service_item_data = {
+        "name": "Test Name",
+        "business_name": "Test Business",
+        "phone": "+1234567890",
+        "services": [{"duration": 30, "price": 25.0}], # Missing name
+        "availability": {}
+    }
+    response = await client.post(
+        "/profile/update",
+        json=invalid_service_item_data,
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    assert response.status_code == 422
+    
+    # Invalid availability format (not a dict)
+    invalid_availability_data = {
+        "name": "Test Name",
+        "business_name": "Test Business",
+        "phone": "+1234567890",
+        "services": [],
+        "availability": "not a dict" # Invalid
+    }
+    response = await client.post(
+        "/profile/update",
+        json=invalid_availability_data,
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    assert response.status_code == 422
+
+    # Invalid time format in availability
+    invalid_time_format_data = {
+        "name": "Test Name",
+        "business_name": "Test Business",
+        "phone": "+1234567890",
+        "services": [],
+        "availability": {
+            "Monday": [{"start_time": "09-00", "end_time": "17:00"}] # Invalid time format
+        }
+    }
+    response = await client.post(
+        "/profile/update",
+        json=invalid_time_format_data,
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    assert response.status_code == 400 # Custom validation in main.py for time format
+    assert "Invalid time format" in response.json()["detail"]

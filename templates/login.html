@@ -1,29 +1,25 @@
-<!DOCTYPE html>
-<html lang="{{ request.cookies.get('lang', 'en') }}">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _('Login') }} - BookSlot</title>
-</head>
-<body>
-    <h1>{{ _('Login to BookSlot') }}</h1>
-    {% if error_message %}
-        <p style="color: red;">{{ error_message }}</p>
-    {% endif %}
-    <form action="/login" method="post">
-        <label for="email">{{ _('Email:') }}</label><br>
-        <input type="email" id="email" name="email" required><br><br>
-        
-        <label for="password">{{ _('Password:') }}</label><br>
-        <input type="password" id="password" name="password" required><br><br>
-        
-        <input type="submit" value="{{ _('Login') }}">
+{% extends "base.html" %}
+
+{% block title %}{{ _('Login to BookSlot') }}{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto bg-white p-8 rounded-lg shadow-md">
+    <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">{{ _('Login') }}</h2>
+    <form action="/token" method="post" class="space-y-4">
+        <div>
+            <label for="username" class="block text-gray-700 text-sm font-bold mb-2">{{ _('Email') }}:</label>
+            <input type="email" id="username" name="username" required class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+        </div>
+        <div>
+            <label for="password" class="block text-gray-700 text-sm font-bold mb-2">{{ _('Password') }}:</label>
+            <input type="password" id="password" name="password" required class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline">
+        </div>
+        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full">
+            {{ _('Login') }}
+        </button>
     </form>
-    <p>{{ _('Don\'t have an account?') }} <a href="/signup">{{ _('Sign Up here') }}</a></p>
-    <p>
-        <a href="/set_lang/en">English</a> |
-        <a href="/set_lang/ar">العربية</a> |
-        <a href="/set_lang/fr">Français</a>
+    <p class="mt-6 text-center text-gray-600">
+        {{ _('Don\'t have an account?') }} <a href="/signup" class="text-blue-600 hover:text-blue-800 font-bold">{{ _('Sign Up') }}</a>
     </p>
-</body>
-</html>
+</div>
+{% endblock %}

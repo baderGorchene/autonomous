@@ -1,139 +1,199 @@
-<!DOCTYPE html>
-<html lang="{{ request.cookies.get('lang', 'en') }}">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _('Dashboard') }} - BookSlot</title>
-    <style>
-        body { font-family: sans-serif; margin: 20px; }
-        .container { max-width: 800px; margin: auto; }
-        h1, h2 { color: #333; }
-        .message { padding: 10px; margin-bottom: 10px; border-radius: 5px; }
-        .error { background-color: #fdd; border: 1px solid #f00; color: #f00; }
-        .success { background-color: #dfd; border: 1px solid #0f0; color: #0f0; }
-        .booking-list { list-style: none; padding: 0; }
-        .booking-item { background-color: #f9f9f9; border: 1px solid #eee; margin-bottom: 10px; padding: 10px; border-radius: 5px; }
-        .service-item, .availability-item { background-color: #eef; border: 1px solid #dde; margin-bottom: 5px; padding: 5px; border-radius: 3px; }
-        .language-toggle { margin-bottom: 20px; }
-        form label { display: block; margin-top: 10px; }
-        form input[type="text"], form input[type="email"], form input[type="tel"], form textarea {
-            width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;
-        }
-        form button { background-color: #4CAF50; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px; }
-        form button:hover { background-color: #45a049; }
-        pre { background-color: #eee; padding: 10px; border-radius: 5px; overflow-x: auto; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="language-toggle">
-            <a href="{{ request.url|urlencode('lang', 'en') }}">English</a> |
-            <a href="{{ request.url|urlencode('lang', 'ar') }}">العربية</a> |
-            <a href="{{ request.url|urlencode('lang', 'fr') }}">Français</a>
-            <span style="float: right;"><a href="/logout">{{ _('Logout') }}</a></span>
-        </div>
+{% extends "base.html" %}
 
-        <h1>{{ _('Welcome, %s!') % owner.name }}</h1>
-        <p>{{ _('Your Booking Page Link:') }} <a href="/bookslot.app/{{ owner.slug }}" target="_blank">bookslot.app/{{ owner.slug }}</a></p>
+{% block title %}{{ _('Dashboard') }} - BookSlot{% endblock %}
 
-        {% if error_message %}
-            <div class="message error">{{ error_message }}</div>
-        {% endif %}
-        {% if success_message %}
-            <div class="message success">{{ success_message }}</div>
-        {% endif %}
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+{% endblock %}
 
-        <h2>{{ _('Upcoming Bookings') }}</h2>
-        {% if bookings %}
-            <ul class="booking-list">
+{% block nav %}
+<a href="/dashboard" class="text-blue-600 font-semibold mx-2">{{ _('Dashboard') }}</a>
+<a href="/logout" class="text-gray-600 hover:text-blue-600 mx-2">{{ _('Logout') }}</a>
+{% endblock %}
+
+{% block content %}
+<div id="dashboard-app" class="bg-white p-8 rounded-lg shadow-md">
+    <h2 class="text-3xl font-bold text-gray-800 mb-6">{{ _('Welcome,') }} {{ owner.name }}!</h2>
+
+    <div class="mb-8">
+        <h3 class="text-xl font-semibold text-gray-700 mb-4">{{ _('Your Booking Page') }}</h3>
+        <p class="text-gray-600">
+            {{ _('Share this link with your customers:') }} 
+            <a href="/bookslot.app/{{ owner.slug }}" target="_blank" class="text-blue-600 hover:underline font-medium">bookslot.app/{{ owner.slug }}</a>
+        </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <!-- Upcoming Bookings -->
+        <div>
+            <h3 class="text-xl font-semibold text-gray-700 mb-4">{{ _('Upcoming Bookings') }}</h3>
+            {% if bookings %}
+            <ul class="space-y-4">
                 {% for booking in bookings %}
-                    <li class="booking-item">
-                        <strong>{{ booking.service_name }}</strong> {{ _('on') }} {{ booking.booking_date.strftime('%Y-%m-%d') }} {{ _('at') }} {{ booking.booking_time }}<br>
-                        {{ _('Customer:') }} {{ booking.customer_name }} ({{ booking.customer_email }}) {% if booking.customer_phone %}/ {{ booking.customer_phone }}{% endif %}
-                    </li>
+                <li class="bg-gray-50 p-4 rounded-md shadow-sm">
+                    <p class="font-semibold">{{ booking.service_name }}</p>
+                    <p>{{ _('Customer:') }} {{ booking.customer_name }} ({{ booking.customer_email }})</p>
+                    <p>{{ _('Phone:') }} {{ booking.customer_phone if booking.customer_phone else _('N/A') }}</p>
+                    <p class="text-sm text-gray-500">{{ booking.booking_date.strftime('%Y-%m-%d') }} at {{ booking.booking_time }}</p>
+                </li>
                 {% endfor %}
             </ul>
-        {% else %}
-            <p>{{ _('No upcoming bookings.') }}</p>
-        {% endif %}
+            {% else %}
+            <p class="text-gray-600">{{ _('No upcoming bookings.') }}</p>
+            {% endif %}
+        </div>
 
-        <h2>{{ _('Update Profile, Services & Availability') }}</h2>
-        <form action="/dashboard/profile" method="post">
-            <label for="name">{{ _('Your Name:') }}</label>
-            <input type="text" id="name" name="name" value="{{ owner.name }}" required>
+        <!-- Profile, Services & Availability -->
+        <div>
+            <h3 class="text-xl font-semibold text-gray-700 mb-4">{{ _('Your Profile, Services & Availability') }}</h3>
+            <form @submit.prevent="updateProfile" class="space-y-6">
+                <!-- Profile Info -->
+                <div class="border-b border-gray-200 pb-4">
+                    <h4 class="text-lg font-medium text-gray-900 mb-2">{{ _('Business Information') }}</h4>
+                    <div>
+                        <label for="name" class="block text-sm font-medium text-gray-700">{{ _('Your Name') }}</label>
+                        <input type="text" id="name" v-model="profile.name" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                    <div class="mt-4">
+                        <label for="business_name" class="block text-sm font-medium text-gray-700">{{ _('Business Name') }}</label>
+                        <input type="text" id="business_name" v-model="profile.business_name" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                    <div class="mt-4">
+                        <label for="phone" class="block text-sm font-medium text-gray-700">{{ _('Phone Number (for WhatsApp notifications)') }}</label>
+                        <input type="tel" id="phone" v-model="profile.phone" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                </div>
 
-            <label for="business_name">{{ _('Business Name:') }}</label>
-            <input type="text" id="business_name" name="business_name" value="{{ owner.business_name }}" required>
+                <!-- Services -->
+                <div class="border-b border-gray-200 pb-4">
+                    <h4 class="text-lg font-medium text-gray-900 mb-2">{{ _('Services Offered') }}</h4>
+                    <div v-for="(service, index) in profile.services" :key="index" class="flex space-x-2 mb-2 items-end">
+                        <div class="flex-1">
+                            <label class="block text-sm font-medium text-gray-700">{{ _('Service Name') }}</label>
+                            <input type="text" v-model="service.name" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 sm:text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">{{ _('Duration (min)') }}</label>
+                            <input type="number" v-model.number="service.duration" class="mt-1 block w-24 border border-gray-300 rounded-md shadow-sm py-2 px-3 sm:text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">{{ _('Price') }}</label>
+                            <input type="number" step="0.01" v-model.number="service.price" class="mt-1 block w-24 border border-gray-300 rounded-md shadow-sm py-2 px-3 sm:text-sm">
+                        </div>
+                        <button type="button" @click="removeService(index)" class="bg-red-500 hover:bg-red-600 text-white p-2 rounded-md">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                    <button type="button" @click="addService" class="mt-2 bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-md">
+                        {{ _('Add Service') }}
+                    </button>
+                </div>
 
-            <label for="phone">{{ _('Phone (for WhatsApp notifications):') }}</label>
-            <input type="tel" id="phone" name="phone" value="{{ owner.phone if owner.phone else '' }}">
+                <!-- Availability -->
+                <div>
+                    <h4 class="text-lg font-medium text-gray-900 mb-2">{{ _('Your Availability') }}</h4>
+                    <div v-for="(slots, day) in profile.availability" :key="day" class="mb-4 p-3 border border-gray-200 rounded-md bg-gray-50">
+                        <h5 class="font-semibold text-gray-800 mb-2 capitalize">[[ day ]]</h5>
+                        <div v-for="(slot, slotIndex) in slots" :key="slotIndex" class="flex space-x-2 mb-2 items-end">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">{{ _('Start Time') }}</label>
+                                <input type="time" v-model="slot.start_time" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 sm:text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">{{ _('End Time') }}</label>
+                                <input type="time" v-model="slot.end_time" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 sm:text-sm">
+                            </div>
+                            <button type="button" @click="removeAvailabilitySlot(day, slotIndex)" class="bg-red-500 hover:bg-red-600 text-white p-2 rounded-md">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                        <button type="button" @click="addAvailabilitySlot(day)" class="mt-2 bg-blue-500 hover:bg-blue-600 text-white font-bold py-1 px-3 rounded-md text-sm">
+                            {{ _('Add Slot') }}
+                        </button>
+                    </div>
+                    <p class="text-sm text-gray-600 mt-4">{{ _('Days not listed are considered unavailable.') }}</p>
+                </div>
 
-            <label for="services_data">{{ _('Services (JSON format):') }}</label>
-            <textarea id="services_data" name="services_data" rows="10" required>
-{%- if services -%}
-{{ services|tojson(indent=4) }}
-{%- else -%}
-[
-    {
-        "name": "Haircut",
-        "description": "Standard haircut for men/women",
-        "duration_minutes": 30,
-        "price": 25.00
-    },
-    {
-        "name": "Massage (60 min)",
-        "description": "Relaxing full body massage",
-        "duration_minutes": 60,
-        "price": 70.00
-    }
-]
-{%- endif -%}
-            </textarea>
-            <small>{{ _('Example:') }}</small>
-            <pre>[{"name": "Service A", "duration_minutes": 30, "price": 50.0}, {"name": "Service B", "duration_minutes": 60, "price": 90.0}]</pre>
-
-            <label for="availability_data">{{ _('Availability (JSON format):') }}</label>
-            <textarea id="availability_data" name="availability_data" rows="15" required>
-{%- if availability -%}
-{{ availability|tojson(indent=4) }}
-{%- else -%}
-{
-    "monday": {
-        "is_available": true,
-        "slots": [{"start_time": "09:00", "end_time": "12:00"}, {"start_time": "13:00", "end_time": "17:00"}]
-    },
-    "tuesday": {
-        "is_available": true,
-        "slots": [{"start_time": "09:00", "end_time": "17:00"}]
-    },
-    "wednesday": {
-        "is_available": true,
-        "slots": [{"start_time": "09:00", "end_time": "12:00"}]
-    },
-    "thursday": {
-        "is_available": true,
-        "slots": [{"start_time": "13:00", "end_time": "17:00"}]
-    },
-    "friday": {
-        "is_available": true,
-        "slots": [{"start_time": "09:00", "end_time": "17:00"}]
-    },
-    "saturday": {
-        "is_available": false,
-        "slots": []
-    },
-    "sunday": {
-        "is_available": false,
-        "slots": []
-    }
-}
-{%- endif -%}
-            </textarea>
-            <small>{{ _('Example:') }}</small>
-            <pre>{ "monday": {"is_available": true, "slots": [{"start_time": "09:00", "end_time": "17:00"}]}, "sunday": {"is_available": false, "slots": []} }</pre>
-
-            <button type="submit">{{ _('Update Profile') }}</button>
-        </form>
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full">
+                    {{ _('Save Changes') }}
+                </button>
+                <div v-if="message" :class="messageType === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'" class="p-3 rounded-md mt-4">
+                    [[ message ]]
+                </div>
+            </form>
+        </div>
     </div>
-</body>
-</html>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    new Vue({
+        el: '#dashboard-app',
+        delimiters: ['[[', ']]'],
+        data: {
+            profile: {
+                name: "{{ owner.name }}",
+                business_name: "{{ owner.business_name }}",
+                phone: "{{ owner.phone if owner.phone else '' }}",
+                services: JSON.parse('{{ services | tojson }}'),
+                availability: JSON.parse('{{ availability | tojson }}')
+            },
+            message: '',
+            messageType: ''
+        },
+        methods: {
+            addService() {
+                this.profile.services.push({ name: '', duration: 60, price: 0.0 });
+            },
+            removeService(index) {
+                this.profile.services.splice(index, 1);
+            },
+            addAvailabilitySlot(day) {
+                if (!this.profile.availability[day]) {
+                    this.profile.availability[day] = [];
+                }
+                this.profile.availability[day].push({ start_time: '09:00', end_time: '17:00' });
+            },
+            removeAvailabilitySlot(day, index) {
+                this.profile.availability[day].splice(index, 1);
+            },
+            async updateProfile() {
+                this.message = '';
+                this.messageType = '';
+                try {
+                    const token = localStorage.getItem('access_token'); // Assuming token is stored here
+                    if (!token) {
+                        this.message = "{{ _('Authentication token not found. Please log in again.') }}";
+                        this.messageType = 'error';
+                        return;
+                    }
+
+                    const response = await axios.post('/profile/update', this.profile, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    this.message = "{{ _('Profile updated successfully!') }}";
+                    this.messageType = 'success';
+                    // Update profile data from response if needed, or simply trust local state
+                } catch (error) {
+                    console.error('Error updating profile:', error);
+                    this.message = error.response?.data?.detail || "{{ _('Failed to update profile.') }}";
+                    this.messageType = 'error';
+                }
+            }
+        },
+        mounted() {
+            // Ensure all days of the week are present in availability for UI, even if empty
+            const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+            daysOfWeek.forEach(day => {
+                if (!(day in this.profile.availability)) {
+                    this.$set(this.profile.availability, day, []);
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

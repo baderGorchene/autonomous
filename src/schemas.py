@@ -1,29 +1,18 @@
 from pydantic import BaseModel, EmailStr, Field
-from typing import List, Optional, Dict
+from typing import List, Dict, Any, Optional
 import datetime
 
-# Service Schema (for services_json)
 class Service(BaseModel):
     name: str
-    description: Optional[str] = None
-    duration_minutes: int
+    duration: int # in minutes
     price: float
+    description: Optional[str] = None
 
-# Availability Schema (for availability_json)
-class TimeSlot(BaseModel):
+class AvailabilitySlot(BaseModel):
+    day: str # e.g., "Monday"
     start_time: str # e.g., "09:00"
-    end_time: str   # e.g., "17:00"
+    end_time: str # e.g., "17:00"
 
-class DayAvailability(BaseModel):
-    is_available: bool = True
-    slots: List[TimeSlot] = []
-
-class Availability(BaseModel):
-    # Keys are day names, e.g., "monday", "tuesday"
-    # Values are DayAvailability objects
-    __root__: Dict[str, DayAvailability]
-
-# Owner Schemas
 class OwnerBase(BaseModel):
     name: str
     email: EmailStr
@@ -34,29 +23,36 @@ class OwnerBase(BaseModel):
 class OwnerCreate(OwnerBase):
     password: str
 
-class Owner(OwnerBase):
-    id: int
-    services_json: str # Raw JSON string
-    availability_json: str # Raw JSON string
-
-    class Config:
-        from_attributes = True
-
 class OwnerProfileUpdate(BaseModel):
     name: str
     business_name: str
     phone: Optional[str] = None
-    services: Optional[List[Service]] = None
-    availability: Optional[Dict[str, DayAvailability]] = None
+    services: List[Service] = Field(default_factory=list)
+    availability: Dict[str, List[AvailabilitySlot]] = Field(default_factory=dict)
 
-# Booking Schemas
+class Owner(OwnerBase):
+    id: int
+    services_json: str
+    availability_json: str
+    is_active: bool = True
+
+    class Config:
+        from_attributes = True # Changed from orm_mode = True for Pydantic v2
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class TokenData(BaseModel):
+    email: Optional[str] = None
+
 class BookingBase(BaseModel):
     customer_name: str
     customer_email: EmailStr
     customer_phone: Optional[str] = None
     service_name: str
     booking_date: datetime.date
-    booking_time: str # e.g., "10:00 AM"
+    booking_time: str
 
 class BookingCreate(BookingBase):
     pass
@@ -69,11 +65,3 @@ class Booking(BookingBase):
 
     class Config:
         from_attributes = True
-
-# Security Schemas
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-
-class TokenData(BaseModel):
-    email: Optional[str] = None

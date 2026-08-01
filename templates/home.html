@@ -1,18 +1,14 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BookSlot - Simple Booking Page</title>
-</head>
-<body>
-    <h1>Welcome to BookSlot!</h1>
-    <p>A dead-simple booking page for local service businesses.</p>
-    <a href="/signup">Sign Up</a> | <a href="/login">Login</a>
-    <p>
-        <a href="/set_lang/en">English</a> |
-        <a href="/set_lang/ar">العربية</a> |
-        <a href="/set_lang/fr">Français</a>
-    </p>
-</body>
-</html>
+{% extends "base.html" %}
+
+{% block title %}{{ _('Welcome to BookSlot') }}{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto bg-white p-8 rounded-lg shadow-md text-center">
+    <h2 class="text-3xl font-bold text-gray-800 mb-4">{{ _('Effortless Booking for Your Business') }}</h2>
+    <p class="text-gray-600 mb-6">{{ _('Say goodbye to WhatsApp chaos. Get your simple, shareable booking page today!') }}</p>
+    <a href="/signup" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg text-lg transition duration-300">
+        {{ _('Get Started - It\'s Free!') }}
+    </a>
+    <p class="mt-4 text-gray-500 text-sm">{{ _('Free for up to 20 bookings/month, then just $19/month.') }}</p>
+</div>
+{% endblock %}

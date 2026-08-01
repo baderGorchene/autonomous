@@ -1,58 +1,48 @@
 <!DOCTYPE html>
-<html lang="{{ request.cookies.get('lang', 'en') }}">
+<html lang="{{ lang }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}{{ _("BookSlot App") }}{% endblock %}</title>
+    <title>{% block title %}BookSlot{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    {% block head_extra %}{% endblock %}
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .locale-switcher {
+            position: absolute;
+            top: 1rem;
+            {% if lang == 'ar' %}
+            left: 1rem;
+            {% else %}
+            right: 1rem;
+            {% endif %}
+            z-index: 10;
+        }
+    </style>
+    {% block head %}{% endblock %}
 </head>
-<body class="bg-gray-100 font-sans antialiased flex flex-col min-h-screen">
-    <header class="bg-white shadow-sm p-4">
-        <div class="container mx-auto flex justify-between items-center">
-            <a href="/" class="text-2xl font-bold text-indigo-600">BookSlot</a>
+<body class="bg-gray-100 text-gray-900 flex flex-col min-h-screen">
+    <div class="locale-switcher">
+        <a href="{{ request.url|urlencode('lang', 'en') }}" class="px-2 py-1 rounded-md {% if lang == 'en' %}bg-blue-500 text-white{% else %}bg-gray-200{% endif %}">EN</a>
+        <a href="{{ request.url|urlencode('lang', 'ar') }}" class="px-2 py-1 rounded-md {% if lang == 'ar' %}bg-blue-500 text-white{% else %}bg-gray-200{% endif %}">AR</a>
+        <a href="{{ request.url|urlencode('lang', 'fr') }}" class="px-2 py-1 rounded-md {% if lang == 'fr' %}bg-blue-500 text-white{% else %}bg-gray-200{% endif %}">FR</a>
+    </div>
+    <header class="bg-white shadow-sm py-4">
+        <div class="container mx-auto px-4 flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-blue-600">BookSlot</h1>
             <nav>
-                <a href="/dashboard" class="text-gray-600 hover:text-indigo-600 mx-2">{{ _("Dashboard") }}</a>
-                <a href="/login" class="text-gray-600 hover:text-indigo-600 mx-2">{{ _("Login") }}</a>
-                <a href="/signup" class="text-gray-600 hover:text-indigo-600 mx-2">{{ _("Signup") }}</a>
-                <div class="inline-block relative">
-                    <button class="text-gray-600 hover:text-indigo-600 mx-2 focus:outline-none" onclick="toggleLanguageDropdown()">{{ _("Language") }}</button>
-                    <div id="languageDropdown" class="absolute right-0 mt-2 w-28 bg-white rounded-md shadow-lg hidden">
-                        <a href="{{ request.url|urlencode('lang', 'en') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">English</a>
-                        <a href="{{ request.url|urlencode('lang', 'ar') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">العربية</a>
-                        <a href="{{ request.url|urlencode('lang', 'fr') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Français</a>
-                    </div>
-                </div>
+                {% block nav %}{% endblock %}
             </nav>
         </div>
     </header>
-
-    <main class="flex-grow container mx-auto p-4">
+    <main class="flex-grow container mx-auto px-4 py-8">
         {% block content %}{% endblock %}
     </main>
-
-    <footer class="bg-white shadow-sm p-4 mt-auto">
-        <div class="container mx-auto text-center text-gray-500 text-sm">
-            &copy; {{ now().year }} BookSlot. {{ _("All rights reserved.") }}
+    <footer class="bg-gray-800 text-white py-4 mt-8">
+        <div class="container mx-auto px-4 text-center">
+            <p>&copy; {{ _('2023 BookSlot. All rights reserved.') }}</p>
         </div>
     </footer>
-
-    <script>
-        function toggleLanguageDropdown() {
-            document.getElementById("languageDropdown").classList.toggle("hidden");
-        }
-        window.onclick = function(event) {
-            if (!event.target.matches('button')) {
-                var dropdowns = document.getElementsByClassName("absolute");
-                for (var i = 0; i < dropdowns.length; i++) {
-                    var openDropdown = dropdowns[i];
-                    if (!openDropdown.classList.contains('hidden')) {
-                        openDropdown.classList.add('hidden');
-                    }
-                }
-            }
-        }
-    </script>
     {% block scripts %}{% endblock %}
 </body>
 </html>

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Booking Notification</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+    <div style="max-width: 600px; margin: 20px auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+        <h2 style="color: #007bff;">New Booking for {{ owner_name }}!</h2>
+        <p>Hello {{ owner_name }},</p>
+        <p>A new appointment has been booked:</p>
+        <ul>
+            <li><strong>Customer:</strong> {{ customer_name }}</li>
+            <li><strong>Service:</strong> {{ service_name }}</li>
+            <li><strong>Date:</strong> {{ booking_date }}</li>
+            <li><strong>Time:</strong> {{ booking_time }}</li>
+            <li><strong>Customer Email:</strong> {{ customer_email }}</li>
+            <li><strong>Customer Phone:</strong> {{ customer_phone if customer_phone else 'N/A' }}</li>
+        </ul>
+        <p>Please log in to your dashboard to view all upcoming bookings: <a href="http://bookslot.app/dashboard" style="color: #007bff; text-decoration: none;">Go to Dashboard</a></p>
+        <p>Thank you,</p>
+        <p>The BookSlot Team</p>
+    </div>
+</body>
+</html>

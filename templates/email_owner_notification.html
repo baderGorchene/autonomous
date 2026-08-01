@@ -3,20 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _('New Booking Notification') }}</title>
+    <title>{{ _("New Booking Notification") }}</title>
 </head>
 <body>
-    <p>{{ _('Dear') }} {{ owner.name }},</p>
-    <p>{{ _('You have a new booking for your service:') }}</p>
-    <ul>
-        <li><strong>{{ _('Service') }}:</strong> {{ booking.service_name }}</li>
-        <li><strong>{{ _('Date') }}:</strong> {{ booking.booking_date }}</li>
-        <li><strong>{{ _('Time') }}:</strong> {{ booking.booking_time }}</li>
-        <li><strong>{{ _('Customer Name') }}:</strong> {{ booking.customer_name }}</li>
-        <li><strong>{{ _('Customer Email') }}:</strong> {{ booking.customer_email }}</li>
-        <li><strong>{{ _('Customer Phone') }}:</strong> {{ booking.customer_phone if booking.customer_phone else _('N/A') }}</li>
-    </ul>
-    <p>{{ _('Please check your dashboard for more details:') }} <a href="bookslot.app/dashboard">{{ _('Your Dashboard') }}</a></p>
-    <p>{{ _('Thank you,') }}<br>BookSlot Team</p>
+    <p>{{ _("Dear {owner_name},").format(owner_name=owner.name) }}</p>
+    <p>{{ _("You have a new booking for {business_name}!").format(business_name=owner.business_name) }}</p>
+    
+    <p><strong>{{ _("Customer Name:") }}</strong> {{ booking.customer_name }}</p>
+    <p><strong>{{ _("Customer Email:") }}</strong> {{ booking.customer_email }}</p>
+    {% if booking.customer_phone %}
+    <p><strong>{{ _("Customer Phone:") }}</strong> {{ booking.customer_phone }}</p>
+    {% endif %}
+    <p><strong>{{ _("Service:") }}</strong> {{ booking.service_name }}</p>
+    <p><strong>{{ _("Date:") }}</strong> {{ booking_date_formatted }}</p>
+    <p><strong>{{ _("Time:") }}</strong> {{ booking_time_formatted }}</p>
+    
+    <p>{{ _("Please check your dashboard for more details.") }}</p>
+    <p>{{ _("Best regards,") }}<br>{{ _("BookSlot Team") }}</p>
 </body>
 </html>

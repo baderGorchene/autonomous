@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Booking Confirmation</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+    <div style="max-width: 600px; margin: 20px auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+        <h2 style="color: #28a745;">Your Booking Confirmation for {{ owner_business_name }}</h2>
+        <p>Hello {{ customer_name }},</p>
+        <p>This email confirms your appointment details:</p>
+        <ul>
+            <li><strong>Business:</strong> {{ owner_business_name }}</li>
+            <li><strong>Service:</strong> {{ service_name }}</li>
+            <li><strong>Date:</strong> {{ booking_date }}</li>
+            <li><strong>Time:</strong> {{ booking_time }}</li>
+        </ul>
+        <p>If you need to contact {{ owner_business_name }}, you can reach them at:</p>
+        <ul>
+            <li><strong>Email:</strong> {{ owner_email }}</li>
+            {% if owner_phone %}
+            <li><strong>Phone:</strong> {{ owner_phone }}</li>
+            {% endif %}
+        </ul>
+        <p>We look forward to seeing you!</p>
+        <p>Best regards,</p>
+        <p>The BookSlot Team</p>
+    </div>
+</body>
+</html>

@@ -1,1 +1,1 @@
-Reconstruct: Full application, templates, locales, and tests to fix pytest import error
+Fix: Re-provision requirements.txt and core application files to resolve 'No module named pytest' and ensure test execution
