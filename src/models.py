@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Boolean
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text, ForeignKey
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from .database import Base
@@ -10,11 +10,12 @@ class Owner(Base):
     name = Column(String, index=True)
     email = Column(String, unique=True, index=True)
     hashed_password = Column(String)
-    business_name = Column(String, index=True)
-    slug = Column(String, unique=True, index=True) # For public booking page URL
-    services_json = Column(Text) # JSON string of services offered by the owner
-    availability_json = Column(Text) # JSON string of owner's weekly availability
+    business_name = Column(String)
+    slug = Column(String, unique=True, index=True) # e.g., bookslot.app/their-name
+    services_json = Column(Text) # JSON string of services: [{"name": "Haircut", "duration": 30, "price": 25}]
+    availability_json = Column(Text) # JSON string of availability: {"monday": [{"start": "09:00", "end": "17:00"}], ...}
     phone = Column(String, nullable=True) # Owner's phone number
+    is_active = Column(Boolean, default=True)
 
     bookings = relationship("Booking", back_populates="owner")
 
@@ -23,12 +24,12 @@ class Booking(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     owner_id = Column(Integer, ForeignKey("owners.id"))
-    customer_name = Column(String, index=True)
-    customer_email = Column(String, index=True)
+    customer_name = Column(String)
+    customer_email = Column(String)
     customer_phone = Column(String, nullable=True) # Customer's phone number
-    service_name = Column(String) # Name of the service booked
+    service_name = Column(String)
     booking_date = Column(DateTime)
-    booking_time = Column(String) # e.g., "10:00 AM"
-    status = Column(String, default="confirmed") # e.g., confirmed, cancelled
+    booking_time = Column(String) # e.g., "14:30"
+    created_at = Column(DateTime, default=datetime.utcnow)
 
     owner = relationship("Owner", back_populates="bookings")

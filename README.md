@@ -1,36 +1,41 @@
-# BookSlot
+# BookSlot - Dead-Simple Booking Page
 
-BookSlot is a dead-simple $19/month booking page for local service businesses. It allows owners to create a shareable booking link, customers to book themselves without accounts, and provides notifications to the owner. It supports bilingual (English + Arabic/French) operation from day one.
+BookSlot is a minimalist booking page solution for local service businesses. It aims to replace the "WhatsApp chaos" of appointment management with a simple, shareable booking link.
 
 ## Features
 
-- Owner signup and service setup
-- Public booking page
-- Time slot availability management
-- Email confirmations to both parties
-- Simple dashboard for upcoming bookings
-- Bilingual support (English, Arabic, French)
+*   **Owner Signup & Service Setup:** Business owners can easily create an account, define their services, and set their availability.
+*   **Public Booking Page:** A mobile-first, beautiful booking page (`bookslot.app/their-name`) where customers can self-book without needing an account.
+*   **Time Slot Availability:** Customers see available time slots based on the owner's defined schedule.
+*   **Email & WhatsApp Notifications:** Both the owner and customer receive notifications upon booking confirmation.
+*   **Simple Dashboard:** Owners can view their upcoming bookings and manage their profile, services, and availability.
+*   **Bilingual Support:** English, Arabic, and French are supported from day one to cater to diverse markets.
 
-## Setup and Installation
+## Getting Started
+
+These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
 
 ### Prerequisites
 
-- Python 3.9+
-- pip
-- Docker (optional, for containerized deployment)
+*   Python 3.8+
+*   pip (Python package installer)
+*   Git
 
-### Local Development
+### Installation
 
 1.  **Clone the repository:**
     ```bash
-    git clone <repository-url>
+    git clone https://github.com/your-username/bookslot.git
     cd bookslot
     ```
 
-2.  **Create a virtual environment and activate it:**
+2.  **Create and activate a virtual environment:**
     ```bash
     python -m venv venv
-    source venv/bin/activate  # On Windows: `venv\Scripts\activate`
+    # On Windows
+    .\venv\Scripts\activate
+    # On macOS/Linux
+    source venv/bin/activate
     ```
 
 3.  **Install dependencies:**
@@ -38,83 +43,71 @@ BookSlot is a dead-simple $19/month booking page for local service businesses. I
     pip install -r requirements.txt
     ```
 
-4.  **Set up environment variables:**
-    Create a `.env` file in the project root based on `.env.example`.
-
-    ```ini
-    # .env
-    SECRET_KEY="your-super-secret-key-for-jwt"
-    ALGORITHM="HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES=30
-
-    SENDGRID_API_KEY="your-sendgrid-api-key"
-    TWILIO_ACCOUNT_SID="your-twilio-account-sid"
-    TWILIO_AUTH_TOKEN="your-twilio-auth-token"
-    TWILIO_WHATSAPP_NUMBER="whatsapp:+1234567890" # e.g., whatsapp:+14155238886
-    GEMINI_API_KEY="" # Optional, if not used
-
-    DATABASE_URL="sqlite:///./sql_app.db" # For local development, or a PostgreSQL connection string
+4.  **Configure environment variables:**
+    Create a `.env` file in the project root (same directory as `main.py`) and populate it with your settings.
     ```
-
-5.  **Run database migrations (if applicable):**
-    If using Alembic or similar, run migration commands here. For SQLite, `uvicorn` will create the `sql_app.db` file automatically on first run if models are defined and `Base.metadata.create_all(engine)` is called.
-
-6.  **Run the application:**
-    ```bash
-    uvicorn src.main:app --reload
+    SECRET_KEY="your_super_secret_key_here"
+    DATABASE_URL="sqlite:///./bookslot.db"
+    # Optional: For email notifications (e.g., SendGrid)
+    SENDGRID_API_KEY=""
+    # Optional: For WhatsApp notifications (e.g., Twilio)
+    TWILIO_ACCOUNT_SID=""
+    TWILIO_AUTH_TOKEN=""
+    TWILIO_WHATSAPP_NUMBER="" # e.g., +1234567890
+    # Optional: For AI integration (if planned)
+    GEMINI_API_KEY=""
     ```
-    The application will be available at `http://127.0.0.1:8000`.
+    *   `SECRET_KEY`: A strong, random string for JWT token signing.
+    *   `DATABASE_URL`: SQLAlchemy database connection string. `sqlite:///./bookslot.db` for a local SQLite file.
+    *   Notification keys are optional for basic functionality but required for email/WhatsApp features.
+
+### Running the Application
+
+```bash
+uvicorn src.main:app --reload
+```
+The application will be accessible at `http://127.0.0.1:8000`.
 
 ### Running Tests
+
+To run the automated tests, ensure your virtual environment is active and `pytest` is installed (it's in `requirements.txt`).
 
 ```bash
 pytest
 ```
+This will execute all tests in the `tests/` directory.
 
-### Docker Deployment
-
-1.  **Build the Docker image:**
-    ```bash
-    docker build -t bookslot .
-    ```
-
-2.  **Run the Docker container:**
-    Ensure you have your `.env` variables available to the container. You can pass them directly or mount the `.env` file.
-
-    ```bash
-    docker run -d -p 8000:8000 --env-file ./.env bookslot
-    ```
-    The application will be available at `http://localhost:8000`.
-
-## Project Structure
+### Project Structure
 
 ```
 .
 ├── src/
 │   ├── __init__.py
-│   ├── config.py
-│   ├── crud.py
-│   ├── database.py
-│   ├── i18n_config.py
-│   ├── main.py             # Main FastAPI application
-│   ├── models.py           # SQLAlchemy models
-│   ├── notifications.py    # Email/WhatsApp notifications
-│   ├── schemas.py          # Pydantic schemas
-│   └── security.py         # Authentication utilities
-├── templates/              # Jinja2 templates (booking_page.html, dashboard.html etc.)
-├── static/                 # Static files (CSS, JS, images)
-├── locales/                # Translation files (ar/LC_MESSAGES/messages.po, fr/LC_MESSAGES/messages.po)
-├── tests/                  # Automated tests
-├── .env.example            # Example environment variables
-├── Dockerfile              # Docker configuration
-├── README.md               # Project documentation
-└── requirements.txt        # Python dependencies
+│   ├── config.py             # Application settings
+│   ├── crud.py               # Database Create, Read, Update, Delete operations
+│   ├── database.py           # SQLAlchemy setup and session management
+│   ├── i18n_config.py        # Jinja2 i18n setup
+│   ├── main.py               # FastAPI application, routes, and logic
+│   ├── models.py             # SQLAlchemy ORM models
+│   ├── notifications.py      # Email (SendGrid) and WhatsApp (Twilio) notification logic
+│   ├── schemas.py            # Pydantic models for data validation and serialization
+│   └── security.py           # Password hashing and JWT token handling
+├── templates/
+│   ├── booking_page.html     # Public booking interface
+│   ├── booking_confirmation.html # Booking success page
+│   ├── dashboard.html        # Owner's dashboard
+│   ├── login.html            # Owner login page
+│   └── signup.html           # Owner signup page
+├── locales/                  # Internationalization files
+│   ├── ar/
+│   │   └── LC_MESSAGES/
+│   │       └── messages.po   # Arabic translations
+│   └── fr/
+│       └── LC_MESSAGES/
+│           └── messages.po   # French translations
+├── tests/
+│   └── test_integration.py   # Comprehensive integration tests
+├── .env                      # Environment variables (local config)
+├── requirements.txt          # Python dependencies
+└── README.md                 # Project documentation
 ```
-
-## Contributing
-
-... (Guidelines for contribution)
-
-## License
-
-... (License information)
