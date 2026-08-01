@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ _('Booking Confirmed!') }}</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; background-color: #e6f7ff; color: #333; }
+        .container { max-width: 600px; margin: auto; padding: 30px; background-color: #fff; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; }
+        h1 { color: #28a745; margin-bottom: 20px; }
+        p { font-size: 1.1rem; line-height: 1.6; }
+        .back-link { display: inline-block; margin-top: 30px; padding: 10px 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px; transition: background-color 0.3s ease; }
+        .back-link:hover { background-color: #0056b3; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>{{ _('Booking Confirmed!') }} 🎉</h1>
+        <p>{{ _('Thank you for booking with') }} <strong>{{ owner.business_name }}</strong>.</p>
+        <p>{{ _('A confirmation email has been sent to your inbox.') }}</p>
+        <p>{{ _('We look forward to seeing you!') }}</p>
+        <a href="/book/{{ owner.slug }}" class="back-link">{{ _('Book another appointment') }}</a>
+    </div>
+</body>
+</html>

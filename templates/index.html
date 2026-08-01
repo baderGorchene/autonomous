@@ -3,38 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _("BookSlot - Simple Booking Page") }}</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <title>BookSlot</title>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
-    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md text-center">
-        <h1 class="text-3xl font-bold text-gray-800 mb-4">{{ _("Welcome to BookSlot") }}</h1>
-        <p class="text-gray-600 mb-6">{{ _("Your dead-simple booking page for local service businesses.") }}</p>
-        <div class="space-y-4">
-            <a href="/owner/signup" class="block w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition duration-300">
-                {{ _("Sign Up Now") }}
-            </a>
-            <a href="/owner/dashboard" class="block w-full bg-gray-300 text-gray-800 py-2 px-4 rounded-md hover:bg-gray-400 transition duration-300">
-                {{ _("Owner Login / Dashboard") }}
-            </a>
-        </div>
-        <div class="mt-6">
-            <label for="language-select" class="sr-only">{{ _("Select Language") }}</label>
-            <select id="language-select" onchange="changeLanguage(this.value)" class="block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
-                <option value="en" {% if current_locale == 'en' %}selected{% endif %}>English</option>
-                <option value="ar" {% if current_locale == 'ar' %}selected{% endif %}>&#1575;&#1604;&#1593;&#1585;&#1576;&#1610;&#1577;</option>
-                <option value="fr" {% if current_locale == 'fr' %}selected{% endif %}>Fran&#231;ais</option>
-            </select>
-        </div>
-    </div>
-
-    <script>
-        function changeLanguage(locale) {
-            const currentUrl = new URL(window.location.href);
-            currentUrl.searchParams.set('lang', locale);
-            document.cookie = `locale=${locale}; path=/; max-age=31536000`; // Set cookie for 1 year
-            window.location.reload();
-        }
-    </script>
+<body>
+    <h1>Welcome to BookSlot!</h1>
+    <p>A dead-simple booking page for local service businesses.</p>
+    <p><a href="/owner/register">Sign Up</a> or <a href="/owner/login">Login</a></p>
+    <p>Switch language: <a href="{{ request.url|urlencode('lang', 'en') }}">English</a> | <a href="{{ request.url|urlencode('lang', 'ar') }}">العربية</a> | <a href="{{ request.url|urlencode('lang', 'fr') }}">Français</a></p>
 </body>
 </html>

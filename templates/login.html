@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ _('Login') }}</title>
+</head>
+<body>
+    <h1>{{ _('Login') }}</h1>
+    <form id="loginForm" method="POST" action="/token">
+        <label for="username">{{ _('Email') }}:</label><br>
+        <input type="email" id="username" name="username" required><br>
+        <label for="password">{{ _('Password') }}:</label><br>
+        <input type="password" id="password" name="password" required><br>
+        <button type="submit">{{ _('Login') }}</button>
+    </form>
+    <p>{{ _('Don\'t have an account?') }} <a href="/owner/register">{{ _('Sign Up') }}</a></p>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new URLSearchParams(new FormData(form)).toString();
+
+            try {
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    localStorage.setItem('access_token', result.access_token);
+                    window.location.href = '/dashboard';
+                } else {
+                    alert(result.detail || 'Login failed');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred during login.');
+            }
+        });
+    </script>
+</body>
+</html>
