@@ -1,113 +1,138 @@
-# BookSlot - Dead-Simple Booking Page
+# BookSlot - README
 
-BookSlot is a minimalist booking page solution for local service businesses. It aims to replace the "WhatsApp chaos" of appointment management with a simple, shareable booking link.
+This project aims to provide a dead-simple $19/month booking page for local service businesses.
 
-## Features
+## Business Idea
+BookSlot targets local service businesses (salons, clinics, tutors, mechanics, coaches) who currently manage appointments via WhatsApp chaos. The owner gets a shareable link (bookslot.app/their-name), customers book themselves, and the owner gets a WhatsApp/email notification with the booking details. No accounts needed for customers. Bilingual (English + Arabic/French) from day one to target the underserved MENA and North Africa market. MVP has: (1) owner signup + service setup page, (2) public booking page, (3) time slot availability, (4) email confirmation to both parties, (5) a simple dashboard showing upcoming bookings. Monetization: free for up to 20 bookings/month, $19/month for unlimited. Target: solo service providers who have 10-50 clients/week and are drowning in WhatsApp messages.
 
-*   **Owner Signup & Service Setup:** Business owners can easily create an account, define their services, and set their availability.
-*   **Public Booking Page:** A mobile-first, beautiful booking page (`bookslot.app/their-name`) where customers can self-book without needing an account.
-*   **Time Slot Availability:** Customers see available time slots based on the owner's defined schedule.
-*   **Email & WhatsApp Notifications:** Both the owner and customer receive notifications upon booking confirmation.
-*   **Simple Dashboard:** Owners can view their upcoming bookings and manage their profile, services, and availability.
-*   **Bilingual Support:** English, Arabic, and French are supported from day one to cater to diverse markets.
+## Project Structure
 
-## Getting Started
+-   `src/main.py`: Main FastAPI application entry point.
+-   `src/models.py`: SQLAlchemy ORM models for database interaction.
+-   `src/schemas.py`: Pydantic models for request/response validation.
+-   `src/security.py`: Handles password hashing, JWT token generation, and authentication.
+-   `src/crud.py`: Database Create, Read, Update, Delete operations.
+-   `src/database.py`: Database connection and session management.
+-   `src/config.py`: Application settings and environment variable loading.
+-   `src/notifications.py`: Handles sending email and WhatsApp notifications.
+-   `src/i18n_config.py`: Internationalization (i18n) setup for Jinja2 templates.
+-   `templates/`: HTML templates for rendering UI.
+-   `locales/`: Translation files for internationalization (e.g., `ar/LC_MESSAGES/messages.po`, `fr/LC_MESSAGES/messages.po`).
+-   `tests/`: Unit and integration tests.
+-   `Dockerfile`: Docker build instructions for the application.
+-   `requirements.txt`: Python dependencies.
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
-
-### Prerequisites
-
-*   Python 3.8+
-*   pip (Python package installer)
-*   Git
-
-### Installation
+## Setup and Local Development
 
 1.  **Clone the repository:**
     ```bash
-    git clone https://github.com/your-username/bookslot.git
+    git clone <repository-url>
     cd bookslot
     ```
 
-2.  **Create and activate a virtual environment:**
+2.  **Create a virtual environment and install dependencies:**
     ```bash
     python -m venv venv
-    # On Windows
-    .\venv\Scripts\activate
-    # On macOS/Linux
-    source venv/bin/activate
-    ```
-
-3.  **Install dependencies:**
-    ```bash
+    source venv/bin/activate  # On Windows: .venv\Scripts\activate
     pip install -r requirements.txt
     ```
 
-4.  **Configure environment variables:**
-    Create a `.env` file in the project root (same directory as `main.py`) and populate it with your settings.
+3.  **Create a `.env` file:**
+    Create a file named `.env` in the root directory and populate it with your environment variables. Example:
     ```
     SECRET_KEY="your_super_secret_key_here"
-    DATABASE_URL="sqlite:///./bookslot.db"
-    # Optional: For email notifications (e.g., SendGrid)
-    SENDGRID_API_KEY=""
-    # Optional: For WhatsApp notifications (e.g., Twilio)
-    TWILIO_ACCOUNT_SID=""
-    TWILIO_AUTH_TOKEN=""
-    TWILIO_WHATSAPP_NUMBER="" # e.g., +1234567890
-    # Optional: For AI integration (if planned)
-    GEMINI_API_KEY=""
+    SENDGRID_API_KEY="your_sendgrid_api_key"
+    TWILIO_ACCOUNT_SID="your_twilio_account_sid"
+    TWILIO_AUTH_TOKEN="your_twilio_auth_token"
+    TWILIO_WHATSAPP_NUMBER="+1234567890" # Your Twilio WhatsApp enabled number
+    GEMINI_API_KEY="your_gemini_api_key"
+    DATABASE_URL="sqlite:///./sql_app.db" # For local development
+    TESTING="False"
     ```
-    *   `SECRET_KEY`: A strong, random string for JWT token signing.
-    *   `DATABASE_URL`: SQLAlchemy database connection string. `sqlite:///./bookslot.db` for a local SQLite file.
-    *   Notification keys are optional for basic functionality but required for email/WhatsApp features.
 
-### Running the Application
+4.  **Run database migrations (if any) and create tables:**
+    For SQLite, the tables will be created automatically on first run if they don't exist based on `Base.metadata.create_all(bind=engine)` in `database.py`. For production/staging with PostgreSQL, you might use Alembic for migrations.
 
-```bash
-uvicorn src.main:app --reload
-```
-The application will be accessible at `http://127.0.0.1:8000`.
+5.  **Run the application:**
+    ```bash
+    uvicorn src.main:app --reload
+    ```
+    The application will be available at `http://127.0.0.1:8000`.
 
-### Running Tests
+## Testing
 
-To run the automated tests, ensure your virtual environment is active and `pytest` is installed (it's in `requirements.txt`).
+To run the tests, ensure you have `pytest` installed (included in `requirements.txt`):
 
 ```bash
 pytest
 ```
-This will execute all tests in the `tests/` directory.
 
-### Project Structure
+Tests are configured to use an in-memory SQLite database to ensure isolation and speed.
 
-```
-.
-├── src/
-│   ├── __init__.py
-│   ├── config.py             # Application settings
-│   ├── crud.py               # Database Create, Read, Update, Delete operations
-│   ├── database.py           # SQLAlchemy setup and session management
-│   ├── i18n_config.py        # Jinja2 i18n setup
-│   ├── main.py               # FastAPI application, routes, and logic
-│   ├── models.py             # SQLAlchemy ORM models
-│   ├── notifications.py      # Email (SendGrid) and WhatsApp (Twilio) notification logic
-│   ├── schemas.py            # Pydantic models for data validation and serialization
-│   └── security.py           # Password hashing and JWT token handling
-├── templates/
-│   ├── booking_page.html     # Public booking interface
-│   ├── booking_confirmation.html # Booking success page
-│   ├── dashboard.html        # Owner's dashboard
-│   ├── login.html            # Owner login page
-│   └── signup.html           # Owner signup page
-├── locales/                  # Internationalization files
-│   ├── ar/
-│   │   └── LC_MESSAGES/
-│   │       └── messages.po   # Arabic translations
-│   └── fr/
-│       └── LC_MESSAGES/
-│           └── messages.po   # French translations
-├── tests/
-│   └── test_integration.py   # Comprehensive integration tests
-├── .env                      # Environment variables (local config)
-├── requirements.txt          # Python dependencies
-└── README.md                 # Project documentation
-```
+## Deployment to Staging Environment
+
+This section outlines the steps to deploy BookSlot to a staging environment using Docker and Docker Compose.
+
+### Prerequisites
+- Docker and Docker Compose installed on your system.
+
+### Steps
+
+1.  **Clone the repository:**
+    ```bash
+    git clone <repository-url>
+    cd bookslot
+    ```
+
+2.  **Create a `.env` file:**
+    Create a file named `.env` in the root directory of the project. This file will hold sensitive environment variables required by the application.
+    ```
+    SECRET_KEY="your_strong_secret_key_here" # Generate with 'openssl rand -hex 32'
+    SENDGRID_API_KEY="your_sendgrid_api_key"
+    TWILIO_ACCOUNT_SID="your_twilio_account_sid"
+    TWILIO_AUTH_TOKEN="your_twilio_auth_token"
+    TWILIO_WHATSAPP_NUMBER="your_twilio_whatsapp_number"
+    GEMINI_API_KEY="your_gemini_api_key"
+    ```
+    **Note:** For a real staging environment, these should be managed securely (e.g., Kubernetes secrets, AWS Secrets Manager, etc.) and not committed to version control.
+
+3.  **Deploy with Docker Compose:**
+    From the root directory of the project, run:
+    ```bash
+    docker-compose up -d --build
+    ```
+    This command will:
+    -   Build the Docker image for the application (if not already built or if changes detected).
+    -   Start the PostgreSQL database service.
+    -   Start the BookSlot application service, linking it to the database.
+    -   Run services in detached mode (`-d`).
+
+4.  **Access the Staging Application:**
+    The application will be accessible at `http://localhost:8000` (or the IP address/domain where Docker is running).
+
+### User Acceptance Testing (UAT)
+
+Once deployed, perform the following checks on the staging environment:
+
+-   **Owner Onboarding:**
+    -   Register a new owner account.
+    -   Login with the new account.
+    -   Set up services and availability.
+    -   Update profile information.
+-   **Public Booking Page:**
+    -   Access the public booking page (`/book/{owner_slug}`).
+    -   Verify correct display of services and available slots.
+    -   Submit a booking as a customer.
+    -   Verify booking confirmation page.
+-   **Email/WhatsApp Notifications:**
+    -   Check if the owner receives email/WhatsApp notifications for new bookings.
+    -   Check if the customer receives email confirmations.
+-   **Owner Dashboard:**
+    -   Login to the owner dashboard.
+    -   Verify the list of upcoming bookings is accurate.
+    -   Test profile update functionality.
+-   **Internationalization (i18n):**
+    -   Verify language toggle (English/Arabic/French) on both public booking page and owner dashboard.
+    -   Ensure translations are correctly applied.
+-   **Error Handling:**
+    -   Test various invalid inputs for signup, booking, and profile updates to ensure appropriate error messages are displayed.
