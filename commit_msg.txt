@@ -1,1 +1,1 @@
-Fix: Ensure pytest is discoverable and runnable by providing requirements.txt and a placeholder test file.
+Fix: Re-add requirements.txt and basic test file to resolve 'No module named pytest' error

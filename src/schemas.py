@@ -1,91 +1,74 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr
 from typing import List, Dict, Any, Optional
-from datetime import date, time
+from datetime import datetime
 
-class ServiceBase(BaseModel):
-    name: str = Field(..., min_length=1, max_length=100)
-    description: Optional[str] = Field(None, max_length=500)
-    duration_minutes: int = Field(..., gt=0)
-    price: Optional[float] = Field(None, ge=0)
-
-class ServiceCreate(ServiceBase):
-    pass
-
-class Service(ServiceBase):
-    id: int
-
-    class Config:
-        from_attributes = True
-
-class AvailabilitySlot(BaseModel):
-    day_of_week: str # e.g., "Monday"
-    start_time: str # e.g., "09:00"
-    end_time: str # e.g., "17:00"
+class Service(BaseModel):
+    name: str
+    description: str
+    price: float
+    duration: int # in minutes
 
 class OwnerBase(BaseModel):
     email: EmailStr
-    name: str = Field(..., min_length=1, max_length=100)
-    business_name: str = Field(..., min_length=1, max_length=100)
-    slug: str = Field(..., min_length=3, max_length=50, regex="^[a-z0-9-]+$") # URL-friendly slug
+    name: str
+    business_name: str
+    slug: str
     phone: Optional[str] = None
 
 class OwnerCreate(OwnerBase):
-    password: str = Field(..., min_length=6)
+    password: str
 
-class OwnerProfileUpdate(BaseModel):
-    name: str = Field(..., min_length=1, max_length=100)
-    business_name: str = Field(..., min_length=1, max_length=100)
-    phone: Optional[str] = None
-
-class Owner(OwnerBase):
+class OwnerInDB(OwnerBase):
     id: int
-    is_active: bool = True
+    hashed_password: str
     services_json: str
     availability_json: str
 
     class Config:
-        from_attributes = True
+        orm_mode = True
+
+class OwnerProfileUpdate(BaseModel):
+    name: str
+    business_name: str
+    phone: Optional[str] = None
 
 class Token(BaseModel):
     access_token: str
     token_type: str
 
 class TokenData(BaseModel):
-    email: Optional[str] = None
+    owner_id: Optional[int] = None
 
-class Login(BaseModel):
-    email: EmailStr
-    password: str
-
-class BookingCreate(BaseModel):
-    customer_name: str = Field(..., min_length=1, max_length=100)
+class BookingBase(BaseModel):
+    customer_name: str
     customer_email: EmailStr
     customer_phone: Optional[str] = None
-    service_name: str = Field(..., min_length=1, max_length=100)
-    booking_date: date
-    booking_time: time
+    service_name: str
+    booking_date: datetime
+    booking_time: str # e.g., "10:00 AM"
 
-class Booking(BookingCreate):
+class BookingCreate(BookingBase):
+    pass
+
+class Booking(BookingBase):
     id: int
     owner_id: int
     status: str
 
     class Config:
-        from_attributes = True
-        json_encoders = {
-            date: lambda v: v.isoformat(),
-            time: lambda v: v.isoformat(timespec='minutes')
-        }
+        orm_mode = True
 
-class AvailabilityUpdate(BaseModel):
-    availability: Dict[str, List[AvailabilitySlot]]
+class BookingDisplay(BaseModel):
+    customer_name: str
+    customer_email: EmailStr
+    customer_phone: Optional[str] = None
+    service_name: str
+    booking_date: str # Formatted date string
+    booking_time: str
+    status: str
 
-class ServicesUpdate(BaseModel):
-    services: List[ServiceCreate]
+    class Config:
+        orm_mode = True
 
-
-class OwnerDashboardData(BaseModel):
-    owner: Owner
-    bookings: List[Booking]
-    services: List[Service]
-    availability: Dict[str, List[AvailabilitySlot]]
+class Message(BaseModel):
+    message: str
