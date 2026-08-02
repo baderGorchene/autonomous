@@ -1,52 +1,118 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
-"Report-Msgid-Bugs-To: \n"
+"Project-Id-Version: BookSlot\n"
 "POT-Creation-Date: 2023-10-27 10:00+0000\n"
 "PO-Revision-Date: 2023-10-27 10:00+0000\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: fr\n"
+"Last-Translator: \n"
+"Language-Team: French\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Pybabel 2.11.1\n"
+"Language: fr\n"
 
-msgid "Dashboard"
-msgstr "Tableau de bord"
+msgid "BookSlot - Simple Booking Pages"
+msgstr "BookSlot - Pages de réservation simples"
 
-msgid "Welcome, %s!"
-msgstr "Bienvenue, %s!"
+msgid "Welcome to BookSlot!"
+msgstr "Bienvenue sur BookSlot !"
+
+msgid "Create your dead-simple booking page."
+msgstr "Créez votre page de réservation ultra-simple."
+
+msgid "Sign Up"
+msgstr "S'inscrire"
+
+msgid "Log In"
+msgstr "Se connecter"
+
+msgid "Sign Up - BookSlot"
+msgstr "S'inscrire - BookSlot"
+
+msgid "Your Name:"
+msgstr "Votre Nom :"
+
+msgid "Email:"
+msgstr "E-mail :"
+
+msgid "Password:"
+msgstr "Mot de passe :"
+
+msgid "Business Name:"
+msgstr "Nom de l'entreprise :"
+
+msgid "Booking Page URL (e.g., your-name):"
+msgstr "URL de la page de réservation (ex: votre-nom) :"
+
+msgid "Lowercase letters, numbers, and hyphens only."
+msgstr "Lettres minuscules, chiffres et tirets uniquement."
+
+msgid "Phone Number (for WhatsApp notifications, optional):"
+msgstr "Numéro de téléphone (pour les notifications WhatsApp, facultatif) :"
+
+msgid "Already have an account?"
+msgstr "Vous avez déjà un compte ?"
+
+msgid "Login - BookSlot"
+msgstr "Se connecter - BookSlot"
+
+msgid "Don't have an account?"
+msgstr "Vous n'avez pas de compte ?"
+
+msgid "Dashboard - BookSlot"
+msgstr "Tableau de bord - BookSlot"
+
+msgid "Welcome,"
+msgstr "Bienvenue,"
+
+msgid "Your Booking Page URL:"
+msgstr "URL de votre page de réservation :"
+
+msgid "Upcoming Bookings"
+msgstr "Réservations à venir"
+
+msgid "No upcoming bookings."
+msgstr "Aucune réservation à venir."
+
+msgid "Your Services"
+msgstr "Vos services"
+
+msgid "No services set up yet."
+msgstr "Aucun service configuré pour le moment."
+
+msgid "Your Availability"
+msgstr "Vos disponibilités"
+
+msgid "No availability set up yet."
+msgstr "Aucune disponibilité configurée pour le moment."
+
+msgid "Edit Profile, Services & Availability"
+msgstr "Modifier le profil, les services et les disponibilités"
 
 msgid "Logout"
-msgstr "Déconnexion"
+msgstr "Se déconnecter"
 
-msgid "Your Profile"
-msgstr "Votre profil"
+msgid "Profile - BookSlot"
+msgstr "Profil - BookSlot"
 
-msgid "Name"
-msgstr "Nom"
+msgid "Edit Profile"
+msgstr "Modifier le profil"
 
-msgid "Business Name"
-msgstr "Nom de l'entreprise"
+msgid "Services Offered"
+msgstr "Services offerts"
 
-msgid "Phone Number"
-msgstr "Numéro de téléphone"
+msgid "Service Name:"
+msgstr "Nom du service :"
 
-msgid "Services"
-msgstr "Services"
+msgid "Duration (minutes):"
+msgstr "Durée (minutes) :"
 
-msgid "Service Name"
-msgstr "Nom du service"
+msgstr "Durée (minutes) :"
 
-msgid "Duration (minutes)"
-msgstr "Durée (minutes)"
+msgid "Price (USD):"
+msgstr "Prix (USD) :"
 
-msgid "Price"
-msgstr "Prix"
-
-msgid "Description (optional)"
-msgstr "Description (facultatif)"
+msgid "Description (optional):"
+msgstr "Description (facultatif) :"
 
 msgid "Remove Service"
 msgstr "Supprimer le service"
@@ -55,10 +121,40 @@ msgid "Add Service"
 msgstr "Ajouter un service"
 
 msgid "Availability"
-msgstr "Disponibilité"
+msgstr "Disponibilités"
 
-msgid "Remove"
-msgstr "Supprimer"
+msgid "Monday"
+msgstr "Lundi"
+
+msgid "Tuesday"
+msgstr "Mardi"
+
+msgid "Wednesday"
+msgstr "Mercredi"
+
+msgid "Thursday"
+msgstr "Jeudi"
+
+msgid "Friday"
+msgstr "Vendredi"
+
+msgid "Saturday"
+msgstr "Samedi"
+
+msgid "Sunday"
+msgstr "Dimanche"
+
+msgid "Not available"
+msgstr "Non disponible"
+
+msgid "Start Time:"
+msgstr "Heure de début :"
+
+msgid "End Time:"
+msgstr "Heure de fin :"
+
+msgid "Remove Slot"
+msgstr "Supprimer le créneau"
 
 msgid "Add Slot"
 msgstr "Ajouter un créneau"
@@ -66,101 +162,80 @@ msgstr "Ajouter un créneau"
 msgid "Update Profile"
 msgstr "Mettre à jour le profil"
 
-msgid "Upcoming Bookings"
-msgstr "Prochaines réservations"
+msgid "Back to Dashboard"
+msgstr "Retour au tableau de bord"
 
-msgid "No upcoming bookings."
-msgstr "Aucune réservation à venir."
+msgid "Book an Appointment with"
+msgstr "Prendre rendez-vous avec"
 
-msgid "Customer:"
-msgstr "Client :"
+msgid "Please select a service, date, and time."
+msgstr "Veuillez sélectionner un service, une date et une heure."
 
-msgid "Date:"
-msgstr "Date :"
+msgid "Your Details"
+msgstr "Vos coordonnées"
 
-msgid "at"
-msgstr "à"
+msgid "Your Phone (optional, for WhatsApp confirmation):"
+msgstr "Votre téléphone (facultatif, pour confirmation WhatsApp) :"
 
-msgid "Book with %s"
-msgstr "Réserver avec %s"
-
-msgid "Your Name"
-msgstr "Votre nom"
-
-msgid "Your Email"
-msgstr "Votre e-mail"
-
-msgid "Your Phone Number (optional)"
-msgstr "Votre numéro de téléphone (facultatif)"
-
-msgid "Select Service"
+msgid "Select a Service"
 msgstr "Sélectionner un service"
 
-msgid "mins"
-msgstr "min"
+msgid "No description available."
+msgstr "Aucune description disponible."
 
-msgid "No services available"
-msgstr "Aucun service disponible"
+msgid "Duration:"
+msgstr "Durée :"
 
-msgid "Select Date"
-msgstr "Sélectionner la date"
+msgid "minutes"
+msgstr "minutes"
 
-msgid "Select Time"
-msgstr "Sélectionner l'heure"
+msgid "Price:"
+msgstr "Prix :"
 
-msgid "Book Now"
-msgstr "Réserver maintenant"
+msgid "Select a Date"
+msgstr "Sélectionner une date"
+
+msgid "Select a Time Slot"
+msgstr "Sélectionner un créneau horaire"
+
+msgid "Please select a service and date to see available times."
+msgstr "Veuillez sélectionner un service et une date pour voir les horaires disponibles."
+
+msgid "No availability for this day."
+msgstr "Pas de disponibilité pour ce jour."
+
+msgid "No available time slots for the selected service and date."
+msgstr "Aucun créneau horaire disponible pour le service et la date sélectionnés."
+
+msgid "Confirm Booking"
+msgstr "Confirmer la réservation"
 
 msgid "Booking Confirmed!"
 msgstr "Réservation confirmée !"
 
-msgid "Thank you, %s!"
-msgstr "Merci, %s !"
+msgid "Thank you,"
+msgstr "Merci,"
 
-msgid "Your booking with %s for %s is confirmed."
-msgstr "Votre réservation avec %s pour %s est confirmée."
+msgid "for booking with"
+msgstr "d'avoir réservé avec"
 
-msgid "A confirmation email has been sent to %s."
-msgstr "Un e-mail de confirmation a été envoyé à %s."
-
-msgid "Book Another Slot"
-msgstr "Réserver un autre créneau"
-
-msgid "Dear %s,"
-msgstr "Cher %s,"
-
-msgid "You have a new booking!"
-msgstr "Vous avez une nouvelle réservation !"
+msgid "Here are your booking details:"
+msgstr "Voici les détails de votre réservation :"
 
 msgid "Service:"
 msgstr "Service :"
 
+msgid "Date:"
+msgstr "Date :"
+
 msgid "Time:"
 msgstr "Heure :"
 
-msgid "Customer Name:"
-msgstr "Nom du client :"
+msgid "Business Contact:"
+msgstr "Contact de l'entreprise :"
 
-msgid "Customer Email:"
-msgstr "E-mail du client :"
+msgid "A confirmation email has been sent to"
+msgstr "Un e-mail de confirmation a été envoyé à"
 
-msgid "Customer Phone:"
-msgstr "Téléphone du client :"
-
-msgid "Please check your dashboard for more details."
-msgstr "Veuillez consulter votre tableau de bord pour plus de détails."
-
-msgid "Your booking with %s is confirmed!"
-msgstr "Votre réservation avec %s est confirmée !"
-
-msgid "We look forward to seeing you!"
-msgstr "Nous avons hâte de vous voir !"
-
-msgid "Selected time slot is not available or outside business hours."
-msgstr "Le créneau horaire sélectionné n'est pas disponible ou en dehors des heures d'ouverture."
-
-msgid "Invalid date or time format provided."
-msgstr "Format de date ou d'heure invalide fourni."
-
-msgid "An unexpected error occurred during booking. Please try again."
-msgstr "Une erreur inattendue est survenue lors de la réservation. Veuillez réessayer."
+msgid "Book another appointment"
+msgstr "Réserver un autre rendez-vous"

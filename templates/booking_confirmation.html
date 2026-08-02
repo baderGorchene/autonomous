@@ -1,20 +1,24 @@
 <!DOCTYPE html>
-<html lang="{{ current_lang }}">
+<html lang="{{ request.state.locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ gettext('Booking Confirmed!') }}</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css">
+    <title>{{ _('Booking Confirmed!') }}</title>
 </head>
-<body class="bg-gray-100 font-sans leading-normal tracking-normal">
-    <div class="container mx-auto p-4 max-w-md bg-white shadow-md rounded-lg mt-10 text-center">
-        <h1 class="text-3xl font-bold text-green-600 mb-4">{{ gettext('Booking Confirmed!') }}</h1>
-        <p class="text-lg mb-2">{{ gettext('Thank you, %s!') % booking.customer_name }}</p>
-        <p class="mb-4">{{ gettext('Your booking with %s for %s is confirmed.') % (owner.business_name, booking.service_name) }}</p>
-        <p class="font-semibold">{{ gettext('Date:') }} {{ booking.booking_date.strftime('%Y-%m-%d') }}</p>
-        <p class="font-semibold">{{ gettext('Time:') }} {{ booking.booking_time }}</p>
-        <p class="mt-6">{{ gettext('A confirmation email has been sent to %s.') % booking.customer_email }}</p>
-        <a href="/{{ owner.slug }}?lang={{ current_lang }}" class="mt-8 inline-block bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">{{ gettext('Book Another Slot') }}</a>
+<body>
+    <h1>{{ _('Your Booking is Confirmed!') }}</h1>
+    <p>{{ _('Thank you,') }} {{ booking.customer_name }}, {{ _('for booking with') }} {{ owner.business_name }}.</p>
+    <p>{{ _('Here are your booking details:') }}</p>
+    <ul>
+        <li><strong>{{ _('Service:') }}</strong> {{ booking.service_name }}</li>
+        <li><strong>{{ _('Date:') }}</strong> {{ booking.booking_date.strftime('%Y-%m-%d') }}</li>
+        <li><strong>{{ _('Time:') }}</strong> {{ booking.booking_time }}</li>
+        <li><strong>{{ _('Business Contact:') }}</strong> {{ owner.email }} {% if owner.phone %}/ {{ owner.phone }}{% endif %}</li>
+    </ul>
+    <p>{{ _('A confirmation email has been sent to') }} {{ booking.customer_email }}.</p>
+    <p><a href="/bookslot.app/{{ owner.slug }}">{{ _('Book another appointment') }}</a></p>
+    <div>
+        <a href="{{ request.url|urlencode('lang', 'en') }}">English</a> | <a href="{{ request.url|urlencode('lang', 'ar') }}">العربية</a> | <a href="{{ request.url|urlencode('lang', 'fr') }}">Français</a>
     </div>
 </body>
 </html>

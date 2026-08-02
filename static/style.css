@@ -1,7 +1,7 @@
 body {
     font-family: Arial, sans-serif;
     margin: 0;
-    padding: 20px;
+    padding: 0;
     background-color: #f4f4f4;
     color: #333;
 }
@@ -9,54 +9,67 @@ body {
     max-width: 800px;
     margin: 20px auto;
     background-color: #fff;
-    padding: 20px 30px;
+    padding: 20px;
     border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
-h1, h2 {
-    color: #0056b3;
+header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+h1, h2, h3 {
+    color: #007bff;
 }
 form {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+    margin-top: 20px;
 }
 label {
+    display: block;
+    margin-bottom: 8px;
     font-weight: bold;
-    margin-top: 10px;
 }
-input[type="text"], input[type="email"], input[type="password"], input[type="tel"], input[type="number"], select {
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="date"],
+input[type="number"],
+input[type="time"],
+select,
+textarea {
+    width: calc(100% - 22px); /* Account for padding and border */
     padding: 10px;
-    border: 1px solid #ddd;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
     border-radius: 4px;
-    width: 100%;
     box-sizing: border-box;
 }
 button {
     background-color: #007bff;
     color: white;
-    padding: 10px 15px;
+    padding: 12px 20px;
     border: none;
     border-radius: 4px;
     cursor: pointer;
     font-size: 16px;
-    margin-top: 10px;
+    margin-right: 10px;
 }
 button:hover {
     background-color: #0056b3;
 }
-.error {
+.error-message {
     color: red;
     background-color: #ffe0e0;
     border: 1px solid red;
     padding: 10px;
+    margin-bottom: 15px;
     border-radius: 4px;
 }
-.success {
+.success-message {
     color: green;
-    background-color: #e0ffe0;
+    background-color: #e6ffe6;
     border: 1px solid green;
     padding: 10px;
+    margin-bottom: 15px;
     border-radius: 4px;
 }
 table {
@@ -64,58 +77,72 @@ table {
     border-collapse: collapse;
     margin-top: 20px;
 }
-th, td {
+table, th, td {
     border: 1px solid #ddd;
+}
+th, td {
     padding: 8px;
     text-align: left;
 }
 th {
     background-color: #f2f2f2;
 }
-.slug-input {
-    display: flex;
-    align-items: center;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    overflow: hidden;
-    margin-bottom: 10px;
+nav {
+    margin-top: 20px;
 }
-.slug-input span {
-    padding: 10px;
-    background-color: #eee;
-    border-right: 1px solid #ddd;
+nav a {
+    margin-right: 15px;
+    text-decoration: none;
+    color: #007bff;
+    font-weight: bold;
 }
-.slug-input input {
-    border: none;
-    flex-grow: 1;
+nav a:hover {
+    text-decoration: underline;
 }
-.slug-input input:focus {
-    outline: none;
-}
-.language-toggle {
+.language-switcher {
     margin-top: 20px;
     text-align: center;
 }
-.language-toggle a {
+.language-switcher a {
     margin: 0 5px;
-    text-decoration: none;
     color: #007bff;
+    text-decoration: none;
 }
-.language-toggle a:hover {
+.language-switcher a:hover {
     text-decoration: underline;
 }
-.service-item, .availability-item {
+.service-item, .time-slot-item {
     display: flex;
     gap: 10px;
-    margin-bottom: 5px;
+    margin-bottom: 10px;
     align-items: center;
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
 }
-.service-item input, .availability-item input {
+.service-item input, .service-item textarea, .time-slot-item input {
     flex-grow: 1;
+    margin-bottom: 0; /* Override default margin */
 }
-.remove-service {
-    background-color: #dc3545;
+.service-item button, .time-slot-item button {
+    flex-shrink: 0;
+    width: auto;
+    padding: 8px 12px;
 }
-.remove-service:hover {
-    background-color: #c82333;
+/* Responsive adjustments */
+@media (max-width: 600px) {
+    .container {
+        margin: 10px;
+        padding: 15px;
+    }
+    .service-item, .time-slot-item {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .service-item input, .service-item textarea, .time-slot-item input {
+        width: 100%;
+    }
+    button {
+        width: 100%;
+        margin-right: 0;
+        margin-bottom: 10px;
+    }
 }

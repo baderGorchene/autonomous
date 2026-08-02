@@ -1,170 +1,66 @@
 <!DOCTYPE html>
-<html lang="{{ current_lang }}">
+<html lang="{{ request.state.locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _('Dashboard') }} - {{ owner.business_name }}</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css">
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    <style>
-        [v-cloak] { display: none; }
-    </style>
+    <title>{{ _('Dashboard - BookSlot') }}</title>
 </head>
-<body class="bg-gray-100 font-sans leading-normal tracking-normal">
-    <div class="container mx-auto p-4">
-        <div class="flex justify-between items-center mb-6">
-            <h1 class="text-3xl font-bold">{{ _('Welcome, %s!') % owner.name }}</h1>
-            <div>
-                <a href="{{ request.url|urlencode('lang', 'en') }}" class="text-blue-500 hover:underline mx-2">English</a>
-                <a href="{{ request.url|urlencode('lang', 'ar') }}" class="text-blue-500 hover:underline mx-2">العربية</a>
-                <a href="{{ request.url|urlencode('lang', 'fr') }}" class="text-blue-500 hover:underline mx-2">Français</a>
-            </div>
-            <a href="/logout" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">{{ _('Logout') }}</a>
-        </div>
+<body>
+    <h1>{{ _('Welcome,') }} {{ owner.name }}!</h1>
+    <p>{{ _('Your Booking Page URL:') }} <a href="http://{{ booking_page_url }}" target="_blank">http://{{ booking_page_url }}</a></p>
 
-        <div id="app" v-cloak class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <!-- Profile Section -->
-            <div class="lg:col-span-1 bg-white shadow-md rounded-lg p-6">
-                <h2 class="text-2xl font-semibold mb-4">{{ _('Your Profile') }}</h2>
-                <form @submit.prevent="updateProfile" class="space-y-4">
-                    <div>
-                        <label for="name" class="block text-sm font-medium text-gray-700">{{ _('Name') }}</label>
-                        <input type="text" id="name" v-model="profile.name" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" required>
-                    </div>
-                    <div>
-                        <label for="business_name" class="block text-sm font-medium text-gray-700">{{ _('Business Name') }}</label>
-                        <input type="text" id="business_name" v-model="profile.business_name" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" required>
-                    </div>
-                    <div>
-                        <label for="phone" class="block text-sm font-medium text-gray-700">{{ _('Phone Number') }}</label>
-                        <input type="text" id="phone" v-model="profile.phone" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
-                    </div>
+    <h2>{{ _('Upcoming Bookings') }}</h2>
+    {% if bookings %}
+        <ul>
+            {% for booking in bookings %}
+                <li>
+                    <strong>{{ booking.booking_date.strftime('%Y-%m-%d') }} {{ booking.booking_time }}</strong> -
+                    {{ booking.service_name }} for {{ booking.customer_name }} ({{ booking.customer_email }})
+                    {% if booking.customer_phone %}, {{ booking.customer_phone }}{% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>{{ _('No upcoming bookings.') }}</p>
+    {% endif %}
 
-                    <h3 class="text-xl font-medium mt-6 mb-3">{{ _('Services') }}</h3>
-                    <div v-for="(service, index) in profile.services" :key="index" class="border p-4 rounded-md mb-2">
-                        <input type="text" v-model="service.name" placeholder="{{ _('Service Name') }}" class="block w-full border border-gray-300 rounded-md shadow-sm p-2 mb-2" required>
-                        <input type="number" v-model.number="service.duration" placeholder="{{ _('Duration (minutes)') }}" class="block w-full border border-gray-300 rounded-md shadow-sm p-2 mb-2" required>
-                        <input type="number" v-model.number="service.price" placeholder="{{ _('Price') }}" class="block w-full border border-gray-300 rounded-md shadow-sm p-2 mb-2" required>
-                        <textarea v-model="service.description" placeholder="{{ _('Description (optional)') }}" class="block w-full border border-gray-300 rounded-md shadow-sm p-2 mb-2"></textarea>
-                        <button type="button" @click="removeService(index)" class="bg-red-500 text-white p-2 rounded">{{ _('Remove Service') }}</button>
-                    </div>
-                    <button type="button" @click="addService" class="bg-green-500 text-white p-2 rounded">{{ _('Add Service') }}</button>
+    <h2>{{ _('Your Services') }}</h2>
+    {% if services %}
+        <ul>
+            {% for service in services %}
+                <li>{{ service.name }} ({{ service.duration }} {{ _('min') }}, {{ service.price }} {{ _('USD') }})</li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>{{ _('No services set up yet.') }}</p>
+    {% endif %}
 
-                    <h3 class="text-xl font-medium mt-6 mb-3">{{ _('Availability') }}</h3>
-                    <div v-for="(slots, day) in profile.availability" :key="day" class="mb-4">
-                        <h4 class="font-semibold">{{ day }}</h4>
-                        <div v-for="(slot, index) in slots" :key="index" class="flex space-x-2 mb-2">
-                            <input type="time" v-model="slot.start_time" class="border p-2 rounded" required>
-                            <input type="time" v-model="slot.end_time" class="border p-2 rounded" required>
-                            <button type="button" @click="removeAvailabilitySlot(day, index)" class="bg-red-500 text-white p-2 rounded">{{ _('Remove') }}</button>
-                        </div>
-                        <button type="button" @click="addAvailabilitySlot(day)" class="bg-green-500 text-white p-2 rounded">{{ _('Add Slot') }}</button>
-                    </div>
-                    <!-- Add functionality to add new days if needed -->
+    <h2>{{ _('Your Availability') }}</h2>
+    {% if availability %}
+        <ul>
+            {% for day, slots in availability.items() %}
+                <li><strong>{{ day }}:</strong>
+                    {% if slots %}
+                        {% for slot in slots %}
+                            {{ slot.start_time }} - {{ slot.end_time }}
+                        {% endfor %}
+                    {% else %}
+                        {{ _('Not available') }}
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>{{ _('No availability set up yet.') }}</p>
+    {% endif %}
 
-                    <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">{{ _('Update Profile') }}</button>
-                </form>
-            </div>
+    <p><a href="/profile">{{ _('Edit Profile, Services & Availability') }}</a></p>
 
-            <!-- Upcoming Bookings Section -->
-            <div class="lg:col-span-2 bg-white shadow-md rounded-lg p-6">
-                <h2 class="text-2xl font-semibold mb-4">{{ _('Upcoming Bookings') }}</h2>
-                <div v-if="bookings.length === 0" class="text-gray-600">{{ _('No upcoming bookings.') }}</div>
-                <div v-else class="space-y-4">
-                    <div v-for="booking in bookings" :key="booking.id" class="border p-4 rounded-md shadow-sm">
-                        <p class="font-bold">{{ booking.service_name }}</p>
-                        <p>{{ _('Customer:') }} {{ booking.customer_name }} ({{ booking.customer_email }}) <span v-if="booking.customer_phone"> - {{ booking.customer_phone }}</span></p>
-                        <p>{{ _('Date:') }} {{ booking.booking_date_str }} {{ _('at') }} {{ booking.booking_time }}</p>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <form action="/logout" method="post">
+        <button type="submit">{{ _('Logout') }}</button>
+    </form>
+    <div>
+        <a href="{{ request.url|urlencode('lang', 'en') }}">English</a> | <a href="{{ request.url|urlencode('lang', 'ar') }}">العربية</a> | <a href="{{ request.url|urlencode('lang', 'fr') }}">Français</a>
     </div>
-
-    <script>
-        const { createApp, ref, reactive, onMounted } = Vue;
-
-        createApp({
-            setup() {
-                const ownerData = {{ owner|tojson }};
-                const bookingsData = {{ bookings|tojson }};
-                const currentLang = "{{ current_lang }}";
-
-                const profile = reactive({
-                    name: ownerData.name,
-                    business_name: ownerData.business_name,
-                    phone: ownerData.phone,
-                    services: ownerData.services || [],
-                    availability: ownerData.availability || {
-                        "Monday": [], "Tuesday": [], "Wednesday": [], "Thursday": [], "Friday": [], "Saturday": [], "Sunday": []
-                    }
-                });
-                const bookings = ref(bookingsData);
-
-                const gettext = (msgid) => {
-                    // This is a simplified client-side gettext.
-                    // For full functionality, you'd load .json translations or use a client-side library.
-                    // For now, it just returns the message id.
-                    return msgid;
-                };
-                
-                const updateProfile = async () => {
-                    const formData = new FormData();
-                    formData.append('name', profile.name);
-                    formData.append('business_name', profile.business_name);
-                    formData.append('phone', profile.phone || '');
-                    formData.append('services_json', JSON.stringify(profile.services));
-                    formData.append('availability_json', JSON.stringify(profile.availability));
-
-                    // Use the form action directly to handle redirect
-                    const response = await fetch('/owner/profile?lang=' + currentLang, {
-                        method: 'POST',
-                        body: formData,
-                        headers: {
-                            'Authorization': `Bearer {{ request.cookies.get('access_token') }}`
-                        }
-                    });
-
-                    if (response.redirected) {
-                        window.location.href = response.url;
-                    } else {
-                        const result = await response.json();
-                        alert(result.detail || gettext('Profile updated successfully!'));
-                        // Optionally re-fetch data or update UI
-                    }
-                };
-
-                const addService = () => {
-                    profile.services.push({ name: '', duration: 60, price: 0.0, description: '' });
-                };
-
-                const removeService = (index) => {
-                    profile.services.splice(index, 1);
-                };
-
-                const addAvailabilitySlot = (day) => {
-                    if (!profile.availability[day]) {
-                        profile.availability[day] = [];
-                    }
-                    profile.availability[day].push({ start_time: '09:00', end_time: '17:00' });
-                };
-
-                const removeAvailabilitySlot = (day, index) => {
-                    profile.availability[day].splice(index, 1);
-                };
-
-                return {
-                    profile,
-                    bookings,
-                    updateProfile,
-                    addService,
-                    removeService,
-                    addAvailabilitySlot,
-                    removeAvailabilitySlot,
-                    gettext
-                };
-            }
-        }).mount('#app');
-    </script>
 </body>
 </html>

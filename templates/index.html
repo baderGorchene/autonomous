@@ -1,14 +1,16 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ request.state.locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BookSlot</title>
+    <title>{{ _('BookSlot - Simple Booking Pages') }}</title>
 </head>
 <body>
-    <h1>Welcome to BookSlot!</h1>
-    <p>A dead-simple booking page for local service businesses.</p>
-    <p><a href="/owner/register">Sign Up</a> or <a href="/owner/login">Login</a></p>
-    <p>Switch language: <a href="{{ request.url|urlencode('lang', 'en') }}">English</a> | <a href="{{ request.url|urlencode('lang', 'ar') }}">العربية</a> | <a href="{{ request.url|urlencode('lang', 'fr') }}">Français</a></p>
+    <h1>{{ _('Welcome to BookSlot!') }}</h1>
+    <p>{{ _('Create your dead-simple booking page.') }}</p>
+    <a href="/signup">{{ _('Sign Up') }}</a> | <a href="/login">{{ _('Log In') }}</a>
+    <div>
+        <a href="?lang=en">English</a> | <a href="?lang=ar">العربية</a> | <a href="?lang=fr">Français</a>
+    </div>
 </body>
 </html>

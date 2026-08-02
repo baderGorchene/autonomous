@@ -1,126 +1,264 @@
-from fastapi import FastAPI, Depends, HTTPException, status, Request, Form, Response
+from fastapi import FastAPI, Depends, HTTPException, status, Request, Response, Form, BackgroundTasks
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
-from typing import List, Dict, Any, Optional
+from datetime import timedelta, datetime, date
+from typing import List, Optional, Dict, Any
 import json
-import datetime
 import logging
-from urllib.parse import urlencode
 
-from . import crud, models, schemas, security, notifications
+from . import models, schemas, crud, security, notifications
 from .database import SessionLocal, engine, create_tables, get_db
 from .config import settings
 from .i18n_config import get_jinja_env
-import gettext
-import os
-
-# Create tables on startup (only for development/testing, migrations for production)
-create_tables()
-
-app = FastAPI()
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Middleware for language detection and setting
+# Create database tables on startup
+# This is typically done with migrations in production, but for MVP, this is fine.
+create_tables()
+
+app = FastAPI(
+    title="BookSlot API",
+    description="API for the BookSlot booking page application.",
+    version="0.1.0",
+)
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+# Dependency to get the current owner from the JWT token
+async def get_current_owner(request: Request, db: Session = Depends(get_db)) -> models.Owner:
+    token = request.cookies.get("access_token")
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    token_data = security.decode_access_token(token)
+    if token_data is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    owner = crud.get_owner_by_email(db, email=token_data.get("sub"))
+    if owner is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Owner not found",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return owner
+
+# Dependency for translations
+def get_locale(request: Request) -> str:
+    # Prioritize query parameter, then cookie, then accept-language header, fallback to 'en'
+    query_locale = request.query_params.get("lang")
+    if query_locale in ["en", "ar", "fr"]:
+        return query_locale
+    
+    cookie_locale = request.cookies.get("lang")
+    if cookie_locale in ["en", "ar", "fr"]:
+        return cookie_locale
+        
+    accept_language = request.headers.get("Accept-Language", "en")
+    if "ar" in accept_language:
+        return "ar"
+    if "fr" in accept_language:
+        return "fr"
+    return "en"
+
 @app.middleware("http")
 async def add_language_middleware(request: Request, call_next):
-    lang = request.query_params.get("lang", "en")
-    request.state.lang = lang
+    locale = get_locale(request)
+    request.state.locale = locale
     response = await call_next(request)
+    # Set cookie if not already set, or if query param changed it
+    if request.cookies.get("lang") != locale:
+        response.set_cookie(key="lang", value=locale, httponly=True, samesite="lax", max_age=3600 * 24 * 30) # 30 days
     return response
 
-# Dependency for Jinja2 environment with i18n
-def get_jinja_env_dependency(request: Request):
-    return get_jinja_env(request.state.lang)
+# Template setup with i18n
+def get_templates(request: Request) -> Jinja2Templates:
+    locale = request.state.locale if hasattr(request.state, 'locale') else 'en'
+    env = get_jinja_env(locale)
+    return Jinja2Templates(directory=settings.TEMPLATES_DIR, env=env)
 
-# Health check endpoint
-@app.get("/health", response_model=schemas.Message)
-def health_check():
-    return {"message": "ok"}
+# --- API Endpoints ---
 
-# --- Owner Authentication and Profile Management ---
-
-@app.post("/owner/signup", response_model=schemas.Token)
-def signup_owner(owner: schemas.OwnerCreate, db: Session = Depends(get_db)):
-    db_owner = crud.get_owner_by_email(db, email=owner.email)
-    if db_owner:
-        raise HTTPException(status_code=400, detail="Email already registered")
-    db_owner_by_slug = crud.get_owner_by_slug(db, slug=owner.slug)
-    if db_owner_by_slug:
-        raise HTTPException(status_code=400, detail="Business slug already taken")
-    
-    db_owner = crud.create_owner(db=db, owner=owner)
-    access_token = security.create_access_token(data={"sub": db_owner.email})
-    return {"access_token": access_token, "token_type": "bearer"}
-
-@app.post("/owner/token", response_model=schemas.Token)
-def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+@app.post("/token", response_model=schemas.Token)
+async def login_for_access_token(response: Response, form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     owner = crud.authenticate_owner(db, form_data.username, form_data.password)
     if not owner:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
+            detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    access_token = security.create_access_token(data={"sub": owner.email})
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = security.create_access_token(
+        data={"sub": owner.email}, expires_delta=access_token_expires
+    )
+    response.set_cookie(key="access_token", value=access_token, httponly=True, samesite="lax")
     return {"access_token": access_token, "token_type": "bearer"}
 
-@app.get("/owner/me", response_model=schemas.Owner)
-def read_owner_me(current_owner: models.Owner = Depends(security.get_current_owner)):
-    return current_owner
+@app.get("/health", response_class=HTMLResponse)
+async def health_check():
+    return "OK"
+
+# --- HTML/UI Routes ---
+
+@app.get("/", response_class=HTMLResponse)
+async def read_root(request: Request, templates: Jinja2Templates = Depends(get_templates)):
+    return templates.TemplateResponse("index.html", {"request": request})
+
+@app.get("/signup", response_class=HTMLResponse)
+async def signup_page(request: Request, templates: Jinja2Templates = Depends(get_templates)):
+    return templates.TemplateResponse("signup.html", {"request": request})
+
+@app.post("/signup", response_class=RedirectResponse, status_code=status.HTTP_303_SEE_OTHER)
+async def signup_owner(
+    request: Request,
+    name: str = Form(...),
+    email: str = Form(...),
+    password: str = Form(...),
+    business_name: str = Form(...),
+    slug: str = Form(...),
+    phone: Optional[str] = Form(None),
+    db: Session = Depends(get_db)
+):
+    owner = crud.get_owner_by_email(db, email=email)
+    if owner:
+        # TODO: Add error message to template
+        raise HTTPException(status_code=400, detail="Email already registered")
+    owner_by_slug = crud.get_owner_by_slug(db, slug=slug)
+    if owner_by_slug:
+        # TODO: Add error message to template
+        raise HTTPException(status_code=400, detail="Booking page URL already taken")
+    
+    try:
+        owner_create = schemas.OwnerCreate(
+            name=name, email=email, password=password, business_name=business_name, slug=slug, phone=phone
+        )
+        db_owner = crud.create_owner(db=db, owner=owner_create)
+    except Exception as e:
+        logger.error(f"Error creating owner: {e}")
+        # TODO: Add error message to template
+        raise HTTPException(status_code=400, detail="Error creating owner. Please check your inputs.")
+
+    # Log in the user automatically after signup
+    response = RedirectResponse(url="/dashboard", status_code=status.HTTP_303_SEE_OTHER)
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = security.create_access_token(
+        data={"sub": db_owner.email}, expires_delta=access_token_expires
+    )
+    response.set_cookie(key="access_token", value=access_token, httponly=True, samesite="lax")
+    return response
+
+@app.get("/login", response_class=HTMLResponse)
+async def login_page(request: Request, templates: Jinja2Templates = Depends(get_templates)):
+    return templates.TemplateResponse("login.html", {"request": request})
+
+@app.post("/login", response_class=RedirectResponse, status_code=status.HTTP_303_SEE_OTHER)
+async def login_owner(
+    response: Response,
+    email: str = Form(...),
+    password: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    owner = crud.authenticate_owner(db, email, password)
+    if not owner:
+        # TODO: Add error message to template
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+        )
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = security.create_access_token(
+        data={"sub": owner.email}, expires_delta=access_token_expires
+    )
+    response.set_cookie(key="access_token", value=access_token, httponly=True, samesite="lax")
+    return RedirectResponse(url="/dashboard", status_code=status.HTTP_303_SEE_OTHER)
+
+@app.post("/logout", response_class=RedirectResponse, status_code=status.HTTP_303_SEE_OTHER)
+async def logout_owner(response: Response):
+    response.delete_cookie(key="access_token")
+    return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
 
 @app.get("/dashboard", response_class=HTMLResponse)
-async def dashboard_page(
+async def owner_dashboard(
     request: Request,
-    db: Session = Depends(get_db),
-    current_owner: models.Owner = Depends(security.get_current_owner),
-    env: Any = Depends(get_jinja_env_dependency)
+    templates: Jinja2Templates = Depends(get_templates),
+    current_owner: models.Owner = Depends(get_current_owner),
+    db: Session = Depends(get_db)
 ):
-    _ = env.get_template('dashboard.html').globals['gettext'] # Initialize gettext for the template
+    bookings = crud.get_owner_bookings(db, current_owner.id)
+    upcoming_bookings = [
+        b for b in bookings if b.booking_date >= date.today()
+    ]
     
-    owner_data = schemas.Owner.from_orm(current_owner).dict()
-    owner_data['services'] = json.loads(current_owner.services_json) if current_owner.services_json else []
-    owner_data['availability'] = json.loads(current_owner.availability_json) if current_owner.availability_json else {}
+    # Parse services and availability for display
+    services = json.loads(current_owner.services_json) if current_owner.services_json else []
+    availability = json.loads(current_owner.availability_json) if current_owner.availability_json else {}
 
-    upcoming_bookings = crud.get_owner_bookings(db, owner_id=current_owner.id)
-
-    # Convert booking_date from datetime to string for JSON serialization if needed, or format for display
-    for booking in upcoming_bookings:
-        booking.booking_date_str = booking.booking_date.strftime("%Y-%m-%d")
-
-    return env.get_template("dashboard.html").render(
-        request=request,
-        owner=owner_data,
-        bookings=upcoming_bookings,
-        current_lang=request.state.lang
+    return templates.TemplateResponse(
+        "dashboard.html",
+        {
+            "request": request,
+            "owner": current_owner,
+            "bookings": upcoming_bookings,
+            "services": services,
+            "availability": availability,
+            "booking_page_url": f"bookslot.app/{current_owner.slug}" # Placeholder, needs actual domain
+        }
     )
 
-@app.post("/owner/profile", response_class=RedirectResponse, status_code=status.HTTP_303_SEE_OTHER)
+@app.get("/profile", response_class=HTMLResponse)
+async def owner_profile_page(
+    request: Request,
+    templates: Jinja2Templates = Depends(get_templates),
+    current_owner: models.Owner = Depends(get_current_owner)
+):
+    services = json.loads(current_owner.services_json) if current_owner.services_json else []
+    availability = json.loads(current_owner.availability_json) if current_owner.availability_json else {}
+    return templates.TemplateResponse(
+        "profile.html",
+        {
+            "request": request,
+            "owner": current_owner,
+            "services": services,
+            "availability": availability
+        }
+    )
+
+@app.post("/profile", response_class=RedirectResponse, status_code=status.HTTP_303_SEE_OTHER)
 async def update_owner_profile(
     request: Request,
-    db: Session = Depends(get_db),
-    current_owner: models.Owner = Depends(security.get_current_owner),
     name: str = Form(...),
     business_name: str = Form(...),
     phone: Optional[str] = Form(None),
-    services_json: str = Form("[]"),
-    availability_json: str = Form("{}")
+    services_json: str = Form("[]"), # Expecting JSON string from a hidden input or JS
+    availability_json: str = Form("{}"), # Expecting JSON string from a hidden input or JS
+    db: Session = Depends(get_db),
+    current_owner: models.Owner = Depends(get_current_owner)
 ):
     try:
-        # Validate JSON inputs
+        # Validate services_json and availability_json
         services_data = json.loads(services_json)
         availability_data = json.loads(availability_json)
 
-        # Basic validation for services and availability schemas
-        # This is a simplified check; more robust validation would iterate and validate each item
+        # Basic validation for services
         for service in services_data:
-            schemas.Service(**service) # Will raise ValidationError if invalid
+            schemas.Service(**service) # Validate each service item
+
+        # Basic validation for availability
         for day, slots in availability_data.items():
             for slot in slots:
-                schemas.AvailabilitySlot(**slot) # Will raise ValidationError if invalid
+                schemas.AvailabilitySlot(**slot) # Validate each slot
 
         owner_update = schemas.OwnerProfileUpdate(
             name=name,
@@ -129,175 +267,114 @@ async def update_owner_profile(
             services=services_data,
             availability=availability_data
         )
-
-        current_owner.name = owner_update.name
-        current_owner.business_name = owner_update.business_name
-        current_owner.phone = owner_update.phone
-        current_owner.services_json = json.dumps(owner_update.services)
-        current_owner.availability_json = json.dumps(owner_update.availability)
-
-        db.add(current_owner)
-        db.commit()
-        db.refresh(current_owner)
         
-        return RedirectResponse(url=f"/dashboard?lang={request.state.lang}", status_code=status.HTTP_303_SEE_OTHER)
+        updated_owner = crud.update_owner_profile(db, current_owner, owner_update)
+        # Update services_json and availability_json directly as they are Text fields
+        updated_owner.services_json = services_json
+        updated_owner.availability_json = availability_json
+        db.add(updated_owner)
+        db.commit()
+        db.refresh(updated_owner)
+
     except json.JSONDecodeError:
         raise HTTPException(status_code=400, detail="Invalid JSON format for services or availability.")
     except Exception as e:
         logger.error(f"Error updating owner profile: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to update profile: {e}")
+        raise HTTPException(status_code=400, detail=f"Error updating profile: {e}")
+    
+    return RedirectResponse(url="/dashboard", status_code=status.HTTP_303_SEE_OTHER)
 
 
-# --- Public Booking Page ---
-
-@app.get("/{owner_slug}", response_class=HTMLResponse)
+@app.get("/bookslot.app/{owner_slug}", response_class=HTMLResponse)
 async def public_booking_page(
-    owner_slug: str,
     request: Request,
-    db: Session = Depends(get_db),
-    env: Any = Depends(get_jinja_env_dependency)
+    owner_slug: str,
+    templates: Jinja2Templates = Depends(get_templates),
+    db: Session = Depends(get_db)
 ):
-    _ = env.get_template('booking_page.html').globals['gettext'] # Initialize gettext for the template
-    owner = crud.get_owner_by_slug(db, slug=owner_slug)
+    owner = crud.get_owner_by_slug(db, owner_slug)
     if not owner:
-        raise HTTPException(status_code=404, detail="Owner not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Booking page not found")
 
     services = json.loads(owner.services_json) if owner.services_json else []
     availability = json.loads(owner.availability_json) if owner.availability_json else {}
 
-    return env.get_template("booking_page.html").render(
-        request=request,
-        owner=owner,
-        services=services,
-        availability=availability,
-        current_lang=request.state.lang
+    return templates.TemplateResponse(
+        "booking_page.html",
+        {
+            "request": request,
+            "owner": owner,
+            "services": services,
+            "availability": availability
+        }
     )
 
-@app.post("/{owner_slug}/book", response_class=HTMLResponse)
+@app.post("/bookslot.app/{owner_slug}/book", response_class=RedirectResponse, status_code=status.HTTP_303_SEE_OTHER)
 async def submit_booking(
-    owner_slug: str,
     request: Request,
-    db: Session = Depends(get_db),
-    env: Any = Depends(get_jinja_env_dependency),
+    owner_slug: str,
+    background_tasks: BackgroundTasks,
     customer_name: str = Form(...),
-    customer_email: EmailStr = Form(...),
+    customer_email: str = Form(...),
     customer_phone: Optional[str] = Form(None),
     service_name: str = Form(...),
-    booking_date: str = Form(...), # YYYY-MM-DD
-    booking_time: str = Form(...)  # HH:MM
+    booking_date_str: str = Form(...),
+    booking_time: str = Form(...),
+    db: Session = Depends(get_db)
 ):
-    _ = env.get_template('booking_confirmation.html').globals['gettext'] # Initialize gettext for the template
-    owner = crud.get_owner_by_slug(db, slug=owner_slug)
+    owner = crud.get_owner_by_slug(db, owner_slug)
     if not owner:
-        raise HTTPException(status_code=404, detail="Owner not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Booking page not found")
 
     try:
-        parsed_date = datetime.datetime.strptime(booking_date, "%Y-%m-%d").date()
-        
-        # Basic availability check (can be expanded)
-        owner_availability = json.loads(owner.availability_json) if owner.availability_json else {}
-        day_of_week = parsed_date.strftime("%A") # e.g., "Monday"
-        
-        is_available = False
-        if day_of_week in owner_availability:
-            for slot in owner_availability[day_of_week]:
-                start_dt = datetime.datetime.strptime(f"{booking_date} {slot['start_time']}", "%Y-%m-%d %H:%M")
-                end_dt = datetime.datetime.strptime(f"{booking_date} {slot['end_time']}", "%Y-%m-%d %H:%M")
-                booking_dt = datetime.datetime.strptime(f"{booking_date} {booking_time}", "%Y-%m-%d %H:%M")
+        booking_date = datetime.strptime(booking_date_str, "%Y-%m-%d").date()
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid date format. Expected YYYY-MM-DD.")
+    
+    # TODO: Add more robust validation for time slot availability
+    # For MVP, we assume the frontend sends valid (available) time slots.
 
-                if start_dt <= booking_dt < end_dt:
-                    is_available = True
-                    break
-        
-        if not is_available:
-            # Render booking page again with an error message
-            services = json.loads(owner.services_json) if owner.services_json else []
-            availability = json.loads(owner.availability_json) if owner.availability_json else {}
-            return env.get_template("booking_page.html").render(
-                request=request,
-                owner=owner,
-                services=services,
-                availability=availability,
-                current_lang=request.state.lang,
-                error_message=_("Selected time slot is not available or outside business hours.")
-            )
+    booking_create = schemas.BookingCreate(
+        customer_name=customer_name,
+        customer_email=customer_email,
+        customer_phone=customer_phone,
+        service_name=service_name,
+        booking_date=booking_date,
+        booking_time=booking_time
+    )
 
-        booking_data = schemas.BookingCreate(
-            customer_name=customer_name,
-            customer_email=customer_email,
-            customer_phone=customer_phone,
-            service_name=service_name,
-            booking_date=parsed_date,
-            booking_time=booking_time
-        )
-        
-        db_booking = crud.create_booking(db=db, booking=booking_data, owner_id=owner.id)
-
-        # Send notifications
-        # Owner notification
-        owner_subject = _("New Booking Received!")
-        owner_html_content = env.get_template("email/owner_booking_notification.html").render(
-            booking=db_booking, owner=owner, current_lang=request.state.lang
-        )
-        notifications.send_email_notification(owner.email, owner_subject, owner_html_content)
-        if owner.phone:
-            owner_whatsapp_message = _(f"New booking for {service_name} on {booking_date} at {booking_time} by {customer_name}. Email: {customer_email}, Phone: {customer_phone}")
-            notifications.send_whatsapp_notification(owner.phone, owner_whatsapp_message)
-
-        # Customer confirmation
-        customer_subject = _("Your Booking is Confirmed!")
-        customer_html_content = env.get_template("email/customer_booking_confirmation.html").render(
-            booking=db_booking, owner=owner, current_lang=request.state.lang
-        )
-        notifications.send_email_notification(customer_email, customer_subject, customer_html_content)
-        if customer_phone:
-            customer_whatsapp_message = _(f"Your booking for {service_name} with {owner.business_name} on {booking_date} at {booking_time} is confirmed.")
-            notifications.send_whatsapp_notification(customer_phone, customer_whatsapp_message)
-
-        return env.get_template("booking_confirmation.html").render(
-            request=request,
-            booking=db_booking,
-            owner=owner,
-            current_lang=request.state.lang,
-            gettext=env.get_template('booking_confirmation.html').globals['gettext'] # Pass gettext explicitly
-        )
-
-    except ValueError as ve:
-        # Handle date/time parsing errors
-        services = json.loads(owner.services_json) if owner.services_json else []
-        availability = json.loads(owner.availability_json) if owner.availability_json else {}
-        return env.get_template("booking_page.html").render(
-            request=request,
-            owner=owner,
-            services=services,
-            availability=availability,
-            current_lang=request.state.lang,
-            error_message=_("Invalid date or time format provided.")
-        )
+    try:
+        db_booking = crud.create_booking(db, booking_create, owner.id)
+        background_tasks.add_task(notifications.notify_owner_of_new_booking, owner, db_booking)
+        background_tasks.add_task(notifications.notify_customer_of_booking_confirmation, owner, db_booking)
     except Exception as e:
-        logger.error(f"Error processing booking: {e}")
-        services = json.loads(owner.services_json) if owner.services_json else []
-        availability = json.loads(owner.availability_json) if owner.availability_json else {}
-        return env.get_template("booking_page.html").render(
-            request=request,
-            owner=owner,
-            services=services,
-            availability=availability,
-            current_lang=request.state.lang,
-            error_message=_("An unexpected error occurred during booking. Please try again.")
-        )
+        logger.error(f"Error creating booking or sending notifications: {e}")
+        raise HTTPException(status_code=400, detail="Error processing your booking. Please try again.")
 
-# --- Language Toggle Redirect ---
-@app.get("/set_language/{lang_code}", response_class=RedirectResponse)
-async def set_language(request: Request, lang_code: str):
-    referer = request.headers.get("referer")
-    if referer:
-        # Parse the referer URL and update the 'lang' query parameter
-        from urllib.parse import urlparse, urlunparse, parse_qs, urlencode
-        parsed_url = urlparse(referer)
-        query_params = parse_qs(parsed_url.query)
-        query_params['lang'] = [lang_code]
-        new_query = urlencode(query_params, doseq=True)
-        new_url = urlunparse(parsed_url._replace(query=new_query))
-        return RedirectResponse(url=new_url, status_code=status.HTTP_302_FOUND)
-    return RedirectResponse(url=f"/?lang={lang_code}", status_code=status.HTTP_302_FOUND)
+    # Redirect to a confirmation page or show a success message
+    return RedirectResponse(url=f"/bookslot.app/{owner_slug}/confirm?booking_id={db_booking.id}", status_code=status.HTTP_303_SEE_OTHER)
+
+@app.get("/bookslot.app/{owner_slug}/confirm", response_class=HTMLResponse)
+async def booking_confirmation_page(
+    request: Request,
+    owner_slug: str,
+    booking_id: int,
+    templates: Jinja2Templates = Depends(get_templates),
+    db: Session = Depends(get_db)
+):
+    owner = crud.get_owner_by_slug(db, owner_slug)
+    if not owner:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Booking page not found")
+
+    booking = db.query(models.Booking).filter(models.Booking.id == booking_id, models.Booking.owner_id == owner.id).first()
+    if not booking:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Booking not found.")
+
+    return templates.TemplateResponse(
+        "booking_confirmation.html",
+        {
+            "request": request,
+            "owner": owner,
+            "booking": booking
+        }
+    )

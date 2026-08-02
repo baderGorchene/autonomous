@@ -1,58 +1,30 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ request.state.locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _('Sign Up') }}</title>
+    <title>{{ _('Sign Up - BookSlot') }}</title>
 </head>
 <body>
     <h1>{{ _('Sign Up') }}</h1>
-    <form id="signupForm" method="POST" action="/owner/signup">
-        <label for="name">{{ _('Your Name') }}:</label><br>
+    <form action="/signup" method="post">
+        <label for="name">{{ _('Your Name:') }}</label><br>
         <input type="text" id="name" name="name" required><br>
-        <label for="email">{{ _('Email') }}:</label><br>
+        <label for="email">{{ _('Email:') }}</label><br>
         <input type="email" id="email" name="email" required><br>
-        <label for="password">{{ _('Password') }}:</label><br>
+        <label for="password">{{ _('Password:') }}</label><br>
         <input type="password" id="password" name="password" required><br>
-        <label for="business_name">{{ _('Business Name') }}:</label><br>
+        <label for="business_name">{{ _('Business Name:') }}</label><br>
         <input type="text" id="business_name" name="business_name" required><br>
-        <label for="phone">{{ _('Phone Number (e.g., +1234567890)') }}:</label><br>
+        <label for="slug">{{ _('Booking Page URL (e.g., your-name):') }} bookslot.app/</label><br>
+        <input type="text" id="slug" name="slug" pattern="^[a-z0-9-]+$" title="{{ _('Lowercase letters, numbers, and hyphens only.') }}" required><br>
+        <label for="phone">{{ _('Phone Number (for WhatsApp notifications, optional):') }}</label><br>
         <input type="tel" id="phone" name="phone"><br>
-        <label for="slug">{{ _('Custom Link (bookslot.app/your-name)') }}:</label><br>
-        <input type="text" id="slug" name="slug" placeholder="{{ _('optional') }}"><br>
-        <button type="submit">{{ _('Register') }}</button>
+        <input type="submit" value="{{ _('Sign Up') }}">
     </form>
-    <p>{{ _('Already have an account?') }} <a href="/owner/login">{{ _('Login') }}</a></p>
-
-    <script>
-        document.getElementById('signupForm').addEventListener('submit', async function(event) {
-            event.preventDefault();
-            const form = event.target;
-            const formData = new FormData(form);
-            const data = Object.fromEntries(formData.entries());
-
-            try {
-                const response = await fetch(form.action, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(data)
-                });
-
-                const result = await response.json();
-
-                if (response.ok) {
-                    localStorage.setItem('access_token', result.access_token);
-                    window.location.href = '/dashboard';
-                } else {
-                    alert(result.detail || 'Signup failed');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('An error occurred during signup.');
-            }
-        });
-    </script>
+    <p>{{ _('Already have an account?') }} <a href="/login">{{ _('Log In') }}</a></p>
+    <div>
+        <a href="?lang=en">English</a> | <a href="?lang=ar">العربية</a> | <a href="?lang=fr">Français</a>
+    </div>
 </body>
 </html>
