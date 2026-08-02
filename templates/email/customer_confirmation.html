@@ -1,1 +1,40 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>{{ _('Your Booking Confirmation') }}</title></head><body><h1>{{ _('Booking Confirmed!') }}</h1><p>{{ _('Dear') }} {{ booking.customer_name }},</p><p>{{ _('Your booking with') }} <strong>{{ booking.owner_business_name }}</strong> {{ _('is confirmed.') }}</p><p>{{ _('Service') }}: {{ booking.service_name }}</p><p>{{ _('Date') }}: {{ booking.booking_date }}</p><p>{{ _('Time') }}: {{ booking.booking_time }}</p><p>{{ _('We look forward to seeing you!') }}</p><p>{{ _('Regards,') }}<br>{{ booking.owner_business_name }}</p></body></html>
+<!DOCTYPE html>
+<html lang="{{ _('en') }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ _('Your Booking is Confirmed!') }}</title>
+    <style>
+        body { font-family: sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 20px auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .header { text-align: center; margin-bottom: 20px; }
+        .header h1 { color: #4F46E5; }
+        .content { margin-bottom: 20px; }
+        .footer { text-align: center; font-size: 0.8em; color: #777; border-top: 1px solid #eee; padding-top: 10px; }
+        .button { display: inline-block; background-color: #4F46E5; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>{{ _('Booking Confirmed!') }}</h1>
+        </div>
+        <div class="content">
+            <p>{{ _('Dear') }} {{ customer_name }},</p>
+            <p>{{ _('Your appointment with') }} <strong>{{ owner_business_name }}</strong> {{ _('for the service') }} <strong>{{ service_name }}</strong> {{ _('has been successfully confirmed!') }}</p>
+            <p>{{ _('Here are your booking details:') }}</p>
+            <ul>
+                <li><strong>{{ _('Service:') }}</strong> {{ service_name }}</li>
+                <li><strong>{{ _('Date:') }}</strong> {{ booking_date }}</li>
+                <li><strong>{{ _('Time:') }}</strong> {{ booking_time }}</li>
+            </ul>
+            <p>{{ _('We look forward to seeing you!') }}</p>
+            <p>{{ _('If you need to make changes, please contact') }} {{ owner_business_name }} {{ _('directly.') }}</p>
+        </div>
+        <div class="footer">
+            <p>{{ _('This is an automated email, please do not reply.') }}</p>
+            <p>&copy; 2024 BookSlot. {{ _('All rights reserved.') }}</p>
+        </div>
+    </div>
+</body>
+</html>
