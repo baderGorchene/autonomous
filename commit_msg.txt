@@ -1,1 +1,1 @@
-Fix: Resolve 'No module named pytest' error by providing requirements.txt and basic tests
+feat: Reconstruct full application and test suite; fix i18n/templating integration and testing database setup

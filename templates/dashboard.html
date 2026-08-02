@@ -1,50 +1,232 @@
 <!DOCTYPE html>
-<html lang="{{ current_locale }}">
+<html lang="{{ request.state.lang }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _('Dashboard') }}</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+    <title>{{ _('Dashboard - BookSlot') }}</title>
+    <link rel="stylesheet" href="/static/style.css">
     <style>
-        body { padding: 20px; }
-        .container { max-width: 960px; margin: auto; }
-        .booking-card { margin-bottom: 15px; padding: 15px; border: 1px solid #eee; border-radius: 8px; }
+        /* Basic styling for services and availability */
+        .service-item, .availability-item {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            position: relative;
+        }
+        .service-item button, .availability-item button {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .service-item button:hover, .availability-item button:hover {
+            background-color: #c82333;
+        }
+        .add-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .add-button:hover {
+            background-color: #0056b3;
+        }
+        #services-list, #availability-list {
+            margin-top: 15px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <nav class="container-fluid">
-            <ul>
-                <li><strong>BookSlot</strong></li>
-            </ul>
-            <ul>
-                <li><a href="/set_language/en" role="button">EN</a></li>
-                <li><a href="/set_language/ar" role="button">AR</a></li>
-                <li><a href="/set_language/fr" role="button">FR</a></li>
-                <li><a href="/owner/profile" role="button">{{ _('Profile') }}</a></li>
-                <li><a href="/logout" role="button">{{ _('Logout') }}</a></li>
-            </ul>
-        </nav>
+        <h1>{{ _('Welcome, {owner_name}!')|format(owner_name=owner.name) }}</h1>
+        <p><a href="/logout">{{ _('Logout') }}</a></p>
+        <p>
+            <a href="{{ request.url|urlencode('lang', 'en') }}">English</a> |
+            <a href="{{ request.url|urlencode('lang', 'ar') }}">العربية</a> |
+            <a href="{{ request.url|urlencode('lang', 'fr') }}">Français</a>
+        </p>
 
-        <h1>{{ _('Welcome') }}, {{ owner.name }}!</h1>
-        <p>{{ _('Your Business') }}: {{ owner.business_name }}</p>
+        {% if request.query_params.success %}
+            <p class="success">{{ _('Profile updated successfully!') }}</p>
+        {% endif %}
+        {% if error %}
+            <p class="error">{{ error }}</p>
+        {% endif %}
+
+        <h2>{{ _('Your Profile') }}</h2>
+        <form action="/dashboard/profile" method="post">
+            <label for="name">{{ _('Your Name') }}:</label>
+            <input type="text" id="name" name="name" value="{{ owner.name }}" required>
+
+            <label for="business_name">{{ _('Business Name') }}:</label>
+            <input type="text" id="business_name" name="business_name" value="{{ owner.business_name }}" required>
+
+            <label for="phone">{{ _('Phone Number (for WhatsApp notifications, optional)') }}:</label>
+            <input type="tel" id="phone" name="phone" value="{{ owner.phone if owner.phone else '' }}">
+
+            <h3>{{ _('Your Services') }}</h3>
+            <div id="services-list">
+                {% for service in services %}
+                <div class="service-item" data-index="{{ loop.index0 }}">
+                    <input type="text" name="service_name_{{ loop.index0 }}" value="{{ service.name }}" placeholder="{{ _('Service Name') }}" required>
+                    <input type="number" name="service_duration_{{ loop.index0 }}" value="{{ service.duration }}" placeholder="{{ _('Duration (minutes)') }}" min="5" required>
+                    <input type="number" name="service_price_{{ loop.index0 }}" value="{{ service.price }}" placeholder="{{ _('Price') }}" step="0.01" required>
+                    <input type="text" name="service_description_{{ loop.index0 }}" value="{{ service.description if service.description else '' }}" placeholder="{{ _('Description (optional)') }}">
+                    <button type="button" onclick="removeService(this)">{{ _('Remove') }}</button>
+                </div>
+                {% endfor %}
+            </div>
+            <button type="button" class="add-button" onclick="addService()">{{ _('Add Service') }}</button>
+            <input type="hidden" id="services_json" name="services_json">
+
+            <h3>{{ _('Your Availability') }}</h3>
+            <div id="availability-list">
+                {% for slot in availability %}
+                <div class="availability-item" data-index="{{ loop.index0 }}">
+                    <select name="availability_day_{{ loop.index0 }}" required>
+                        <option value="0" {% if slot.day_of_week == 0 %}selected{% endif %}>{{ _('Monday') }}</option>
+                        <option value="1" {% if slot.day_of_week == 1 %}selected{% endif %}>{{ _('Tuesday') }}</option>
+                        <option value="2" {% if slot.day_of_week == 2 %}selected{% endif %}>{{ _('Wednesday') }}</option>
+                        <option value="3" {% if slot.day_of_week == 3 %}selected{% endif %}>{{ _('Thursday') }}</option>
+                        <option value="4" {% if slot.day_of_week == 4 %}selected{% endif %}>{{ _('Friday') }}</option>
+                        <option value="5" {% if slot.day_of_week == 5 %}selected{% endif %}>{{ _('Saturday') }}</option>
+                        <option value="6" {% if slot.day_of_week == 6 %}selected{% endif %}>{{ _('Sunday') }}</option>
+                    </select>
+                    <input type="time" name="availability_start_{{ loop.index0 }}" value="{{ slot.start_time }}" required>
+                    <input type="time" name="availability_end_{{ loop.index0 }}" value="{{ slot.end_time }}" required>
+                    <button type="button" onclick="removeAvailability(this)">{{ _('Remove') }}</button>
+                </div>
+                {% endfor %}
+            </div>
+            <button type="button" class="add-button" onclick="addAvailability()">{{ _('Add Availability') }}</button>
+            <input type="hidden" id="availability_json" name="availability_json">
+
+            <button type="submit" onclick="prepareFormData()">{{ _('Update Profile') }}</button>
+        </form>
 
         <h2>{{ _('Upcoming Bookings') }}</h2>
         {% if bookings %}
-            {% for booking in bookings %}
-                <div class="booking-card">
-                    <h3>{{ _('Service') }}: {{ booking.service_name }}</h3>
-                    <p>{{ _('Customer') }}: {{ booking.customer_name }}</p>
-                    <p>{{ _('Email') }}: {{ booking.customer_email }}</p>
-                    <p>{{ _('Phone') }}: {{ booking.customer_phone }}</p>
-                    <p>{{ _('Date') }}: {{ booking.booking_date.isoformat() }}</p>
-                    <p>{{ _('Time') }}: {{ booking.booking_time.isoformat() }}</p>
-                    <p>{{ _('Status') }}: {{ booking.status }}</p>
-                </div>
-            {% endfor %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>{{ _('Customer Name') }}</th>
+                        <th>{{ _('Service') }}</th>
+                        <th>{{ _('Date') }}</th>
+                        <th>{{ _('Time') }}</th>
+                        <th>{{ _('Customer Contact') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for booking in bookings %}
+                    <tr>
+                        <td>{{ booking.customer_name }}</td>
+                        <td>{{ booking.service_name }}</td>
+                        <td>{{ booking.booking_date.strftime('%Y-%m-%d') }}</td>
+                        <td>{{ booking.booking_time }}</td>
+                        <td>
+                            {% if booking.customer_email %}{{ booking.customer_email }}{% endif %}
+                            {% if booking.customer_email and booking.customer_phone %}<br>{% endif %}
+                            {% if booking.customer_phone %}{{ booking.customer_phone }}{% endif %}
+                            {% if not booking.customer_email and not booking.customer_phone %}{{ _('N/A') }}{% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         {% else %}
             <p>{{ _('No upcoming bookings.') }}</p>
         {% endif %}
     </div>
+
+    <script>
+        let serviceCounter = {{ services|length }};
+        let availabilityCounter = {{ availability|length }};
+
+        function addService() {
+            const list = document.getElementById('services-list');
+            const newItem = document.createElement('div');
+            newItem.className = 'service-item';
+            newItem.setAttribute('data-index', serviceCounter);
+            newItem.innerHTML = `
+                <input type="text" name="service_name_${serviceCounter}" placeholder="{{ _('Service Name') }}" required>
+                <input type="number" name="service_duration_${serviceCounter}" placeholder="{{ _('Duration (minutes)') }}" min="5" required>
+                <input type="number" name="service_price_${serviceCounter}" placeholder="{{ _('Price') }}" step="0.01" required>
+                <input type="text" name="service_description_${serviceCounter}" placeholder="{{ _('Description (optional)') }}">
+                <button type="button" onclick="removeService(this)">{{ _('Remove') }}</button>
+            `;
+            list.appendChild(newItem);
+            serviceCounter++;
+        }
+
+        function removeService(button) {
+            button.closest('.service-item').remove();
+        }
+
+        function addAvailability() {
+            const list = document.getElementById('availability-list');
+            const newItem = document.createElement('div');
+            newItem.className = 'availability-item';
+            newItem.setAttribute('data-index', availabilityCounter);
+            newItem.innerHTML = `
+                <select name="availability_day_${availabilityCounter}" required>
+                    <option value="0">{{ _('Monday') }}</option>
+                    <option value="1">{{ _('Tuesday') }}</option>
+                    <option value="2">{{ _('Wednesday') }}</option>
+                    <option value="3">{{ _('Thursday') }}</option>
+                    <option value="4">{{ _('Friday') }}</option>
+                    <option value="5">{{ _('Saturday') }}</option>
+                    <option value="6">{{ _('Sunday') }}</option>
+                </select>
+                <input type="time" name="availability_start_${availabilityCounter}" value="09:00" required>
+                <input type="time" name="availability_end_${availabilityCounter}" value="17:00" required>
+                <button type="button" onclick="removeAvailability(this)">{{ _('Remove') }}</button>
+            `;
+            list.appendChild(newItem);
+            availabilityCounter++;
+        }
+
+        function removeAvailability(button) {
+            button.closest('.availability-item').remove();
+        }
+
+        function prepareFormData() {
+            const services = [];
+            document.querySelectorAll('#services-list .service-item').forEach(item => {
+                const index = item.getAttribute('data-index');
+                services.push({
+                    name: item.querySelector(`[name="service_name_${index}"]`).value,
+                    duration: parseInt(item.querySelector(`[name="service_duration_${index}"]`).value),
+                    price: parseFloat(item.querySelector(`[name="service_price_${index}"]`).value),
+                    description: item.querySelector(`[name="service_description_${index}"]`).value || null
+                });
+            });
+            document.getElementById('services_json').value = JSON.stringify(services);
+
+            const availability = [];
+            document.querySelectorAll('#availability-list .availability-item').forEach(item => {
+                const index = item.getAttribute('data-index');
+                availability.push({
+                    day_of_week: parseInt(item.querySelector(`[name="availability_day_${index}"]`).value),
+                    start_time: item.querySelector(`[name="availability_start_${index}"]`).value,
+                    end_time: item.querySelector(`[name="availability_end_${index}"]`).value
+                });
+            });
+            document.getElementById('availability_json').value = JSON.stringify(availability);
+        }
+
+        // Call prepareFormData before form submission if the button type is submit
+        // or ensure the form submission button calls this function
+        document.querySelector('form[action="/dashboard/profile"]').addEventListener('submit', prepareFormData);
+
+    </script>
 </body>
 </html>

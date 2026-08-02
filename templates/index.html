@@ -4,26 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ _('BookSlot - Simple Booking Page') }}</title>
-    <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-    <header>
-        <div class="header-content">
-            <h1>{{ _('Welcome to BookSlot') }}</h1>
-            <nav>
-                <a href="/signup">{{ _('Sign Up') }}</a>
-                <a href="/login">{{ _('Login') }}</a>
-            </nav>
-        </div>
-    </header>
-    <main class="container">
-        <p>{{ _('A dead-simple booking page for local service businesses.') }}</p>
-        <p>{{ _('Manage your appointments with ease.') }}</p>
-        <a href="/signup" class="button">{{ _('Get Started') }}</a>
-    </main>
-    <footer>
-        <p>&copy; 2023 BookSlot</p>
-    </footer>
-    {% include 'language_switcher.html' %}
+    <h1>{{ _('Welcome to BookSlot') }}</h1>
+    <p>{{ _('Your dead-simple booking page for local service businesses.') }}</p>
+    <p><a href="/signup">{{ _('Sign Up') }}</a></p>
+    <p><a href="/login">{{ _('Login') }}</a></p>
+    <p>
+        <a href="{{ request.url|urlencode('lang', 'en') }}">English</a> |
+        <a href="{{ request.url|urlencode('lang', 'ar') }}">العربية</a> |
+        <a href="{{ request.url|urlencode('lang', 'fr') }}">Français</a>
+    </p>
 </body>
 </html>

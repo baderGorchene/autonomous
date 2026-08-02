@@ -1,70 +1,44 @@
-{% extends "base.html" %}
-
-{% block title %}{{ _('Sign Up') }} - BookSlot{% endblock %}
-
-{% block content %}
-<div class="min-h-screen flex items-center justify-center bg-gray-100">
-    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-        <h2 class="text-3xl font-bold text-center text-gray-800 mb-6">{{ _('Create Your BookSlot Account') }}</h2>
-        <p class="text-center text-gray-600 mb-8">{{ _('Start managing your appointments with ease.') }}</p>
-
+<!DOCTYPE html>
+<html lang="{{ request.state.lang }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ _('Sign Up - BookSlot') }}</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>{{ _('Create Your BookSlot Account') }}</h1>
         {% if error %}
-        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-            <strong class="font-bold">{{ _('Error!') }}</strong>
-            <span class="block sm:inline">{{ error }}</span>
-        </div>
+            <p class="error">{{ error }}</p>
         {% endif %}
+        <form action="/signup" method="post">
+            <label for="name">{{ _('Your Name') }}:</label>
+            <input type="text" id="name" name="name" value="{{ name if name else '' }}" required>
 
-        <form action="/signup" method="post" class="space-y-6">
-            <div>
-                <label for="name" class="block text-sm font-medium text-gray-700">{{ _('Your Name') }}</label>
-                <input type="text" id="name" name="name" required
-                       class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-            </div>
-            <div>
-                <label for="email" class="block text-sm font-medium text-gray-700">{{ _('Email Address') }}</label>
-                <input type="email" id="email" name="email" required
-                       class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-            </div>
-            <div>
-                <label for="password" class="block text-sm font-medium text-gray-700">{{ _('Password') }}</label>
-                <input type="password" id="password" name="password" required
-                       class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-            </div>
-            <div>
-                <label for="business_name" class="block text-sm font-medium text-gray-700">{{ _('Business Name') }}</label>
-                <input type="text" id="business_name" name="business_name" required
-                       class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-            </div>
-            <div>
-                <label for="slug" class="block text-sm font-medium text-gray-700">{{ _('Your Booking Page URL (e.g., bookslot.app/your-name)') }}</label>
-                <div class="mt-1 flex rounded-md shadow-sm">
-                    <span class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 sm:text-sm">
-                        bookslot.app/
-                    </span>
-                    <input type="text" id="slug" name="slug" required
-                           class="flex-1 block w-full rounded-none rounded-r-md px-3 py-2 border border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                           placeholder="your-name">
-                </div>
-            </div>
-            <div>
-                <label for="phone" class="block text-sm font-medium text-gray-700">{{ _('Phone Number (optional, for WhatsApp notifications)') }}</label>
-                <input type="tel" id="phone" name="phone"
-                       class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                       placeholder="+1234567890">
-            </div>
-            <div>
-                <button type="submit"
-                        class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    {{ _('Sign Up') }}
-                </button>
-            </div>
+            <label for="email">{{ _('Email') }}:</label>
+            <input type="email" id="email" name="email" value="{{ email if email else '' }}" required>
+
+            <label for="password">{{ _('Password') }}:</label>
+            <input type="password" id="password" name="password" required>
+
+            <label for="business_name">{{ _('Business Name') }}:</label>
+            <input type="text" id="business_name" name="business_name" value="{{ business_name if business_name else '' }}" required>
+
+            <label for="slug">{{ _('Your Booking Page URL (e.g., bookslot.app/your-name)') }}:</label>
+            <input type="text" id="slug" name="slug" value="{{ slug if slug else '' }}" required>
+
+            <label for="phone">{{ _('Phone Number (for WhatsApp notifications, optional)') }}:</label>
+            <input type="tel" id="phone" name="phone" value="{{ phone if phone else '' }}">
+
+            <button type="submit">{{ _('Sign Up') }}</button>
         </form>
-
-        <p class="mt-8 text-center text-sm text-gray-600">
-            {{ _('Already have an account?') }}
-            <a href="/login" class="font-medium text-indigo-600 hover:text-indigo-500">{{ _('Login here') }}</a>
+        <p>{{ _('Already have an account?') }} <a href="/login">{{ _('Login here') }}</a></p>
+        <p>
+            <a href="{{ request.url|urlencode('lang', 'en') }}">English</a> |
+            <a href="{{ request.url|urlencode('lang', 'ar') }}">العربية</a> |
+            <a href="{{ request.url|urlencode('lang', 'fr') }}">Français</a>
         </p>
     </div>
-</div>
-{% endblock %}
+</body>
+</html>
