@@ -1,17 +1,50 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ current_locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Owner Dashboard</title>
+    <title>{{ _('Dashboard') }}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+    <style>
+        body { padding: 20px; }
+        .container { max-width: 960px; margin: auto; }
+        .booking-card { margin-bottom: 15px; padding: 15px; border: 1px solid #eee; border-radius: 8px; }
+    </style>
 </head>
 <body>
-    <h1>{{ _('Welcome') }}, {{ owner.name }}!</h1>
-    <p>This is your dashboard.</p>
-    <h2>{{ _('Upcoming Bookings') }}</h2>
-    <ul>
-        <!-- Bookings will be listed here -->
-    </ul>
-    <a href="/owner/logout">{{ _('Logout') }}</a>
+    <div class="container">
+        <nav class="container-fluid">
+            <ul>
+                <li><strong>BookSlot</strong></li>
+            </ul>
+            <ul>
+                <li><a href="/set_language/en" role="button">EN</a></li>
+                <li><a href="/set_language/ar" role="button">AR</a></li>
+                <li><a href="/set_language/fr" role="button">FR</a></li>
+                <li><a href="/owner/profile" role="button">{{ _('Profile') }}</a></li>
+                <li><a href="/logout" role="button">{{ _('Logout') }}</a></li>
+            </ul>
+        </nav>
+
+        <h1>{{ _('Welcome') }}, {{ owner.name }}!</h1>
+        <p>{{ _('Your Business') }}: {{ owner.business_name }}</p>
+
+        <h2>{{ _('Upcoming Bookings') }}</h2>
+        {% if bookings %}
+            {% for booking in bookings %}
+                <div class="booking-card">
+                    <h3>{{ _('Service') }}: {{ booking.service_name }}</h3>
+                    <p>{{ _('Customer') }}: {{ booking.customer_name }}</p>
+                    <p>{{ _('Email') }}: {{ booking.customer_email }}</p>
+                    <p>{{ _('Phone') }}: {{ booking.customer_phone }}</p>
+                    <p>{{ _('Date') }}: {{ booking.booking_date.isoformat() }}</p>
+                    <p>{{ _('Time') }}: {{ booking.booking_time.isoformat() }}</p>
+                    <p>{{ _('Status') }}: {{ booking.status }}</p>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>{{ _('No upcoming bookings.') }}</p>
+        {% endif %}
+    </div>
 </body>
 </html>

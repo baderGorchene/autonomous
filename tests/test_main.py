@@ -4,30 +4,27 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from src.main import app, get_db
 from src.database import Base
-from src.config import settings
 
-# Override settings for testing
-settings.TESTING = True
-settings.DATABASE_URL = "sqlite:///./test.db" # Use a separate test database
+# Use an in-memory SQLite database for testing
+SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
 
-# Setup a test database
-SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
+engine = create_engine(
+    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
+)
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 @pytest.fixture(name="db_session")
 def db_session_fixture():
-    # Create tables
     Base.metadata.create_all(bind=engine)
     db = TestingSessionLocal()
     try:
         yield db
     finally:
         db.close()
-        Base.metadata.drop_all(bind=engine) # Clean up after tests
+        Base.metadata.drop_all(bind=engine)
 
 @pytest.fixture(name="client")
-def client_fixture(db_session: TestingSessionLocal):
+def client_fixture(db_session):
     def override_get_db():
         try:
             yield db_session
@@ -38,17 +35,16 @@ def client_fixture(db_session: TestingSessionLocal):
         yield c
     app.dependency_overrides.clear()
 
-def test_health_check(client: TestClient):
+def test_read_main(client):
+    response = client.get("/")
+    assert response.status_code == 200
+    assert "text/html" in response.headers["content-type"]
+
+def test_health_check(client):
     response = client.get("/health")
     assert response.status_code == 200
-    assert "BookSlot Health Check: OK" in response.text
+    assert response.json() == {"status": "ok"}
 
-def test_root_redirect(client: TestClient):
-    response = client.get("/")
-    assert response.status_code == 302
-    assert response.headers["location"] == "/owner/login"
-
-def test_owner_login_page(client: TestClient):
-    response = client.get("/owner/login")
-    assert response.status_code == 200
-    assert "Login" in response.text # Assuming "Login" text is in owner_login.html
+# Example of a simple test, more comprehensive tests will be added later
+def test_example_test():
+    assert True

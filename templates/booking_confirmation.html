@@ -1,34 +1,35 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="{{ current_locale }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ _('Booking Confirmed') }}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+    <style>
+        body { padding: 20px; }
+        .container { max-width: 600px; margin: auto; text-align: center; }
+        .success-icon { font-size: 4em; color: var(--pico-success); margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav class="container-fluid">
+            <ul>
+                <li><strong>BookSlot</strong></li>
+            </ul>
+            <ul>
+                <li><a href="{{ request.url|urlencode('lang', 'en') }}" role="button">EN</a></li>
+                <li><a href="{{ request.url|urlencode('lang', 'ar') }}" role="button">AR</a></li>
+                <li><a href="{{ request.url|urlencode('lang', 'fr') }}" role="button">FR</a></li>
+            </ul>
+        </nav>
 
-{% block title %}{{ _('Booking Confirmed!') }} - BookSlot{% endblock %}
-
-{% block content %}
-<div class="min-h-screen flex items-center justify-center bg-gray-100 p-4 sm:p-6 lg:p-8">
-    <div class="bg-white rounded-lg shadow-xl overflow-hidden w-full max-w-md fade-in text-center p-8">
-        <div class="text-green-500 mb-6">
-            <svg class="mx-auto h-24 w-24" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
-        </div>
-        <h1 class="text-3xl font-extrabold text-gray-900 mb-4">{{ _('Booking Confirmed!') }}</h1>
-        <p class="text-lg text-gray-700 mb-6">
-            {{ _('Thank you,') }} <span class="font-semibold">{{ customer_name if customer_name else _('valued customer') }}</span>! {{ _('Your appointment has been successfully booked.') }}
-        </p>
-
-        {% if service_name and booking_date and booking_time %}
-        <div class="bg-indigo-50 p-6 rounded-lg mb-8 text-left">
-            <p class="text-gray-800 text-lg mb-2"><strong class="font-semibold">{{ _('Service:') }}</strong> {{ service_name }}</p>
-            <p class="text-gray-800 text-lg mb-2"><strong class="font-semibold">{{ _('Date:') }}</strong> {{ booking_date }}</p>
-            <p class="text-gray-800 text-lg mb-2"><strong class="font-semibold">{{ _('Time:') }}</strong> {{ booking_time }}</p>
-            <p class="text-gray-800 text-lg"><strong class="font-semibold">{{ _('With:') }}</strong> {{ owner.business_name }}</p>
-        </div>
-        {% endif %}
-
-        <p class="text-gray-600 mb-8">{{ _('A confirmation email has been sent to your inbox. Please check it for full details.') }}</p>
-
-        <a href="/{{ owner.slug }}" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-            {{ _('Book Another Appointment') }}
-        </a>
+        <div class="success-icon">&#10004;</div>
+        <h1>{{ _('Booking Confirmed!') }}</h1>
+        <p>{{ _('Thank you,') }} {{ booking.customer_name }}!</p>
+        <p>{{ _('Your booking for') }} <strong>{{ booking.service_name }}</strong> {{ _('with') }} <strong>{{ owner.business_name }}</strong> {{ _('on') }} <strong>{{ booking.booking_date.isoformat() }}</strong> {{ _('at') }} <strong>{{ booking.booking_time.isoformat() }}</strong> {{ _('has been successfully confirmed.') }}</p>
+        <p>{{ _('A confirmation email has been sent to') }} {{ booking.customer_email }}.</p>
+        <p><a href="/book/{{ owner.slug }}" role="button">{{ _('Book another service') }}</a></p>
     </div>
-</div>
-{% endblock %}
+</body>
+</html>

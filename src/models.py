@@ -1,7 +1,7 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, Date, Time, ForeignKey, Text
 from sqlalchemy.orm import relationship
-from .database import Base
-from datetime import datetime
+from sqlalchemy.sql import func
+from src.database import Base
 
 class Owner(Base):
     __tablename__ = "owners"
@@ -12,9 +12,10 @@ class Owner(Base):
     hashed_password = Column(String)
     business_name = Column(String)
     slug = Column(String, unique=True, index=True)
-    services_json = Column(String) # JSON string of services offered
-    availability_json = Column(String) # JSON string of availability
-    phone = Column(String, nullable=True) # Added phone for owner
+    phone = Column(String, nullable=True)
+    services_json = Column(Text, default="[]")
+    availability_json = Column(Text, default="{}")
+    is_active = Column(Boolean, default=True)
 
     bookings = relationship("Booking", back_populates="owner")
 
@@ -23,12 +24,14 @@ class Booking(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     owner_id = Column(Integer, ForeignKey("owners.id"))
-    customer_name = Column(String, index=True)
-    customer_email = Column(String, index=True)
-    customer_phone = Column(String, nullable=True) # Added phone for customer
+    customer_name = Column(String)
+    customer_email = Column(String)
+    customer_phone = Column(String, nullable=True)
     service_name = Column(String)
-    booking_date = Column(DateTime)
-    booking_time = Column(String) # e.g., "10:00"
-    created_at = Column(DateTime, default=datetime.utcnow)
+    booking_date = Column(Date)
+    booking_time = Column(Time)
+    status = Column(String, default="pending")
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     owner = relationship("Owner", back_populates="bookings")

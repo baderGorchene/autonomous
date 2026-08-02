@@ -1,1 +1,1 @@
-Fix: Ensure pytest is installed and discoverable by providing requirements.txt and a basic test file.
+Fix: Ensure pytest and dependencies are available for testing

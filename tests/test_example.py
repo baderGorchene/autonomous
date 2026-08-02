@@ -1,4 +1,4 @@
 import pytest
 
-def test_example_success():
-    assert True
+def test_example_assertion():
+    assert 1 + 1 == 2
