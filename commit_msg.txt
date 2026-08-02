@@ -1,1 +1,1 @@
-Add requirements.txt and basic test to resolve 'No module named pytest'
+Fix: Ensure pytest is installed and discoverable by providing requirements.txt and a basic test file.
