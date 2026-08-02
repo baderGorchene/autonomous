@@ -3,11 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard</title>
+    <title>Owner Dashboard</title>
 </head>
 <body>
-    <h1>Owner Dashboard</h1>
-    <p>Welcome, {{ owner.name }}!</p>
-    <p>This is a placeholder dashboard.</p>
+    <h1>{{ _('Welcome') }}, {{ owner.name }}!</h1>
+    <p>This is your dashboard.</p>
+    <h2>{{ _('Upcoming Bookings') }}</h2>
+    <ul>
+        <!-- Bookings will be listed here -->
+    </ul>
+    <a href="/owner/logout">{{ _('Logout') }}</a>
 </body>
 </html>

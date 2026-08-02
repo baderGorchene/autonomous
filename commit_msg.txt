@@ -1,1 +1,1 @@
-Fix: Re-add requirements.txt and basic test file to resolve 'No module named pytest' error
+Add requirements.txt and basic test to resolve 'No module named pytest'

@@ -3,10 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
+    <title>Owner Login</title>
 </head>
 <body>
-    <h1>Owner Login</h1>
-    <p>This is a placeholder login page.</p>
+    <h1>{{ _('Login') }}</h1>
+    <form action="/token" method="post">
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="username" required>
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required>
+        <button type="submit">{{ _('Login') }}</button>
+    </form>
 </body>
 </html>

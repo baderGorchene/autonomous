@@ -1,12 +1,24 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: BookSlot\n"
-"POT-Creation-Date: 2023-10-26 10:00+0000\n"
-"PO-Revision-Date: 2023-10-26 10:00+0000\n"
+"POT-Creation-Date: 2023-01-01 00:00+0000\n"
+"PO-Revision-Date: 2023-01-01 00:00+0000\n"
 "Last-Translator: \n"
-"Language-Team: French\n"
+"Language-Team: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Pybabel 2.1.0\n"
 "Language: fr\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+msgid "Login"
+msgstr "Connexion"
+
+msgid "Welcome"
+msgstr "Bienvenue"
+
+msgid "Upcoming Bookings"
+msgstr "Réservations à venir"
+
+msgid "Logout"
+msgstr "Déconnexion"
