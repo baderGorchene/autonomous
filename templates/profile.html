@@ -1,141 +1,180 @@
 <!DOCTYPE html>
-<html lang="{{ request.state.locale }}">
+<html lang="{{ request.state.lang }}" dir="{{ 'rtl' if request.state.lang == 'ar' else 'ltr' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _('Profile - BookSlot') }}</title>
+    <title>{{ _("BookSlot - Profile") }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://unpkg.com/dayjs@1.10.4/dayjs.min.js"></script>
+    <script src="https://unpkg.com/dayjs@1.10.4/plugin/customParseFormat.js"></script>
+    <script>dayjs.extend(dayjs_plugin_customParseFormat);</script>
     <style>
-        .service-item, .availability-slot {
-            border: 1px solid #ccc;
-            padding: 10px;
-            margin-bottom: 5px;
-        }
+        [v-cloak] { display: none; }
     </style>
 </head>
-<body>
-    <h1>{{ _('Edit Profile') }}</h1>
-    <form action="/profile" method="post" id="profile-form">
-        <label for="name">{{ _('Your Name:') }}</label><br>
-        <input type="text" id="name" name="name" value="{{ owner.name }}" required><br>
-        <label for="business_name">{{ _('Business Name:') }}</label><br>
-        <input type="text" id="business_name" name="business_name" value="{{ owner.business_name }}" required><br>
-        <label for="phone">{{ _('Phone Number (for WhatsApp notifications, optional):') }}</label><br>
-        <input type="tel" id="phone" name="phone" value="{{ owner.phone or '' }}"><br>
-
-        <h2>{{ _('Services Offered') }}</h2>
-        <div id="services-container">
-            {% for service in services %}
-            <div class="service-item">
-                <label>{{ _('Service Name:') }} <input type="text" class="service-name" value="{{ service.name }}" required></label><br>
-                <label>{{ _('Duration (minutes):') }} <input type="number" class="service-duration" value="{{ service.duration }}" required></label><br>
-                <label>{{ _('Price (USD):') }} <input type="number" step="0.01" class="service-price" value="{{ service.price }}" required></label><br>
-                <label>{{ _('Description (optional):') }} <textarea class="service-description">{{ service.description or '' }}</textarea></label><br>
-                <button type="button" onclick="removeService(this)">{{ _('Remove Service') }}</button>
-            </div>
-            {% endfor %}
+<body class="bg-gray-100 font-sans">
+    <nav class="bg-white shadow-md p-4 flex justify-between items-center">
+        <h1 class="text-2xl font-bold text-indigo-600">{{ _("BookSlot Profile") }}</h1>
+        <div class="flex items-center space-x-4">
+            <a href="/dashboard" class="text-indigo-600 hover:text-indigo-800">{{ _("Dashboard") }}</a>
+            <a href="/logout" class="text-red-600 hover:text-red-800">{{ _("Logout") }}</a>
+            <select onchange="window.location.href = this.value" class="block pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                <option value="{{ request.url|urlencode('lang', 'en') }}" {% if request.state.lang == 'en' %}selected{% endif %}>English</option>
+                <option value="{{ request.url|urlencode('lang', 'ar') }}" {% if request.state.lang == 'ar' %}selected{% endif %}>العربية</option>
+                <option value="{{ request.url|urlencode('lang', 'fr') }}" {% if request.state.lang == 'fr' %}selected{% endif %}>Français</option>
+            </select>
         </div>
-        <button type="button" onclick="addService()">{{ _('Add Service') }}</button>
-        <input type="hidden" name="services_json" id="services-json-input">
+    </nav>
 
-        <h2>{{ _('Availability') }}</h2>
-        <div id="availability-container">
-            {% set days_of_week = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] %}
-            {% for day in days_of_week %}
-            <h3>{{ _(day) }}</h3>
-            <div class="day-availability" data-day="{{ day }}">
-                {% set day_slots = availability.get(day, []) %}
-                {% if day_slots %}
-                    {% for slot in day_slots %}
-                    <div class="availability-slot">
-                        <label>{{ _('Start Time:') }} <input type="time" class="slot-start-time" value="{{ slot.start_time }}" required></label><br>
-                        <label>{{ _('End Time:') }} <input type="time" class="slot-end-time" value="{{ slot.end_time }}" required></label><br>
-                        <button type="button" onclick="removeSlot(this)">{{ _('Remove Slot') }}</button>
+    <div id="app" v-cloak class="container mx-auto p-6">
+        <div class="bg-white p-8 rounded-lg shadow-md">
+            <h2 class="text-2xl font-bold mb-6 text-gray-800">{{ _("Update Your Profile") }}</h2>
+
+            {% if message %}
+                <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
+                    <strong class="font-bold">{{ _("Success!") }}</strong>
+                    <span class="block sm:inline">{{ message }}</span>
+                </div>
+            {% endif %}
+            {% if error %}
+                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+                    <strong class="font-bold">{{ _("Error!") }}</strong>
+                    <span class="block sm:inline">{{ error }}</span>
+                </div>
+            {% endif %}
+
+            <form @submit.prevent="submitForm" class="space-y-6">
+                <div>
+                    <label for="name" class="block text-sm font-medium text-gray-700">{{ _("Your Name") }}</label>
+                    <input type="text" id="name" v-model="owner.name" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div>
+                    <label for="business_name" class="block text-sm font-medium text-gray-700">{{ _("Business Name") }}</label>
+                    <input type="text" id="business_name" v-model="owner.business_name" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div>
+                    <label for="phone" class="block text-sm font-medium text-gray-700">{{ _("Phone Number (for WhatsApp notifications, optional)") }}</label>
+                    <input type="tel" id="phone" v-model="owner.phone" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+
+                <h3 class="text-xl font-semibold mt-8 mb-4 text-gray-800">{{ _("Services") }}</h3>
+                <div v-for="(service, index) in services" :key="index" class="border p-4 rounded-md mb-4 bg-gray-50">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label :for="'service_name_' + index" class="block text-sm font-medium text-gray-700">{{ _("Service Name") }}</label>
+                            <input type="text" :id="'service_name_' + index" v-model="service.name" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                        </div>
+                        <div>
+                            <label :for="'service_duration_' + index" class="block text-sm font-medium text-gray-700">{{ _("Duration (minutes)") }}</label>
+                            <input type="number" :id="'service_duration_' + index" v-model.number="service.duration_minutes" required min="1" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                        </div>
+                        <div>
+                            <label :for="'service_price_' + index" class="block text-sm font-medium text-gray-700">{{ _("Price") }}</label>
+                            <input type="number" :id="'service_price_' + index" v-model.number="service.price" required min="0" step="0.01" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label :for="'service_description_' + index" class="block text-sm font-medium text-gray-700">{{ _("Description (optional)") }}</label>
+                            <textarea :id="'service_description_' + index" v-model="service.description" rows="2" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"></textarea>
+                        </div>
                     </div>
-                    {% endfor %}
-                {% endif %}
-                <button type="button" onclick="addSlot(this, '{{ day }}')">{{ _('Add Slot') }}</button>
-            </div>
-            {% endfor %}
-        </div>
-        <input type="hidden" name="availability_json" id="availability-json-input">
+                    <button type="button" @click="removeService(index)" class="mt-4 inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                        {{ _("Remove Service") }}
+                    </button>
+                </div>
+                <button type="button" @click="addService" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                    {{ _("Add Service") }}
+                </button>
 
-        <br>
-        <input type="submit" value="{{ _('Update Profile') }}">
-    </form>
-    <p><a href="/dashboard">{{ _('Back to Dashboard') }}</a></p>
-    <div>
-        <a href="{{ request.url|urlencode('lang', 'en') }}">English</a> | <a href="{{ request.url|urlencode('lang', 'ar') }}">العربية</a> | <a href="{{ request.url|urlencode('lang', 'fr') }}">Français</a>
+                <h3 class="text-xl font-semibold mt-8 mb-4 text-gray-800">{{ _("Availability") }}</h3>
+                <div class="space-y-4">
+                    <div v-for="(day, dayName) in availability" :key="dayName" class="border p-4 rounded-md bg-gray-50">
+                        <h4 class="font-medium text-gray-800 capitalize">{{ _(dayName) }}</h4>
+                        <div v-for="(slot, slotIndex) in day" :key="slotIndex" class="flex items-center space-x-2 mt-2">
+                            <input type="time" v-model="slot.start_time" required class="border border-gray-300 rounded-md shadow-sm p-1">
+                            <span>-</span>
+                            <input type="time" v-model="slot.end_time" required class="border border-gray-300 rounded-md shadow-sm p-1">
+                            <button type="button" @click="removeSlot(dayName, slotIndex)" class="text-red-600 hover:text-red-800 text-sm">{{ _("Remove") }}</button>
+                        </div>
+                        <button type="button" @click="addSlot(dayName)" class="mt-2 inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            {{ _("Add Slot") }}
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    {{ _("Save Profile") }}
+                </button>
+            </form>
+        </div>
     </div>
 
     <script>
-        function collectServices() {
-            const services = [];
-            document.querySelectorAll('.service-item').forEach(item => {
-                services.push({
-                    name: item.querySelector('.service-name').value,
-                    duration: parseInt(item.querySelector('.service-duration').value),
-                    price: parseFloat(item.querySelector('.service-price').value),
-                    description: item.querySelector('.service-description').value
-                });
-            });
-            document.getElementById('services-json-input').value = JSON.stringify(services);
-        }
+        const { createApp, ref, reactive, onMounted } = Vue;
 
-        function addService() {
-            const container = document.getElementById('services-container');
-            const newService = document.createElement('div');
-            newService.className = 'service-item';
-            newService.innerHTML = `
-                <label>{{ _('Service Name:') }} <input type="text" class="service-name" required></label><br>
-                <label>{{ _('Duration (minutes):') }} <input type="number" class="service-duration" required></label><br>
-                <label>{{ _('Price (USD):') }} <input type="number" step="0.01" class="service-price" required></label><br>
-                <label>{{ _('Description (optional):') }} <textarea class="service-description"></textarea></label><br>
-                <button type="button" onclick="removeService(this)">{{ _('Remove Service') }}</button>
-            `;
-            container.appendChild(newService);
-        }
+        createApp({
+            setup() {
+                const owner = reactive({{ owner | tojson }});
+                const services = reactive({{ services | tojson }});
+                const availability = reactive({{ availability | tojson }});
 
-        function removeService(button) {
-            button.closest('.service-item').remove();
-        }
+                const addService = () => {
+                    services.push({ name: '', duration_minutes: 30, price: 0.00, description: '' });
+                };
 
-        function collectAvailability() {
-            const availability = {};
-            document.querySelectorAll('.day-availability').forEach(dayContainer => {
-                const day = dayContainer.dataset.day;
-                const slots = [];
-                dayContainer.querySelectorAll('.availability-slot').forEach(slotItem => {
-                    slots.push({
-                        day_of_week: day,
-                        start_time: slotItem.querySelector('.slot-start-time').value,
-                        end_time: slotItem.querySelector('.slot-end-time').value
-                    });
-                });
-                availability[day] = slots;
-            });
-            document.getElementById('availability-json-input').value = JSON.stringify(availability);
-        }
+                const removeService = (index) => {
+                    services.splice(index, 1);
+                };
 
-        function addSlot(button, day) {
-            const dayContainer = button.closest('.day-availability');
-            const newSlot = document.createElement('div');
-            newSlot.className = 'availability-slot';
-            newSlot.innerHTML = `
-                <label>{{ _('Start Time:') }} <input type="time" class="slot-start-time" required></label><br>
-                <label>{{ _('End Time:') }} <input type="time" class="slot-end-time" required></label><br>
-                <button type="button" onclick="removeSlot(this)">{{ _('Remove Slot') }}</button>
-            `;
-            dayContainer.insertBefore(newSlot, button); // Insert before the "Add Slot" button
-        }
+                const addSlot = (dayName) => {
+                    if (!availability[dayName]) {
+                        availability[dayName] = [];
+                    }
+                    availability[dayName].push({ start_time: '09:00', end_time: '17:00' });
+                };
 
-        function removeSlot(button) {
-            button.closest('.availability-slot').remove();
-        }
+                const removeSlot = (dayName, slotIndex) => {
+                    availability[dayName].splice(slotIndex, 1);
+                };
 
-        document.getElementById('profile-form').addEventListener('submit', function() {
-            collectServices();
-            collectAvailability();
-        });
+                const submitForm = async () => {
+                    try {
+                        const formData = new FormData();
+                        formData.append('name', owner.name);
+                        formData.append('business_name', owner.business_name);
+                        formData.append('phone', owner.phone || '');
+                        formData.append('services_json', JSON.stringify(services));
+                        formData.append('availability_json', JSON.stringify(availability));
+
+                        const response = await fetch('/profile', {
+                            method: 'POST',
+                            body: formData
+                        });
+
+                        const htmlResponse = await response.text();
+                        document.open();
+                        document.write(htmlResponse);
+                        document.close();
+
+                    } catch (error) {
+                        console.error('Error submitting form:', error);
+                        // Display a generic error message to the user
+                        alert('{{ _("An error occurred while saving your profile. Please try again.") }}');
+                    }
+                };
+
+                return {
+                    owner,
+                    services,
+                    availability,
+                    addService,
+                    removeService,
+                    addSlot,
+                    removeSlot,
+                    submitForm
+                };
+            }
+        }).mount('#app');
     </script>
 </body>
 </html>

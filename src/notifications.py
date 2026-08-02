@@ -1,21 +1,18 @@
-import os
-import logging
-from typing import Optional
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 from twilio.rest import Client
 from .config import settings
-from .schemas import Booking, Owner
+import logging
 
 logger = logging.getLogger(__name__)
 
-def send_email(to_email: str, subject: str, html_content: str, from_email: str = "no-reply@bookslot.app"):
+def send_email_notification(to_email: str, subject: str, html_content: str):
     if not settings.SENDGRID_API_KEY:
-        logger.warning("SENDGRID_API_KEY is not set. Email will not be sent.")
+        logger.warning("SendGrid API key not set. Email notification skipped for %s", to_email)
         return False
 
     message = Mail(
-        from_email=from_email,
+        from_email='no-reply@bookslot.app', # Replace with your verified sender email
         to_emails=to_email,
         subject=subject,
         html_content=html_content
@@ -23,89 +20,34 @@ def send_email(to_email: str, subject: str, html_content: str, from_email: str =
     try:
         sendgrid_client = SendGridAPIClient(settings.SENDGRID_API_KEY)
         response = sendgrid_client.send(message)
-        logger.info(f"Email sent to {to_email}. Status Code: {response.status_code}")
+        logger.info("Email sent to %s, Status Code: %s", to_email, response.status_code)
         return True
     except Exception as e:
-        logger.error(f"Error sending email to {to_email}: {e}")
+        logger.error("Error sending email to %s: %s", to_email, e)
         return False
 
-def send_whatsapp_message(to_phone_number: str, message_body: str):
+def send_whatsapp_notification(to_phone: str, message_body: str):
     if not settings.TWILIO_ACCOUNT_SID or not settings.TWILIO_AUTH_TOKEN or not settings.TWILIO_WHATSAPP_NUMBER:
-        logger.warning("Twilio credentials or WhatsApp number not set. WhatsApp message will not be sent.")
+        logger.warning("Twilio credentials not fully set. WhatsApp notification skipped for %s", to_phone)
         return False
-    
-    # Twilio expects phone numbers in E.164 format, e.g., "+1234567890"
-    # Ensure the 'to_phone_number' is in the correct format.
-    if not to_phone_number.startswith('+'):
-        logger.warning(f"Recipient phone number {to_phone_number} is not in E.164 format. Prepending '+'.")
-        to_phone_number = '+' + to_phone_number.lstrip('0') # Basic attempt to fix, may need more robust validation
 
     try:
         client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
         message = client.messages.create(
-            from_=f"whatsapp:{settings.TWILIO_WHATSAPP_NUMBER}",
+            from_=f'whatsapp:{settings.TWILIO_WHATSAPP_NUMBER}',
             body=message_body,
-            to=f"whatsapp:{to_phone_number}"
+            to=f'whatsapp:{to_phone}'
         )
-        logger.info(f"WhatsApp message sent to {to_phone_number}. SID: {message.sid}")
+        logger.info("WhatsApp message sent to %s, SID: %s", to_phone, message.sid)
         return True
     except Exception as e:
-        logger.error(f"Error sending WhatsApp message to {to_phone_number}: {e}")
+        logger.error("Error sending WhatsApp message to %s: %s", to_phone, e)
         return False
 
-def notify_owner_of_new_booking(owner: Owner, booking: Booking):
-    subject = f"New Booking for {owner.business_name}!"
-    html_content = f"""
-    <html>
-        <body>
-            <p>Hello {owner.name},</p>
-            <p>You have a new booking!</p>
-            <ul>
-                <li><strong>Customer:</strong> {booking.customer_name}</li>
-                <li><strong>Email:</strong> {booking.customer_email}</li>
-                <li><strong>Phone:</strong> {booking.customer_phone or 'N/A'}</li>
-                <li><strong>Service:</strong> {booking.service_name}</li>
-                <li><strong>Date:</strong> {booking.booking_date.strftime('%Y-%m-%d')}</li>
-                <li><strong>Time:</strong> {booking.booking_time}</li>
-            </ul>
-            <p>Thank you!</p>
-        </body>
-    </html>
-    """
-    send_email(owner.email, subject, html_content)
-    if owner.phone:
-        whatsapp_message = (
-            f"Hello {owner.name},\n"
-            f"You have a new booking from {booking.customer_name} for {booking.service_name} "
-            f"on {booking.booking_date.strftime('%Y-%m-%d')} at {booking.booking_time}.\n"
-            f"Customer Contact: {booking.customer_email} / {owner.phone or 'N/A'}"
-        )
-        send_whatsapp_message(owner.phone, whatsapp_message)
+def send_booking_confirmation_to_customer(booking_details: dict, owner_details: dict, locale: str = 'en'):
+    # This will be handled by the main.py using gettext
+    pass
 
-def notify_customer_of_booking_confirmation(owner: Owner, booking: Booking):
-    subject = f"Your Booking with {owner.business_name} is Confirmed!"
-    html_content = f"""
-    <html>
-        <body>
-            <p>Hello {booking.customer_name},</p>
-            <p>Your booking with {owner.business_name} has been confirmed!</p>
-            <ul>
-                <li><strong>Service:</strong> {booking.service_name}</li>
-                <li><strong>Date:</strong> {booking.booking_date.strftime('%Y-%m-%d')}</li>
-                <li><strong>Time:</strong> {booking.booking_time}</li>
-                <li><strong>Business:</strong> {owner.business_name}</li>
-                <li><strong>Contact:</strong> {owner.email} / {owner.phone or 'N/A'}</li>
-            </ul>
-            <p>We look forward to seeing you!</p>
-        </body>
-    </html>
-    """
-    send_email(booking.customer_email, subject, html_content)
-    if booking.customer_phone:
-        whatsapp_message = (
-            f"Hello {booking.customer_name},\n"
-            f"Your booking with {owner.business_name} for {booking.service_name} "
-            f"on {booking.booking_date.strftime('%Y-%m-%d')} at {booking.booking_time} is confirmed.\n"
-            f"Contact {owner.business_name}: {owner.email} / {owner.phone or 'N/A'}"
-        )
-        send_whatsapp_message(booking.customer_phone, whatsapp_message)
+def send_booking_notification_to_owner(booking_details: dict, owner_details: dict, locale: str = 'en'):
+    # This will be handled by the main.py using gettext
+    pass
