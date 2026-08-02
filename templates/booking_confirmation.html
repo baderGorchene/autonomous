@@ -1,1 +1,21 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>{{ request.state.gettext("Booking Confirmed!") }}</title></head><body><h1>{{ request.state.gettext("Booking Confirmed!") }}</h1><p>{{ request.state.gettext("Thank you,") }} {{ customer_name }}!</p><p>{{ request.state.gettext("Your booking with") }} {{ owner.business_name }} {{ request.state.gettext("for") }} {{ service_name }} {{ request.state.gettext("on") }} {{ booking_date }} {{ request.state.gettext("at") }} {{ booking_time }} {{ request.state.gettext("has been successfully recorded.") }}</p><p>{{ request.state.gettext("A confirmation email has been sent to your inbox.") }}</p><p><a href="/book/{{ owner.slug }}">{{ request.state.gettext("Book another appointment") }}</a></p></body></html>
+{% extends "base.html" %}
+
+{% block title %}Booking Confirmed!{% endblock %}
+
+{% block page_title %}{{ _("Booking Confirmed!") }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 text-center">
+        <div class="alert alert-success" role="alert">
+            <h4 class="alert-heading">{{ _("Thank you for your booking!") }}</h4>
+            <p>{{ _("Your appointment with %s for %s on %s at %s has been successfully confirmed.")|format(owner.business_name, booking.service_name, booking.booking_date.strftime('%Y-%m-%d'), booking.booking_time) }}</p>
+            <hr>
+            <p class="mb-0">{{ _("A confirmation email has been sent to %s.")|format(booking.customer_email) }}</p>
+            <p class="mb-0">{{ _("We look forward to seeing you!") }}</p>
+        </div>
+        <a href="/{{ owner.slug }}" class="btn btn-primary mt-3">{{ _("Book another appointment") }}</a>
+        <a href="/" class="btn btn-outline-secondary mt-3">{{ _("Go to Homepage") }}</a>
+    </div>
+</div>
+{% endblock %}

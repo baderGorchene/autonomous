@@ -1,77 +1,90 @@
-import logging
-from . import models
-from .config import settings
-import sendgrid
+import os
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 from twilio.rest import Client
+from typing import Dict, Any
+import logging
+from .config import settings
 
 logger = logging.getLogger(__name__)
 
-def send_email(to_email: str, subject: str, body: str):
+def send_email_notification(to_email: str, subject: str, html_content: str):
     if not settings.SENDGRID_API_KEY:
-        logger.warning("SENDGRID_API_KEY is not set. Skipping email notification.")
+        logger.warning("SENDGRID_API_KEY is not set. Email notification skipped for %s.", to_email)
         return
 
+    message = Mail(
+        from_email='no-reply@bookslot.app', # Replace with your verified sender email
+        to_emails=to_email,
+        subject=subject,
+        html_content=html_content
+    )
     try:
-        sg = sendgrid.SendGridAPIClient(settings.SENDGRID_API_KEY)
-        # Using a placeholder 'from_email' for now. In a real app, this should be configured.
-        message = Mail(
-            from_email='noreply@bookslot.app',
-            to_emails=to_email,
-            subject=subject,
-            html_content=body
-        )
-        response = sg.send(message)
-        logger.info(f"Email sent to {to_email}. Status Code: {response.status_code}")
+        sendgrid_client = SendGridAPIClient(settings.SENDGRID_API_KEY)
+        response = sendgrid_client.send(message)
+        logger.info("Email sent to %s. Status Code: %s", to_email, response.status_code)
+        if response.status_code >= 400:
+            logger.error("SendGrid email failed for %s. Response body: %s", to_email, response.body)
     except Exception as e:
-        logger.error(f"Failed to send email to {to_email}: {e}")
+        logger.error("Error sending email to %s: %s", to_email, e)
 
-def send_whatsapp_message(to_phone: str, body: str):
+def send_whatsapp_notification(to_phone_number: str, message_body: str):
     if not settings.TWILIO_ACCOUNT_SID or not settings.TWILIO_AUTH_TOKEN or not settings.TWILIO_WHATSAPP_NUMBER:
-        logger.warning("Twilio credentials are not fully set. Skipping WhatsApp notification.")
+        logger.warning("Twilio credentials not fully set. WhatsApp notification skipped for %s.", to_phone_number)
         return
 
     try:
         client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
         message = client.messages.create(
-            from_=f"whatsapp:{settings.TWILIO_WHATSAPP_NUMBER}",
-            body=body,
-            to=f"whatsapp:{to_phone}"
+            from_=f'whatsapp:{settings.TWILIO_WHATSAPP_NUMBER}',
+            body=message_body,
+            to=f'whatsapp:{to_phone_number}'
         )
-        logger.info(f"WhatsApp message sent to {to_phone}. SID: {message.sid}")
+        logger.info("WhatsApp message sent to %s. SID: %s", to_phone_number, message.sid)
     except Exception as e:
-        logger.error(f"Failed to send WhatsApp message to {to_phone}: {e}")
+        logger.error("Error sending WhatsApp message to %s: %s", to_phone_number, e)
 
-def send_owner_notification(owner: models.Owner, booking: models.Booking):
-    subject = f"New Booking for {owner.business_name}!"
-    body = (
-        f"Hello {owner.name},\n\n"
-        f"You have a new booking!\n\n"
-        f"Customer: {booking.customer_name}\n"
-        f"Email: {booking.customer_email}\n"
-        f"Phone: {booking.customer_phone}\n"
-        f"Service: {booking.service_name}\n"
-        f"Date: {booking.booking_date.strftime('%Y-%m-%d')}\n"
-        f"Time: {booking.booking_time.strftime('%H:%M')}\n\n"
-        f"Manage your bookings at your dashboard: bookslot.app/dashboard\n" # Placeholder URL
-    )
-    send_email(owner.email, subject, body)
-    if owner.phone:
-        send_whatsapp_message(owner.phone, body)
-    logger.info(f"Owner notification sent for booking {booking.id} to {owner.email}.")
+def send_booking_confirmation_email(owner_email: str, customer_email: str, booking_details: Dict[str, Any], owner_name: str, business_name: str):
+    # Owner notification
+    owner_subject = f"New Booking for {business_name} - {booking_details['service_name']}"
+    owner_html = f"""
+    <p>Dear {owner_name},</p>
+    <p>You have a new booking!</p>
+    <p><strong>Service:</strong> {booking_details['service_name']}</p>
+    <p><strong>Date:</strong> {booking_details['booking_date'].strftime('%Y-%m-%d')}</p>
+    <p><strong>Time:</strong> {booking_details['booking_time']}</p>
+    <p><strong>Customer Name:</strong> {booking_details['customer_name']}</p>
+    <p><strong>Customer Email:</strong> {booking_details['customer_email']}</p>
+    <p><strong>Customer Phone:</strong> {booking_details.get('customer_phone', 'N/A')}</p>
+    <p>Please check your dashboard for more details.</p>
+    <p>Thank you!</p>
+    """
+    send_email_notification(owner_email, owner_subject, owner_html)
 
-def send_customer_confirmation(owner: models.Owner, booking: models.Booking):
-    subject = f"Your Booking Confirmation for {owner.business_name}"
-    body = (
-        f"Hello {booking.customer_name},\n\n"
-        f"Your booking with {owner.business_name} has been confirmed!\n\n"
-        f"Service: {booking.service_name}\n"
-        f"Date: {booking.booking_date.strftime('%Y-%m-%d')}\n"
-        f"Time: {booking.booking_time.strftime('%H:%M')}\n\n"
-        f"We look forward to seeing you!\n"
-        f"Contact {owner.name} at {owner.phone or owner.email} for any questions.\n"
+    # Customer notification
+    customer_subject = f"Your Booking Confirmation with {business_name}"
+    customer_html = f"""
+    <p>Dear {booking_details['customer_name']},</p>
+    <p>Your booking with {business_name} has been confirmed!</p>
+    <p><strong>Service:</strong> {booking_details['service_name']}</p>
+    <p><strong>Date:</strong> {booking_details['booking_date'].strftime('%Y-%m-%d')}</p>
+    <p><strong>Time:</strong> {booking_details['booking_time']}</p>
+    <p>We look forward to seeing you!</p>
+    <p>Thank you!</p>
+    """
+    send_email_notification(customer_email, customer_subject, customer_html)
+
+def send_owner_whatsapp_notification(owner_phone: str, booking_details: Dict[str, Any], business_name: str):
+    message_body = (
+        f"New Booking for {business_name}!\n"
+        f"Service: {booking_details['service_name']}\n"
+        f"Date: {booking_details['booking_date'].strftime('%Y-%m-%d')}\n"
+        f"Time: {booking_details['booking_time']}\n"
+        f"Customer: {booking_details['customer_name']}\n"
+        f"Email: {booking_details['customer_email']}\n"
+        f"Phone: {booking_details.get('customer_phone', 'N/A')}"
     )
-    send_email(booking.customer_email, subject, body)
-    if booking.customer_phone:
-        send_whatsapp_message(booking.customer_phone, body)
-    logger.info(f"Customer confirmation sent for booking {booking.id} to {booking.customer_email}.")
+    send_whatsapp_notification(owner_phone, message_body)

@@ -40,7 +40,6 @@ def update_owner_profile(db: Session, current_owner: models.Owner, owner_update:
     current_owner.name = owner_update.name
     current_owner.business_name = owner_update.business_name
     current_owner.phone = owner_update.phone
-    # services_json and availability_json are updated in main.py directly after validation
     db.add(current_owner)
     db.commit()
     db.refresh(current_owner)

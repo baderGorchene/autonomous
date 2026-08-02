@@ -1,0 +1,271 @@
+{% extends "base.html" %}
+
+{% block title %}Services & Availability - BookSlot{% endblock %}
+
+{% block page_title %}{{ _("Setup Your Services & Availability") }}{% endblock %}
+
+{% block content %}
+<nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/dashboard">{{ _("Dashboard") }}</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="/profile">{{ _("Profile") }}</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" aria-current="page" href="/setup-services">{{ _("Services & Availability") }}</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/{{ owner.slug }}" target="_blank">{{ _("My Booking Page") }} <small>(bookslot.app/{{ owner.slug }})</small></a>
+                </li>
+            </ul>
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="/logout">{{ _("Logout") }}</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="row">
+    <div class="col-md-12">
+        {% if message %}
+        <div class="alert alert-success">{{ message }}</div>
+        {% endif %}
+        {% if error %}
+        <div class="alert alert-danger">{{ error }}</div>
+        {% endif %}
+
+        <ul class="nav nav-tabs mb-3" id="setupTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="services-tab" data-bs-toggle="tab" data-bs-target="#services" type="button" role="tab" aria-controls="services" aria-selected="true">{{ _("Services") }}</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="availability-tab" data-bs-toggle="tab" data-bs-target="#availability" type="button" role="tab" aria-controls="availability" aria-selected="false">{{ _("Availability") }}</button>
+            </li>
+        </ul>
+        <div class="tab-content" id="setupTabsContent">
+            <div class="tab-pane fade show active" id="services" role="tabpanel" aria-labelledby="services-tab">
+                <h3>{{ _("Manage Your Services") }}</h3>
+                <form id="servicesForm" action="/setup-services" method="post">
+                    <div id="serviceList" class="mb-3">
+                        {% if services %}
+                            {% for service in services %}
+                            <div class="service-item border p-3 mb-2 rounded">
+                                <div class="mb-2">
+                                    <label class="form-label">{{ _("Service Name") }}</label>
+                                    <input type="text" class="form-control service-name" value="{{ service.name }}" required>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label">{{ _("Duration (minutes)") }}</label>
+                                    <input type="number" class="form-control service-duration" value="{{ service.duration }}" required min="1">
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label">{{ _("Price") }}</label>
+                                    <input type="number" class="form-control service-price" value="{{ service.price }}" required min="0" step="0.01">
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label">{{ _("Description (Optional)") }}</label>
+                                    <textarea class="form-control service-description">{{ service.description }}</textarea>
+                                </div>
+                                <button type="button" class="btn btn-danger btn-sm remove-service">{{ _("Remove Service") }}</button>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <p>{{ _("No services added yet.") }}</p>
+                        {% endif %}
+                    </div>
+                    <button type="button" id="addServiceBtn" class="btn btn-secondary mb-3">{{ _("Add New Service") }}</button>
+                    <input type="hidden" name="services_data" id="servicesDataInput">
+                    <button type="submit" class="btn btn-primary">{{ _("Save Services") }}</button>
+                </form>
+            </div>
+            <div class="tab-pane fade" id="availability" role="tabpanel" aria-labelledby="availability-tab">
+                <h3>{{ _("Set Your Availability") }}</h3>
+                <form id="availabilityForm" action="/setup-availability" method="post">
+                    <div id="availabilitySettings" class="mb-3">
+                        <p>{{ _("Choose your available days and time slots.") }}</p>
+                        {% set weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] %}
+                        {% for day in weekdays %}
+                        <div class="card mb-2">
+                            <div class="card-header">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input day-toggle" type="checkbox" id="toggle-{{ day }}" {% if availability[day] is defined and availability[day]|length > 0 %}checked{% endif %} data-day="{{ day }}">
+                                    <label class="form-check-label" for="toggle-{{ day }}">{{ _(day) }}</label>
+                                </div>
+                            </div>
+                            <div class="card-body availability-body" id="body-{{ day }}" {% if availability[day] is not defined or availability[day]|length == 0 %}style="display:none;"{% endif %}>
+                                <div class="time-slots-container mb-2" data-day="{{ day }}">
+                                    {% if availability[day] is defined and availability[day]|length > 0 %}
+                                        {% for slot in availability[day] %}
+                                        <div class="input-group mb-2 time-slot-item">
+                                            <input type="time" class="form-control time-slot" value="{{ slot }}">
+                                            <button class="btn btn-outline-danger remove-time-slot" type="button">{{ _("Remove") }}</button>
+                                        </div>
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+                                <button type="button" class="btn btn-sm btn-success add-time-slot" data-day="{{ day }}">{{ _("Add Slot") }}</button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <input type="hidden" name="availability_data" id="availabilityDataInput">
+                    <button type="submit" class="btn btn-primary">{{ _("Save Availability") }}</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // --- Services Tab Logic ---
+    const serviceList = document.getElementById('serviceList');
+    const addServiceBtn = document.getElementById('addServiceBtn');
+    const servicesDataInput = document.getElementById('servicesDataInput');
+    const servicesForm = document.getElementById('servicesForm');
+
+    function updateServicesDataInput() {
+        const services = [];
+        serviceList.querySelectorAll('.service-item').forEach(item => {
+            services.push({
+                name: item.querySelector('.service-name').value,
+                duration: parseInt(item.querySelector('.service-duration').value),
+                price: parseFloat(item.querySelector('.service-price').value),
+                description: item.querySelector('.service-description').value
+            });
+        });
+        servicesDataInput.value = JSON.stringify(services);
+    }
+
+    function addServiceItem(service = {name: '', duration: 60, price: 0.00, description: ''}) {
+        const div = document.createElement('div');
+        div.className = 'service-item border p-3 mb-2 rounded';
+        div.innerHTML = `
+            <div class="mb-2">
+                <label class="form-label">{{ _("Service Name") }}</label>
+                <input type="text" class="form-control service-name" value="${service.name}" required>
+            </div>
+            <div class="mb-2">
+                <label class="form-label">{{ _("Duration (minutes)") }}</label>
+                <input type="number" class="form-control service-duration" value="${service.duration}" required min="1">
+            </div>
+            <div class="mb-2">
+                <label class="form-label">{{ _("Price") }}</label>
+                <input type="number" class="form-control service-price" value="${service.price}" required min="0" step="0.01">
+            </div>
+            <div class="mb-2">
+                <label class="form-label">{{ _("Description (Optional)") }}</label>
+                <textarea class="form-control service-description">${service.description}</textarea>
+            </div>
+            <button type="button" class="btn btn-danger btn-sm remove-service">{{ _("Remove Service") }}</button>
+        `;
+        serviceList.appendChild(div);
+        div.querySelector('.remove-service').addEventListener('click', function() {
+            div.remove();
+            updateServicesDataInput();
+        });
+        div.querySelectorAll('input, textarea').forEach(input => {
+            input.addEventListener('change', updateServicesDataInput);
+        });
+        updateServicesDataInput(); // Update after adding
+    }
+
+    addServiceBtn.addEventListener('click', () => addServiceItem());
+
+    // Initial setup for existing services
+    serviceList.querySelectorAll('.service-item').forEach(item => {
+        item.querySelector('.remove-service').addEventListener('click', function() {
+            item.remove();
+            updateServicesDataInput();
+        });
+        item.querySelectorAll('input, textarea').forEach(input => {
+            input.addEventListener('change', updateServicesDataInput);
+        });
+    });
+    updateServicesDataInput(); // Initial population
+
+    // --- Availability Tab Logic ---
+    const availabilityDataInput = document.getElementById('availabilityDataInput');
+    const availabilityForm = document.getElementById('availabilityForm');
+
+    function updateAvailabilityDataInput() {
+        const availability = {};
+        document.querySelectorAll('.day-toggle').forEach(toggle => {
+            const day = toggle.dataset.day;
+            if (toggle.checked) {
+                const slots = [];
+                document.querySelector(`.time-slots-container[data-day="${day}"]`).querySelectorAll('.time-slot').forEach(input => {
+                    if (input.value) {
+                        slots.push(input.value);
+                    }
+                });
+                availability[day] = slots.sort(); // Keep slots sorted
+            }
+        });
+        availabilityDataInput.value = JSON.stringify(availability);
+    }
+
+    document.querySelectorAll('.day-toggle').forEach(toggle => {
+        toggle.addEventListener('change', function() {
+            const day = this.dataset.day;
+            const body = document.getElementById(`body-${day}`);
+            if (this.checked) {
+                body.style.display = 'block';
+                // If no slots exist, add one by default
+                if (body.querySelector('.time-slots-container').children.length === 0) {
+                    addTimeSlot(day);
+                }
+            } else {
+                body.style.display = 'none';
+            }
+            updateAvailabilityDataInput();
+        });
+    });
+
+    function addTimeSlot(day, time = '09:00') {
+        const container = document.querySelector(`.time-slots-container[data-day="${day}"]`);
+        const div = document.createElement('div');
+        div.className = 'input-group mb-2 time-slot-item';
+        div.innerHTML = `
+            <input type="time" class="form-control time-slot" value="${time}">
+            <button class="btn btn-outline-danger remove-time-slot" type="button">{{ _("Remove") }}</button>
+        `;
+        container.appendChild(div);
+        div.querySelector('.remove-time-slot').addEventListener('click', function() {
+            div.remove();
+            updateAvailabilityDataInput();
+        });
+        div.querySelector('.time-slot').addEventListener('change', updateAvailabilityDataInput);
+        updateAvailabilityDataInput();
+    }
+
+    document.querySelectorAll('.add-time-slot').forEach(button => {
+        button.addEventListener('click', function() {
+            addTimeSlot(this.dataset.day);
+        });
+    });
+
+    document.querySelectorAll('.remove-time-slot').forEach(button => {
+        button.addEventListener('click', function() {
+            button.closest('.time-slot-item').remove();
+            updateAvailabilityDataInput();
+        });
+    });
+
+    document.querySelectorAll('.time-slot').forEach(input => {
+        input.addEventListener('change', updateAvailabilityDataInput);
+    });
+
+    updateAvailabilityDataInput(); // Initial population
+});
+</script>
+{% endblock %}

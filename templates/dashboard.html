@@ -1,1 +1,80 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>{{ request.state.gettext("Dashboard") }}</title></head><body><h1>{{ request.state.gettext("Welcome,") }} {{ owner.name }}!</h1><p>{{ request.state.gettext("Your Business:") }} {{ owner.business_name }}</p><p>{{ request.state.gettext("Your Booking Page:") }} <a href="{{ booking_page_url }}">{{ booking_page_url }}</a></p><h2>{{ request.state.gettext("Upcoming Bookings") }}</h2>{% if bookings %}<table border="1"><thead><tr><th>{{ request.state.gettext("Customer Name") }}</th><th>{{ request.state.gettext("Service") }}</th><th>{{ request.state.gettext("Date") }}</th><th>{{ request.state.gettext("Time") }}</th><th>{{ request.state.gettext("Status") }}</th></tr></thead><tbody>{% for booking in bookings %}<tr><td>{{ booking.customer_name }}</td><td>{{ booking.service_name }}</td><td>{{ booking.booking_date }}</td><td>{{ booking.booking_time }}</td><td>{{ booking.status }}</td></tr>{% endfor %}</tbody></table>{% else %}<p>{{ request.state.gettext("No upcoming bookings.") }}</p>{% endif %}<h2>{{ request.state.gettext("Profile Settings") }}</h2>{% if error %}<p style="color: red;">{{ error }}</p>{% endif %}<form action="/dashboard/update_profile" method="post"><label for="name">{{ request.state.gettext("Name") }}:</label><input type="text" id="name" name="name" value="{{ owner.name }}" required><br><label for="business_name">{{ request.state.gettext("Business Name") }}:</label><input type="text" id="business_name" name="business_name" value="{{ owner.business_name }}" required><br><label for="phone">{{ request.state.gettext("Phone") }}:</label><input type="tel" id="phone" name="phone" value="{{ owner.phone or '' }}"><br><h3>{{ request.state.gettext("Services") }} (JSON)</h3><textarea name="services_json" rows="10" cols="50">{{ owner.services_json }}</textarea><p>{{ request.state.gettext("Example:") }} `[{"name": "Haircut", "duration": 30, "price": 25}, {"name": "Shave", "duration": 15, "price": 15}]`</p><h3>{{ request.state.gettext("Availability") }} (JSON)</h3><textarea name="availability_json" rows="10" cols="50">{{ owner.availability_json }}</textarea><p>{{ request.state.gettext("Example:") }} `{"Monday": ["09:00-12:00", "14:00-17:00"], "Tuesday": ["10:00-18:00"]}`</p><button type="submit">{{ request.state.gettext("Update Profile") }}</button></form><p><a href="/logout">{{ request.state.gettext("Logout") }}</a></p><div><a href="{{ request.url | urlencode('lang', 'en') }}">English</a> | <a href="{{ request.url | urlencode('lang', 'ar') }}">العربية</a> | <a href="{{ request.url | urlencode('lang', 'fr') }}">Français</a></div></body></html>
+{% extends "base.html" %}
+
+{% block title %}Dashboard - BookSlot{% endblock %}
+
+{% block page_title %}{{ _("Welcome, %s!")|format(owner.name) }}{% endblock %}
+
+{% block content %}
+<nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="#">{{ _("Dashboard") }}</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="/profile">{{ _("Profile") }}</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/setup-services">{{ _("Services & Availability") }}</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/{{ owner.slug }}" target="_blank">{{ _("My Booking Page") }} <small>(bookslot.app/{{ owner.slug }})</small></a>
+                </li>
+            </ul>
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="/logout">{{ _("Logout") }}</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+{% if message %}
+<div class="alert alert-success">{{ message }}</div>
+{% endif %}
+
+{% if error %}
+<div class="alert alert-danger">{{ error }}</div>
+{% endif %}
+
+<div class="row">
+    <div class="col-md-12">
+        <h2>{{ _("Upcoming Bookings") }}</h2>
+        {% if upcoming_bookings %}
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>{{ _("Date") }}</th>
+                        <th>{{ _("Time") }}</th>
+                        <th>{{ _("Service") }}</th>
+                        <th>{{ _("Customer Name") }}</th>
+                        <th>{{ _("Customer Email") }}</th>
+                        <th>{{ _("Customer Phone") }}</th>
+                        <th>{{ _("Status") }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for booking in upcoming_bookings %}
+                    <tr>
+                        <td>{{ booking.booking_date.strftime('%Y-%m-%d') }}</td>
+                        <td>{{ booking.booking_time }}</td>
+                        <td>{{ booking.service_name }}</td>
+                        <td>{{ booking.customer_name }}</td>
+                        <td>{{ booking.customer_email }}</td>
+                        <td>{{ booking.customer_phone if booking.customer_phone else _('N/A') }}</td>
+                        <td>{{ booking.status }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p>{{ _("No upcoming bookings.") }}</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,16 +1,29 @@
 <!DOCTYPE html>
-<html lang="{{ request.state.locale }}">
+<html lang="{{ request.state.lang }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _('BookSlot - Simple Booking Pages') }}</title>
+    <title>{{ _('BookSlot - Simple Booking Page') }}</title>
+    <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-    <h1>{{ _('Welcome to BookSlot!') }}</h1>
-    <p>{{ _('Create your dead-simple booking page.') }}</p>
-    <a href="/signup">{{ _('Sign Up') }}</a> | <a href="/login">{{ _('Log In') }}</a>
-    <div>
-        <a href="?lang=en">English</a> | <a href="?lang=ar">العربية</a> | <a href="?lang=fr">Français</a>
-    </div>
+    <header>
+        <div class="header-content">
+            <h1>{{ _('Welcome to BookSlot') }}</h1>
+            <nav>
+                <a href="/signup">{{ _('Sign Up') }}</a>
+                <a href="/login">{{ _('Login') }}</a>
+            </nav>
+        </div>
+    </header>
+    <main class="container">
+        <p>{{ _('A dead-simple booking page for local service businesses.') }}</p>
+        <p>{{ _('Manage your appointments with ease.') }}</p>
+        <a href="/signup" class="button">{{ _('Get Started') }}</a>
+    </main>
+    <footer>
+        <p>&copy; 2023 BookSlot</p>
+    </footer>
+    {% include 'language_switcher.html' %}
 </body>
 </html>

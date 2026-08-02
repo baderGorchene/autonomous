@@ -1,58 +1,72 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from typing import List, Dict, Any, Optional
-from datetime import date, time
+from datetime import datetime
 
-class Token(BaseModel):
-    access_token: str
-    token_type: str
+class ServiceBase(BaseModel):
+    name: str
+    duration: int # in minutes
+    price: float
+    description: Optional[str] = None
 
-class TokenData(BaseModel):
-    owner_id: Optional[int] = None
+class ServiceCreate(ServiceBase):
+    pass
+
+class Service(ServiceBase):
+    id: int
+    class Config:
+        from_attributes = True
 
 class OwnerBase(BaseModel):
-    email: EmailStr
     name: str
+    email: EmailStr
     business_name: str
     slug: str
     phone: Optional[str] = None
 
 class OwnerCreate(OwnerBase):
     password: str
-    services_json: str = "[]"
-    availability_json: str = "{}"
 
 class OwnerProfileUpdate(BaseModel):
     name: str
     business_name: str
     phone: Optional[str] = None
-    # services_json: str # Handled directly in main.py for now
-    # availability_json: str # Handled directly in main.py for now
 
-class OwnerInDB(OwnerBase):
+class OwnerLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+class Owner(OwnerBase):
     id: int
-    hashed_password: str
-    services_json: str
-    availability_json: str
+    is_active: bool = True
+    services: List[Service] = [] # This will be handled as JSON in the model
+    availability: Dict[str, Any] = {} # This will be handled as JSON in the model
 
     class Config:
-        orm_mode = True
+        from_attributes = True
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class TokenData(BaseModel):
+    email: Optional[str] = None
 
 class BookingBase(BaseModel):
     customer_name: str
     customer_email: EmailStr
     customer_phone: Optional[str] = None
     service_name: str
-    booking_date: date
-    booking_time: time
+    booking_date: datetime
+    booking_time: str # e.g., "10:00 AM"
 
 class BookingCreate(BookingBase):
-    status: str = "pending"
+    pass
 
 class Booking(BookingBase):
     id: int
     owner_id: int
-    created_at: datetime
     status: str
+    created_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True

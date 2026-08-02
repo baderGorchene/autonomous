@@ -1,1 +1,234 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>{{ owner.business_name }} - {{ request.state.gettext("Book an Appointment") }}</title></head><body><h1>{{ owner.business_name }}</h1><p>{{ request.state.gettext("Book an appointment with") }} {{ owner.name }}.</p>{% if error %}<p style="color: red;">{{ error }}</p>{% endif %}<form method="post"><label for="customer_name">{{ request.state.gettext("Your Name") }}:</label><input type="text" id="customer_name" name="customer_name" required><br><label for="customer_email">{{ request.state.gettext("Your Email") }}:</label><input type="email" id="customer_email" name="customer_email" required><br><label for="customer_phone">{{ request.state.gettext("Your Phone") }}:</label><input type="tel" id="customer_phone" name="customer_phone"><br><label for="service">{{ request.state.gettext("Select Service") }}:</label><select id="service" name="service" required><option value="">-- {{ request.state.gettext("Choose a service") }} --</option>{% for service in services %}<option value="{{ service.name }}">{{ service.name }} ({{ service.duration }} {{ request.state.gettext("min") }}, {{ service.price }} {{ request.state.gettext("currency") }})</option>{% endfor %}</select><br><label for="booking_date">{{ request.state.gettext("Select Date") }}:</label><input type="date" id="booking_date" name="booking_date" value="{{ current_date }}" required><br><label for="booking_time">{{ request.state.gettext("Select Time") }}:</label><input type="time" id="booking_time" name="booking_time" required><br><button type="submit">{{ request.state.gettext("Book Now") }}</button></form><div><a href="{{ request.url | urlencode('lang', 'en') }}">English</a> | <a href="{{ request.url | urlencode('lang', 'ar') }}">العربية</a> | <a href="{{ request.url | urlencode('lang', 'fr') }}">Français</a></div></body></html>
+{% extends "base.html" %}
+
+{% block title %}{{ owner.business_name }} - Book Now{% endblock %}
+
+{% block page_title %}{{ owner.business_name }}{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<style>
+    /* Mobile-first adjustments */
+    .container {
+        padding: 10px;
+    }
+    .card {
+        margin-bottom: 15px;
+    }
+    .service-item {
+        cursor: pointer;
+        border: 1px solid #ddd;
+        padding: 15px;
+        margin-bottom: 10px;
+        border-radius: 8px;
+        transition: all 0.2s ease-in-out;
+    }
+    .service-item:hover {
+        background-color: #f8f9fa;
+        border-color: #007bff;
+    }
+    .service-item.selected {
+        background-color: #e9f5ff;
+        border-color: #007bff;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+    .time-slot-btn {
+        margin: 5px;
+        padding: 10px 15px;
+        border-radius: 5px;
+        border: 1px solid #007bff;
+        background-color: #fff;
+        color: #007bff;
+        cursor: pointer;
+        transition: all 0.2s ease-in-out;
+    }
+    .time-slot-btn:hover {
+        background-color: #007bff;
+        color: #fff;
+    }
+    .time-slot-btn.selected {
+        background-color: #007bff;
+        color: #fff;
+    }
+    .flatpickr-calendar {
+        margin: auto; /* Center the calendar */
+    }
+    .form-section {
+        display: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8 col-md-10 col-sm-12">
+        <h2 class="text-center mb-4">{{ _("Book an Appointment with %s")|format(owner.business_name) }}</h2>
+
+        {% if error %}
+        <div class="alert alert-danger">{{ error }}</div>
+        {% endif %}
+
+        {% if message %}
+        <div class="alert alert-success">{{ message }}</div>
+        {% endif %}
+
+        <form action="/{{ owner_slug }}/book" method="post" id="bookingForm">
+            <div class="card mb-3 p-3">
+                <h3 class="card-title">{{ _("1. Choose a Service") }}</h3>
+                <div id="serviceSelection" class="row">
+                    {% if services %}
+                        {% for service in services %}
+                        <div class="col-md-6">
+                            <div class="service-item" data-service-name="{{ service.name }}" data-service-duration="{{ service.duration }}" data-service-price="{{ service.price }}">
+                                <h4>{{ service.name }}</h4>
+                                <p>{{ _("Duration: %s minutes")|format(service.duration) }}</p>
+                                <p>{{ _("Price: %s")|format(service.price) }}</p>
+                                {% if service.description %}<p class="text-muted">{{ service.description }}</p>{% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p>{{ _("No services available yet. Please check back later.") }}</p>
+                    {% endif %}
+                </div>
+                <input type="hidden" name="service_name" id="selectedServiceName" required>
+            </div>
+
+            <div id="dateSelectionSection" class="card mb-3 p-3 form-section">
+                <h3 class="card-title">{{ _("2. Select a Date") }}</h3>
+                <input type="text" id="bookingDate" name="booking_date" class="form-control" placeholder="{{ _('Select Date') }}" required>
+            </div>
+
+            <div id="timeSelectionSection" class="card mb-3 p-3 form-section">
+                <h3 class="card-title">{{ _("3. Choose a Time Slot") }}</h3>
+                <div id="timeSlots" class="d-flex flex-wrap justify-content-center">
+                    <p class="text-muted">{{ _("Please select a date to see available times.") }}</p>
+                </div>
+                <input type="hidden" name="booking_time" id="selectedBookingTime" required>
+            </div>
+
+            <div id="customerDetailsSection" class="card mb-3 p-3 form-section">
+                <h3 class="card-title">{{ _("4. Your Details") }}</h3>
+                <div class="mb-3">
+                    <label for="customer_name" class="form-label">{{ _("Your Name") }}</label>
+                    <input type="text" class="form-control" id="customer_name" name="customer_name" required>
+                </div>
+                <div class="mb-3">
+                    <label for="customer_email" class="form-label">{{ _("Your Email") }}</label>
+                    <input type="email" class="form-control" id="customer_email" name="customer_email" required>
+                </div>
+                <div class="mb-3">
+                    <label for="customer_phone" class="form-label">{{ _("Your Phone Number (Optional, for WhatsApp notifications)") }}</label>
+                    <input type="tel" class="form-control" id="customer_phone" name="customer_phone">
+                </div>
+            </div>
+            
+            <div id="submitSection" class="text-center form-section">
+                <button type="submit" class="btn btn-primary btn-lg">{{ _("Confirm Booking") }}</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const serviceItems = document.querySelectorAll('.service-item');
+        const selectedServiceNameInput = document.getElementById('selectedServiceName');
+        const bookingDateInput = document.getElementById('bookingDate');
+        const timeSlotsContainer = document.getElementById('timeSlots');
+        const selectedBookingTimeInput = document.getElementById('selectedBookingTime');
+        const dateSelectionSection = document.getElementById('dateSelectionSection');
+        const timeSelectionSection = document.getElementById('timeSelectionSection');
+        const customerDetailsSection = document.getElementById('customerDetailsSection');
+        const submitSection = document.getElementById('submitSection');
+
+        let selectedService = null;
+        let ownerAvailability = {{ availability | tojson }}; // Passed from backend
+        let ownerSlug = "{{ owner_slug }}";
+
+        // Step 1: Service Selection
+        serviceItems.forEach(item => {
+            item.addEventListener('click', function() {
+                serviceItems.forEach(s => s.classList.remove('selected'));
+                this.classList.add('selected');
+                selectedService = {
+                    name: this.dataset.serviceName,
+                    duration: parseInt(this.dataset.serviceDuration),
+                    price: parseFloat(this.dataset.servicePrice)
+                };
+                selectedServiceNameInput.value = selectedService.name;
+                
+                // Show next section
+                dateSelectionSection.style.display = 'block';
+                // Reset subsequent sections
+                timeSelectionSection.style.display = 'none';
+                customerDetailsSection.style.display = 'none';
+                submitSection.style.display = 'none';
+                selectedBookingTimeInput.value = '';
+                timeSlotsContainer.innerHTML = `<p class="text-muted">{{ _("Please select a date to see available times.") }}</p>`;
+            });
+        });
+
+        // Step 2: Date Selection (Flatpickr)
+        const fp = flatpickr(bookingDateInput, {
+            dateFormat: "Y-m-d",
+            minDate: "today",
+            inline: true, // Display calendar directly
+            locale: "{{ request.state.locale }}", // Set locale for Flatpickr
+            onChange: function(selectedDates, dateStr, instance) {
+                if (selectedDates.length > 0) {
+                    displayAvailableTimeSlots(selectedDates[0]);
+                    timeSelectionSection.style.display = 'block';
+                    customerDetailsSection.style.display = 'none';
+                    submitSection.style.display = 'none';
+                    selectedBookingTimeInput.value = '';
+                }
+            }
+        });
+
+        function displayAvailableTimeSlots(selectedDate) {
+            timeSlotsContainer.innerHTML = ''; // Clear previous slots
+            const dayOfWeek = new Date(selectedDate).toLocaleString('en-US', { weekday: 'long' });
+            const availableSlotsForDay = ownerAvailability[dayOfWeek] || [];
+
+            if (availableSlotsForDay.length === 0) {
+                timeSlotsContainer.innerHTML = `<p class="text-muted">{{ _("No availability for this day.") }}</p>`;
+                return;
+            }
+
+            availableSlotsForDay.forEach(slot => {
+                // Here you would typically add logic to check for existing bookings
+                // and calculate actual available slots based on service duration.
+                // For MVP, we just show all configured slots for the day.
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'time-slot-btn';
+                button.textContent = slot;
+                button.dataset.time = slot;
+                button.addEventListener('click', function() {
+                    document.querySelectorAll('.time-slot-btn').forEach(btn => btn.classList.remove('selected'));
+                    this.classList.add('selected');
+                    selectedBookingTimeInput.value = this.dataset.time;
+                    customerDetailsSection.style.display = 'block';
+                    submitSection.style.display = 'block';
+                });
+                timeSlotsContainer.appendChild(button);
+            });
+        }
+        
+        // Handle form submission error (if page reloads with error)
+        if (bookingDateInput.value && selectedServiceNameInput.value) {
+            dateSelectionSection.style.display = 'block';
+            timeSelectionSection.style.display = 'block';
+            customerDetailsSection.style.display = 'block';
+            submitSection.style.display = 'block';
+            // Re-render time slots if a date was pre-selected due to error reload
+            if (bookingDateInput.value) {
+                displayAvailableTimeSlots(new Date(bookingDateInput.value));
+            }
+        }
+    });
+</script>
+{% endblock %}

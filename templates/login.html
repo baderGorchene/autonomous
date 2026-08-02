@@ -1,1 +1,27 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>{{ request.state.gettext("Login") }}</title></head><body><h1>{{ request.state.gettext("Login") }}</h1>{% if error %}<p style="color: red;">{{ error }}</p>{% endif %}{% if message %}<p style="color: green;">{{ message }}</p>{% endif %}<form action="/token" method="post"><label for="username">{{ request.state.gettext("Email") }}:</label><input type="email" id="username" name="username" required><br><label for="password">{{ request.state.gettext("Password") }}:</label><input type="password" id="password" name="password" required><br><button type="submit">{{ request.state.gettext("Log In") }}</button></form><p>{{ request.state.gettext("Don't have an account?") }} <a href="/signup">{{ request.state.gettext("Sign up here") }}</a></p></body></html>
+{% extends "base.html" %}
+
+{% block title %}Login - BookSlot{% endblock %}
+
+{% block page_title %}{{ _("Login to BookSlot") }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <form action="/login" method="post">
+            {% if error %}
+            <div class="alert alert-danger">{{ error }}</div>
+            {% endif %}
+            <div class="mb-3">
+                <label for="email" class="form-label">{{ _("Email address") }}</label>
+                <input type="email" class="form-control" id="email" name="email" required>
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">{{ _("Password") }}</label>
+                <input type="password" class="form-control" id="password" name="password" required>
+            </div>
+            <button type="submit" class="btn btn-primary">{{ _("Login") }}</button>
+            <p class="mt-3">{{ _("Don't have an account?") }} <a href="/signup">{{ _("Sign up here") }}</a></p>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -4,6 +4,7 @@ import gettext
 import os
 import logging
 from src.config import settings
+from urllib.parse import urlparse, urlunparse, parse_qs, urlencode
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +19,6 @@ def get_jinja_env(locale='en'):
         translate = gettext.NullTranslations()
     else:
         try:
-            # Ensure the domain matches the .po file name (e.g., 'messages.po')
             translate = gettext.translation('messages', LOCALES_DIR, languages=[locale], fallback=True)
         except Exception as e:
             logger.warning(f"Could not load translations for locale '{locale}': {e}")
@@ -27,7 +27,6 @@ def get_jinja_env(locale='en'):
     env.install_gettext_translations(translate)
     
     def urlencode_query_param(url, query_param_name, value):
-        from urllib.parse import urlparse, urlunparse, parse_qs, urlencode
         parsed_url = urlparse(url)
         query_params = parse_qs(parsed_url.query)
         query_params[query_param_name] = [value]

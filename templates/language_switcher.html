@@ -1,0 +1,5 @@
+<div class="language-switcher">
+    <a href="{{ request.url|urlencode('lang', 'en') }}" class="lang-link {% if request.state.lang == 'en' %}active{% endif %}">English</a>
+    <a href="{{ request.url|urlencode('lang', 'ar') }}" class="lang-link {% if request.state.lang == 'ar' %}active{% endif %}">العربية</a>
+    <a href="{{ request.url|urlencode('lang', 'fr') }}" class="lang-link {% if request.state.lang == 'fr' %}active{% endif %}">Français</a>
+</div>
