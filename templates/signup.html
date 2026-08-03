@@ -1,59 +1,69 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ gettext('Sign Up - BookSlot') }}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+    <style>
+        body { display: flex; flex-direction: column; min-height: 100vh; }
+        main { flex-grow: 1; display: flex; align-items: center; justify-content: center; }
+        .container { max-width: 500px; margin: auto; padding: 1rem; }
+        .error-message { color: var(--pico-del-color); margin-top: 1rem; }
+        .language-toggle { text-align: right; margin-bottom: 1rem; }
+    </style>
+</head>
+<body>
+    <nav class="container-fluid">
+        <ul>
+            <li><strong>BookSlot</strong></li>
+        </ul>
+        <ul>
+            <li><a href="/login">{{ gettext('Login') }}</a></li>
+            <li>
+                <details role="list" dir="rtl">
+                    <summary aria-haspopup="listbox" role="link" class="secondary">{{ gettext('Language') }}</summary>
+                    <ul role="listbox">
+                        <li><a href="?lang=en">English</a></li>
+                        <li><a href="?lang=ar">العربية</a></li>
+                        <li><a href="?lang=fr">Français</a></li>
+                    </ul>
+                </details>
+            </li>
+        </ul>
+    </nav>
+    <main class="container">
+        <article>
+            <hgroup>
+                <h1>{{ gettext('Sign Up') }}</h1>
+                <h2>{{ gettext('Create your BookSlot account') }}</h2>
+            </hgroup>
+            {% if error %}
+                <p class="error-message">{{ error }}</p>
+            {% endif %}
+            <form action="/signup" method="post">
+                <label for="name">{{ gettext('Your Name') }}</label>
+                <input type="text" id="name" name="name" required>
 
-{% block title %}{{ _('Sign Up') }}{% endblock %}
+                <label for="email">{{ gettext('Email') }}</label>
+                <input type="email" id="email" name="email" required>
 
-{% block content %}
-<div class="max-w-md mx-auto bg-white p-8 rounded-lg shadow-md mt-10">
-    <h2 class="text-2xl font-bold text-center text-gray-800 mb-6">{{ _('Create Your BookSlot Account') }}</h2>
-    
-    {% if msg %}
-    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-        <span class="block sm:inline">{{ msg }}</span>
-    </div>
-    {% endif %}
+                <label for="password">{{ gettext('Password') }}</label>
+                <input type="password" id="password" name="password" required>
 
-    <form action="/signup" method="post" class="space-y-4">
-        <div>
-            <label for="name" class="block text-sm font-medium text-gray-700">{{ _('Your Name') }}</label>
-            <input type="text" name="name" id="name" required
-                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-        </div>
-        <div>
-            <label for="email" class="block text-sm font-medium text-gray-700">{{ _('Email Address') }}</label>
-            <input type="email" name="email" id="email" autocomplete="email" required
-                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-        </div>
-        <div>
-            <label for="password" class="block text-sm font-medium text-gray-700">{{ _('Password') }}</label>
-            <input type="password" name="password" id="password" autocomplete="new-password" required
-                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-        </div>
-        <div>
-            <label for="business_name" class="block text-sm font-medium text-gray-700">{{ _('Business Name') }}</label>
-            <input type="text" name="business_name" id="business_name" required
-                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-        </div>
-        <div>
-            <label for="slug" class="block text-sm font-medium text-gray-700">{{ _('Your Booking Link (e.g., bookslot.app/your-name)') }}</label>
-            <div class="mt-1 flex rounded-md shadow-sm">
-                <span class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 sm:text-sm">
-                    bookslot.app/
-                </span>
-                <input type="text" name="slug" id="slug" required
-                       class="flex-1 block w-full rounded-none rounded-r-md sm:text-sm border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-            </div>
-        </div>
-        <div>
-            <label for="phone" class="block text-sm font-medium text-gray-700">{{ _('Your Phone (Optional, for WhatsApp notifications)') }}</label>
-            <input type="tel" name="phone" id="phone"
-                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-        </div>
-        <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-            {{ _('Sign Up') }}
-        </button>
-    </form>
-    <p class="mt-6 text-center text-sm text-gray-600">
-        {{ _('Already have an account?') }} <a href="/login" class="font-medium text-blue-600 hover:text-blue-500">{{ _('Log In') }}</a>
-    </p>
-</div>
-{% endblock %}
+                <label for="business_name">{{ gettext('Business Name') }}</label>
+                <input type="text" id="business_name" name="business_name" required>
+
+                <label for="slug">{{ gettext('Your Booking Page URL (e.g., bookslot.app/your-name)') }}</label>
+                <input type="text" id="slug" name="slug" pattern="^[a-z0-9-]+$" title="{{ gettext('Only lowercase letters, numbers, and hyphens allowed.') }}" required>
+
+                <label for="phone">{{ gettext('Phone Number (Optional, for WhatsApp notifications)') }}</label>
+                <input type="tel" id="phone" name="phone">
+
+                <button type="submit">{{ gettext('Sign Up') }}</button>
+            </form>
+            <p>{{ gettext('Already have an account?') }} <a href="/login">{{ gettext('Login here') }}</a></p>
+        </article>
+    </main>
+</body>
+</html>

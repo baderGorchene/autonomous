@@ -1,11 +1,50 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ lang }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BookSlot</title>
+    <title>{{ gettext('BookSlot - Simple Booking Page') }}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+    <style>
+        body { display: flex; flex-direction: column; min-height: 100vh; }
+        main { flex-grow: 1; display: flex; align-items: center; justify-content: center; }
+        footer { padding: 1rem; text-align: center; }
+        .container { max-width: 960px; margin: auto; padding: 1rem; }
+        .language-toggle { text-align: right; margin-bottom: 1rem; }
+    </style>
 </head>
 <body>
-    <h1>{{ message }}</h1>
+    <nav class="container-fluid">
+        <ul>
+            <li><strong>BookSlot</strong></li>
+        </ul>
+        <ul>
+            <li><a href="/signup">{{ gettext('Sign Up') }}</a></li>
+            <li><a href="/login">{{ gettext('Login') }}</a></li>
+            <li>
+                <details role="list" dir="rtl">
+                    <summary aria-haspopup="listbox" role="link" class="secondary">{{ gettext('Language') }}</summary>
+                    <ul role="listbox">
+                        <li><a href="?lang=en">English</a></li>
+                        <li><a href="?lang=ar">العربية</a></li>
+                        <li><a href="?lang=fr">Français</a></li>
+                    </ul>
+                </details>
+            </li>
+        </ul>
+    </nav>
+    <main class="container">
+        <article>
+            <hgroup>
+                <h1>{{ gettext('BookSlot') }}</h1>
+                <h2>{{ gettext('Dead-simple booking page for local service businesses.') }}</h2>
+            </hgroup>
+            <p>{{ gettext('Manage appointments without the WhatsApp chaos. Get your shareable link and let customers book themselves.') }}</p>
+            <p><a href="/signup" role="button">{{ gettext('Get Started - It\'s Free!') }}</a></p>
+        </article>
+    </main>
+    <footer class="container">
+        <small>&copy; 2024 BookSlot. {{ gettext('All rights reserved.') }}</small>
+    </footer>
 </body>
 </html>

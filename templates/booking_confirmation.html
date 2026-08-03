@@ -1,22 +1,45 @@
-{% extends "base.html" %}
-
-{% block title %}{{ _('Booking Confirmed') }}{% endblock %}
-
-{% block content %}
-<div class="max-w-md mx-auto bg-white p-6 rounded-lg shadow-md mt-8 text-center">
-    <svg class="mx-auto h-16 w-16 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-    <h2 class="text-3xl font-bold text-gray-800 mt-4 mb-2">{{ _('Booking Confirmed!') }}</h2>
-    <p class="text-gray-600 mb-6">{{ _('Thank you,') }} {{ booking.customer_name }}! {{ _('Your booking with') }} <strong>{{ owner.business_name }}</strong> {{ _('has been successfully confirmed.') }}</p>
-    
-    <div class="text-left space-y-2 mb-6">
-        <p><strong>{{ _('Service:') }}</strong> {{ booking.service_name }}</p>
-        <p><strong>{{ _('Date:') }}</strong> {{ booking.booking_date.strftime('%Y-%m-%d') }}</p>
-        <p><strong>{{ _('Time:') }}</strong> {{ booking.booking_time }}</p>
-        <p><strong>{{ _('Confirmation will be sent to:') }}</strong> {{ booking.customer_email }}</p>
-    </div>
-
-    <a href="/{{ owner.slug }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-        {{ _('Book Another Appointment') }}
-    </a>
-</div>
-{% endblock %}
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ gettext('Booking Confirmed!') }}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+    <style>
+        body { display: flex; flex-direction: column; min-height: 100vh; }
+        main { flex-grow: 1; display: flex; align-items: center; justify-content: center; }
+        .container { max-width: 600px; margin: auto; padding: 1rem; text-align: center; }
+        .language-toggle { text-align: right; margin-bottom: 1rem; }
+    </style>
+</head>
+<body>
+    <nav class="container-fluid">
+        <ul>
+            <li><strong>{{ owner.business_name }}</strong></li>
+        </ul>
+        <ul>
+            <li>
+                <details role="list" dir="rtl">
+                    <summary aria-haspopup="listbox" role="link" class="secondary">{{ gettext('Language') }}</summary>
+                    <ul role="listbox">
+                        <li><a href="{{ request.url | update_query_param('lang', 'en') }}">English</a></li>
+                        <li><a href="{{ request.url | update_query_param('lang', 'ar') }}">العربية</a></li>
+                        <li><a href="{{ request.url | update_query_param('lang', 'fr') }}">Français</a></li>
+                    </ul>
+                </details>
+            </li>
+        </ul>
+    </nav>
+    <main class="container">
+        <article>
+            <hgroup>
+                <h1>{{ gettext('Booking Confirmed!') }}</h1>
+                <h2>{{ gettext('Thank you, %s!') % booking.customer_name }}</h2>
+            </hgroup>
+            <p>{{ gettext('Your booking for %s on %s at %s with %s has been successfully confirmed.') % (booking.service_name, booking.booking_date.strftime('%Y-%m-%d'), booking.booking_time, owner.business_name) }}</p>
+            <p>{{ gettext('A confirmation email has been sent to %s.') % booking.customer_email }}</p>
+            <p><a href="/{{ owner.slug }}" role="button">{{ gettext('Book Another Appointment') }}</a></p>
+        </article>
+    </main>
+</body>
+</html>

@@ -1,25 +1,18 @@
 from pydantic import BaseModel, EmailStr, Field
-from typing import List, Dict, Any, Optional
-from datetime import date, datetime
+from typing import List, Optional, Dict, Any
+import datetime
 
 class Service(BaseModel):
     name: str
+    description: Optional[str] = None
     duration_minutes: int
     price: float
-
-class AvailabilitySlot(BaseModel):
-    start_time: str # e.g., "09:00"
-    end_time: str   # e.g., "17:00"
-
-class DailyAvailability(BaseModel):
-    day_of_week: int # 0=Monday, 6=Sunday
-    slots: List[AvailabilitySlot]
 
 class OwnerBase(BaseModel):
     name: str
     email: EmailStr
     business_name: str
-    slug: str
+    slug: str = Field(pattern=r"^[a-z0-9-]+", description="URL-friendly identifier")
     phone: Optional[str] = None
 
 class OwnerCreate(OwnerBase):
@@ -32,7 +25,7 @@ class OwnerProfileUpdate(BaseModel):
 
 class Owner(OwnerBase):
     id: int
-    is_active: bool
+    is_active: bool = True
     services_json: str
     availability_json: str
 
@@ -51,8 +44,8 @@ class BookingBase(BaseModel):
     customer_email: EmailStr
     customer_phone: Optional[str] = None
     service_name: str
-    booking_date: date
-    booking_time: str # e.g., "09:00-10:00"
+    booking_date: datetime.date
+    booking_time: str # e.g., "09:00 AM"
 
 class BookingCreate(BookingBase):
     pass
@@ -61,8 +54,14 @@ class Booking(BookingBase):
     id: int
     owner_id: int
     status: str
-    created_at: datetime
-
+    
     class Config:
         from_attributes = True
 
+class AvailabilitySlot(BaseModel):
+    day_of_week: str # e.g., "Monday"
+    start_time: str # e.g., "09:00"
+    end_time: str # e.g., "17:00"
+
+class OwnerAvailability(BaseModel):
+    availability: Dict[str, List[AvailabilitySlot]]

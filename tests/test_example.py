@@ -1,2 +1,2 @@
-def test_example_always_passes():
+def test_example_success():
     assert True
