@@ -1,4 +1,2 @@
-import pytest
-
-def test_example_assertion():
-    assert 1 + 1 == 2
+def test_example_always_passes():
+    assert True

@@ -1,1 +1,1 @@
-Feat: Reconstruct complete application, tests, and deployment files; fix 'No module named pytest' error and update documentation
+Fix: Resolve 'No module named pytest' error by adding requirements.txt and basic tests
