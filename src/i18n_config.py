@@ -53,10 +53,10 @@ def get_jinja_templates(locale='en'):
             numeric_value = float(value)
             if lang_code == 'ar':
                 # Example for Arabic, assuming SAR for now
-                return f"{numeric_value:,.2f} ر.س"
+                return f"{numeric_value:,.2f} ","\u0631.\u0633"
             elif lang_code == 'fr':
                 # Example for French, assuming EUR
-                return f"{numeric_value:,.2f} €"
+                return f"{numeric_value:,.2f} \u20ac"
             else:
                 return f"${numeric_value:,.2f}"
         except (ValueError, TypeError):
