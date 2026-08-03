@@ -3,30 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _('Login - BookSlot') }}</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <title>{{ _('Login to BookSlot') }}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1.5.10/css/pico.min.css">
+    <style>
+        body { display: flex; justify-content: center; align-items: center; min-height: 100vh; background-color: var(--pico-background-color); }
+        .container { max-width: 400px; padding: 20px; border-radius: var(--pico-border-radius); background-color: var(--pico-card-background-color); box-shadow: var(--pico-card-box-shadow); }
+        .language-toggle { text-align: right; margin-bottom: 20px; }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <h1>{{ _('Login to Your Account') }}</h1>
+    <main class="container">
+        <div class="language-toggle">
+            <a href="{{ request.url|urlencode('lang', 'en') }}" role="button" class="secondary small">{{ _('English') }}</a>
+            <a href="{{ request.url|urlencode('lang', 'ar') }}" role="button" class="secondary small">{{ _('Arabic') }}</a>
+            <a href="{{ request.url|urlencode('lang', 'fr') }}" role="button" class="secondary small">{{ _('French') }}</a>
+        </div>
+        <hgroup>
+            <h1>{{ _('Login') }}</h1>
+            <h2>{{ _('Access your BookSlot dashboard') }}</h2>
+        </hgroup>
+        {% if message %}
+            <article class="success">
+                {{ _('Success:') }} {{ message }}
+            </article>
+        {% endif %}
         {% if error %}
-            <p class="error">{{ error }}</p>
+            <article class="error">
+                {{ _('Error:') }} {{ error }}
+            </article>
         {% endif %}
         <form action="/login" method="post">
-            <label for="email">{{ _('Email') }}:</label>
-            <input type="email" id="email" name="email" value="{{ email if email else '' }}" required>
+            <label for="email">{{ _('Email') }}</label>
+            <input type="email" id="email" name="email" placeholder="{{ _('Enter your email') }}" required>
 
-            <label for="password">{{ _('Password') }}:</label>
-            <input type="password" id="password" name="password" required>
+            <label for="password">{{ _('Password') }}</label>
+            <input type="password" id="password" name="password" placeholder="{{ _('Enter your password') }}" required>
 
-            <button type="submit">{{ _('Login') }}</button>
+            <button type="submit">{{ _('Log in') }}</button>
         </form>
-        <p>{{ _('Don\'t have an account?') }} <a href="/signup">{{ _('Sign Up here') }}</a></p>
-        <p>
-            <a href="{{ request.url|urlencode('lang', 'en') }}">English</a> |
-            <a href="{{ request.url|urlencode('lang', 'ar') }}">العربية</a> |
-            <a href="{{ request.url|urlencode('lang', 'fr') }}">Français</a>
-        </p>
-    </div>
+        <p>{{ _('Don\'t have an account?') }} <a href="/signup">{{ _('Sign up here') }}</a></p>
+    </main>
 </body>
 </html>

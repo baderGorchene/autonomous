@@ -1,13 +1,23 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ request.state.lang }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _('Error') }}</title>
+    <title>{{ _('Error') }} - BookSlot</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1.5.10/css/pico.min.css">
+    <style>
+        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; background-color: var(--pico-background-color); }
+        .container { max-width: 600px; padding: 20px; border-radius: var(--pico-border-radius); background-color: var(--pico-card-background-color); box-shadow: var(--pico-card-box-shadow); text-align: center; }
+    </style>
 </head>
 <body>
-    <h1>{{ _('Error') }}</h1>
-    <p>{{ message or _('An unexpected error occurred.') }}</p>
-    <p><a href="/">{{ _('Go to Homepage') }}</a></p>
+    <main class="container">
+        <hgroup>
+            <h1>{{ _('Error') }} {{ status_code }}</h1>
+            <h2>{{ detail }}</h2>
+        </hgroup>
+        <p>{{ _('An unexpected error occurred. Please try again later or contact support.') }}</p>
+        <p><a href="/" role="button">{{ _('Go to Homepage') }}</a></p>
+    </main>
 </body>
 </html>

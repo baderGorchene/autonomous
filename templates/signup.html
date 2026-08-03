@@ -3,42 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _('Sign Up - BookSlot') }}</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <title>{{ _('Sign Up for BookSlot') }}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1.5.10/css/pico.min.css">
+    <style>
+        body { display: flex; justify-content: center; align-items: center; min-height: 100vh; background-color: var(--pico-background-color); }
+        .container { max-width: 500px; padding: 20px; border-radius: var(--pico-border-radius); background-color: var(--pico-card-background-color); box-shadow: var(--pico-card-box-shadow); }
+        .language-toggle { text-align: right; margin-bottom: 20px; }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <h1>{{ _('Create Your BookSlot Account') }}</h1>
+    <main class="container">
+        <div class="language-toggle">
+            <a href="{{ request.url|urlencode('lang', 'en') }}" role="button" class="secondary small">{{ _('English') }}</a>
+            <a href="{{ request.url|urlencode('lang', 'ar') }}" role="button" class="secondary small">{{ _('Arabic') }}</a>
+            <a href="{{ request.url|urlencode('lang', 'fr') }}" role="button" class="secondary small">{{ _('French') }}</a>
+        </div>
+        <hgroup>
+            <h1>{{ _('Sign Up') }}</h1>
+            <h2>{{ _('Create your BookSlot account') }}</h2>
+        </hgroup>
         {% if error %}
-            <p class="error">{{ error }}</p>
+            <article class="error">
+                {{ _('Error:') }} {{ error }}
+            </article>
         {% endif %}
         <form action="/signup" method="post">
-            <label for="name">{{ _('Your Name') }}:</label>
-            <input type="text" id="name" name="name" value="{{ name if name else '' }}" required>
+            <label for="name">{{ _('Your Name') }}</label>
+            <input type="text" id="name" name="name" placeholder="{{ _('Enter your name') }}" required>
 
-            <label for="email">{{ _('Email') }}:</label>
-            <input type="email" id="email" name="email" value="{{ email if email else '' }}" required>
+            <label for="email">{{ _('Email') }}</label>
+            <input type="email" id="email" name="email" placeholder="{{ _('Enter your email') }}" required>
 
-            <label for="password">{{ _('Password') }}:</label>
-            <input type="password" id="password" name="password" required>
+            <label for="password">{{ _('Password') }}</label>
+            <input type="password" id="password" name="password" placeholder="{{ _('Create a password') }}" required>
 
-            <label for="business_name">{{ _('Business Name') }}:</label>
-            <input type="text" id="business_name" name="business_name" value="{{ business_name if business_name else '' }}" required>
+            <label for="business_name">{{ _('Business Name') }}</label>
+            <input type="text" id="business_name" name="business_name" placeholder="{{ _('e.g., John Doe Hair Salon') }}" required>
 
-            <label for="slug">{{ _('Your Booking Page URL (e.g., bookslot.app/your-name)') }}:</label>
-            <input type="text" id="slug" name="slug" value="{{ slug if slug else '' }}" required>
+            <label for="slug">{{ _('Public URL Slug') }}</label>
+            <input type="text" id="slug" name="slug" placeholder="{{ _('e.g., john-doe-salon (bookslot.app/john-doe-salon)') }}" pattern="^[a-z0-9-]+$" title="{{ _('Lowercase letters, numbers, and hyphens only.') }}" required>
+            <small>{{ _('This will be part of your public booking page URL (e.g., bookslot.app/your-slug)') }}</small>
 
-            <label for="phone">{{ _('Phone Number (for WhatsApp notifications, optional)') }}:</label>
-            <input type="tel" id="phone" name="phone" value="{{ phone if phone else '' }}">
+            <label for="phone">{{ _('Phone Number (optional, for WhatsApp notifications)') }}</label>
+            <input type="tel" id="phone" name="phone" placeholder="{{ _('e.g., +15551234567') }}">
 
             <button type="submit">{{ _('Sign Up') }}</button>
         </form>
-        <p>{{ _('Already have an account?') }} <a href="/login">{{ _('Login here') }}</a></p>
-        <p>
-            <a href="{{ request.url|urlencode('lang', 'en') }}">English</a> |
-            <a href="{{ request.url|urlencode('lang', 'ar') }}">العربية</a> |
-            <a href="{{ request.url|urlencode('lang', 'fr') }}">Français</a>
-        </p>
-    </div>
+        <p>{{ _('Already have an account?') }} <a href="/login">{{ _('Log in here') }}</a></p>
+    </main>
 </body>
 </html>

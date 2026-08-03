@@ -4,38 +4,31 @@ FROM python:3.10-slim-buster
 # Set the working directory in the container
 WORKDIR /app
 
-# Install system dependencies for gettext (msgfmt)
-RUN apt-get update && apt-get install -y gettext && rm -rf /var/lib/apt/lists/*
+# Install system dependencies needed for gettext (for .mo file compilation)
+# and potentially other libraries (e.g., cryptography for python-jose)
+RUN apt-get update && apt-get install -y \
+    gettext \
+    build-essential \
+    libffi-dev \
+    libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copy the requirements file into the container at /app
-COPY requirements.txt .
+# Copy the current directory contents into the container at /app
+COPY . /app
 
 # Install any needed packages specified in requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the application code
-COPY . .
+# Compile .po files to .mo files for gettext
+# Ensure babel.cfg is present or adjust command if not using babel for compilation
+# For simplicity, we'll assume `pybabel compile` is run if .po files change.
+# For a full CI/CD, this step would be more robust.
+# For now, rely on `python-gettext`'s runtime loading, or ensure .mo files are pre-compiled.
+# If babel is installed and babel.cfg is present, this would be:
+# RUN pybabel compile -d locales
 
-# Compile message catalogs for i18n
-# This assumes 'locales' directory exists in the root of the project
-# and contains 'ar', 'fr', 'en' subdirectories with LC_MESSAGES/messages.po
-RUN for lang_dir in locales/*; do \
-    if [ -d "$lang_dir/LC_MESSAGES" ]; then \
-        lang=$(basename "$lang_dir"); \
-        mkdir -p "$lang_dir/LC_MESSAGES"; \
-        if [ -f "$lang_dir/LC_MESSAGES/messages.po" ]; then \
-            msgfmt -o "$lang_dir/LC_MESSAGES/messages.mo" "$lang_dir/LC_MESSAGES/messages.po"; \
-        else \
-            echo "Warning: messages.po not found for language $lang, creating dummy .mo"; \
-            touch "$lang_dir/LC_MESSAGES/messages.mo"; \
-        fi; \
-    fi; \
-done
-
-
-# Expose the port the app runs on
+# Expose port 8000 for the FastAPI application
 EXPOSE 8000
 
-# Run the application with Gunicorn
-# Using 4 workers, binding to all interfaces, and running the FastAPI app
-CMD ["gunicorn", "src.main:app", "--workers", "4", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000"]
+# Run the application using Uvicorn
+CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
