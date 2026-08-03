@@ -1,138 +1,165 @@
-# BookSlot - README
+# BookSlot: Dead-Simple Booking Page for Local Service Businesses
 
-This project aims to provide a dead-simple $19/month booking page for local service businesses.
+## Project Tagline
+Streamline appointments, ditch WhatsApp chaos.
 
 ## Business Idea
-BookSlot targets local service businesses (salons, clinics, tutors, mechanics, coaches) who currently manage appointments via WhatsApp chaos. The owner gets a shareable link (bookslot.app/their-name), customers book themselves, and the owner gets a WhatsApp/email notification with the booking details. No accounts needed for customers. Bilingual (English + Arabic/French) from day one to target the underserved MENA and North Africa market. MVP has: (1) owner signup + service setup page, (2) public booking page, (3) time slot availability, (4) email confirmation to both parties, (5) a simple dashboard showing upcoming bookings. Monetization: free for up to 20 bookings/month, $19/month for unlimited. Target: solo service providers who have 10-50 clients/week and are drowning in WhatsApp messages.
+BookSlot offers a dead-simple, $19/month booking page for local service businesses (salons, clinics, tutors, mechanics, coaches) drowning in WhatsApp appointment management. Owners get a shareable link (e.g., `bookslot.app/their-name`), customers book themselves, and the owner receives WhatsApp/email notifications. No customer accounts needed. Bilingual (English + Arabic/French) from day one, targeting underserved MENA and North Africa markets.
 
-## Project Structure
+## Minimum Viable Product (MVP) Features
+1.  **Owner Signup & Service Setup**: Business owners can register and define their services and availability.
+2.  **Public Booking Page**: A mobile-first, beautiful, and shareable booking link for customers.
+3.  **Time Slot Availability**: Customers can see and select available time slots.
+4.  **Email Confirmations**: Automated booking confirmations sent to both the customer and the owner.
+5.  **Simple Dashboard**: Owners can view upcoming bookings and manage their profile.
+6.  **Bilingual Support**: English, Arabic, and French translations available from launch.
 
--   `src/main.py`: Main FastAPI application entry point.
--   `src/models.py`: SQLAlchemy ORM models for database interaction.
--   `src/schemas.py`: Pydantic models for request/response validation.
--   `src/security.py`: Handles password hashing, JWT token generation, and authentication.
--   `src/crud.py`: Database Create, Read, Update, Delete operations.
--   `src/database.py`: Database connection and session management.
--   `src/config.py`: Application settings and environment variable loading.
--   `src/notifications.py`: Handles sending email and WhatsApp notifications.
--   `src/i18n_config.py`: Internationalization (i18n) setup for Jinja2 templates.
--   `templates/`: HTML templates for rendering UI.
--   `locales/`: Translation files for internationalization (e.g., `ar/LC_MESSAGES/messages.po`, `fr/LC_MESSAGES/messages.po`).
--   `tests/`: Unit and integration tests.
--   `Dockerfile`: Docker build instructions for the application.
--   `requirements.txt`: Python dependencies.
+## Monetization
+*   **Free Tier**: Up to 20 bookings per month.
+*   **Premium Tier**: $19/month for unlimited bookings.
+*   **Target Audience**: Solo service providers handling 10-50 clients/week.
 
-## Setup and Local Development
+## Tech Stack
+*   **Backend**: FastAPI (Python)
+*   **Database**: SQLAlchemy ORM with SQLite (for MVP)
+*   **Frontend**: Jinja2 Templates, HTML, CSS (TailwindCSS/Custom CSS for mobile-first design)
+*   **Authentication**: JWT
+*   **Notifications**: SendGrid (Email), Twilio (WhatsApp)
+*   **Internationalization (i18n)**: gettext
+*   **Deployment**: Docker, Gunicorn
 
-1.  **Clone the repository:**
+## Installation (Local Development)
+
+### Prerequisites
+*   Python 3.8+
+*   `pip` (Python package installer)
+*   `git`
+*   `gettext` (for `msgfmt` command, usually available on Linux/macOS or via WSL on Windows)
+
+### Steps
+1.  **Clone the Repository**:
     ```bash
-    git clone <repository-url>
+    git clone https://github.com/your-username/bookslot.git
     cd bookslot
     ```
 
-2.  **Create a virtual environment and install dependencies:**
+2.  **Create a Virtual Environment**:
     ```bash
     python -m venv venv
-    source venv/bin/activate  # On Windows: .venv\Scripts\activate
+    source venv/bin/activate  # On Windows: venv\Scripts\activate
+    ```
+
+3.  **Install Dependencies**:
+    ```bash
     pip install -r requirements.txt
     ```
 
-3.  **Create a `.env` file:**
-    Create a file named `.env` in the root directory and populate it with your environment variables. Example:
+4.  **Set up Environment Variables**:
+    Create a `.env` file in the root directory of the project based on `.env.example`.
     ```
-    SECRET_KEY="your_super_secret_key_here"
-    SENDGRID_API_KEY="your_sendgrid_api_key"
-    TWILIO_ACCOUNT_SID="your_twilio_account_sid"
-    TWILIO_AUTH_TOKEN="your_twilio_auth_token"
-    TWILIO_WHATSAPP_NUMBER="+1234567890" # Your Twilio WhatsApp enabled number
-    GEMINI_API_KEY="your_gemini_api_key"
-    DATABASE_URL="sqlite:///./sql_app.db" # For local development
-    TESTING="False"
+    # .env
+    SECRET_KEY="your_super_secret_key_here_CHANGE_THIS_IN_PRODUCTION"
+    ALGORITHM="HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES=30
+
+    # For email notifications
+    SENDGRID_API_KEY="YOUR_SENDGRID_API_KEY"
+
+    # For WhatsApp notifications (optional, if Twilio is configured)
+    TWILIO_ACCOUNT_SID="YOUR_TWILIO_ACCOUNT_SID"
+    TWILIO_AUTH_TOKEN="YOUR_TWILIO_AUTH_TOKEN"
+    TWILIO_WHATSAPP_NUMBER="whatsapp:+14155238886" # Your Twilio WhatsApp Sandbox number or actual number
+
+    # Database configuration
+    DATABASE_URL="sqlite:///./sql_app.db" # Use sqlite for local development
+    TESTING=False
+
+    # Optional: For future AI features
+    GEMINI_API_KEY=""
     ```
+    **Important**: For production deployments, ensure `SECRET_KEY` is a strong, randomly generated string.
 
-4.  **Run database migrations (if any) and create tables:**
-    For SQLite, the tables will be created automatically on first run if they don't exist based on `Base.metadata.create_all(bind=engine)` in `database.py`. For production/staging with PostgreSQL, you might use Alembic for migrations.
-
-5.  **Run the application:**
+5.  **Initialize the Database**:
     ```bash
-    uvicorn src.main:app --reload
+    python -c "from src.database import create_tables; create_tables()"
     ```
-    The application will be available at `http://127.0.0.1:8000`.
+    This will create the `sql_app.db` SQLite file and necessary tables.
+
+6.  **Compile Message Catalogs for i18n**:
+    ```bash
+    # For each language you have (e.g., ar, fr, en)
+    # This command compiles .po files into .mo files required by gettext
+    # Example for Arabic:
+    msgfmt -o locales/ar/LC_MESSAGES/messages.mo locales/ar/LC_MESSAGES/messages.po
+    # Example for French:
+    msgfmt -o locales/fr/LC_MESSAGES/messages.mo locales/fr/LC_MESSAGES/messages.po
+    # ... and so on for any other languages, including English if you have a .po for it.
+    ```
+
+## Running the Application
+
+### Local Development Server
+```bash
+uvicorn src.main:app --reload
+```
+The application will be accessible at `http://127.0.0.1:8000`.
+
+### Running with Docker (Recommended for Production)
+
+1.  **Build the Docker Image**:
+    ```bash
+    docker build -t bookslot .
+    ```
+
+2.  **Run with Docker Compose**:
+    Ensure your `.env` file is configured correctly.
+    ```bash
+    docker-compose up --build -d
+    ```
+    The application will be accessible at `http://localhost:8000`.
+
+    To stop the services:
+    ```bash
+    docker-compose down
+    ```
 
 ## Testing
-
-To run the tests, ensure you have `pytest` installed (included in `requirements.txt`):
-
+To run the automated tests:
 ```bash
 pytest
 ```
+Ensure you have `pytest` and `httpx` installed (`pip install pytest httpx`).
 
-Tests are configured to use an in-memory SQLite database to ensure isolation and speed.
+## Internationalization (i18n)
+BookSlot supports multiple languages (English, Arabic, French).
+*   Translation files are located in the `locales` directory.
+*   To add a new language:
+    1.  Create a new language directory (e.g., `locales/es/LC_MESSAGES`).
+    2.  Create `messages.po` in that directory.
+    3.  Extract new strings from your code/templates using `pybabel extract -F babel.cfg -o locales/messages.pot .` (requires `babel` package).
+    4.  Initialize new language: `pybabel init -i locales/messages.pot -d locales -l es`
+    5.  Translate strings in `locales/es/LC_MESSAGES/messages.po`.
+    6.  Compile translations: `msgfmt -o locales/es/LC_MESSAGES/messages.mo locales/es/LC_MESSAGES/messages.po`.
+*   The language can be toggled via a query parameter (e.g., `?lang=ar` or `?lang=fr`).
 
-## Deployment to Staging Environment
+## Security Considerations
+*   **Secret Key**: `SECRET_KEY` in `.env` must be a strong, unique, and securely stored value in production. Do not commit it to version control.
+*   **Password Hashing**: Passwords are hashed using `bcrypt`.
+*   **Input Validation**: Pydantic schemas are used for robust input validation.
+*   **JWT Security**: Access tokens are signed and have an expiration time.
+*   **Environment Variables**: Sensitive information is stored in environment variables, not directly in code.
 
-This section outlines the steps to deploy BookSlot to a staging environment using Docker and Docker Compose.
+## Future Enhancements
+*   Payment Gateway Integration
+*   Calendar Sync (Google Calendar, Outlook)
+*   Recurring Appointments
+*   Customer Management (CRM light)
+*   Promotional Tools
+*   Admin Panel for advanced settings
+*   More robust analytics and reporting
 
-### Prerequisites
-- Docker and Docker Compose installed on your system.
+## Contributing
+Please refer to the project's issue tracker for current development goals and how to contribute.
 
-### Steps
-
-1.  **Clone the repository:**
-    ```bash
-    git clone <repository-url>
-    cd bookslot
-    ```
-
-2.  **Create a `.env` file:**
-    Create a file named `.env` in the root directory of the project. This file will hold sensitive environment variables required by the application.
-    ```
-    SECRET_KEY="your_strong_secret_key_here" # Generate with 'openssl rand -hex 32'
-    SENDGRID_API_KEY="your_sendgrid_api_key"
-    TWILIO_ACCOUNT_SID="your_twilio_account_sid"
-    TWILIO_AUTH_TOKEN="your_twilio_auth_token"
-    TWILIO_WHATSAPP_NUMBER="your_twilio_whatsapp_number"
-    GEMINI_API_KEY="your_gemini_api_key"
-    ```
-    **Note:** For a real staging environment, these should be managed securely (e.g., Kubernetes secrets, AWS Secrets Manager, etc.) and not committed to version control.
-
-3.  **Deploy with Docker Compose:**
-    From the root directory of the project, run:
-    ```bash
-    docker-compose up -d --build
-    ```
-    This command will:
-    -   Build the Docker image for the application (if not already built or if changes detected).
-    -   Start the PostgreSQL database service.
-    -   Start the BookSlot application service, linking it to the database.
-    -   Run services in detached mode (`-d`).
-
-4.  **Access the Staging Application:**
-    The application will be accessible at `http://localhost:8000` (or the IP address/domain where Docker is running).
-
-### User Acceptance Testing (UAT)
-
-Once deployed, perform the following checks on the staging environment:
-
--   **Owner Onboarding:**
-    -   Register a new owner account.
-    -   Login with the new account.
-    -   Set up services and availability.
-    -   Update profile information.
--   **Public Booking Page:**
-    -   Access the public booking page (`/book/{owner_slug}`).
-    -   Verify correct display of services and available slots.
-    -   Submit a booking as a customer.
-    -   Verify booking confirmation page.
--   **Email/WhatsApp Notifications:**
-    -   Check if the owner receives email/WhatsApp notifications for new bookings.
-    -   Check if the customer receives email confirmations.
--   **Owner Dashboard:**
-    -   Login to the owner dashboard.
-    -   Verify the list of upcoming bookings is accurate.
-    -   Test profile update functionality.
--   **Internationalization (i18n):**
-    -   Verify language toggle (English/Arabic/French) on both public booking page and owner dashboard.
-    -   Ensure translations are correctly applied.
--   **Error Handling:**
-    -   Test various invalid inputs for signup, booking, and profile updates to ensure appropriate error messages are displayed.
+## License
+[Specify your license here, e.g., MIT License]

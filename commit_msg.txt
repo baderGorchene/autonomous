@@ -1,1 +1,1 @@
-feat: Reconstruct full application and test suite; fix i18n/templating integration and testing database setup
+Fix: Ensure pytest discoverability and provide basic test setup

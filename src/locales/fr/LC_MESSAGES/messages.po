@@ -1,1 +1,254 @@
-msgid ""msgstr """Project-Id-Version: BookSlot\n""POT-Creation-Date: 2023-10-27 10:00+0000\n""PO-Revision-Date: 2023-10-27 10:00+0000\n""Last-Translator: Your Name <you@example.com>\n""Language-Team: Your Team <yourteam@example.com>\n""MIME-Version: 1.0\n""Content-Type: text/plain; charset=utf-8\n""Content-Transfer-Encoding: 8bit\n""Language: fr\n""msgid "Dashboard"msgstr "Tableau de bord"msgid "Welcome"msgstr "Bienvenue"msgid "Logout"msgstr "Se déconnecter"msgid "Profile updated successfully!"msgstr "Profil mis à jour avec succès !"msgid "Profile Settings"msgstr "Paramètres du profil"msgid "Name"msgstr "Nom"msgid "Business Name"msgstr "Nom de l'entreprise"msgid "Phone"msgstr "Téléphone"msgid "Update Profile"msgstr "Mettre à jour le profil"msgid "Upcoming Bookings"msgstr "Réservations à venir"msgid "Customer Name"msgstr "Nom du client"msgid "Customer Email"msgstr "E-mail du client"msgid "Customer Phone"msgstr "Téléphone du client"msgid "Service"msgstr "Service"msgid "Date & Time"msgstr "Date et heure"msgid "Status"msgstr "Statut"msgid "No upcoming bookings."msgstr "Aucune réservation à venir."msgid "Book Your Slot"msgstr "Réservez votre créneau"msgid "Book a Slot with"msgstr "Réservez un créneau avec"msgid "Select a Service"msgstr "Sélectionnez un service"msgid "-- Please select a service --"msgstr "-- Veuillez sélectionner un service --"msgid "Select a Date"msgstr "Sélectionnez une date"msgid "Select a Time"msgstr "Sélectionnez une heure"msgid "Your Name"msgstr "Votre nom"msgid "Your Email"msgstr "Votre e-mail"msgid "Your Phone (optional)"msgstr "Votre téléphone (facultatif)"msgid "Book Now"msgstr "Réserver maintenant"msgid "English"msgstr "Anglais"msgid "Arabic"msgstr "Arabe"msgid "French"msgstr "Français"
+msgid ""
+msgstr ""
+"Project-Id-Version: BookSlot\n"
+"POT-Creation-Date: 2023-10-27 10:00+0000\n"
+"PO-Revision-Date: 2023-10-27 10:00+0000\n"
+"Last-Translator: \n"
+"Language-Team: French\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: fr\n"
+"X-Generator: Babel 2.15.0\n"
+
+msgid "Book your slot with"
+msgstr "Réservez votre créneau avec"
+
+msgid "Providing services by"
+msgstr "Services fournis par"
+
+msgid "Your Name:"
+msgstr "Votre Nom :"
+
+msgid "Your Email:"
+msgstr "Votre Email :"
+
+msgid "Your Phone (for WhatsApp notifications):"
+msgstr "Votre Téléphone (pour les notifications WhatsApp) :"
+
+msgid "Select Service:"
+msgstr "Sélectionnez le service :"
+
+msgid "Choose a service"
+msgstr "Choisissez un service"
+
+msgid "Select Date:"
+msgstr "Sélectionnez la date :"
+
+msgid "Select Time:"
+msgstr "Sélectionnez l'heure :"
+
+msgid "Choose a time"
+msgstr "Choisissez une heure"
+
+msgid "Notes (optional):"
+msgstr "Notes (facultatif) :"
+
+msgid "Book Now"
+msgstr "Réserver maintenant"
+
+msgid "Booking Confirmed!"
+msgstr "Réservation Confirmée !"
+
+msgid "Thank you,"
+msgstr "Merci,"
+
+msgid "! Your booking with"
+msgstr "! Votre réservation avec"
+
+msgid "has been successfully confirmed."
+msgstr "a été confirmée avec succès."
+
+msgid "You will receive a confirmation email and WhatsApp message shortly."
+msgstr "Vous recevrez sous peu un e-mail de confirmation et un message WhatsApp."
+
+msgid "Booking Details:"
+msgstr "Détails de la réservation :"
+
+msgid "Service:"
+msgstr "Service :"
+
+msgid "Date:"
+msgstr "Date :"
+
+msgid "Time:"
+msgstr "Heure :"
+
+msgid "Business:"
+msgstr "Entreprise :"
+
+msgid "Owner Contact:"
+msgstr "Contact du propriétaire :"
+
+msgid "Book another slot"
+msgstr "Réserver un autre créneau"
+
+msgid "Go to Homepage"
+msgstr "Aller à la page d'accueil"
+
+msgid "BookSlot Dashboard"
+msgstr "Tableau de bord BookSlot"
+
+msgid "Welcome,"
+msgstr "Bienvenue,"
+
+msgid "Logout"
+msgstr "Déconnexion"
+
+msgid "Your Profile"
+msgstr "Votre Profil"
+
+msgid "Your Public Booking Page Link:"
+msgstr "Lien de votre page de réservation publique :"
+
+msgid "Email:"
+msgstr "Email :"
+
+msgid "Business Name:"
+msgstr "Nom de l'entreprise :"
+
+msgid "Phone Number:"
+msgstr "Numéro de téléphone :"
+
+msgid "Update Profile"
+msgstr "Mettre à jour le profil"
+
+msgid "Upcoming Bookings"
+msgstr "Réservations à venir"
+
+msgid "for"
+msgstr "pour"
+
+msgid "Customer Email:"
+msgstr "Email du client :"
+
+msgid "Customer Phone:"
+msgstr "Téléphone du client :"
+
+msgid "No upcoming bookings."
+msgstr "Aucune réservation à venir."
+
+msgid "BookSlot Login"
+msgstr "Connexion BookSlot"
+
+msgid "Password:"
+msgstr "Mot de passe :"
+
+msgid "Login"
+msgstr "Connexion"
+
+msgid "Don't have an account?"
+msgstr "Vous n'avez pas de compte ?"
+
+msgid "Sign Up"
+msgstr "S'inscrire"
+
+msgid "Sign Up for BookSlot"
+msgstr "S'inscrire à BookSlot"
+
+msgid "Desired Booking Page URL (e.g., your-business-name):"
+msgstr "URL de la page de réservation souhaitée (ex: nom-de-votre-entreprise) :"
+
+msgid "Create Account"
+msgstr "Créer un compte"
+
+msgid "Already have an account?"
+msgstr "Vous avez déjà un compte ?"
+
+msgid "All fields are required."
+msgstr "Tous les champs sont obligatoires."
+
+msgid "Email already registered."
+msgstr "Email déjà enregistré."
+
+msgid "Business URL slug already taken."
+msgstr "Le slug d'URL de l'entreprise est déjà pris."
+
+msgid "An unexpected error occurred. Please try again."
+msgstr "Une erreur inattendue est survenue. Veuillez réessayer."
+
+msgid "Incorrect email or password."
+msgstr "Email ou mot de passe incorrect."
+
+msgid "All profile fields are required."
+msgstr "Tous les champs du profil sont obligatoires."
+
+msgid "Profile updated successfully!"
+msgstr "Profil mis à jour avec succès !"
+
+msgid "Booking page not found."
+msgstr "Page de réservation introuvable."
+
+msgid "Haircut"
+msgstr "Coupe de cheveux"
+
+msgid "Coloring"
+msgstr "Coloration"
+
+msgid "Please fill in all required booking details correctly."
+msgstr "Veuillez remplir correctement tous les détails de réservation requis."
+
+msgid "An unexpected error occurred during booking. Please try again."
+msgstr "Une erreur inattendue est survenue lors de la réservation. Veuillez réessayer."
+
+msgid "New Booking Received for {service_name}"
+msgstr "Nouvelle réservation reçue pour {service_name}"
+
+msgid """
+        <p>Dear {owner_name},</p>
+        <p>You have received a new booking!</p>
+        <ul>
+            <li><strong>Client :</strong> {customer_name}</li>
+            <li><strong>Service :</strong> {service_name}</li>
+            <li><strong>Date :</strong> {booking_date}</li>
+            <li><strong>Heure :</strong> {booking_time}</li>
+        </ul>
+        <p>Veuillez consulter votre tableau de bord pour plus de détails.</p>
+        <p>Merci,<br>L'équipe BookSlot</p>
+    """
+msgstr """
+        <p>Cher {owner_name},</p>
+        <p>Vous avez reçu une nouvelle réservation !</p>
+        <ul>
+            <li><strong>Client :</strong> {customer_name}</li>
+            <li><strong>Service :</strong> {service_name}</li>
+            <li><strong>Date :</strong> {booking_date}</li>
+            <li><strong>Heure :</strong> {booking_time}</li>
+        </ul>
+        <p>Veuillez consulter votre tableau de bord pour plus de détails.</p>
+        <p>Merci,<br>L'équipe BookSlot</p>
+    """
+
+msgid "New booking: {customer_name} for {service_name} on {booking_date} at {booking_time}."
+msgstr "Nouvelle réservation : {customer_name} pour {service_name} le {booking_date} à {booking_time}."
+
+msgid "Your Booking Confirmation with {business_name}"
+msgstr "Votre confirmation de réservation avec {business_name}"
+
+msgid """
+        <p>Dear {customer_name},</p>
+        <p>Your booking with {business_name} has been confirmed!</p>
+        <ul>
+            <li><strong>Service :</strong> {service_name}</li>
+            <li><strong>Date :</strong> {booking_date}</li>
+            <li><strong>Heure :</strong> {booking_time}</li>
+            <li><strong>Entreprise :</strong> {business_name} ({owner_name})</li>
+        </ul>
+        <p>We look forward to seeing you!</p>
+        <p>Merci,<br>{business_name}</p>
+    """
+msgstr """
+        <p>Cher {customer_name},</p>
+        <p>Votre réservation avec {business_name} a été confirmée !</p>
+        <ul>
+            <li><strong>Service :</strong> {service_name}</li>
+            <li><strong>Date :</strong> {booking_date}</li>
+            <li><strong>Heure :</strong> {booking_time}</li>
+            <li><strong>Entreprise :</strong> {business_name} ({owner_name})</li>
+        </ul>
+        <p>Nous sommes impatients de vous voir !</p>
+        <p>Merci,<br>{business_name}</p>
+    """
+
+msgid "Your booking with {business_name} for {service_name} on {booking_date} at {booking_time} is confirmed!"
+msgstr "Votre réservation avec {business_name} pour {service_name} le {booking_date} à {booking_time} est confirmée !"
