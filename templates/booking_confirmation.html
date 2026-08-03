@@ -1,35 +1,22 @@
-<!DOCTYPE html>
-<html lang="{{ request.state.lang }}">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _('Booking Confirmed!') }}</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1.5.10/css/pico.min.css">
-    <style>
-        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; background-color: var(--pico-background-color); }
-        .container { max-width: 600px; padding: 20px; border-radius: var(--pico-border-radius); background-color: var(--pico-card-background-color); box-shadow: var(--pico-card-box-shadow); text-align: center; }
-        .language-toggle { text-align: right; margin-bottom: 20px; }
-        .success-icon { font-size: 3em; color: var(--pico-color-success); margin-bottom: 20px; }
-    </style>
-</head>
-<body>
-    <main class="container">
-        <div class="language-toggle">
-            <a href="{{ request.url|urlencode('lang', 'en') }}" role="button" class="secondary small">{{ _('English') }}</a>
-            <a href="{{ request.url|urlencode('lang', 'ar') }}" role="button" class="secondary small">{{ _('Arabic') }}</a>
-            <a href="{{ request.url|urlencode('lang', 'fr') }}" role="button" class="secondary small">{{ _('French') }}</a>
-        </div>
-        <div class="success-icon">✔</div>
-        <hgroup>
-            <h1>{{ _('Booking Confirmed!') }}</h1>
-            <h2>{{ _('Thank you,') }} {{ booking.customer_name }}!</h2>
-        </hgroup>
-        <p>{{ _('Your booking with') }} <strong>{{ owner.business_name }}</strong> {{ _('for') }} <strong>{{ booking.service_name }}</strong> {{ _('on') }} <strong>{{ booking.booking_date }}</strong> {{ _('at') }} <strong>{{ booking.booking_time }}</strong> {{ _('has been successfully confirmed.') }}</p>
-        <p>{{ _('A confirmation email has been sent to') }} {{ booking.customer_email }}.</p>
-        {% if booking.customer_phone %}
-        <p>{{ _('A WhatsApp message has been sent to') }} {{ booking.customer_phone }}.</p>
-        {% endif %}
-        <p><a href="/{{ owner.slug }}" role="button">{{ _('Make another booking') }}</a></p>
-    </main>
-</body>
-</html>
+{% extends "base.html" %}
+
+{% block title %}{{ _('Booking Confirmed') }}{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto bg-white p-6 rounded-lg shadow-md mt-8 text-center">
+    <svg class="mx-auto h-16 w-16 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+    <h2 class="text-3xl font-bold text-gray-800 mt-4 mb-2">{{ _('Booking Confirmed!') }}</h2>
+    <p class="text-gray-600 mb-6">{{ _('Thank you,') }} {{ booking.customer_name }}! {{ _('Your booking with') }} <strong>{{ owner.business_name }}</strong> {{ _('has been successfully confirmed.') }}</p>
+    
+    <div class="text-left space-y-2 mb-6">
+        <p><strong>{{ _('Service:') }}</strong> {{ booking.service_name }}</p>
+        <p><strong>{{ _('Date:') }}</strong> {{ booking.booking_date.strftime('%Y-%m-%d') }}</p>
+        <p><strong>{{ _('Time:') }}</strong> {{ booking.booking_time }}</p>
+        <p><strong>{{ _('Confirmation will be sent to:') }}</strong> {{ booking.customer_email }}</p>
+    </div>
+
+    <a href="/{{ owner.slug }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+        {{ _('Book Another Appointment') }}
+    </a>
+</div>
+{% endblock %}

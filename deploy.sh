@@ -1,38 +1,48 @@
 #!/bin/bash
-IMAGE_NAME="bookslot-app"
-TAG="staging-$(date +%Y%m%d%H%M%S)"
-DOCKER_REGISTRY="your-docker-registry" 
-FULL_IMAGE_NAME="${DOCKER_REGISTRY}/${IMAGE_NAME}:${TAG}
-echo "Verifying staging environment variables..."
-if [ -z "$DATABASE_URL" ] || [ -z "$SECRET_KEY" ] || [ -z "$SENDGRID_API_KEY" ]; then
-  echo "Error: Missing critical environment variables for staging deployment."
-  echo "Please set DATABASE_URL, SECRET_KEY, SENDGRID_API_KEY, etc."
-  exit 1
-fi
-echo "Building Docker image: ${FULL_IMAGE_NAME}"
-docker build -t "${FULL_IMAGE_NAME}" .
+
+# This is a basic deployment script for BookSlot using Docker.
+# For production, consider more robust solutions like Docker Compose, Kubernetes, or cloud-specific CI/CD pipelines.
+
+# --- Configuration --- 
+# Set these environment variables in your CI/CD system or local shell before running this script.
+# export BOOKSLOT_SECRET_KEY="your-production-secret-key"
+# export BOOKSLOT_SENDGRID_API_KEY="your_sendgrid_api_key"
+# export BOOKSLOT_TWILIO_ACCOUNT_SID="your_twilio_account_sid"
+# export BOOKSLOT_TWILIO_AUTH_TOKEN="your_twilio_auth_token"
+# export BOOKSLOT_TWILIO_WHATSAPP_NUMBER="+1XXXXXXXXXX" # Your Twilio WhatsApp enabled number
+# export BOOKSLOT_DATABASE_URL="postgresql://user:password@host:port/dbname" # PostgreSQL for production
+
+APP_NAME="bookslot-app"
+CONTAINER_NAME="bookslot-instance"
+PORT=8000 # Internal container port
+HOST_PORT=80 # Port on the host machine to map to the container
+
+echo "--- Stopping and removing existing container (if any) ---"
+docker stop ${CONTAINER_NAME} || true
+docker rm ${CONTAINER_NAME} || true
+
+echo "--- Building Docker image ---"
+docker build -t ${APP_NAME} .
+
 if [ $? -ne 0 ]; then
-  echo "Docker build failed."
-  exit 1
+    echo "Docker build failed! Exiting."
+    exit 1
 fi
-echo "Logging in to Docker registry..."
-echo "Pushing Docker image to registry..."
-docker push "${FULL_IMAGE_NAME}"
+
+echo "--- Running new Docker container ---"
+docker run -d -p ${HOST_PORT}:${PORT} --name ${CONTAINER_NAME} \
+    -e SECRET_KEY="${BOOKSLOT_SECRET_KEY}" \
+    -e SENDGRID_API_KEY="${BOOKSLOT_SENDGRID_API_KEY}" \
+    -e TWILIO_ACCOUNT_SID="${BOOKSLOT_TWILIO_ACCOUNT_SID}" \
+    -e TWILIO_AUTH_TOKEN="${BOOKSLOT_TWILIO_AUTH_TOKEN}" \
+    -e TWILIO_WHATSAPP_NUMBER="${BOOKSLOT_TWILIO_WHATSAPP_NUMBER}" \
+    -e DATABASE_URL="${BOOKSLOT_DATABASE_URL}" \
+    ${APP_NAME}
+
 if [ $? -ne 0 ]; then
-  echo "Docker push failed."
-  exit 1
+    echo "Docker run failed! Exiting."
+    exit 1
 fi
-echo "Deployment to staging environment (simulated):"
-echo "Image ${FULL_IMAGE_NAME} pushed successfully."
-echo "Next steps would involve updating your staging environment (e.g., Kubernetes deployment, Docker Compose, AWS ECS) to pull and run this new image."
-echo "Example command to run locally (for testing the image):"
-echo "docker run -d -p 8000:8000 --name bookslot-staging \"
-echo "  -e DATABASE_URL=\"$DATABASE_URL\" \"
-echo "  -e SECRET_KEY=\"$SECRET_KEY\" \"
-echo "  -e SENDGRID_API_KEY=\"$SENDGRID_API_KEY\" \"
-echo "  -e TWILIO_ACCOUNT_SID=\"$TWILIO_ACCOUNT_SID\" \"
-echo "  -e TWILIO_AUTH_TOKEN=\"$TWILIO_AUTH_TOKEN\" \"
-echo "  -e TWILIO_WHATSAPP_NUMBER=\"$TWILIO_WHATSAPP_NUMBER\" \"
-echo "  -e GEMINI_API_KEY=\"$GEMINI_API_KEY\" \"
-echo "  ${FULL_IMAGE_NAME}"
-echo "Staging deployment process complete (simulated)."
+
+echo "--- BookSlot deployed successfully! ---"
+echo "Access the application at http://localhost:${HOST_PORT} (or your server's IP)"

@@ -1,9 +1,10 @@
-<p>{{ _('Dear %s,') % owner.name }}</p>
-<p>{{ _('You have a new booking!') }}</p>
-<p>{{ _('Service:') }} {{ booking.service_name }}</p>
-<p>{{ _('Date:') }} {{ booking.booking_date.strftime('%Y-%m-%d') }}</p>
-<p>{{ _('Time:') }} {{ booking.booking_time }}</p>
-<p>{{ _('Customer Name:') }} {{ booking.customer_name }}</p>
-<p>{{ _('Customer Email:') }} {{ booking.customer_email }}</p>
-{% if booking.customer_phone %}<p>{{ _('Customer Phone:') }} {{ booking.customer_phone }}</p>{% endif %}
-<p>{{ _('Please check your dashboard for more details.') }}</p>
+<p>Hello {{ owner.name }},</p>
+<p>You have received a new booking!</p>
+<p><strong>Service:</strong> {{ booking.service_name }}</p>
+<p><strong>Date:</strong> {{ booking.booking_date.strftime('%Y-%m-%d') }}</p>
+<p><strong>Time:</strong> {{ booking.booking_time }}</p>
+<p><strong>Customer Name:</strong> {{ booking.customer_name }}</p>
+<p><strong>Customer Email:</strong> {{ booking.customer_email }}</p>
+<p><strong>Customer Phone:</strong> {{ booking.customer_phone if booking.customer_phone else 'N/A' }}</p>
+<p>Thank you,</p>
+<p>BookSlot Team</p>

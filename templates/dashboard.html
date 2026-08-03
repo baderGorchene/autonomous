@@ -1,217 +1,51 @@
-<!DOCTYPE html>
-<html lang="{{ request.state.lang }}">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _('BookSlot Dashboard') }}</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1.5.10/css/pico.min.css">
-    <style>
-        body { font-family: sans-serif; }
-        .container { max-width: 960px; margin: 20px auto; padding: 20px; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        .header h1 { margin: 0; }
-        .profile-section, .bookings-section { margin-bottom: 40px; }
-        .service-item, .availability-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding: 10px; border: 1px solid var(--pico-primary-background); border-radius: var(--pico-border-radius); }
-        .service-item span, .availability-item span { flex: 1; }
-        .add-button { margin-top: 15px; }
-        .language-toggle { text-align: right; margin-bottom: 20px; }
-    </style>
-</head>
-<body>
-    <main class="container">
-        <div class="language-toggle">
-            <a href="{{ request.url|urlencode('lang', 'en') }}" role="button" class="secondary small">{{ _('English') }}</a>
-            <a href="{{ request.url|urlencode('lang', 'ar') }}" role="button" class="secondary small">{{ _('Arabic') }}</a>
-            <a href="{{ request.url|urlencode('lang', 'fr') }}" role="button" class="secondary small">{{ _('French') }}</a>
+{% extends "base.html" %}
+
+{% block title %}{{ _('Dashboard') }}{% endblock %}
+
+{% block head_extra %}
+<style>
+    .booking-card { transition: transform 0.2s ease-in-out; }
+    .booking-card:hover { transform: translateY(-3px); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto py-8">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-3xl font-bold text-gray-800">{{ _('Welcome,') }} {{ owner.name }}!</h2>
+        <a href="/dashboard/profile" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
+            {{ _('Edit Profile') }}
+        </a>
+    </div>
+
+    <h3 class="text-2xl font-semibold text-gray-700 mb-4">{{ _('Your Upcoming Bookings') }}</h3>
+    
+    {% if bookings %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for booking in bookings %}
+        <div class="booking-card bg-white p-6 rounded-lg shadow-md border border-gray-200">
+            <h4 class="text-xl font-bold text-blue-700 mb-2">{{ booking.service_name }}</h4>
+            <p class="text-gray-700"><strong>{{ _('Customer:') }}</strong> {{ booking.customer_name }}</p>
+            <p class="text-gray-700"><strong>{{ _('Email:') }}</strong> {{ booking.customer_email }}</p>
+            <p class="text-gray-700"><strong>{{ _('Phone:') }}</strong> {{ booking.customer_phone if booking.customer_phone else _('N/A') }}</p>
+            <p class="text-gray-700"><strong>{{ _('Date:') }}</strong> {{ booking.booking_date.strftime('%Y-%m-%d') }}</p>
+            <p class="text-gray-700"><strong>{{ _('Time:') }}</strong> {{ booking.booking_time }}</p>
+            <p class="text-gray-700 text-sm mt-2">{{ _('Booked on:') }} {{ booking.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
         </div>
-        <header class="header">
-            <h1>{{ _('Welcome,') }} {{ owner.name }}!</h1>
-            <nav>
-                <ul>
-                    <li><a href="/logout" role="button" class="secondary">{{ _('Logout') }}</a></li>
-                </ul>
-            </nav>
-        </header>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-blue-50 border-l-4 border-blue-400 text-blue-700 p-4" role="alert">
+        <p class="font-bold">{{ _('No Upcoming Bookings') }}</p>
+        <p>{{ _('It looks like you don’t have any bookings yet. Share your booking link to get started!') }}</p>
+        <p class="mt-2">{{ _('Your booking link:') }} <a href="/{{ owner.slug }}" class="text-blue-800 underline">bookslot.app/{{ owner.slug }}</a></p>
+    </div>
+    {% endif %}
 
-        {% if message %}
-            <article class="success">
-                {{ _('Success:') }} {{ message }}
-            </article>
-        {% endif %}
-
-        <section class="profile-section">
-            <h2>{{ _('Your Business Profile') }}</h2>
-            <form action="/dashboard/profile" method="post">
-                <label for="name">{{ _('Your Name') }}</label>
-                <input type="text" id="name" name="name" value="{{ owner.name }}" required>
-
-                <label for="business_name">{{ _('Business Name') }}</label>
-                <input type="text" id="business_name" name="business_name" value="{{ owner.business_name }}" required>
-
-                <label for="phone">{{ _('Phone Number (for WhatsApp notifications)') }}</label>
-                <input type="tel" id="phone" name="phone" value="{{ owner.phone or '' }}">
-
-                <label>{{ _('Public Booking Page Link:') }}</label>
-                <p><a href="/{{ owner.slug }}" target="_blank">bookslot.app/{{ owner.slug }}</a></p>
-
-                <h3>{{ _('Services Offered') }}</h3>
-                <div id="services-list">
-                    {% for service in owner.services %}
-                    <article class="service-item">
-                        <span>{{ service.name }} ({{ service.duration }} {{ _('min') }}) - {{ service.price }}</span>
-                        <button type="button" class="secondary small outline" onclick="removeService(this, '{{ service.name }}')">{{ _('Remove') }}</button>
-                    </article>
-                    {% endfor %}
-                </div>
-                <button type="button" class="secondary add-button" onclick="addService()">{{ _('Add Service') }}</button>
-                <input type="hidden" name="services" id="services-input" value="{{ owner.services_json or '[]' }}">
-
-                <h3>{{ _('Availability') }}</h3>
-                <div id="availability-list">
-                    {% for day_of_week, slots in owner.availability.items() %}
-                        {% for slot in slots %}
-                        <article class="availability-item">
-                            <span>{{ _(day_names[day_of_week|int]) }}: {{ slot.start_time }} - {{ slot.end_time }}</span>
-                            <button type="button" class="secondary small outline" onclick="removeAvailability(this, '{{ day_of_week }}', '{{ slot.start_time }}', '{{ slot.end_time }}')">{{ _('Remove') }}</button>
-                        </article>
-                        {% endfor %}
-                    {% endfor %}
-                </div>
-                <button type="button" class="secondary add-button" onclick="addAvailability()">{{ _('Add Availability') }}</button>
-                <input type="hidden" name="availability" id="availability-input" value="{{ owner.availability_json or '{}' }}">
-
-                <button type="submit" class="contrast">{{ _('Save Profile') }}</button>
-            </form>
-        </section>
-
-        <section class="bookings-section">
-            <h2>{{ _('Upcoming Bookings') }}</h2>
-            {% if bookings %}
-            <table>
-                <thead>
-                    <tr>
-                        <th>{{ _('Customer') }}</th>
-                        <th>{{ _('Service') }}</th>
-                        <th>{{ _('Date') }}</th>
-                        <th>{{ _('Time') }}</th>
-                        <th>{{ _('Contact') }}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for booking in bookings %}
-                    <tr>
-                        <td>{{ booking.customer_name }}</td>
-                        <td>{{ booking.service_name }}</td>
-                        <td>{{ booking.booking_date }}</td>
-                        <td>{{ booking.booking_time }}</td>
-                        <td>{{ booking.customer_email }}<br>{{ booking.customer_phone or '-' }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            {% else %}
-            <p>{{ _('No upcoming bookings.') }}</p>
-            {% endif %}
-        </section>
-    </main>
-
-    <script>
-        let services = JSON.parse(document.getElementById('services-input').value || '[]');
-        let availability = JSON.parse(document.getElementById('availability-input').value || '{}');
-
-        const dayNames = [
-            "{{ _('Monday') }}", "{{ _('Tuesday') }}", "{{ _('Wednesday') }}", "{{ _('Thursday') }}",
-            "{{ _('Friday') }}", "{{ _('Saturday') }}", "{{ _('Sunday') }}"
-        ];
-
-        function updateServicesInput() {
-            document.getElementById('services-input').value = JSON.stringify(services);
-        }
-
-        function updateAvailabilityInput() {
-            document.getElementById('availability-input').value = JSON.stringify(availability);
-        }
-
-        function addService() {
-            const name = prompt("{{ _('Service Name:') }}");
-            if (!name) return;
-            const duration = parseInt(prompt("{{ _('Duration in minutes:') }}"), 10);
-            if (isNaN(duration) || duration <= 0) { alert("{{ _('Invalid duration.') }}"); return; }
-            const price = parseFloat(prompt("{{ _('Price:') }}"));
-            if (isNaN(price) || price < 0) { alert("{{ _('Invalid price.') }}"); return; }
-            const description = prompt("{{ _('Service Description (optional):') }}");
-
-            services.push({ name, duration, price, description });
-            renderServices();
-            updateServicesInput();
-        }
-
-        function removeService(button, serviceName) {
-            services = services.filter(s => s.name !== serviceName);
-            renderServices();
-            updateServicesInput();
-        }
-
-        function renderServices() {
-            const servicesList = document.getElementById('services-list');
-            servicesList.innerHTML = '';
-            services.forEach(service => {
-                servicesList.innerHTML += `
-                    <article class="service-item">
-                        <span>${service.name} (${service.duration} {{ _('min') }}) - ${service.price}</span>
-                        <button type="button" class="secondary small outline" onclick="removeService(this, '${service.name}')">{{ _('Remove') }}</button>
-                    </article>
-                `;
-            });
-        }
-
-        function addAvailability() {
-            const dayOfWeek = prompt("{{ _('Day of week (0=Mon, 6=Sun):') }}");
-            if (dayOfWeek === null || isNaN(parseInt(dayOfWeek, 10)) || parseInt(dayOfWeek, 10) < 0 || parseInt(dayOfWeek, 10) > 6) { alert("{{ _('Invalid day.') }}"); return; }
-            const startTime = prompt("{{ _('Start time (HH:MM):') }}");
-            if (!startTime || !/^\d{2}:\d{2}$/.test(startTime)) { alert("{{ _('Invalid start time format.') }}"); return; }
-            const endTime = prompt("{{ _('End time (HH:MM):') }}");
-            if (!endTime || !/^\d{2}:\d{2}$/.test(endTime)) { alert("{{ _('Invalid end time format.') }}"); return; }
-
-            if (!availability[dayOfWeek]) {
-                availability[dayOfWeek] = [];
-            }
-            availability[dayOfWeek].push({ start_time: startTime, end_time: endTime });
-            renderAvailability();
-            updateAvailabilityInput();
-        }
-
-        function removeAvailability(button, dayOfWeek, startTime, endTime) {
-            if (availability[dayOfWeek]) {
-                availability[dayOfWeek] = availability[dayOfWeek].filter(slot => !(slot.start_time === startTime && slot.end_time === endTime));
-                if (availability[dayOfWeek].length === 0) {
-                    delete availability[dayOfWeek];
-                }
-            }
-            renderAvailability();
-            updateAvailabilityInput();
-        }
-
-        function renderAvailability() {
-            const availabilityList = document.getElementById('availability-list');
-            availabilityList.innerHTML = '';
-            Object.keys(availability).sort().forEach(dayOfWeek => {
-                availability[dayOfWeek].forEach(slot => {
-                    availabilityList.innerHTML += `
-                        <article class="availability-item">
-                            <span>${dayNames[parseInt(dayOfWeek)]}: ${slot.start_time} - ${slot.end_time}</span>
-                            <button type="button" class="secondary small outline" onclick="removeAvailability(this, '${dayOfWeek}', '${slot.start_time}', '${slot.end_time}')">{{ _('Remove') }}</button>
-                        </article>
-                    `;
-                });
-            });
-        }
-
-        // Initial render
-        document.addEventListener('DOMContentLoaded', () => {
-            renderServices();
-            renderAvailability();
-        });
-    </script>
-</body>
-</html>
+    <div class="mt-8 flex justify-end">
+        <a href="/logout" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+            {{ _('Logout') }}
+        </a>
+    </div>
+</div>
+{% endblock %}

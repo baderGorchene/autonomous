@@ -1,55 +1,59 @@
-<!DOCTYPE html>
-<html lang="{{ request.state.lang }}">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _('Sign Up for BookSlot') }}</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1.5.10/css/pico.min.css">
-    <style>
-        body { display: flex; justify-content: center; align-items: center; min-height: 100vh; background-color: var(--pico-background-color); }
-        .container { max-width: 500px; padding: 20px; border-radius: var(--pico-border-radius); background-color: var(--pico-card-background-color); box-shadow: var(--pico-card-box-shadow); }
-        .language-toggle { text-align: right; margin-bottom: 20px; }
-    </style>
-</head>
-<body>
-    <main class="container">
-        <div class="language-toggle">
-            <a href="{{ request.url|urlencode('lang', 'en') }}" role="button" class="secondary small">{{ _('English') }}</a>
-            <a href="{{ request.url|urlencode('lang', 'ar') }}" role="button" class="secondary small">{{ _('Arabic') }}</a>
-            <a href="{{ request.url|urlencode('lang', 'fr') }}" role="button" class="secondary small">{{ _('French') }}</a>
+{% extends "base.html" %}
+
+{% block title %}{{ _('Sign Up') }}{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto bg-white p-8 rounded-lg shadow-md mt-10">
+    <h2 class="text-2xl font-bold text-center text-gray-800 mb-6">{{ _('Create Your BookSlot Account') }}</h2>
+    
+    {% if msg %}
+    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+        <span class="block sm:inline">{{ msg }}</span>
+    </div>
+    {% endif %}
+
+    <form action="/signup" method="post" class="space-y-4">
+        <div>
+            <label for="name" class="block text-sm font-medium text-gray-700">{{ _('Your Name') }}</label>
+            <input type="text" name="name" id="name" required
+                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
         </div>
-        <hgroup>
-            <h1>{{ _('Sign Up') }}</h1>
-            <h2>{{ _('Create your BookSlot account') }}</h2>
-        </hgroup>
-        {% if error %}
-            <article class="error">
-                {{ _('Error:') }} {{ error }}
-            </article>
-        {% endif %}
-        <form action="/signup" method="post">
-            <label for="name">{{ _('Your Name') }}</label>
-            <input type="text" id="name" name="name" placeholder="{{ _('Enter your name') }}" required>
-
-            <label for="email">{{ _('Email') }}</label>
-            <input type="email" id="email" name="email" placeholder="{{ _('Enter your email') }}" required>
-
-            <label for="password">{{ _('Password') }}</label>
-            <input type="password" id="password" name="password" placeholder="{{ _('Create a password') }}" required>
-
-            <label for="business_name">{{ _('Business Name') }}</label>
-            <input type="text" id="business_name" name="business_name" placeholder="{{ _('e.g., John Doe Hair Salon') }}" required>
-
-            <label for="slug">{{ _('Public URL Slug') }}</label>
-            <input type="text" id="slug" name="slug" placeholder="{{ _('e.g., john-doe-salon (bookslot.app/john-doe-salon)') }}" pattern="^[a-z0-9-]+$" title="{{ _('Lowercase letters, numbers, and hyphens only.') }}" required>
-            <small>{{ _('This will be part of your public booking page URL (e.g., bookslot.app/your-slug)') }}</small>
-
-            <label for="phone">{{ _('Phone Number (optional, for WhatsApp notifications)') }}</label>
-            <input type="tel" id="phone" name="phone" placeholder="{{ _('e.g., +15551234567') }}">
-
-            <button type="submit">{{ _('Sign Up') }}</button>
-        </form>
-        <p>{{ _('Already have an account?') }} <a href="/login">{{ _('Log in here') }}</a></p>
-    </main>
-</body>
-</html>
+        <div>
+            <label for="email" class="block text-sm font-medium text-gray-700">{{ _('Email Address') }}</label>
+            <input type="email" name="email" id="email" autocomplete="email" required
+                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+        </div>
+        <div>
+            <label for="password" class="block text-sm font-medium text-gray-700">{{ _('Password') }}</label>
+            <input type="password" name="password" id="password" autocomplete="new-password" required
+                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+        </div>
+        <div>
+            <label for="business_name" class="block text-sm font-medium text-gray-700">{{ _('Business Name') }}</label>
+            <input type="text" name="business_name" id="business_name" required
+                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+        </div>
+        <div>
+            <label for="slug" class="block text-sm font-medium text-gray-700">{{ _('Your Booking Link (e.g., bookslot.app/your-name)') }}</label>
+            <div class="mt-1 flex rounded-md shadow-sm">
+                <span class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 sm:text-sm">
+                    bookslot.app/
+                </span>
+                <input type="text" name="slug" id="slug" required
+                       class="flex-1 block w-full rounded-none rounded-r-md sm:text-sm border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+            </div>
+        </div>
+        <div>
+            <label for="phone" class="block text-sm font-medium text-gray-700">{{ _('Your Phone (Optional, for WhatsApp notifications)') }}</label>
+            <input type="tel" name="phone" id="phone"
+                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+        </div>
+        <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            {{ _('Sign Up') }}
+        </button>
+    </form>
+    <p class="mt-6 text-center text-sm text-gray-600">
+        {{ _('Already have an account?') }} <a href="/login" class="font-medium text-blue-600 hover:text-blue-500">{{ _('Log In') }}</a>
+    </p>
+</div>
+{% endblock %}

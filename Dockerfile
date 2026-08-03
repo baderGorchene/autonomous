@@ -1,17 +1,11 @@
 # Use an official Python runtime as a parent image
-FROM python:3.10-slim-buster
+FROM python:3.11-slim-buster
 
 # Set the working directory in the container
 WORKDIR /app
 
-# Install system dependencies needed for gettext (for .mo file compilation)
-# and potentially other libraries (e.g., cryptography for python-jose)
-RUN apt-get update && apt-get install -y \
-    gettext \
-    build-essential \
-    libffi-dev \
-    libssl-dev \
-    && rm -rf /var/lib/apt/lists/*
+# Install gettext for locale compilation (needed for i18n)
+RUN apt-get update && apt-get install -y gettext && rm -rf /var/lib/apt/lists/*
 
 # Copy the current directory contents into the container at /app
 COPY . /app
@@ -19,16 +13,15 @@ COPY . /app
 # Install any needed packages specified in requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Compile .po files to .mo files for gettext
-# Ensure babel.cfg is present or adjust command if not using babel for compilation
-# For simplicity, we'll assume `pybabel compile` is run if .po files change.
-# For a full CI/CD, this step would be more robust.
-# For now, rely on `python-gettext`'s runtime loading, or ensure .mo files are pre-compiled.
-# If babel is installed and babel.cfg is present, this would be:
-# RUN pybabel compile -d locales
+# Compile translation files
+# This assumes babel is installed via requirements.txt
+# And that babel.cfg is present if needed for extraction, but for compilation only, it's usually fine.
+RUN python -m babel compile -d locales
 
-# Expose port 8000 for the FastAPI application
+# Expose the port the app runs on
 EXPOSE 8000
 
 # Run the application using Uvicorn
+# Use gunicorn with uvicorn workers for production for better performance and robustness
+# Example: gunicorn -w 4 -k uvicorn.workers.UvicornWorker src.main:app --bind 0.0.0.0:8000
 CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]

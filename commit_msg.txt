@@ -1,1 +1,1 @@
-Fix: Resolve 'No module named pytest' error and ensure test discoverability
+Feat: Reconstruct complete application, tests, and deployment files; fix 'No module named pytest' error and update documentation

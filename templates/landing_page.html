@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}{% trans "Welcome" %}{% endblock %}
+
+{% block content %}
+<article>
+    <hgroup>
+        <h1>{% trans "BookSlot" %}</h1>
+        <h2>{% trans "Dead-simple booking pages for local services." %}</h2>
+    </hgroup>
+    <p>{% trans "Manage appointments effortlessly. Get your shareable booking link today!" %}</p>
+    <p>
+        <a href="/signup" role="button">{% trans "Get Started - Sign Up" %}</a>
+        <a href="/login" role="button" class="secondary">{% trans "Login" %}</a>
+    </p>
+</article>
+{% endblock %}

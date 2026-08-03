@@ -30,7 +30,7 @@ def authenticate_owner(db: Session, email: str, password: str):
     return owner
 
 def create_booking(db: Session, booking: schemas.BookingCreate, owner_id: int):
-    db_booking = models.Booking(**booking.dict(), owner_id=owner_id)
+    db_booking = models.Booking(**booking.model_dump(), owner_id=owner_id)
     db.add(db_booking)
     db.commit()
     db.refresh(db_booking)

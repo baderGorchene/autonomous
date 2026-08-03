@@ -1,47 +1,34 @@
-<!DOCTYPE html>
-<html lang="{{ request.state.lang }}">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _('Login to BookSlot') }}</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1.5.10/css/pico.min.css">
-    <style>
-        body { display: flex; justify-content: center; align-items: center; min-height: 100vh; background-color: var(--pico-background-color); }
-        .container { max-width: 400px; padding: 20px; border-radius: var(--pico-border-radius); background-color: var(--pico-card-background-color); box-shadow: var(--pico-card-box-shadow); }
-        .language-toggle { text-align: right; margin-bottom: 20px; }
-    </style>
-</head>
-<body>
-    <main class="container">
-        <div class="language-toggle">
-            <a href="{{ request.url|urlencode('lang', 'en') }}" role="button" class="secondary small">{{ _('English') }}</a>
-            <a href="{{ request.url|urlencode('lang', 'ar') }}" role="button" class="secondary small">{{ _('Arabic') }}</a>
-            <a href="{{ request.url|urlencode('lang', 'fr') }}" role="button" class="secondary small">{{ _('French') }}</a>
+{% extends "base.html" %}
+
+{% block title %}{{ _('Login') }}{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto bg-white p-8 rounded-lg shadow-md mt-10">
+    <h2 class="text-2xl font-bold text-center text-gray-800 mb-6">{{ _('Login to BookSlot') }}</h2>
+    
+    {% if msg %}
+    <div class="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded relative mb-4" role="alert">
+        <span class="block sm:inline">{{ msg }}</span>
+    </div>
+    {% endif %}
+
+    <form action="/login" method="post" class="space-y-4">
+        <div>
+            <label for="username" class="block text-sm font-medium text-gray-700">{{ _('Email Address') }}</label>
+            <input type="email" name="username" id="username" autocomplete="email" required
+                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
         </div>
-        <hgroup>
-            <h1>{{ _('Login') }}</h1>
-            <h2>{{ _('Access your BookSlot dashboard') }}</h2>
-        </hgroup>
-        {% if message %}
-            <article class="success">
-                {{ _('Success:') }} {{ message }}
-            </article>
-        {% endif %}
-        {% if error %}
-            <article class="error">
-                {{ _('Error:') }} {{ error }}
-            </article>
-        {% endif %}
-        <form action="/login" method="post">
-            <label for="email">{{ _('Email') }}</label>
-            <input type="email" id="email" name="email" placeholder="{{ _('Enter your email') }}" required>
-
-            <label for="password">{{ _('Password') }}</label>
-            <input type="password" id="password" name="password" placeholder="{{ _('Enter your password') }}" required>
-
-            <button type="submit">{{ _('Log in') }}</button>
-        </form>
-        <p>{{ _('Don\'t have an account?') }} <a href="/signup">{{ _('Sign up here') }}</a></p>
-    </main>
-</body>
-</html>
+        <div>
+            <label for="password" class="block text-sm font-medium text-gray-700">{{ _('Password') }}</label>
+            <input type="password" name="password" id="password" autocomplete="current-password" required
+                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+        </div>
+        <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            {{ _('Log In') }}
+        </button>
+    </form>
+    <p class="mt-6 text-center text-sm text-gray-600">
+        {{ _('Don’t have an account?') }} <a href="/signup" class="font-medium text-blue-600 hover:text-blue-500">{{ _('Sign Up') }}</a>
+    </p>
+</div>
+{% endblock %}

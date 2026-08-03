@@ -1,6 +1,8 @@
-<p>{{ _('Dear %s,') % booking.customer_name }}</p>
-<p>{{ _('Your booking with %s is confirmed!') % owner.business_name }}</p>
-<p>{{ _('Service:') }} {{ booking.service_name }}</p>
-<p>{{ _('Date:') }} {{ booking.booking_date.strftime('%Y-%m-%d') }}</p>
-<p>{{ _('Time:') }} {{ booking.booking_time }}</p>
-<p>{{ _('We look forward to seeing you!') }}</p>
+<p>Hello {{ booking.customer_name }},</p>
+<p>Your booking with {{ owner.business_name }} has been confirmed!</p>
+<p><strong>Service:</strong> {{ booking.service_name }}</p>
+<p><strong>Date:</strong> {{ booking.booking_date.strftime('%Y-%m-%d') }}</p>
+<p><strong>Time:</strong> {{ booking.booking_time }}</p>
+<p>We look forward to seeing you!</p>
+<p>Thank you,</p>
+<p>{{ owner.business_name }}</p>

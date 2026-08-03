@@ -34,15 +34,16 @@ def get_jinja_templates(locale='en'):
             
     env.install_gettext_translations(translate)
     
-    # Add urlencode filter directly to the Jinja2 environment
-    def urlencode_query_param(url, query_param_name, value):
+    # Add a custom filter to update a specific query parameter in a URL
+    # This is different from the standard 'urlencode' which encodes a dict to a query string.
+    def update_query_param_filter(url, query_param_name, value):
         parsed_url = urlparse(str(url)) # Ensure URL is string
         query_params = parse_qs(parsed_url.query)
         query_params[query_param_name] = [value]
         new_query = urlencode(query_params, doseq=True)
         return urlunparse(parsed_url._replace(query=new_query))
 
-    env.filters['urlencode'] = urlencode_query_param
+    env.filters['update_query_param'] = update_query_param_filter
 
     # Create and cache Jinja2Templates instance
     templates = Jinja2Templates(directory=TEMPLATES_DIR)

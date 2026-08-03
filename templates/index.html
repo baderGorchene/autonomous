@@ -1,19 +1,18 @@
-<!DOCTYPE html>
-<html lang="{{ request.state.lang }}">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _('BookSlot - Simple Booking Page') }}</title>
-</head>
-<body>
-    <h1>{{ _('Welcome to BookSlot') }}</h1>
-    <p>{{ _('Your dead-simple booking page for local service businesses.') }}</p>
-    <p><a href="/signup">{{ _('Sign Up') }}</a></p>
-    <p><a href="/login">{{ _('Login') }}</a></p>
-    <p>
-        <a href="{{ request.url|urlencode('lang', 'en') }}">English</a> |
-        <a href="{{ request.url|urlencode('lang', 'ar') }}">العربية</a> |
-        <a href="{{ request.url|urlencode('lang', 'fr') }}">Français</a>
-    </p>
-</body>
-</html>
+{% extends "base.html" %}
+
+{% block title %}{{ _('Welcome to BookSlot') }}{% endblock %}
+
+{% block content %}
+<div class="text-center py-20">
+    <h2 class="text-5xl font-extrabold text-gray-900 mb-4">{{ _('BookSlot: Simple Booking for Your Business') }}</h2>
+    <p class="text-xl text-gray-600 mb-8">{{ _('Say goodbye to WhatsApp chaos. Get your shareable booking page in minutes.') }}</p>
+    <div class="space-x-4">
+        <a href="/signup" class="inline-flex items-center px-8 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            {{ _('Get Started Free') }}
+        </a>
+        <a href="/login" class="inline-flex items-center px-8 py-3 border border-blue-600 text-base font-medium rounded-md text-blue-600 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            {{ _('Login') }}
+        </a>
+    </div>
+</div>
+{% endblock %}
