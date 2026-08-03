@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from typing import Optional
 from jose import JWTError, jwt
 from passlib.context import CryptContext
@@ -15,9 +15,9 @@ def get_password_hash(password):
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
     if expires_delta:
-        expire = datetime.now(timezone.utc) + expires_delta
+        expire = datetime.utcnow() + expires_delta
     else:
-        expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
@@ -28,3 +28,10 @@ def decode_access_token(token: str):
         return payload
     except JWTError:
         return None
+
+# This is a placeholder, a real app would use the get_current_owner from dependencies.py
+# For simplicity in this file, we add it here for now if security.py is used directly
+# by other modules for owner retrieval, though dependencies.py is the primary place.
+# It's better to keep it in dependencies.py and import it where needed.
+# async def get_current_owner(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+#    ... (logic from dependencies.py)

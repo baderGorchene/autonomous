@@ -1,168 +1,133 @@
 <!DOCTYPE html>
-<html lang="{{ lang }}">
+<html lang="{{ current_lang }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ owner.business_name }} - {{ gettext('Book an Appointment') }}</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+    <title>{{ owner.business_name if owner else _('Booking Page') }}</title>
     <style>
-        body { display: flex; flex-direction: column; min-height: 100vh; }
-        main { flex-grow: 1; padding: 1rem 0; }
-        .container { max-width: 600px; margin: auto; padding: 0 1rem; }
-        .service-card { margin-bottom: 1rem; padding: 1rem; border: 1px solid var(--pico-form-element-border-color); border-radius: var(--pico-border-radius); }
-        .service-card input[type="radio"] { margin-right: 0.5rem; }
-        .error-message { color: var(--pico-del-color); margin-top: 1rem; }
-        .language-toggle { text-align: right; margin-bottom: 1rem; }
-        #available-times-container { margin-top: 1rem; }
-        #available-times-container label { display: block; margin-bottom: 0.5rem; }
-        #available-times { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 0.5rem; }
-        #available-times button { width: 100%; }
-        #available-times button.selected { background-color: var(--pico-primary-background-color); color: var(--pico-primary-color); border-color: var(--pico-primary-color); }
+        body { font-family: sans-serif; margin: 0; background-color: #f0f2f5; color: #333; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; padding: 20px; box-sizing: border-box; }
+        .container { background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 6px 20px rgba(0,0,0,0.1); max-width: 500px; width: 100%; box-sizing: border-box; }
+        .header { text-align: center; margin-bottom: 25px; }
+        .header h1 { color: #007bff; margin-bottom: 5px; font-size: 2.2em; }
+        .header p { color: #555; font-size: 1.1em; line-height: 1.5; }
+        .lang-toggle { text-align: center; margin-bottom: 20px; }
+        .lang-toggle a { margin: 0 8px; text-decoration: none; color: #007bff; font-weight: bold; }
+        .lang-toggle a:hover { text-decoration: underline; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: bold; color: #444; font-size: 1em; }
+        .form-group input[type="text"], .form-group input[type="email"], .form-group input[type="tel"], .form-group select, .form-group input[type="date"], .form-group input[type="time"] {
+            width: calc(100% - 24px); /* Account for padding and border */
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 1em;
+            box-sizing: border-box;
+            transition: border-color 0.3s ease;
+        }
+        .form-group input:focus, .form-group select:focus { border-color: #007bff; outline: none; }
+        .btn-submit { background-color: #28a745; color: white; padding: 14px 25px; border: none; border-radius: 6px; cursor: pointer; font-size: 1.1em; width: 100%; transition: background-color 0.3s ease; }
+        .btn-submit:hover { background-color: #218838; }
+        .error-message { color: #dc3545; margin-top: 10px; text-align: center; font-weight: bold; }
+        .success-message { color: #28a745; margin-top: 10px; text-align: center; font-weight: bold; }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .container { padding: 20px; margin: 10px; }
+            .header h1 { font-size: 1.8em; }
+            .header p { font-size: 0.95em; }
+            .form-group input, .form-group select { padding: 10px; }
+            .btn-submit { padding: 12px; font-size: 1em; }
+        }
+
+        @media (max-width: 480px) {
+            body { padding: 10px; }
+            .container { border-radius: 5px; }
+            .header h1 { font-size: 1.6em; }
+            .header p { font-size: 0.9em; }
+            .lang-toggle a { margin: 0 5px; font-size: 0.9em; }
+        }
     </style>
 </head>
 <body>
-    <nav class="container-fluid">
-        <ul>
-            <li><strong>{{ owner.business_name }}</strong></li>
-        </ul>
-        <ul>
-            <li>
-                <details role="list" dir="rtl">
-                    <summary aria-haspopup="listbox" role="link" class="secondary">{{ gettext('Language') }}</summary>
-                    <ul role="listbox">
-                        <li><a href="{{ request.url | update_query_param('lang', 'en') }}">English</a></li>
-                        <li><a href="{{ request.url | update_query_param('lang', 'ar') }}">العربية</a></li>
-                        <li><a href="{{ request.url | update_query_param('lang', 'fr') }}">Français</a></li>
-                    </ul>
-                </details>
-            </li>
-        </ul>
-    </nav>
-    <main class="container">
-        <article>
-            <hgroup>
-                <h1>{{ gettext('Book an Appointment with %s') % owner.business_name }}</h1>
-                <h2>{{ gettext('Select a service and time slot below.') }}</h2>
-            </hgroup>
+    <div class="container">
+        <div class="lang-toggle">
+            <a href="{{ request.url | update_query_param('lang', 'en') }}">English</a> |
+            <a href="{{ request.url | update_query_param('lang', 'ar') }}">العربية</a> |
+            <a href="{{ request.url | update_query_param('lang', 'fr') }}">Français</a>
+        </div>
 
-            {% if error %}
-                <p class="error-message">{{ error }}</p>
-            {% endif %}
+        <div class="header">
+            <h1>{{ owner.business_name if owner else _('BookSlot') }}</h1>
+            <p>{{ _('Book your service with') }} {{ owner.name if owner else '' }} {{ _('today!') }}</p>
+        </div>
 
-            <form action="/{{ owner.slug }}/book" method="post">
-                <section>
-                    <h3>{{ gettext('Your Details') }}</h3>
-                    <label for="customer_name">{{ gettext('Your Name') }}</label>
-                    <input type="text" id="customer_name" name="customer_name" value="{{ form_data.customer_name if form_data else '' }}" required>
+        <form id="bookingForm">
+            <div class="form-group">
+                <label for="customer_name">{{ _('Your Name') }}:</label>
+                <input type="text" id="customer_name" name="customer_name" required>
+            </div>
+            <div class="form-group">
+                <label for="customer_email">{{ _('Your Email') }}:</label>
+                <input type="email" id="customer_email" name="customer_email" required>
+            </div>
+            <div class="form-group">
+                <label for="customer_phone">{{ _('Your Phone (Optional)') }}:</label>
+                <input type="tel" id="customer_phone" name="customer_phone">
+            </div>
+            <div class="form-group">
+                <label for="service_name">{{ _('Select a Service') }}:</label>
+                <select id="service_name" name="service_name" required>
+                    <option value="">{{ _('Choose a service') }}</option>
+                    {% for service in services %}
+                        <option value="{{ service.name }}">{{ service.name }} - {{ service.duration }} {{ _('min') }} - {{ service.price | format_currency(current_lang, service.currency) }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="booking_date">{{ _('Date') }}:</label>
+                <input type="date" id="booking_date" name="booking_date" required>
+            </div>
+            <div class="form-group">
+                <label for="booking_time">{{ _('Time') }}:</label>
+                <input type="time" id="booking_time" name="booking_time" required>
+            </div>
+            <button type="submit" class="btn-submit">{{ _('Book Now') }}</button>
+            <div id="message" class="error-message" style="display:none;"></div>
+        </form>
+    </div>
 
-                    <label for="customer_email">{{ gettext('Your Email') }}</label>
-                    <input type="email" id="customer_email" name="customer_email" value="{{ form_data.customer_email if form_data else '' }}" required>
-
-                    <label for="customer_phone">{{ gettext('Your Phone Number (Optional, for WhatsApp updates)') }}</label>
-                    <input type="tel" id="customer_phone" name="customer_phone" value="{{ form_data.customer_phone if form_data else '' }}">
-                </section>
-
-                <section>
-                    <h3>{{ gettext('Select a Service') }}</h3>
-                    {% if services %}
-                        {% for service in services %}
-                            <div class="service-card">
-                                <label>
-                                    <input type="radio" name="service_name" value="{{ service.name }}" required
-                                        {% if form_data and form_data.service_name == service.name %}checked{% endif %}>
-                                    <strong>{{ service.name }}</strong> ({{ service.duration_minutes }} {{ gettext('min') }}) - {{ service.price }}
-                                </label>
-                                <p>{{ service.description or '' }}</p>
-                            </div>
-                        {% endfor %}
-                    {% else %}
-                        <p>{{ gettext('No services configured yet.') }}</p>
-                    {% endif %}
-                </section>
-
-                <section>
-                    <h3>{{ gettext('Select Date and Time') }}</h3>
-                    <label for="booking_date">{{ gettext('Date') }}</label>
-                    <input type="date" id="booking_date" name="booking_date" required min="{{ 'now' | date('%Y-%m-%d') }}"
-                        value="{{ form_data.booking_date if form_data else '' }}">
-
-                    <div id="available-times-container" style="display: none;">
-                        <label>{{ gettext('Available Times') }}</label>
-                        <div id="available-times">
-                            <!-- Available time buttons will be loaded here by JavaScript -->
-                        </div>
-                        <input type="hidden" id="booking_time" name="booking_time" value="{{ form_data.booking_time if form_data else '' }}" required>
-                    </div>
-                    <p id="no-slots-message" style="display: none;">{{ gettext('No available slots for this date.') }}</p>
-                </section>
-
-                <button type="submit">{{ gettext('Confirm Booking') }}</button>
-            </form>
-        </article>
-    </main>
     <script>
-        const bookingDateInput = document.getElementById('booking_date');
-        const availableTimesContainer = document.getElementById('available-times-container');
-        const availableTimesDiv = document.getElementById('available-times');
-        const bookingTimeInput = document.getElementById('booking_time');
-        const noSlotsMessage = document.getElementById('no-slots-message');
-        const ownerSlug = "{{ owner.slug }}";
+        document.getElementById('bookingForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const ownerSlug = window.location.pathname.split('/')[1];
+            const messageDiv = document.getElementById('message');
+            messageDiv.style.display = 'none';
+            messageDiv.className = 'error-message';
+            messageDiv.textContent = '';
 
-        async function fetchAvailableSlots(date) {
+            const formData = new FormData(this);
+            const bookingData = Object.fromEntries(formData.entries());
+
             try {
-                const response = await fetch(`/${ownerSlug}/available-slots/${date}?lang={{ lang }}`);
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                const slots = await response.json();
-                renderAvailableSlots(slots);
-            } catch (error) {
-                console.error('Error fetching available slots:', error);
-                renderAvailableSlots([]); // Show no slots on error
-            }
-        }
-
-        function renderAvailableSlots(slots) {
-            availableTimesDiv.innerHTML = '';
-            if (slots.length > 0) {
-                slots.forEach(slot => {
-                    const button = document.createElement('button');
-                    button.type = 'button';
-                    button.textContent = slot;
-                    button.onclick = () => selectTimeSlot(slot, button);
-                    if (bookingTimeInput.value === slot) {
-                        button.classList.add('selected');
-                    }
-                    availableTimesDiv.appendChild(button);
+                const response = await fetch(`/${ownerSlug}/book`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(bookingData)
                 });
-                availableTimesContainer.style.display = 'block';
-                noSlotsMessage.style.display = 'none';
-            } else {
-                availableTimesContainer.style.display = 'none';
-                noSlotsMessage.style.display = 'block';
-            }
-        }
 
-        function selectTimeSlot(time, button) {
-            // Deselect all other buttons
-            document.querySelectorAll('#available-times button').forEach(btn => {
-                btn.classList.remove('selected');
-            });
-            // Select the clicked button
-            button.classList.add('selected');
-            bookingTimeInput.value = time;
-        }
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || '{{ _('Booking failed.') }}');
+                }
 
-        bookingDateInput.addEventListener('change', (event) => {
-            const selectedDate = event.target.value;
-            bookingTimeInput.value = ''; // Clear selected time when date changes
-            fetchAvailableSlots(selectedDate);
-        });
+                // If successful, redirect to a confirmation page or show a success message
+                window.location.href = `/${ownerSlug}/booking-confirmation?name=${encodeURIComponent(bookingData.customer_name)}&service=${encodeURIComponent(bookingData.service_name)}&date=${encodeURIComponent(bookingData.booking_date)}&time=${encodeURIComponent(bookingData.booking_time)}&lang={{ current_lang }}`;
 
-        // Initial load for existing form_data.booking_date
-        document.addEventListener('DOMContentLoaded', () => {
-            if (bookingDateInput.value) {
-                fetchAvailableSlots(bookingDateInput.value);
+            } catch (error) {
+                messageDiv.textContent = error.message;
+                messageDiv.style.display = 'block';
             }
         });
     </script>

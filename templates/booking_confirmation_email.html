@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>{{ _("Booking Confirmation") }}</title>
+</head>
+<body>
+    <p>{{ _("Hello,") }}</p>
+    <p>{{ _("Your booking details:") }}</p>
+    <ul>
+        <li><strong>{{ _("Business Name:") }}</strong> {{ owner.business_name }}</li>
+        <li><strong>{{ _("Service:") }}</strong> {{ booking.service_name }}</li>
+        <li><strong>{{ _("Date:") }}</strong> {{ booking.booking_date }}</li>
+        <li><strong>{{ _("Time:") }}</strong> {{ booking.booking_time }}</li>
+        <li><strong>{{ _("Customer Name:") }}</strong> {{ booking.customer_name }}</li>
+        <li><strong>{{ _("Customer Email:") }}</strong> {{ booking.customer_email }}</li>
+        {% if booking.customer_phone %}
+        <li><strong>{{ _("Customer Phone:") }}</strong> {{ booking.customer_phone }}</li>
+        {% endif %}
+    </ul>
+    <p>{{ _("Thank you!") }}</p>
+    <p>{{ owner.business_name }}</p>
+</body>
+</html>

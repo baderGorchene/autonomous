@@ -45,6 +45,25 @@ def get_jinja_templates(locale='en'):
 
     env.filters['update_query_param'] = update_query_param_filter
 
+    # Add a custom filter for currency formatting
+    def format_currency_filter(value, lang_code, currency_code="USD"):
+        # This is a simplified example. For full i18n currency formatting,
+        # you'd use a library like Babel or a more robust custom implementation.
+        try:
+            numeric_value = float(value)
+            if lang_code == 'ar':
+                # Example for Arabic, assuming SAR for now
+                return f"{numeric_value:,.2f} ر.س"
+            elif lang_code == 'fr':
+                # Example for French, assuming EUR
+                return f"{numeric_value:,.2f} €"
+            else:
+                return f"${numeric_value:,.2f}"
+        except (ValueError, TypeError):
+            return str(value) # Return original value if not a valid number
+
+    env.filters['format_currency'] = format_currency_filter
+
     # Create and cache Jinja2Templates instance
     templates = Jinja2Templates(directory=TEMPLATES_DIR)
     templates.env = env # Override the default env with our configured one

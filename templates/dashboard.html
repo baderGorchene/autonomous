@@ -1,341 +1,83 @@
 <!DOCTYPE html>
-<html lang="{{ lang }}">
+<html lang="{{ current_lang }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ gettext('Dashboard - BookSlot') }}</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+    <title>{{ _('Dashboard') }}</title>
     <style>
-        body { display: flex; flex-direction: column; min-height: 100vh; }
-        main { flex-grow: 1; padding: 1rem 0; }
-        .container { max-width: 1200px; margin: auto; padding: 0 1rem; }
-        .section-title { margin-top: 2rem; margin-bottom: 1rem; }
-        .form-section { background-color: var(--pico-card-background-color); padding: 1.5rem; border-radius: var(--pico-border-radius); margin-bottom: 1.5rem; }
-        .service-item, .availability-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; padding: 0.5rem; border: 1px solid var(--pico-form-element-border-color); border-radius: var(--pico-border-radius); }
-        .service-item button, .availability-item button { margin-left: 1rem; }
-        .error-message { color: var(--pico-del-color); margin-top: 1rem; }
-        .success-message { color: var(--pico-primary-color); margin-top: 1rem; }
-
-        /* Mobile adjustments */
-        @media (max-width: 768px) {
-            .grid { grid-template-columns: 1fr; }
+        body { font-family: sans-serif; margin: 20px; background-color: #f4f7f6; color: #333; }
+        .container { max-width: 900px; margin: auto; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        h1 { color: #007bff; text-align: center; margin-bottom: 30px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
+        .header h2 { margin: 0; color: #555; }
+        .lang-toggle a { margin-left: 10px; text-decoration: none; color: #007bff; }
+        .lang-toggle a:hover { text-decoration: underline; }
+        .profile-section, .bookings-section { margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #666; }
+        .form-group input[type="text"], .form-group input[type="email"], .form-group input[type="tel"] { width: calc(100% - 22px); padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
+        .btn { background-color: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        .btn:hover { background-color: #218838; }
+        .booking-list { list-style: none; padding: 0; }
+        .booking-item { background-color: #f9f9f9; border: 1px solid #eee; margin-bottom: 10px; padding: 15px; border-radius: 5px; }
+        .booking-item strong { color: #007bff; }
+        .logout-btn { background-color: #dc3545; margin-top: 20px; float: right; }
+        .logout-btn:hover { background-color: #c82333; }
+        @media (max-width: 600px) {
+            .header { flex-direction: column; align-items: flex-start; }
+            .lang-toggle { margin-top: 10px; }
         }
     </style>
 </head>
 <body>
-    <nav class="container-fluid">
-        <ul>
-            <li><strong>BookSlot</strong></li>
-        </ul>
-        <ul>
-            <li><a href="/logout" role="button" class="secondary">{{ gettext('Logout') }}</a></li>
-            <li>
-                <details role="list" dir="rtl">
-                    <summary aria-haspopup="listbox" role="link" class="secondary">{{ gettext('Language') }}</summary>
-                    <ul role="listbox">
-                        <li><a href="{{ request.url | update_query_param('lang', 'en') }}">English</a></li>
-                        <li><a href="{{ request.url | update_query_param('lang', 'ar') }}">العربية</a></li>
-                        <li><a href="{{ request.url | update_query_param('lang', 'fr') }}">Français</a></li>
-                    </ul>
-                </details>
-            </li>
-        </ul>
-    </nav>
-    <main class="container">
-        <hgroup>
-            <h1>{{ gettext('Welcome, %s!') % owner.name }}</h1>
-            <h2>{{ gettext('Your Dashboard') }}</h2>
-        </hgroup>
-
-        {% if request.query_params.get('success') == 'profile_updated' %}
-            <p class="success-message">{{ gettext('Profile updated successfully!') }}</p>
-        {% elif request.query_params.get('success') == 'services_updated' %}
-            <p class="success-message">{{ gettext('Services updated successfully!') }}</p>
-        {% elif request.query_params.get('success') == 'availability_updated' %}
-            <p class="success-message">{{ gettext('Availability updated successfully!') }}</p>
-        {% endif %}
-        {% if error %}
-            <p class="error-message">{{ error }}</p>
-        {% endif %}
-
-        <div class="grid">
-            <div>
-                <h3 class="section-title">{{ gettext('Your Booking Page') }}</h3>
-                <p><strong>{{ gettext('Share this link with your customers:') }}</strong> <a href="/{{ owner.slug }}" target="_blank">bookslot.app/{{ owner.slug }}</a></p>
-
-                <h3 class="section-title">{{ gettext('Upcoming Bookings') }}</h3>
-                {% if bookings %}
-                    <figure>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th scope="col">{{ gettext('Customer') }}</th>
-                                    <th scope="col">{{ gettext('Service') }}</th>
-                                    <th scope="col">{{ gettext('Date') }}</th>
-                                    <th scope="col">{{ gettext('Time') }}</th>
-                                    <th scope="col">{{ gettext('Contact') }}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for booking in bookings %}
-                                <tr>
-                                    <td>{{ booking.customer_name }}</td>
-                                    <td>{{ booking.service_name }}</td>
-                                    <td>{{ booking.booking_date.strftime('%Y-%m-%d') }}</td>
-                                    <td>{{ booking.booking_time }}</td>
-                                    <td>{{ booking.customer_email }}<br>{% if booking.customer_phone %}{{ booking.customer_phone }}{% endif %}</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </figure>
-                {% else %}
-                    <p>{{ gettext('No upcoming bookings.') }}</p>
-                {% endif %}
-            </div>
-
-            <div>
-                <h3 class="section-title">{{ gettext('Your Profile') }}</h3>
-                <div class="form-section">
-                    <form action="/profile" method="post">
-                        <label for="name">{{ gettext('Your Name') }}</label>
-                        <input type="text" id="name" name="name" value="{{ owner.name }}" required>
-
-                        <label for="business_name">{{ gettext('Business Name') }}</label>
-                        <input type="text" id="business_name" name="business_name" value="{{ owner.business_name }}" required>
-
-                        <label for="phone">{{ gettext('Phone Number (Optional, for WhatsApp notifications)') }}</label>
-                        <input type="tel" id="phone" name="phone" value="{{ owner.phone or '' }}">
-
-                        <button type="submit">{{ gettext('Update Profile') }}</button>
-                    </form>
-                </div>
-
-                <h3 class="section-title">{{ gettext('Your Services') }}</h3>
-                <div class="form-section">
-                    <div id="services-list">
-                        {% for service in services %}
-                            <div class="service-item" data-index="{{ loop.index0 }}">
-                                <span><strong>{{ service.name }}</strong> ({{ service.duration_minutes }} {{ gettext('min') }}) - {{ service.price }}</span>
-                                <div>
-                                    <button type="button" class="secondary" onclick="editService({{ loop.index0 }})">{{ gettext('Edit') }}</button>
-                                    <button type="button" class="contrast" onclick="removeService({{ loop.index0 }})">{{ gettext('Remove') }}</button>
-                                </div>
-                            </div>
-                        {% endfor %}
-                    </div>
-                    <form id="service-form" onsubmit="addOrUpdateService(event)">
-                        <fieldset>
-                            <legend>{{ gettext('Add/Edit Service') }}</legend>
-                            <input type="hidden" id="service-index">
-                            <label for="service_name">{{ gettext('Service Name') }}</label>
-                            <input type="text" id="service_name" placeholder="{{ gettext('e.g., Haircut') }}" required>
-
-                            <label for="service_duration">{{ gettext('Duration (minutes)') }}</label>
-                            <input type="number" id="service_duration" min="1" required>
-
-                            <label for="service_price">{{ gettext('Price') }}</label>
-                            <input type="number" id="service_price" step="0.01" min="0" required>
-
-                            <button type="submit" id="service-submit-btn">{{ gettext('Add Service') }}</button>
-                            <button type="button" class="secondary" id="service-cancel-btn" style="display:none;" onclick="cancelServiceEdit()">{{ gettext('Cancel Edit') }}</button>
-                        </fieldset>
-                    </form>
-                    <form action="/services" method="post" id="hidden-services-form" style="display:none;">
-                        <input type="hidden" name="services" id="services-json-input">
-                        <button type="submit" id="save-services-btn">{{ gettext('Save All Services') }}</button>
-                    </form>
-                    <button type="button" class="primary" onclick="document.getElementById('save-services-btn').click();">{{ gettext('Save All Services') }}</button>
-                </div>
-
-                <h3 class="section-title">{{ gettext('Your Availability') }}</h3>
-                <div class="form-section">
-                    <p>{{ gettext('Set your weekly availability. Use 24-hour format (e.g., 09:00, 17:00).') }}</p>
-                    <div id="availability-list">
-                        {% for day, slots in availability.items() %}
-                            {% for slot in slots %}
-                                <div class="availability-item" data-day="{{ day }}" data-start="{{ slot.start_time }}" data-end="{{ slot.end_time }}">
-                                    <span><strong>{{ day }}</strong>: {{ slot.start_time }} - {{ slot.end_time }}</span>
-                                    <button type="button" class="contrast" onclick="removeAvailabilitySlot(this)">{{ gettext('Remove') }}</button>
-                                </div>
-                            {% endfor %}
-                        {% endfor %}
-                    </div>
-                    <form id="availability-form" onsubmit="addAvailabilitySlot(event)">
-                        <fieldset>
-                            <legend>{{ gettext('Add Availability Slot') }}</legend>
-                            <label for="day_of_week">{{ gettext('Day of Week') }}</label>
-                            <select id="day_of_week" required>
-                                <option value="">{{ gettext('--Select Day--') }}</option>
-                                <option value="Monday">{{ gettext('Monday') }}</option>
-                                <option value="Tuesday">{{ gettext('Tuesday') }}</option>
-                                <option value="Wednesday">{{ gettext('Wednesday') }}</option>
-                                <option value="Thursday">{{ gettext('Thursday') }}</option>
-                                <option value="Friday">{{ gettext('Friday') }}</option>
-                                <option value="Saturday">{{ gettext('Saturday') }}</option>
-                                <option value="Sunday">{{ gettext('Sunday') }}</option>
-                            </select>
-
-                            <div class="grid">
-                                <div>
-                                    <label for="start_time">{{ gettext('Start Time') }}</label>
-                                    <input type="time" id="start_time" required>
-                                </div>
-                                <div>
-                                    <label for="end_time">{{ gettext('End Time') }}</label>
-                                    <input type="time" id="end_time" required>
-                                </div>
-                            </div>
-                            <button type="submit">{{ gettext('Add Slot') }}</button>
-                        </fieldset>
-                    </form>
-                    <form action="/availability" method="post" id="hidden-availability-form" style="display:none;">
-                        <input type="hidden" name="availability" id="availability-json-input">
-                        <button type="submit" id="save-availability-btn">{{ gettext('Save All Availability') }}</button>
-                    </form>
-                    <button type="button" class="primary" onclick="document.getElementById('save-availability-btn').click();">{{ gettext('Save All Availability') }}</button>
-                </div>
+    <div class="container">
+        <div class="header">
+            <h1>{{ _('BookSlot Dashboard') }}</h1>
+            <div class="lang-toggle">
+                <a href="{{ request.url | update_query_param('lang', 'en') }}">English</a> |
+                <a href="{{ request.url | update_query_param('lang', 'ar') }}">العربية</a> |
+                <a href="{{ request.url | update_query_param('lang', 'fr') }}">Français</a>
             </div>
         </div>
-    </main>
-    <script>
-        // Services Management
-        let services = {{ services | tojson }}; // Initialize with existing services
 
-        function renderServices() {
-            const list = document.getElementById('services-list');
-            list.innerHTML = '';
-            services.forEach((service, index) => {
-                const div = document.createElement('div');
-                div.className = 'service-item';
-                div.setAttribute('data-index', index);
-                div.innerHTML = `
-                    <span><strong>${service.name}</strong> (${service.duration_minutes} {{ gettext('min') }}) - ${service.price.toFixed(2)}</span>
-                    <div>
-                        <button type="button" class="secondary" onclick="editService(${index})">{{ gettext('Edit') }}</button>
-                        <button type="button" class="contrast" onclick="removeService(${index})">{{ gettext('Remove') }}</button>
-                    </div>
-                `;
-                list.appendChild(div);
-            });
-            document.getElementById('services-json-input').value = JSON.stringify(services);
-        }
+        <div class="profile-section">
+            <h2>{{ _('Your Profile') }}</h2>
+            <form id="profile-form">
+                <div class="form-group">
+                    <label for="name">{{ _('Name') }}:</label>
+                    <input type="text" id="name" name="name" value="{{ owner.name if owner else '' }}" required>
+                </div>
+                <div class="form-group">
+                    <label for="business_name">{{ _('Business Name') }}:</label>
+                    <input type="text" id="business_name" name="business_name" value="{{ owner.business_name if owner else '' }}" required>
+                </div>
+                <div class="form-group">
+                    <label for="phone">{{ _('Phone') }}:</label>
+                    <input type="tel" id="phone" name="phone" value="{{ owner.phone if owner else '' }}">
+                </div>
+                <button type="submit" class="btn">{{ _('Update Profile') }}</button>
+            </form>
+        </div>
 
-        function addOrUpdateService(event) {
-            event.preventDefault();
-            const index = document.getElementById('service-index').value;
-            const name = document.getElementById('service_name').value;
-            const duration = parseInt(document.getElementById('service_duration').value);
-            const price = parseFloat(document.getElementById('service_price').value);
+        <div class="bookings-section">
+            <h2>{{ _('Upcoming Bookings') }}</h2>
+            <ul class="booking-list">
+                {% if bookings %}
+                    {% for booking in bookings %}
+                        <li class="booking-item">
+                            <strong>{{ _('Service') }}:</strong> {{ booking.service_name }}<br>
+                            <strong>{{ _('Customer') }}:</strong> {{ booking.customer_name }} ({{ booking.customer_email }})<br>
+                            <strong>{{ _('Date') }}:</strong> {{ booking.booking_date }}<br>
+                            <strong>{{ _('Time') }}:</strong> {{ booking.booking_time }}
+                        </li>
+                    {% endfor %}
+                {% else %}
+                    <p>{{ _('No upcoming bookings.') }}</p>
+                {% endif %}
+            </ul>
+        </div>
 
-            const newService = { name, duration_minutes: duration, price };
-
-            if (index === '') { // Add new
-                services.push(newService);
-            } else { // Update existing
-                services[parseInt(index)] = newService;
-            }
-            
-            renderServices();
-            document.getElementById('service-form').reset();
-            document.getElementById('service-index').value = '';
-            document.getElementById('service-submit-btn').textContent = '{{ gettext('Add Service') }}';
-            document.getElementById('service-cancel-btn').style.display = 'none';
-        }
-
-        function editService(index) {
-            const service = services[index];
-            document.getElementById('service_name').value = service.name;
-            document.getElementById('service_duration').value = service.duration_minutes;
-            document.getElementById('service_price').value = service.price;
-            document.getElementById('service-index').value = index;
-            document.getElementById('service-submit-btn').textContent = '{{ gettext('Update Service') }}';
-            document.getElementById('service-cancel-btn').style.display = 'inline-block';
-        }
-
-        function cancelServiceEdit() {
-            document.getElementById('service-form').reset();
-            document.getElementById('service-index').value = '';
-            document.getElementById('service-submit-btn').textContent = '{{ gettext('Add Service') }}';
-            document.getElementById('service-cancel-btn').style.display = 'none';
-        }
-
-        function removeService(index) {
-            services.splice(index, 1);
-            renderServices();
-        }
-
-        // Availability Management
-        let availability = {{ availability | tojson }}; // Initialize with existing availability
-
-        function renderAvailability() {
-            const list = document.getElementById('availability-list');
-            list.innerHTML = '';
-            for (const day in availability) {
-                availability[day].forEach((slot, index) => {
-                    const div = document.createElement('div');
-                    div.className = 'availability-item';
-                    div.setAttribute('data-day', day);
-                    div.setAttribute('data-start', slot.start_time);
-                    div.setAttribute('data-end', slot.end_time);
-                    div.innerHTML = `
-                        <span><strong>${day}</strong>: ${slot.start_time} - ${slot.end_time}</span>
-                        <button type="button" class="contrast" onclick="removeAvailabilitySlot(this)">{{ gettext('Remove') }}</button>
-                    `;
-                    list.appendChild(div);
-                });
-            }
-            document.getElementById('availability-json-input').value = JSON.stringify(availability);
-        }
-
-        function addAvailabilitySlot(event) {
-            event.preventDefault();
-            const day = document.getElementById('day_of_week').value;
-            const startTime = document.getElementById('start_time').value;
-            const endTime = document.getElementById('end_time').value;
-
-            if (!day || !startTime || !endTime) {
-                alert('{{ gettext('Please fill all fields for availability.') }}');
-                return;
-            }
-
-            if (startTime >= endTime) {
-                alert('{{ gettext('Start time must be before end time.') }}');
-                return;
-            }
-
-            if (!availability[day]) {
-                availability[day] = [];
-            }
-            availability[day].push({ start_time: startTime, end_time: endTime });
-            availability[day].sort((a, b) => a.start_time.localeCompare(b.start_time)); // Sort slots for consistency
-
-            renderAvailability();
-            document.getElementById('availability-form').reset();
-        }
-
-        function removeAvailabilitySlot(buttonElement) {
-            const item = buttonElement.closest('.availability-item');
-            const day = item.getAttribute('data-day');
-            const start = item.getAttribute('data-start');
-            const end = item.getAttribute('data-end');
-
-            if (availability[day]) {
-                availability[day] = availability[day].filter(slot => 
-                    !(slot.start_time === start && slot.end_time === end)
-                );
-                if (availability[day].length === 0) {
-                    delete availability[day];
-                }
-            }
-            renderAvailability();
-        }
-
-        // Initial render on page load
-        document.addEventListener('DOMContentLoaded', () => {
-            renderServices();
-            renderAvailability();
-        });
-    </script>
+        <button type="button" class="btn logout-btn">{{ _('Logout') }}</button>
+    </div>
 </body>
 </html>
