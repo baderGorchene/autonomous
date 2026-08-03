@@ -1,1 +1,1 @@
-Fix: Ensure pytest and other dependencies are installed by providing comprehensive requirements.txt
+Fix: Currency formatting for Arabic locale in i18n filter

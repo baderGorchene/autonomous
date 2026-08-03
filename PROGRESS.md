@@ -1,3 +1,8 @@
+## Iteration 283
+_2026-08-03 23:02 UTC_
+
+Identified and fixed a bug in the Jinja2 `format_currency_filter` for the Arabic locale that was incorrectly returning a tuple instead of a string. This ensures correct currency display on the booking page.
+
 ## Iteration 282
 _2026-08-03 21:04 UTC_
 
