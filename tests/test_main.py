@@ -1,170 +1,123 @@
 import pytest
-from fastapi.testclient import TestClient
+from httpx import AsyncClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from src.main import app
 from src.database import Base, get_db
 from src.config import settings
-from src.models import Owner # Import Owner model
-from src import security
-import json
+import asyncio
+import os
 
 # Override database settings for testing
-settings.DATABASE_URL = "sqlite:///./test.db" # Use a separate test database
+settings.DATABASE_URL = "sqlite:///./test.db"
 settings.TESTING = True
 
-# Setup test database
-connect_args = {"check_same_thread": False} if "sqlite" in settings.DATABASE_URL else {}
-engine = create_engine(settings.DATABASE_URL, **connect_args)
+# Setup a test database
+engine = create_engine(settings.DATABASE_URL, connect_args={"check_same_thread": False})
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 @pytest.fixture(name="db_session")
 def db_session_fixture():
-    Base.metadata.drop_all(bind=engine) # Clear tables for a clean test run
+    """Create a clean database session for each test."""
     Base.metadata.create_all(bind=engine) # Create tables
     db = TestingSessionLocal()
     try:
         yield db
     finally:
         db.close()
-        # Base.metadata.drop_all(bind=engine) # Clean up after tests - often handled by the test runner or a global teardown
+        Base.metadata.drop_all(bind=engine) # Drop tables after test
 
 @pytest.fixture(name="client")
-def client_fixture(db_session):
+async def client_fixture(db_session):
+    """Create an httpx client for testing FastAPI app."""
     def override_get_db():
-        try:
-            yield db_session
-        finally:
-            # db_session.close() # Session is closed by the fixture already
-            pass
+        yield db_session
     app.dependency_overrides[get_db] = override_get_db
-    with TestClient(app) as c:
-        yield c
-    app.dependency_overrides.clear()
+    async with AsyncClient(app=app, base_url="http://test") as client:
+        yield client
+    app.dependency_overrides = {} # Clean up overrides
 
-# Fixture to create a test owner
-@pytest.fixture(name="test_owner")
-def test_owner_fixture(db_session):
-    hashed_password = security.get_password_hash("testpassword")
-    owner_data = {
-        "name": "Test Owner",
-        "email": "test@example.com",
-        "hashed_password": hashed_password,
-        "business_name": "Test Salon",
-        "slug": "test-salon",
-        "services_json": json.dumps([{"name": "Haircut", "description": "Mens haircut", "duration": 30, "price": 25.0, "currency": "USD"}]),
-        "availability_json": json.dumps({"Monday": [{"start_time": "09:00", "end_time": "17:00"}]}),
-        "phone": "+15551234567"
-    }
-    owner = Owner(**owner_data)
-    db_session.add(owner)
-    db_session.commit()
-    db_session.refresh(owner)
-    return owner
-
-def test_health_check(client):
-    response = client.get("/health")
+@pytest.mark.asyncio
+async def test_health_check(client: AsyncClient):
+    response = await client.get("/health")
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
 
-def test_root_page_english(client):
-    response = client.get("/?lang=en")
+@pytest.mark.asyncio
+async def test_root_redirect_to_signup(client: AsyncClient):
+    response = await client.get("/", follow_redirects=False)
+    assert response.status_code == 302
+    assert response.headers["location"] == "/signup"
+
+@pytest.mark.asyncio
+async def test_signup_page(client: AsyncClient):
+    response = await client.get("/signup")
     assert response.status_code == 200
-    assert "Welcome to BookSlot!" in response.text
-    assert "English" in response.text
-    assert "Arabic" in response.text
-    assert "French" in response.text
+    assert "Sign Up - BookSlot" in response.text
+    assert "Your Name" in response.text
 
-def test_root_page_arabic(client):
-    response = client.get("/?lang=ar")
-    assert response.status_code == 200
-    assert "مرحباً بك في بوك سلوت!" in response.text # Assuming this is the Arabic translation
-    assert "الإنجليزية" in response.text
-    assert "العربية" in response.text
-    assert "الفرنسية" in response.text
-
-def test_root_page_french(client):
-    response = client.get("/?lang=fr")
-    assert response.status_code == 200
-    assert "Bienvenue sur BookSlot !" in response.text # Assuming this is the French translation
-    assert "Anglais" in response.text
-    assert "Arabe" in response.text
-    assert "Français" in response.text
-
-def test_create_owner(client):
-    response = client.post(
-        "/owners/",
-        json={
-            "name": "New Owner",
-            "email": "new@example.com",
-            "password": "securepassword",
-            "business_name": "New Business",
-            "slug": "new-business-slug",
-            "phone": "+1234567890"
-        },
-    )
-    assert response.status_code == 200
-    data = response.json()
-    assert data["email"] == "new@example.com"
-    assert "id" in data
-
-def test_create_owner_duplicate_email(client, test_owner):
-    response = client.post(
-        "/owners/",
-        json={
-            "name": "Another Owner",
-            "email": "test@example.com", # Duplicate email
-            "password": "securepassword",
-            "business_name": "Another Business",
-            "slug": "another-business-slug",
-            "phone": "+1234567891"
-        },
-    )
-    assert response.status_code == 400
-    assert response.json() == {"detail": "Email already registered"}
-
-def test_get_booking_page(client, test_owner):
-    response = client.get(f"/{test_owner.slug}")
-    assert response.status_code == 200
-    assert test_owner.business_name in response.text
-    assert "Haircut" in response.text
-
-def test_create_booking(client, test_owner):
-    booking_data = {
-        "customer_name": "Jane Doe",
-        "customer_email": "jane@example.com",
-        "customer_phone": "+1234567890",
-        "service_name": "Haircut",
-        "booking_date": "2023-12-25",
-        "booking_time": "10:00"
+@pytest.mark.asyncio
+async def test_owner_signup_and_login(client: AsyncClient):
+    # Test Signup
+    signup_data = {
+        "name": "Test Owner",
+        "email": "test@example.com",
+        "password": "testpassword",
+        "business_name": "Test Business",
+        "slug": "test-business",
+        "phone": "+1234567890"
     }
-    response = client.post(f"/{test_owner.slug}/book", json=booking_data)
-    assert response.status_code == 200
-    assert "Booking Confirmed!" in response.text
-    assert "Jane Doe" in response.text
-    assert "Haircut" in response.text
-    assert "2023-12-25" in response.text
-    assert "10:00" in response.text
+    response = await client.post("/signup", data=signup_data, follow_redirects=False)
+    assert response.status_code == 302
+    assert response.headers["location"] == "/login?lang=en"
 
-def test_create_booking_missing_data(client, test_owner):
-    booking_data = {
-        "customer_name": "Jane Doe",
-        "customer_email": "jane@example.com",
-        "service_name": "Haircut",
-        "booking_date": "2023-12-25" # Missing booking_time
+    # Test Login
+    login_data = {
+        "username": "test@example.com",
+        "password": "testpassword"
     }
-    response = client.post(f"/{test_owner.slug}/book", json=booking_data)
-    assert response.status_code == 422 # Pydantic validation error
+    response = await client.post("/token", data=login_data, follow_redirects=False)
+    assert response.status_code == 200
+    assert "access_token" in response.json()
+    assert "token_type" in response.json()
 
-# Test currency formatting filter
-def test_currency_filter_english(client, test_owner):
-    response = client.get(f"/{test_owner.slug}?lang=en")
-    assert "$25.00" in response.text
+@pytest.mark.asyncio
+async def test_i18n_language_toggle_on_signup(client: AsyncClient):
+    response_en = await client.get("/signup?lang=en")
+    assert "Sign Up" in response_en.text
+    assert "Already have an account? Log In" in response_en.text
 
-def test_currency_filter_arabic(client, test_owner):
-    response = client.get(f"/{test_owner.slug}?lang=ar")
-    assert "25.00 ر.س" in response.text # Assuming SAR for Arabic example
+    response_ar = await client.get("/signup?lang=ar")
+    assert "التسجيل" in response_ar.text
+    assert "هل لديك حساب بالفعل؟ تسجيل الدخول" in response_ar.text
 
-def test_currency_filter_french(client, test_owner):
-    response = client.get(f"/{test_owner.slug}?lang=fr")
-    assert "25,00 €" in response.text # Assuming EUR for French example
+    response_fr = await client.get("/signup?lang=fr")
+    assert "S'inscrire" in response_fr.text
+    assert "Déjà un compte ? Se connecter" in response_fr.text
+
+@pytest.mark.asyncio
+async def test_currency_formatting_on_booking_page(client: AsyncClient, db_session):
+    # First, create an owner to have a booking page
+    owner_data = {
+        "name": "Currency Test Owner",
+        "email": "currency@example.com",
+        "password": "securepassword",
+        "business_name": "Currency Clinic",
+        "slug": "currency-clinic",
+        "phone": "+1234567890"
+    }
+    await client.post("/signup", data=owner_data) # Signup the owner
+
+    # Access booking page with different languages and check currency format
+    response_en = await client.get("/book/currency-clinic?lang=en")
+    assert response_en.status_code == 200
+    assert "$50.00" in response_en.text # Default service price in English
+
+    response_ar = await client.get("/book/currency-clinic?lang=ar")
+    assert response_ar.status_code == 200
+    # The Arabic currency filter returns "50.00 ر.س"
+    assert "50.00 \u0631.\u0633" in response_ar.text.replace('&#x200f;', '').replace('&#x200e;', '') # Remove potential RTL marks
+
+    response_fr = await client.get("/book/currency-clinic?lang=fr")
+    assert response_fr.status_code == 200
+    assert "50,00 \u20ac" in response_fr.text

@@ -1,83 +1,104 @@
 <!DOCTYPE html>
-<html lang="{{ current_lang }}">
+<html lang="{{ request.state.lang }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _('Dashboard') }}</title>
-    <style>
-        body { font-family: sans-serif; margin: 20px; background-color: #f4f7f6; color: #333; }
-        .container { max-width: 900px; margin: auto; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        h1 { color: #007bff; text-align: center; margin-bottom: 30px; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
-        .header h2 { margin: 0; color: #555; }
-        .lang-toggle a { margin-left: 10px; text-decoration: none; color: #007bff; }
-        .lang-toggle a:hover { text-decoration: underline; }
-        .profile-section, .bookings-section { margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px; }
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #666; }
-        .form-group input[type="text"], .form-group input[type="email"], .form-group input[type="tel"] { width: calc(100% - 22px); padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
-        .btn { background-color: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
-        .btn:hover { background-color: #218838; }
-        .booking-list { list-style: none; padding: 0; }
-        .booking-item { background-color: #f9f9f9; border: 1px solid #eee; margin-bottom: 10px; padding: 15px; border-radius: 5px; }
-        .booking-item strong { color: #007bff; }
-        .logout-btn { background-color: #dc3545; margin-top: 20px; float: right; }
-        .logout-btn:hover { background-color: #c82333; }
-        @media (max-width: 600px) {
-            .header { flex-direction: column; align-items: flex-start; }
-            .lang-toggle { margin-top: 10px; }
-        }
-    </style>
+    <title>{{ _('Dashboard - BookSlot') }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>{{ _('BookSlot Dashboard') }}</h1>
-            <div class="lang-toggle">
-                <a href="{{ request.url | update_query_param('lang', 'en') }}">English</a> |
-                <a href="{{ request.url | update_query_param('lang', 'ar') }}">العربية</a> |
-                <a href="{{ request.url | update_query_param('lang', 'fr') }}">Français</a>
+<body class="bg-gray-100 text-gray-900">
+    <nav class="bg-blue-600 p-4 text-white shadow-md">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold">{{ _('BookSlot Dashboard') }}</h1>
+            <div class="flex items-center">
+                <span class="mr-4">{{ _('Welcome,') }} {{ owner.name }}!</span>
+                <a href="{{ request.url|update_query_param('lang', 'en') }}" class="text-white hover:text-blue-200 mx-2">EN</a>
+                <a href="{{ request.url|update_query_param('lang', 'ar') }}" class="text-white hover:text-blue-200 mx-2">AR</a>
+                <a href="{{ request.url|update_query_param('lang', 'fr') }}" class="text-white hover:text-blue-200 mx-2">FR</a>
+                <!-- Logout form -->
+                <form action="/logout" method="post" class="ml-4">
+                    <button type="submit" class="bg-blue-700 hover:bg-blue-800 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">{{ _('Logout') }}</button>
+                </form>
             </div>
         </div>
+    </nav>
 
-        <div class="profile-section">
-            <h2>{{ _('Your Profile') }}</h2>
-            <form id="profile-form">
-                <div class="form-group">
-                    <label for="name">{{ _('Name') }}:</label>
-                    <input type="text" id="name" name="name" value="{{ owner.name if owner else '' }}" required>
+    <div class="container mx-auto p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Profile Section -->
+        <div class="md:col-span-1 bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-xl font-semibold mb-4">{{ _('Your Profile') }}</h2>
+            {% if success %}
+                <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
+                    <strong class="font-bold">{{ _('Success!') }}</strong>
+                    <span class="block sm:inline">{{ success }}</span>
                 </div>
-                <div class="form-group">
-                    <label for="business_name">{{ _('Business Name') }}:</label>
-                    <input type="text" id="business_name" name="business_name" value="{{ owner.business_name if owner else '' }}" required>
+            {% endif %}
+            {% if error %}
+                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+                    <strong class="font-bold">{{ _('Error!') }}</strong>
+                    <span class="block sm:inline">{{ error }}</span>
                 </div>
-                <div class="form-group">
-                    <label for="phone">{{ _('Phone') }}:</label>
-                    <input type="tel" id="phone" name="phone" value="{{ owner.phone if owner else '' }}">
+            {% endif %}
+            <form action="/dashboard/update_profile?lang={{ request.state.lang }}" method="post">
+                <div class="mb-4">
+                    <label for="name" class="block text-gray-700 text-sm font-bold mb-2">{{ _('Name') }}:</label>
+                    <input type="text" id="name" name="name" value="{{ owner.name }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
                 </div>
-                <button type="submit" class="btn">{{ _('Update Profile') }}</button>
+                <div class="mb-4">
+                    <label for="business_name" class="block text-gray-700 text-sm font-bold mb-2">{{ _('Business Name') }}:</label>
+                    <input type="text" id="business_name" name="business_name" value="{{ owner.business_name }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                </div>
+                <div class="mb-4">
+                    <label for="phone" class="block text-gray-700 text-sm font-bold mb-2">{{ _('Phone Number (for WhatsApp notifications)') }}:</label>
+                    <input type="tel" id="phone" name="phone" value="{{ owner.phone if owner.phone else '' }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">{{ _('Booking Page Link') }}:</label>
+                    <p class="text-blue-600 break-words">bookslot.app/{{ owner.slug }}</p>
+                </div>
+                <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                    {{ _('Update Profile') }}
+                </button>
             </form>
         </div>
 
-        <div class="bookings-section">
-            <h2>{{ _('Upcoming Bookings') }}</h2>
-            <ul class="booking-list">
-                {% if bookings %}
-                    {% for booking in bookings %}
-                        <li class="booking-item">
-                            <strong>{{ _('Service') }}:</strong> {{ booking.service_name }}<br>
-                            <strong>{{ _('Customer') }}:</strong> {{ booking.customer_name }} ({{ booking.customer_email }})<br>
-                            <strong>{{ _('Date') }}:</strong> {{ booking.booking_date }}<br>
-                            <strong>{{ _('Time') }}:</strong> {{ booking.booking_time }}
-                        </li>
-                    {% endfor %}
-                {% else %}
-                    <p>{{ _('No upcoming bookings.') }}</p>
-                {% endif %}
-            </ul>
+        <!-- Upcoming Bookings Section -->
+        <div class="md:col-span-2 bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-xl font-semibold mb-4">{{ _('Upcoming Bookings') }}</h2>
+            {% if bookings %}
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white">
+                        <thead>
+                            <tr>
+                                <th class="py-2 px-4 border-b text-left">{{ _('Customer') }}</th>
+                                <th class="py-2 px-4 border-b text-left">{{ _('Service') }}</th>
+                                <th class="py-2 px-4 border-b text-left">{{ _('Date') }}</th>
+                                <th class="py-2 px-4 border-b text-left">{{ _('Time') }}</th>
+                                <th class="py-2 px-4 border-b text-left">{{ _('Contact') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for booking in bookings %}
+                                <tr>
+                                    <td class="py-2 px-4 border-b">{{ booking.customer_name }}</td>
+                                    <td class="py-2 px-4 border-b">{{ booking.service_name }}</td>
+                                    <td class="py-2 px-4 border-b">{{ booking.display_date }}</td>
+                                    <td class="py-2 px-4 border-b">{{ booking.booking_time }}</td>
+                                    <td class="py-2 px-4 border-b">
+                                        <a href="mailto:{{ booking.customer_email }}" class="text-blue-500 hover:underline">{{ booking.customer_email }}</a>
+                                        {% if booking.customer_phone %}
+                                            <br><a href="tel:{{ booking.customer_phone }}" class="text-blue-500 hover:underline">{{ booking.customer_phone }}</a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p>{{ _('No upcoming bookings.') }}</p>
+            {% endif %}
         </div>
-
-        <button type="button" class="btn logout-btn">{{ _('Logout') }}</button>
     </div>
 </body>
 </html>

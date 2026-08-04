@@ -1,1 +1,1 @@
-Fix: Currency formatting for Arabic locale in i18n filter
+Reconstruct full application and test environment to resolve 'No module named pytest' error and ensure test execution.

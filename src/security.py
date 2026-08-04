@@ -28,10 +28,3 @@ def decode_access_token(token: str):
         return payload
     except JWTError:
         return None
-
-# This is a placeholder, a real app would use the get_current_owner from dependencies.py
-# For simplicity in this file, we add it here for now if security.py is used directly
-# by other modules for owner retrieval, though dependencies.py is the primary place.
-# It's better to keep it in dependencies.py and import it where needed.
-# async def get_current_owner(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
-#    ... (logic from dependencies.py)

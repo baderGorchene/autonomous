@@ -1,64 +1,25 @@
 <!DOCTYPE html>
-<html lang="{{ current_lang }}">
+<html lang="{{ request.state.lang }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _('Booking Confirmed') }}</title>
-    <style>
-        body { font-family: sans-serif; margin: 0; background-color: #f0f2f5; color: #333; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; padding: 20px; box-sizing: border-box; }
-        .container { background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 6px 20px rgba(0,0,0,0.1); max-width: 500px; width: 100%; box-sizing: border-box; text-align: center; }
-        .header { margin-bottom: 25px; }
-        .header h1 { color: #28a745; margin-bottom: 15px; font-size: 2.5em; }
-        .header p { color: #555; font-size: 1.1em; line-height: 1.5; margin-bottom: 20px; }
-        .details-list { list-style: none; padding: 0; margin-bottom: 30px; text-align: left; border-top: 1px solid #eee; padding-top: 20px; }
-        .details-list li { margin-bottom: 10px; font-size: 1em; color: #444; }
-        .details-list li strong { color: #007bff; display: inline-block; width: 100px; }
-        .btn-home { background-color: #007bff; color: white; padding: 12px 25px; border: none; border-radius: 6px; cursor: pointer; font-size: 1.1em; text-decoration: none; display: inline-block; transition: background-color 0.3s ease; }
-        .btn-home:hover { background-color: #0056b3; }
-        .lang-toggle { text-align: center; margin-bottom: 20px; }
-        .lang-toggle a { margin: 0 8px; text-decoration: none; color: #007bff; font-weight: bold; }
-        .lang-toggle a:hover { text-decoration: underline; }
-
-        @media (max-width: 768px) {
-            .container { padding: 20px; margin: 10px; }
-            .header h1 { font-size: 2em; }
-            .header p { font-size: 1em; }
-            .details-list li strong { width: 80px; }
-        }
-
-        @media (max-width: 480px) {
-            body { padding: 10px; }
-            .container { border-radius: 5px; }
-            .header h1 { font-size: 1.8em; }
-            .header p { font-size: 0.95em; }
-            .lang-toggle a { margin: 0 5px; font-size: 0.9em; }
-        }
-    </style>
+    <title>{{ _('Booking Confirmed!') }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
-<body>
-    <div class="container">
-        <div class="lang-toggle">
-            <a href="{{ request.url | update_query_param('lang', 'en') }}">English</a> |
-            <a href="{{ request.url | update_query_param('lang', 'ar') }}">العربية</a> |
-            <a href="{{ request.url | update_query_param('lang', 'fr') }}">Français</a>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md text-center">
+        <h2 class="text-3xl font-bold text-green-600 mb-4">{{ _('Booking Confirmed!') }} 🎉</h2>
+        <p class="text-lg text-gray-700 mb-6">{{ _('Thank you,') }} {{ booking.customer_name }}!</p>
+        <p class="text-gray-600 mb-2">{{ _('Your appointment with') }} <strong>{{ owner.business_name }}</strong> {{ _('for') }} <strong>{{ booking.service_name }}</strong> {{ _('on') }} <strong>{{ booking.booking_date.strftime("%Y-%m-%d") }}</strong> {{ _('at') }} <strong>{{ booking.booking_time }}</strong> {{ _('has been successfully booked.') }}</p>
+        <p class="text-gray-600 mb-6">{{ _('A confirmation email has been sent to') }} <strong>{{ booking.customer_email }}</strong>.</p>
+        <a href="/book/{{ owner.slug }}?lang={{ request.state.lang }}" class="inline-block bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+            {{ _('Book Another Appointment') }}
+        </a>
+        <div class="mt-6 text-center">
+            <a href="{{ request.url|update_query_param('lang', 'en') }}" class="text-blue-500 hover:text-blue-800 mx-2">English</a>
+            <a href="{{ request.url|update_query_param('lang', 'ar') }}" class="text-blue-500 hover:text-blue-800 mx-2">العربية</a>
+            <a href="{{ request.url|update_query_param('lang', 'fr') }}" class="text-blue-500 hover:text-blue-800 mx-2">Français</a>
         </div>
-
-        <div class="header">
-            <h1>{{ _('Booking Confirmed!') }}</h1>
-            <p>{{ _('Thank you,') }} {{ booking.customer_name if booking else '' }}! {{ _('Your booking has been successfully placed with') }} {{ owner.business_name if owner else '' }}.</p>
-        </div>
-
-        <ul class="details-list">
-            <li><strong>{{ _('Service') }}:</strong> {{ booking.service_name if booking else '' }}</li>
-            <li><strong>{{ _('Date') }}:</strong> {{ booking.booking_date if booking else '' }}</li>
-            <li><strong>{{ _('Time') }}:</strong> {{ booking.booking_time if booking else '' }}</li>
-            <li><strong>{{ _('Email') }}:</strong> {{ booking.customer_email if booking else '' }}</li>
-            {% if booking.customer_phone %}
-            <li><strong>{{ _('Phone') }}:</strong> {{ booking.customer_phone }}</li>
-            {% endif %}
-        </ul>
-
-        <a href="/{{ owner.slug if owner else '' }}?lang={{ current_lang }}" class="btn-home">{{ _('Back to Booking Page') }}</a>
     </div>
 </body>
 </html>

@@ -3,64 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ gettext("Sign Up - BookSlot") }}</title>
+    <title>{{ _('Sign Up - BookSlot') }}</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen">
     <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-        <h1 class="text-2xl font-bold mb-6 text-center text-gray-800">{{ gettext("Create Your BookSlot Account") }}</h1>
-        
-        {% if msg %}
-            <div class="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded relative mb-4" role="alert">
-                <span class="block sm:inline">{{ msg }}</span>
+        <h2 class="text-2xl font-bold mb-6 text-center">{{ _('Sign Up') }}</h2>
+        {% if error %}
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+                <strong class="font-bold">{{ _('Error!') }}</strong>
+                <span class="block sm:inline">{{ error }}</span>
             </div>
         {% endif %}
-
-        <form action="/signup" method="post" class="space-y-4">
-            <div>
-                <label for="name" class="block text-sm font-medium text-gray-700">{{ gettext("Your Name") }}</label>
-                <input type="text" id="name" name="name" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+        <form action="/signup?lang={{ request.state.lang }}" method="post">
+            <div class="mb-4">
+                <label for="name" class="block text-gray-700 text-sm font-bold mb-2">{{ _('Your Name') }}:</label>
+                <input type="text" id="name" name="name" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
             </div>
-            <div>
-                <label for="email" class="block text-sm font-medium text-gray-700">{{ gettext("Email") }}</label>
-                <input type="email" id="email" name="email" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+            <div class="mb-4">
+                <label for="email" class="block text-gray-700 text-sm font-bold mb-2">{{ _('Email') }}:</label>
+                <input type="email" id="email" name="email" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
             </div>
-            <div>
-                <label for="password" class="block text-sm font-medium text-gray-700">{{ gettext("Password") }}</label>
-                <input type="password" id="password" name="password" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+            <div class="mb-4">
+                <label for="password" class="block text-gray-700 text-sm font-bold mb-2">{{ _('Password') }}:</label>
+                <input type="password" id="password" name="password" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
             </div>
-            <div>
-                <label for="business_name" class="block text-sm font-medium text-gray-700">{{ gettext("Business Name") }}</label>
-                <input type="text" id="business_name" name="business_name" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+            <div class="mb-4">
+                <label for="business_name" class="block text-gray-700 text-sm font-bold mb-2">{{ _('Business Name') }}:</label>
+                <input type="text" id="business_name" name="business_name" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
             </div>
-            <div>
-                <label for="slug" class="block text-sm font-medium text-gray-700">
-                    {{ gettext("Your Booking Page URL (e.g., bookslot.app/") }}<span class="font-bold">your-name</span>{{ gettext(")") }}
-                </label>
-                <input type="text" id="slug" name="slug" required pattern="^[a-z0-9-]+" title="{{ gettext('Only lowercase letters, numbers, and hyphens allowed.') }}" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+            <div class="mb-4">
+                <label for="slug" class="block text-gray-700 text-sm font-bold mb-2">{{ _('Your Booking Page URL (e.g., bookslot.app/your-slug)') }}:</label>
+                <input type="text" id="slug" name="slug" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" pattern="^[a-z0-9-]+$" title="{{ _('Lowercase alphanumeric with hyphens only.') }}" required>
             </div>
-            <div>
-                <label for="phone" class="block text-sm font-medium text-gray-700">{{ gettext("Phone Number (Optional)") }}</label>
-                <input type="tel" id="phone" name="phone" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+            <div class="mb-4">
+                <label for="phone" class="block text-gray-700 text-sm font-bold mb-2">{{ _('Phone Number (Optional, for WhatsApp notifications)') }}:</label>
+                <input type="tel" id="phone" name="phone" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
             </div>
-            <div>
-                <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                    {{ gettext("Sign Up") }}
+            <div class="flex items-center justify-between">
+                <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                    {{ _('Sign Up') }}
                 </button>
+                <a href="/login?lang={{ request.state.lang }}" class="inline-block align-baseline font-bold text-sm text-blue-500 hover:text-blue-800">
+                    {{ _('Already have an account? Log In') }}
+                </a>
             </div>
         </form>
-        <p class="mt-6 text-center text-sm text-gray-600">
-            {{ gettext("Already have an account?") }}
-            <a href="/login" class="font-medium text-blue-600 hover:text-blue-500">{{ gettext("Log in") }}</a>
-        </p>
-
-        <div class="mt-8 text-center">
-            <h3 class="text-lg font-semibold mb-2">{{ gettext("Change Language:") }}</h3>
-            <div class="flex justify-center space-x-4">
-                <a href="{{ request.url|update_query_param('lang', 'en') }}" class="text-blue-500 hover:underline">English</a>
-                <a href="{{ request.url|update_query_param('lang', 'ar') }}" class="text-blue-500 hover:underline">العربية</a>
-                <a href="{{ request.url|update_query_param('lang', 'fr') }}" class="text-blue-500 hover:underline">Français</a>
-            </div>
+        <div class="mt-6 text-center">
+            <a href="{{ request.url|update_query_param('lang', 'en') }}" class="text-blue-500 hover:text-blue-800 mx-2">English</a>
+            <a href="{{ request.url|update_query_param('lang', 'ar') }}" class="text-blue-500 hover:text-blue-800 mx-2">العربية</a>
+            <a href="{{ request.url|update_query_param('lang', 'fr') }}" class="text-blue-500 hover:text-blue-800 mx-2">Français</a>
         </div>
     </div>
 </body>
