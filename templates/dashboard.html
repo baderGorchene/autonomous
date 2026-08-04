@@ -1,154 +1,73 @@
 <!DOCTYPE html>
-<html lang="{{ current_lang }}">
+<html lang="{{ request.state.lang }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _('Dashboard - BookSlot') }}</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <title>{{ _('Dashboard') }} - BookSlot</title>
+    <link rel="stylesheet" href="/static/style.css">
     <style>
-        .lang-toggle a {
-            padding: 0.5rem;
-            border-radius: 0.25rem;
-            text-decoration: none;
-            color: #4a5568;
+        /* Basic styling for dashboard, can be moved to style.css */
+        .booking-list {
+            margin-top: 20px;
         }
-        .lang-toggle a.active {
-            background-color: #cbd5e0;
-            font-weight: bold;
+        .booking-item {
+            border: 1px solid #eee;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
         }
     </style>
 </head>
-<body class="bg-gray-100">
-    <nav class="bg-white shadow-sm">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16">
-                <div class="flex">
-                    <div class="flex-shrink-0 flex items-center">
-                        <a href="/owner/dashboard" class="text-xl font-bold text-indigo-600">BookSlot</a>
+<body>
+    <div class="container">
+        <h1>{{ _('Welcome,') }} {{ owner.name }}!</h1>
+        <p>{{ _('Your Business:') }} {{ owner.business_name }}</p>
+        <p>{{ _('Your Booking Page:') }} <a href="{{ booking_page_url }}">{{ booking_page_url }}</a></p>
+        
+        <h2>{{ _('Upcoming Bookings') }}</h2>
+        {% if bookings %}
+            <div class="booking-list">
+                {% for booking in bookings %}
+                    <div class="booking-item">
+                        <p><strong>{{ _('Service') }}:</strong> {{ booking.service_name }}</p>
+                        <p><strong>{{ _('Date') }}:</strong> {{ booking.booking_date.strftime('%Y-%m-%d') }}</p>
+                        <p><strong>{{ _('Time') }}:</strong> {{ booking.booking_time }}</p>
+                        <p><strong>{{ _('Customer') }}:</strong> {{ booking.customer_name }} ({{ booking.customer_email }})</p>
+                        {% if booking.customer_phone %}<p><strong>{{ _('Phone') }}:</strong> {{ booking.customer_phone }}</p>{% endif %}
                     </div>
-                    <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
-                        <a href="/owner/dashboard" class="border-indigo-500 text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">{{ _('Dashboard') }}</a>
-                        <a href="{{ url_for('public_booking_page', owner_slug=owner.slug) }}" target="_blank" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">{{ _('My Booking Page') }}</a>
-                    </div>
-                </div>
-                <div class="flex items-center">
-                    <div class="lang-toggle flex items-center space-x-2 mr-4">
-                        <a href="{{ request.url|update_query_param('lang', 'en') }}" class="{{ 'active' if current_lang == 'en' }}">EN</a>
-                        <a href="{{ request.url|update_query_param('lang', 'ar') }}" class="{{ 'active' if current_lang == 'ar' }}">AR</a>
-                        <a href="{{ request.url|update_query_param('lang', 'fr') }}" class="{{ 'active' if current_lang == 'fr' }}">FR</a>
-                    </div>
-                    <a href="/logout" class="ml-4 px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700">{{ _('Logout') }}</a>
-                </div>
+                {% endfor %}
             </div>
-        </div>
-    </nav>
-
-    <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <h1 class="text-3xl font-bold text-gray-900 mb-6">{{ _('Welcome, %s!') % owner.name }}</h1>
-
-        {% if error %}
-            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-                <strong class="font-bold">{{ _('Error!') }}</strong>
-                <span class="block sm:inline">{{ error }}</span>
-            </div>
+        {% else %}
+            <p>{{ _('No upcoming bookings.') }}</p>
         {% endif %}
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div class="bg-white shadow rounded-lg p-6">
-                <h2 class="text-xl font-semibold text-gray-900 mb-4">{{ _('Update Profile') }}</h2>
-                <form action="/owner/profile" method="post" class="space-y-4">
-                    <div>
-                        <label for="name" class="block text-sm font-medium text-gray-700">{{ _('Your Name') }}</label>
-                        <input type="text" id="name" name="name" value="{{ owner.name }}" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                    </div>
-                    <div>
-                        <label for="business_name" class="block text-sm font-medium text-gray-700">{{ _('Business Name') }}</label>
-                        <input type="text" id="business_name" name="business_name" value="{{ owner.business_name }}" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                    </div>
-                    <div>
-                        <label for="phone" class="block text-sm font-medium text-gray-700">{{ _('Phone Number') }}</label>
-                        <input type="tel" id="phone" name="phone" value="{{ owner.phone or '' }}" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                    </div>
-                    <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                        {{ _('Update Profile') }}
-                    </button>
-                </form>
-            </div>
+        <h2>{{ _('Your Services') }}</h2>
+        {% if services %}
+            <ul>
+                {% for service in services %}
+                    <li>{{ service.name }} ({{ service.duration_minutes }} {{ _('minutes') }}) - {{ service.price|format_currency(request.state.lang) }}</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>{{ _('No services set up yet.') }}</p>
+        {% endif %}
 
-            <div class="bg-white shadow rounded-lg p-6">
-                <h2 class="text-xl font-semibold text-gray-900 mb-4">{{ _('Your Services') }}</h2>
-                {% if services %}
-                    <ul class="list-disc pl-5 space-y-2">
-                        {% for service in services %}
-                            <li>
-                                <strong>{{ service.name }}</strong> ({{ service.price|format_currency(current_lang) }}) - {{ service.duration_minutes }} {{ _('minutes') }}
-                                <p class="text-gray-600 text-sm">{{ service.description }}</p>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                {% else %}
-                    <p class="text-gray-600">{{ _('No services configured yet.') }}</p>
-                    <p class="text-sm text-gray-500 mt-2">{{ _('Your public booking page currently shows example services.') }}</p>
-                {% endif %}
-            </div>
+        <h2>{{ _('Your Availability') }}</h2>
+        {% if availability.weekly_availability %}
+            <ul>
+                {% for av in availability.weekly_availability %}
+                    <li>{{ _('Day') }}: {{ av.day_of_week }} - {{ av.start_time }} to {{ av.end_time }}</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>{{ _('No availability set up yet.') }}</p>
+        {% endif %}
 
-            <div class="bg-white shadow rounded-lg p-6">
-                <h2 class="text-xl font-semibold text-gray-900 mb-4">{{ _('Your Availability') }}</h2>
-                {% if availability %}
-                    <ul class="list-disc pl-5 space-y-2">
-                        {% for day, slots in availability.items() %}
-                            <li><strong>{{ _(day) }}:</strong>
-                                {% if slots %}
-                                    {% for slot in slots %}
-                                        <span>{{ slot.start_time }} - {{ slot.end_time }}</span>{% if not loop.last %}, {% endif %}
-                                    {% endfor %}
-                                {% else %}
-                                    <span>{{ _('Not available') }}</span>
-                                {% endif %}
-                            </li>
-                        {% endfor %}
-                    </ul>
-                {% else %}
-                    <p class="text-gray-600">{{ _('No availability configured yet.') }}</p>
-                    <p class="text-sm text-gray-500 mt-2">{{ _('Customers cannot book if you have no availability set.') }}</p>
-                {% endif %}
-            </div>
-        </div>
-
-        <div class="mt-8 bg-white shadow rounded-lg p-6">
-            <h2 class="text-xl font-semibold text-gray-900 mb-4">{{ _('Upcoming Bookings') }}</h2>
-            {% if bookings %}
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ _('Date') }}</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ _('Time') }}</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ _('Service') }}</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ _('Customer') }}</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ _('Email') }}</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ _('Phone') }}</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ _('Message') }}</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            {% for booking in bookings %}
-                                <tr>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ booking.booking_date.strftime('%Y-%m-%d') }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ booking.booking_time }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ booking.service_name }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ booking.customer_name }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ booking.customer_email }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ booking.customer_phone or 'N/A' }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ booking.message or 'N/A' }}</td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            {% else %}
-                <p class="text-gray-600">{{ _('No upcoming bookings.') }}</p>
-            {% endif %}
+        <p><a href="/profile">{{ _('Update Profile / Services / Availability') }}</a></p>
+        <div class="language-toggle">
+            <a href="{{ request.url|update_query_param('lang', 'en') }}">English</a> |
+            <a href="{{ request.url|update_query_param('lang', 'ar') }}">العربية</a> |
+            <a href="{{ request.url|update_query_param('lang', 'fr') }}">Français</a>
         </div>
     </div>
 </body>

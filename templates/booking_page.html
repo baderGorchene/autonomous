@@ -1,119 +1,144 @@
 <!DOCTYPE html>
-<html lang="{{ current_lang }}">
+<html lang="{{ request.state.lang }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ owner.business_name }} - {{ _('Book an Appointment') }}</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
     <style>
-        .lang-toggle a {
-            padding: 0.5rem;
-            border-radius: 0.25rem;
-            text-decoration: none;
-            color: #4a5568;
+        /* Minimal styling, can be moved to style.css */
+        .booking-form-container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        .lang-toggle a.active {
-            background-color: #cbd5e0;
+        .service-selection, .date-selection, .time-selection {
+            margin-bottom: 20px;
+        }
+        .service-item, .time-slot-item {
+            display: inline-block;
+            background-color: #f0f0f0;
+            padding: 8px 15px;
+            margin: 5px;
+            border-radius: 20px;
+            cursor: pointer;
+            border: 1px solid #ccc;
+        }
+        .service-item.selected, .time-slot-item.selected {
+            background-color: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+        .error-message {
+            color: red;
             font-weight: bold;
-        }
-        @media (max-width: 767px) {
-            .container {
-                padding: 1rem;
-            }
+            margin-top: 10px;
         }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col">
-    <header class="bg-white shadow-sm p-4">
-        <div class="max-w-4xl mx-auto flex justify-between items-center">
-            <h1 class="text-2xl font-bold text-gray-800">{{ owner.business_name }}</h1>
-            <div class="lang-toggle flex items-center space-x-2">
-                <a href="{{ request.url|update_query_param('lang', 'en') }}" class="{{ 'active' if current_lang == 'en' }}">EN</a>
-                <a href="{{ request.url|update_query_param('lang', 'ar') }}" class="{{ 'active' if current_lang == 'ar' }}">AR</a>
-                <a href="{{ request.url|update_query_param('lang', 'fr') }}" class="{{ 'active' if current_lang == 'fr' }}">FR</a>
+<body>
+    <div class="container booking-form-container">
+        <h1>{{ _('Book an Appointment with') }} {{ owner.business_name }}</h1>
+        <p>{{ _('Welcome to') }} {{ owner.business_name }}'s {{ _('booking page.') }}</p>
+
+        {% if error_message %}
+            <p class="error-message">{{ error_message }}</p>
+        {% endif %}
+
+        <form action="/book/{{ owner.slug }}" method="post" id="bookingForm">
+            <div class="service-selection">
+                <h2>{{ _('Select a Service') }}</h2>
+                {% for service in services %}
+                    <div class="service-item" data-service-name="{{ service.name }}" data-service-price="{{ service.price }}">
+                        {{ service.name }} ({{ service.duration_minutes }} {{ _('minutes') }}) - {{ service.price|format_currency(request.state.lang, 'USD') }}
+                    </div>
+                {% endfor %}
+                <input type="hidden" name="service_name" id="selectedService" required>
             </div>
+
+            <div class="date-selection">
+                <h2>{{ _('Select a Date') }}</h2>
+                <input type="date" id="bookingDate" name="booking_date" min="{{ current_date }}" required>
+            </div>
+
+            <div class="time-selection">
+                <h2>{{ _('Select a Time Slot') }}</h2>
+                <div id="timeSlotsContainer">
+                    <p>{{ _('Please select a date to see available time slots.') }}</p>
+                </div>
+                <input type="hidden" name="booking_time" id="selectedTime" required>
+            </div>
+
+            <h2>{{ _('Your Details') }}</h2>
+            <label for="customerName">{{ _('Your Name') }}:</label>
+            <input type="text" id="customerName" name="customer_name" required>
+
+            <label for="customerEmail">{{ _('Your Email') }}:</label>
+            <input type="email" id="customerEmail" name="customer_email" required>
+
+            <label for="customerPhone">{{ _('Your Phone Number (optional)') }}:</label>
+            <input type="tel" id="customerPhone" name="customer_phone">
+
+            <button type="submit">{{ _('Confirm Booking') }}</button>
+        </form>
+
+        <div class="language-toggle">
+            <a href="{{ request.url|update_query_param('lang', 'en') }}">English</a> |
+            <a href="{{ request.url|update_query_param('lang', 'ar') }}">العربية</a> |
+            <a href="{{ request.url|update_query_param('lang', 'fr') }}">Français</a>
         </div>
-    </header>
-
-    <main class="flex-grow container mx-auto p-4 md:p-8">
-        <div class="bg-white rounded-lg shadow-md p-6 md:p-8">
-            <h2 class="text-xl md:text-2xl font-semibold mb-6 text-center text-gray-800">{{ _('Book Your Appointment') }}</h2>
-
-            {% if error %}
-                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-                    <strong class="font-bold">{{ _('Error!') }}</strong>
-                    <span class="block sm:inline">{{ error }}</span>
-                </div>
-            {% endif %}
-
-            <form action="{{ base_url }}{{ owner.slug }}/book" method="post" class="space-y-4">
-                <div>
-                    <label for="customer_name" class="block text-sm font-medium text-gray-700">{{ _('Your Name') }}</label>
-                    <input type="text" id="customer_name" name="customer_name" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                </div>
-                <div>
-                    <label for="customer_email" class="block text-sm font-medium text-gray-700">{{ _('Your Email') }}</label>
-                    <input type="email" id="customer_email" name="customer_email" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                </div>
-                <div>
-                    <label for="customer_phone" class="block text-sm font-medium text-gray-700">{{ _('Your Phone Number (Optional)') }}</label>
-                    <input type="tel" id="customer_phone" name="customer_phone" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                </div>
-                <div>
-                    <label for="service_name" class="block text-sm font-medium text-gray-700">{{ _('Select Service') }}</label>
-                    <select id="service_name" name="service_name" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                        <option value="">{{ _('-- Please choose a service --') }}</option>
-                        {% for service in services %}
-                            <option value="{{ service.name }}" data-price="{{ service.price }}" data-duration="{{ service.duration_minutes }}">
-                                {{ service.name }} ({{ service.price|format_currency(current_lang) }}) - {{ service.duration_minutes }} {{ _('min') }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div>
-                    <label for="booking_date" class="block text-sm font-medium text-gray-700">{{ _('Preferred Date') }}</label>
-                    <input type="date" id="booking_date" name="booking_date" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                </div>
-                <div>
-                    <label for="booking_time" class="block text-sm font-medium text-gray-700">{{ _('Preferred Time') }}</label>
-                    <input type="time" id="booking_time" name="booking_time" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                    <p class="text-xs text-gray-500 mt-1">{{ _('Times are shown in your local timezone.') }}</p>
-                </div>
-                <div>
-                    <label for="message" class="block text-sm font-medium text-gray-700">{{ _('Message (Optional)') }}</label>
-                    <textarea id="message" name="message" rows="3" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></textarea>
-                </div>
-                <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    {{ _('Book Now') }}
-                </button>
-            </form>
-        </div>
-    </main>
-
-    <footer class="bg-gray-800 text-white text-center p-4 mt-8">
-        <p>&copy; {{ now().year }} BookSlot. {{ _('All rights reserved.') }}</p>
-    </footer>
+    </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const serviceSelect = document.getElementById('service_name');
-            const priceDisplay = document.getElementById('service_price_display');
-            const durationDisplay = document.getElementById('service_duration_display');
+        const serviceItems = document.querySelectorAll('.service-item');
+        const selectedServiceInput = document.getElementById('selectedService');
+        const bookingDateInput = document.getElementById('bookingDate');
+        const timeSlotsContainer = document.getElementById('timeSlotsContainer');
+        const selectedTimeInput = document.getElementById('selectedTime');
+        const availableSlotsData = {{ available_slots | tojson }};
 
-            function updateServiceDetails() {
-                const selectedOption = serviceSelect.options[serviceSelect.selectedIndex];
-                const price = selectedOption.dataset.price;
-                const duration = selectedOption.dataset.duration;
-
-                if (priceDisplay) priceDisplay.textContent = price ? `Price: $${parseFloat(price).toFixed(2)}` : '';
-                if (durationDisplay) durationDisplay.textContent = duration ? `Duration: ${duration} min` : '';
-            }
-
-            if (serviceSelect) {
-                serviceSelect.addEventListener('change', updateServiceDetails);
-                updateServiceDetails();
-            }
+        serviceItems.forEach(item => {
+            item.addEventListener('click', () => {
+                serviceItems.forEach(s => s.classList.remove('selected'));
+                item.classList.add('selected');
+                selectedServiceInput.value = item.dataset.serviceName;
+            });
         });
+
+        bookingDateInput.addEventListener('change', (event) => {
+            const selectedDate = event.target.value;
+            renderTimeSlots(selectedDate);
+        });
+
+        function renderTimeSlots(date) {
+            timeSlotsContainer.innerHTML = '';
+            selectedTimeInput.value = ''; // Clear selected time on date change
+
+            const slots = availableSlotsData[date];
+            if (slots && slots.length > 0) {
+                slots.forEach(slot => {
+                    const div = document.createElement('div');
+                    div.classList.add('time-slot-item');
+                    div.textContent = slot;
+                    div.dataset.timeSlot = slot;
+                    div.addEventListener('click', () => {
+                        document.querySelectorAll('.time-slot-item').forEach(t => t.classList.remove('selected'));
+                        div.classList.add('selected');
+                        selectedTimeInput.value = slot;
+                    });
+                    timeSlotsContainer.appendChild(div);
+                });
+            } else {
+                timeSlotsContainer.innerHTML = `<p>{{ _('No available slots for this date.') }}</p>`;
+            }
+        }
+
+        // Initialize date input min attribute to today
+        bookingDateInput.value = "{{ current_date }}";
+        renderTimeSlots("{{ current_date }}"); // Render slots for today on load
     </script>
 </body>
 </html>

@@ -1,39 +1,62 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="{{ request.state.lang }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ _('Profile Settings') }} - BookSlot</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>{{ _('Profile Settings') }}</h1>
+        
+        {% if request.query_params.error == 'update_failed' %}
+            <p class="error-message">{{ _('Failed to update profile. Please try again.') }}</p>
+        {% endif %}
 
-{% block title %}{{ _('Edit Profile') }}{% endblock %}
+        <form action="/profile" method="post">
+            <label for="name">{{ _('Your Name') }}:</label>
+            <input type="text" id="name" name="name" value="{{ owner.name }}" required>
 
-{% block content %}
-<div class="max-w-md mx-auto bg-white p-8 rounded-lg shadow-md mt-10">
-    <h2 class="text-2xl font-bold text-center text-gray-800 mb-6">{{ _('Edit Your Profile') }}</h2>
-    
-    {% if msg %}
-    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
-        <span class="block sm:inline">{{ msg }}</span>
+            <label for="business_name">{{ _('Business Name') }}:</label>
+            <input type="text" id="business_name" name="business_name" value="{{ owner.business_name }}" required>
+
+            <label for="phone">{{ _('Phone Number (for WhatsApp notifications, optional)') }}:</label>
+            <input type="tel" id="phone" name="phone" value="{{ owner.phone or '' }}">
+
+            <button type="submit">{{ _('Update Profile') }}</button>
+        </form>
+
+        <h2>{{ _('Your Services') }}</h2>
+        <p>{{ _('This section needs a dedicated UI for adding/editing services.') }}</p>
+        {% if services %}
+            <ul>
+                {% for service in services %}
+                    <li>{{ service.name }} ({{ service.duration_minutes }} {{ _('minutes') }}) - {{ service.price|format_currency(request.state.lang) }}</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>{{ _('No services set up yet.') }}</p>
+        {% endif %}
+
+        <h2>{{ _('Your Availability') }}</h2>
+        <p>{{ _('This section needs a dedicated UI for setting daily availability.') }}</p>
+        {% if availability.weekly_availability %}
+            <ul>
+                {% for av in availability.weekly_availability %}
+                    <li>{{ _('Day') }}: {{ av.day_of_week }} - {{ av.start_time }} to {{ av.end_time }}</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>{{ _('No availability set up yet.') }}</p>
+        {% endif %}
+
+        <p><a href="/dashboard">{{ _('Back to Dashboard') }}</a></p>
+        <div class="language-toggle">
+            <a href="{{ request.url|update_query_param('lang', 'en') }}">English</a> |
+            <a href="{{ request.url|update_query_param('lang', 'ar') }}">العربية</a> |
+            <a href="{{ request.url|update_query_param('lang', 'fr') }}">Français</a>
+        </div>
     </div>
-    {% endif %}
-
-    <form action="/dashboard/profile" method="post" class="space-y-4">
-        <div>
-            <label for="name" class="block text-sm font-medium text-gray-700">{{ _('Your Name') }}</label>
-            <input type="text" name="name" id="name" value="{{ owner.name }}" required
-                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-        </div>
-        <div>
-            <label for="business_name" class="block text-sm font-medium text-gray-700">{{ _('Business Name') }}</label>
-            <input type="text" name="business_name" id="business_name" value="{{ owner.business_name }}" required
-                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-        </div>
-        <div>
-            <label for="phone" class="block text-sm font-medium text-gray-700">{{ _('Your Phone (Optional, for WhatsApp notifications)') }}</label>
-            <input type="tel" name="phone" id="phone" value="{{ owner.phone if owner.phone else '' }}"
-                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-        </div>
-        <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-            {{ _('Update Profile') }}
-        </button>
-    </form>
-    <p class="mt-6 text-center text-sm text-gray-600">
-        <a href="/dashboard" class="font-medium text-blue-600 hover:text-blue-500">{{ _('Back to Dashboard') }}</a>
-    </p>
-</div>
-{% endblock %}
+</body>
+</html>

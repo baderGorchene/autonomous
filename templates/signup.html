@@ -3,50 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _('Sign Up - BookSlot') }}</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <title>{{ _('Sign Up') }} - BookSlot</title>
+    <link rel="stylesheet" href="/static/style.css">
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
-    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-        <h1 class="text-2xl font-bold mb-6 text-center">{{ _('Sign Up for BookSlot') }}</h1>
-        {% if error %}
-            <p class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-                <strong class="font-bold">{{ _('Error!') }}</strong>
-                <span class="block sm:inline">{{ error }}</span>
-            </p>
-        {% endif %}
-        <form action="/signup" method="post" class="space-y-4">
-            <div>
-                <label for="name" class="block text-sm font-medium text-gray-700">{{ _('Your Name') }}</label>
-                <input type="text" id="name" name="name" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-            </div>
-            <div>
-                <label for="email" class="block text-sm font-medium text-gray-700">{{ _('Email Address') }}</label>
-                <input type="email" id="email" name="email" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-            </div>
-            <div>
-                <label for="password" class="block text-sm font-medium text-gray-700">{{ _('Password') }}</label>
-                <input type="password" id="password" name="password" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-            </div>
-            <div>
-                <label for="business_name" class="block text-sm font-medium text-gray-700">{{ _('Business Name') }}</label>
-                <input type="text" id="business_name" name="business_name" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-            </div>
-            <div>
-                <label for="slug" class="block text-sm font-medium text-gray-700">{{ _('Your Booking Page URL (e.g., bookslot.app/your-name)') }}</label>
-                <input type="text" id="slug" name="slug" pattern="^[a-z0-9-]+$" title="{{ _('Only lowercase letters, numbers, and hyphens are allowed.') }}" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-            </div>
-            <div>
-                <label for="phone" class="block text-sm font-medium text-gray-700">{{ _('Phone Number (Optional)') }}</label>
-                <input type="tel" id="phone" name="phone" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-            </div>
-            <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                {{ _('Sign Up') }}
-            </button>
+<body>
+    <div class="container">
+        <h1>{{ _('Sign Up for BookSlot') }}</h1>
+        <form action="/signup" method="post">
+            <label for="name">{{ _('Your Name') }}:</label>
+            <input type="text" id="name" name="name" required>
+
+            <label for="email">{{ _('Email') }}:</label>
+            <input type="email" id="email" name="email" required>
+
+            <label for="password">{{ _('Password') }}:</label>
+            <input type="password" id="password" name="password" required>
+
+            <label for="business_name">{{ _('Business Name') }}:</label>
+            <input type="text" id="business_name" name="business_name" required>
+
+            <label for="slug">{{ _('Booking Page URL (e.g., bookslot.app/your-slug)') }}:</label>
+            <input type="text" id="slug" name="slug" pattern="^[a-z0-9-]+$" title="{{ _('Lowercase letters, numbers, and hyphens only.') }}" required>
+            
+            <label for="phone">{{ _('Phone Number (for WhatsApp notifications, optional)') }}:</label>
+            <input type="tel" id="phone" name="phone">
+
+            <button type="submit">{{ _('Create Account') }}</button>
         </form>
-        <p class="mt-6 text-center text-sm text-gray-600">
-            {{ _('Already have an account?') }} <a href="/login" class="font-medium text-indigo-600 hover:text-indigo-500">{{ _('Log In') }}</a>
-        </p>
+        <p>{{ _('Already have an account?') }} <a href="/login">{{ _('Login here') }}</a></p>
+        {% if request.query_params.error == 'email_exists' %}
+            <p class="error-message">{{ _('An account with this email already exists.') }}</p>
+        {% elif request.query_params.error == 'slug_exists' %}
+            <p class="error-message">{{ _('This booking page URL is already taken. Please choose another.') }}</p>
+        {% elif request.query_params.error == 'invalid_slug' %}
+            <p class="error-message">{{ _('Invalid slug format. Use lowercase letters, numbers, and hyphens.') }}</p>
+        {% elif request.query_params.error == 'generic_error' %}
+            <p class="error-message">{{ _('An error occurred during signup. Please try again.') }}</p>
+        {% endif %}
+        <div class="language-toggle">
+            <a href="{{ request.url|update_query_param('lang', 'en') }}">English</a> |
+            <a href="{{ request.url|update_query_param('lang', 'ar') }}">العربية</a> |
+            <a href="{{ request.url|update_query_param('lang', 'fr') }}">Français</a>
+        </div>
     </div>
 </body>
 </html>

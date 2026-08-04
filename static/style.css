@@ -1,132 +1,107 @@
 body {
     font-family: Arial, sans-serif;
+    line-height: 1.6;
     margin: 0;
     padding: 20px;
     background-color: #f4f4f4;
     color: #333;
+    direction: ltr; /* Default LTR, overridden by RTL for Arabic */
+}
+
+html[lang="ar"] body {
+    direction: rtl;
+    text-align: right;
 }
 
 .container {
     max-width: 800px;
     margin: 20px auto;
-    background-color: #fff;
-    padding: 20px 30px;
+    background: #fff;
+    padding: 30px;
     border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
 }
 
-h1, h2, h3 {
+h1, h2 {
     color: #0056b3;
 }
 
 form {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
+    margin-top: 20px;
 }
 
 label {
-    font-weight: bold;
+    display: block;
     margin-bottom: 5px;
+    font-weight: bold;
 }
 
 input[type="text"],
 input[type="email"],
 input[type="password"],
 input[type="tel"],
-input[type="number"],
 input[type="date"],
-input[type="time"],
-select,
-textarea {
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 16px;
+select {
     width: 100%;
-    box-sizing: border-box; /* Include padding and border in the element's total width and height */
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box; /* Include padding in width */
 }
 
 button {
     background-color: #007bff;
     color: white;
-    padding: 12px 20px;
+    padding: 10px 20px;
     border: none;
     border-radius: 4px;
     cursor: pointer;
     font-size: 16px;
-    transition: background-color 0.3s ease;
 }
 
 button:hover {
     background-color: #0056b3;
 }
 
-a {
-    color: #007bff;
-    text-decoration: none;
-}
-
-a:hover {
-    text-decoration: underline;
-}
-
-.error {
+.error-message {
     color: #dc3545;
     background-color: #f8d7da;
     border: 1px solid #f5c6cb;
     padding: 10px;
-    border-radius: 5px;
+    border-radius: 4px;
     margin-bottom: 15px;
 }
 
-.success {
-    color: #28a745;
-    background-color: #d4edda;
-    border: 1px solid #c3e6cb;
-    padding: 10px;
-    border-radius: 5px;
-    margin-bottom: 15px;
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse;
+.language-toggle {
     margin-top: 20px;
+    text-align: center;
+}
+.language-toggle a {
+    margin: 0 5px;
+    text-decoration: none;
+    color: #007bff;
+}
+.language-toggle a:hover {
+    text-decoration: underline;
 }
 
-table, th, td {
-    border: 1px solid #ddd;
+/* Specific styles for booking page */
+.service-item, .time-slot-item {
+    display: inline-block;
+    background-color: #f0f0f0;
+    padding: 8px 15px;
+    margin: 5px;
+    border-radius: 20px;
+    cursor: pointer;
+    border: 1px solid #ccc;
+    transition: background-color 0.3s, color 0.3s, border-color 0.3s;
 }
-
-th, td {
-    padding: 10px;
-    text-align: left;
+.service-item:hover, .time-slot-item:hover {
+    background-color: #e0e0e0;
 }
-
-th {
-    background-color: #e9ecef;
-}
-
-/* Responsive adjustments */
-@media (max-width: 600px) {
-    .container {
-        margin: 10px;
-        padding: 15px;
-    }
-    input[type="text"],
-    input[type="email"],
-    input[type="password"],
-    input[type="tel"],
-    input[type="number"],
-    input[type="date"],
-    input[type="time"],
-    select,
-    textarea {
-        font-size: 14px;
-    }
-    button {
-        padding: 10px 15px;
-        font-size: 14px;
-    }
+.service-item.selected, .time-slot-item.selected {
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
 }

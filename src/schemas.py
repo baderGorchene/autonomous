@@ -1,19 +1,22 @@
 from pydantic import BaseModel, EmailStr, Field
-from datetime import datetime
-from typing import List, Dict, Optional
+from typing import List, Optional
+import datetime
 
-class Token(BaseModel):
-    access_token: str
-    token_type: str
+class Service(BaseModel):
+    name: str
+    duration_minutes: int
+    price: float
 
-class TokenData(BaseModel):
-    email: Optional[str] = None
+class Availability(BaseModel):
+    day_of_week: int # Monday is 0, Sunday is 6
+    start_time: str # HH:MM
+    end_time: str # HH:MM
 
 class OwnerBase(BaseModel):
     name: str
     email: EmailStr
     business_name: str
-    slug: str = Field(..., regex="^[a-z0-9-]+$", min_length=3, max_length=50)
+    slug: str = Field(..., pattern=r"^[a-z0-9-]+$", min_length=3, max_length=50) # Slug validation
     phone: Optional[str] = None
 
 class OwnerCreate(OwnerBase):
@@ -23,11 +26,13 @@ class OwnerProfileUpdate(BaseModel):
     name: str
     business_name: str
     phone: Optional[str] = None
+    # services: Optional[List[Service]] = None # Not directly updating via this schema for now
+    # availability: Optional[List[Availability]] = None # Not directly updating via this schema for now
 
 class Owner(OwnerBase):
     id: int
-    services_json: List[Dict]
-    availability_json: Dict
+    services_json: str
+    availability_json: str
 
     class Config:
         from_attributes = True
@@ -37,9 +42,8 @@ class BookingBase(BaseModel):
     customer_email: EmailStr
     customer_phone: Optional[str] = None
     service_name: str
-    booking_date: datetime
+    booking_date: datetime.date
     booking_time: str
-    message: Optional[str] = None
 
 class BookingCreate(BookingBase):
     pass
@@ -47,22 +51,14 @@ class BookingCreate(BookingBase):
 class Booking(BookingBase):
     id: int
     owner_id: int
-    created_at: datetime
+    status: str
 
     class Config:
         from_attributes = True
 
-class LoginRequest(BaseModel):
-    email: EmailStr
-    password: str
+class Token(BaseModel):
+    access_token: str
+    token_type: str
 
-class Service(BaseModel):
-    name: str
-    description: Optional[str] = None
-    price: float
-    duration_minutes: int
-
-class AvailabilitySlot(BaseModel):
-    day_of_week: int
-    start_time: str
-    end_time: str
+class TokenData(BaseModel):
+    email: Optional[str] = None

@@ -1,48 +1,32 @@
 <!DOCTYPE html>
-<html lang="{{ current_lang }}">
+<html lang="{{ request.state.lang }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _('Booking Confirmed!') }}</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <style>
-        .lang-toggle a {
-            padding: 0.5rem;
-            border-radius: 0.25rem;
-            text-decoration: none;
-            color: #4a5568;
-        }
-        .lang-toggle a.active {
-            background-color: #cbd5e0;
-            font-weight: bold;
-        }
-    </style>
+    <title>{{ _('Booking Confirmed') }} - BookSlot</title>
+    <link rel="stylesheet" href="/static/style.css">
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col items-center justify-center">
-    <div class="bg-white rounded-lg shadow-md p-8 max-w-md w-full text-center">
-        <div class="flex justify-end mb-4">
-            <div class="lang-toggle flex items-center space-x-2">
-                <a href="{{ request.url|update_query_param('lang', 'en') }}" class="{{ 'active' if current_lang == 'en' }}">EN</a>
-                <a href="{{ request.url|update_query_param('lang', 'ar') }}" class="{{ 'active' if current_lang == 'ar' }}">AR</a>
-                <a href="{{ request.url|update_query_param('lang', 'fr') }}" class="{{ 'active' if current_lang == 'fr' }}">FR</a>
-            </div>
+<body>
+    <div class="container">
+        <h1>{{ _('Booking Confirmed!') }}</h1>
+        <p>{{ _('Thank you,') }} {{ booking.customer_name }}!</p>
+        <p>{{ _('Your booking with') }} {{ owner.business_name }} {{ _('has been confirmed.') }}</p>
+        
+        <h2>{{ _('Booking Details') }}</h2>
+        <ul>
+            <li><strong>{{ _('Service') }}:</strong> {{ booking.service_name }}</li>
+            <li><strong>{{ _('Date') }}:</strong> {{ booking.booking_date.strftime('%Y-%m-%d') }}</li>
+            <li><strong>{{ _('Time') }}:</strong> {{ booking.booking_time }}</li>
+            <li><strong>{{ _('Your Email') }}:</strong> {{ booking.customer_email }}</li>
+            {% if booking.customer_phone %}<li><strong>{{ _('Your Phone') }}:</strong> {{ booking.customer_phone }}</li>{% endif %}
+        </ul>
+        <p>{{ _('A confirmation email has been sent to') }} {{ booking.customer_email }}.</p>
+        <p><a href="/book/{{ owner.slug }}">{{ _('Book another appointment') }}</a></p>
+        <div class="language-toggle">
+            <a href="{{ request.url|update_query_param('lang', 'en') }}">English</a> |
+            <a href="{{ request.url|update_query_param('lang', 'ar') }}">العربية</a> |
+            <a href="{{ request.url|update_query_param('lang', 'fr') }}">Français</a>
         </div>
-        <h1 class="text-3xl font-bold text-green-600 mb-4">{{ _('Booking Confirmed!') }}</h1>
-        <p class="text-gray-700 mb-2">{{ _('Thank you, %s!') % booking.customer_name }}</p>
-        <p class="text-gray-700 mb-4">{{ _('Your appointment with %s for %s has been successfully booked.') % (owner.business_name, booking.service_name) }}</p>
-        <div class="text-left text-gray-600 space-y-1 mb-6 inline-block">
-            <p><strong>{{ _('Date:') }}</strong> {{ booking.booking_date.strftime('%Y-%m-%d') }}</p>
-            <p><strong>{{ _('Time:') }}</strong> {{ booking.booking_time }}</p>
-            <p><strong>{{ _('Service:') }}</strong> {{ booking.service_name }}</p>
-            <p><strong>{{ _('Business:') }}</strong> {{ owner.business_name }}</p>
-            {% if booking.message %}
-                <p><strong>{{ _('Your Message:') }}</strong> {{ booking.message }}</p>
-            {% endif %}
-        </div>
-        <p class="text-gray-700">{{ _('A confirmation email has been sent to %s.') % booking.customer_email }}</p>
-        <a href="/{{ owner.slug }}" class="mt-6 inline-block bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-md">
-            {{ _('Back to Booking Page') }}
-        </a>
     </div>
 </body>
 </html>
