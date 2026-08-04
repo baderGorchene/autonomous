@@ -1,73 +1,153 @@
 <!DOCTYPE html>
-<html lang="{{ request.state.lang }}">
+<html lang="{{ current_locale() }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _('Dashboard') }} - BookSlot</title>
+    <title>{{ title }} - BookSlot</title>
     <link rel="stylesheet" href="/static/style.css">
     <style>
-        /* Basic styling for dashboard, can be moved to style.css */
-        .booking-list {
+        /* Basic styling for dashboard, expand as needed */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
             margin-top: 20px;
         }
-        .booking-item {
-            border: 1px solid #eee;
-            padding: 10px;
+        @media (min-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        .card {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .booking-list ul {
+            list-style: none;
+            padding: 0;
+        }
+        .booking-list li {
+            background-color: #fff;
             margin-bottom: 10px;
-            border-radius: 5px;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #eee;
+        }
+        .service-item, .availability-item {
+            background-color: #fff;
+            padding: 10px;
+            margin-bottom: 5px;
+            border-radius: 4px;
+            border: 1px solid #eee;
+        }
+        .add-button {
+            background-color: #007bff;
+            color: white;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .add-button:hover {
+            background-color: #0056b3;
+        }
+        .json-input {
+            width: 100%;
+            height: 150px;
+            margin-top: 5px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: monospace;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>{{ _('Welcome,') }} {{ owner.name }}!</h1>
-        <p>{{ _('Your Business:') }} {{ owner.business_name }}</p>
-        <p>{{ _('Your Booking Page:') }} <a href="{{ booking_page_url }}">{{ booking_page_url }}</a></p>
-        
-        <h2>{{ _('Upcoming Bookings') }}</h2>
-        {% if bookings %}
-            <div class="booking-list">
-                {% for booking in bookings %}
-                    <div class="booking-item">
-                        <p><strong>{{ _('Service') }}:</strong> {{ booking.service_name }}</p>
-                        <p><strong>{{ _('Date') }}:</strong> {{ booking.booking_date.strftime('%Y-%m-%d') }}</p>
-                        <p><strong>{{ _('Time') }}:</strong> {{ booking.booking_time }}</p>
-                        <p><strong>{{ _('Customer') }}:</strong> {{ booking.customer_name }} ({{ booking.customer_email }})</p>
-                        {% if booking.customer_phone %}<p><strong>{{ _('Phone') }}:</strong> {{ booking.customer_phone }}</p>{% endif %}
-                    </div>
-                {% endfor %}
+        <header>
+            <h1>{{ _("Welcome,") }} {{ owner.name }}!</h1>
+            <nav>
+                <a href="/logout">{{ _("Logout") }}</a>
+            </nav>
+        </header>
+
+        {% if error %}
+            <p style="color: red;">{{ error }}</p>
+        {% endif %}
+        {% if message %}
+            <p style="color: green;">{{ message }}</p>
+        {% endif %}
+
+        <div class="dashboard-grid">
+            <div class="card">
+                <h2>{{ _("Your Booking Page") }}</h2>
+                <p>{{ _("Share this link with your customers:") }}</p>
+                <p><a href="{{ url_for('booking_page', owner_slug=owner.slug) }}" target="_blank">bookslot.app/{{ owner.slug }}</a></p>
+                <p>{{ _("Current Business Name:") }} {{ owner.business_name }}</p>
+                <p>{{ _("Current Phone:") }} {{ owner.phone or _('N/A') }}</p>
             </div>
-        {% else %}
-            <p>{{ _('No upcoming bookings.') }}</p>
-        {% endif %}
 
-        <h2>{{ _('Your Services') }}</h2>
-        {% if services %}
-            <ul>
-                {% for service in services %}
-                    <li>{{ service.name }} ({{ service.duration_minutes }} {{ _('minutes') }}) - {{ service.price|format_currency(request.state.lang) }}</li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p>{{ _('No services set up yet.') }}</p>
-        {% endif %}
+            <div class="card">
+                <h2>{{ _("Upcoming Bookings") }}</h2>
+                {% if upcoming_bookings %}
+                    <div class="booking-list">
+                        <ul>
+                            {% for booking in upcoming_bookings %}
+                                <li>
+                                    <strong>{{ booking.booking_date.strftime('%Y-%m-%d') }} {{ booking.booking_time }}</strong><br>
+                                    {{ _("Service:") }} {{ booking.service_name }}<br>
+                                    {{ _("Customer:") }} {{ booking.customer_name }} ({{ booking.customer_email }})
+                                    {% if booking.customer_phone %}<br>{{ _("Phone:") }} {{ booking.customer_phone }}{% endif %}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% else %}
+                    <p>{{ _("No upcoming bookings.") }}</p>
+                {% endif %}
+            </div>
 
-        <h2>{{ _('Your Availability') }}</h2>
-        {% if availability.weekly_availability %}
-            <ul>
-                {% for av in availability.weekly_availability %}
-                    <li>{{ _('Day') }}: {{ av.day_of_week }} - {{ av.start_time }} to {{ av.end_time }}</li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p>{{ _('No availability set up yet.') }}</p>
-        {% endif %}
+            <div class="card">
+                <h2>{{ _("Update Profile & Settings") }}</h2>
+                <form action="/dashboard/profile" method="post">
+                    <label for="name">{{ _("Your Name:") }}</label>
+                    <input type="text" id="name" name="name" value="{{ owner.name }}" required>
 
-        <p><a href="/profile">{{ _('Update Profile / Services / Availability') }}</a></p>
-        <div class="language-toggle">
-            <a href="{{ request.url|update_query_param('lang', 'en') }}">English</a> |
-            <a href="{{ request.url|update_query_param('lang', 'ar') }}">العربية</a> |
-            <a href="{{ request.url|update_query_param('lang', 'fr') }}">Français</a>
+                    <label for="business_name">{{ _("Business Name:") }}</label>
+                    <input type="text" id="business_name" name="business_name" value="{{ owner.business_name }}" required>
+
+                    <label for="phone">{{ _("Your Phone Number (for WhatsApp notifications):") }}</label>
+                    <input type="tel" id="phone" name="phone" value="{{ owner.phone or '' }}">
+
+                    <h3>{{ _("Services Offered (JSON Array):") }}</h3>
+                    <textarea class="json-input" name="services_json" placeholder='[{"name": "Haircut", "duration": 30, "price": 25.0, "description": "Standard haircut"}]'>{{ owner.services_json }}</textarea>
+                    <small>{{ _("Example: [{'name': 'Service A', 'duration': 60, 'price': 50.0}, {'name': 'Service B', 'duration': 30, 'price': 30.0}]") }}</small>
+
+                    <h3>{{ _("Availability (JSON Object):") }}</h3>
+                    <textarea class="json-input" name="availability_json" placeholder='{"Monday": [{"start_time": "09:00", "end_time": "17:00"}], "Tuesday": [{"start_time": "10:00", "end_time": "18:00"}]}'>{{ owner.availability_json }}</textarea>
+                    <small>{{ _("Example: {'Monday': [{'start_time': '09:00', 'end_time': '17:00'}], 'Tuesday': [{'start_time': '10:00', 'end_time': '18:00'}]}") }}</small>
+
+                    <button type="submit" class="add-button">{{ _("Update Profile") }}</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="language-selector">
+            <form action="/set-language-redirect" method="post" style="display:inline;">
+                <input type="hidden" name="lang" value="en">
+                <button type="submit" {% if current_locale() == 'en' %}disabled{% endif %}>English</button>
+            </form>
+            <form action="/set-language-redirect" method="post" style="display:inline;">
+                <input type="hidden" name="lang" value="ar">
+                <button type="submit" {% if current_locale() == 'ar' %}disabled{% endif %}>العربية</button>
+            </form>
+            <form action="/set-language-redirect" method="post" style="display:inline;">
+                <input type="hidden" name="lang" value="fr">
+                <button type="submit" {% if current_locale() == 'fr' %}disabled{% endif %}>Français</button>
+            </form>
         </div>
     </div>
 </body>

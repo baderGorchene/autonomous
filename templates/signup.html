@@ -1,49 +1,59 @@
 <!DOCTYPE html>
-<html lang="{{ request.state.lang }}">
+<html lang="{{ lang }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _('Sign Up') }} - BookSlot</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <title>{{ _("Sign Up - BookSlot") }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
-<body>
-    <div class="container">
-        <h1>{{ _('Sign Up for BookSlot') }}</h1>
-        <form action="/signup" method="post">
-            <label for="name">{{ _('Your Name') }}:</label>
-            <input type="text" id="name" name="name" required>
-
-            <label for="email">{{ _('Email') }}:</label>
-            <input type="email" id="email" name="email" required>
-
-            <label for="password">{{ _('Password') }}:</label>
-            <input type="password" id="password" name="password" required>
-
-            <label for="business_name">{{ _('Business Name') }}:</label>
-            <input type="text" id="business_name" name="business_name" required>
-
-            <label for="slug">{{ _('Booking Page URL (e.g., bookslot.app/your-slug)') }}:</label>
-            <input type="text" id="slug" name="slug" pattern="^[a-z0-9-]+$" title="{{ _('Lowercase letters, numbers, and hyphens only.') }}" required>
-            
-            <label for="phone">{{ _('Phone Number (for WhatsApp notifications, optional)') }}:</label>
-            <input type="tel" id="phone" name="phone">
-
-            <button type="submit">{{ _('Create Account') }}</button>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+        <h1 class="text-2xl font-bold text-gray-800 mb-6 text-center">{{ _("Sign Up for BookSlot") }}</h1>
+        <form action="/signup" method="post" class="space-y-4">
+            <div>
+                <label for="name" class="block text-sm font-medium text-gray-700">{{ _("Your Name") }}</label>
+                <input type="text" id="name" name="name" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+            </div>
+            <div>
+                <label for="email" class="block text-sm font-medium text-gray-700">{{ _("Email") }}</label>
+                <input type="email" id="email" name="email" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+            </div>
+            <div>
+                <label for="password" class="block text-sm font-medium text-gray-700">{{ _("Password") }}</label>
+                <input type="password" id="password" name="password" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+            </div>
+            <div>
+                <label for="business_name" class="block text-sm font-medium text-gray-700">{{ _("Business Name") }}</label>
+                <input type="text" id="business_name" name="business_name" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+            </div>
+            <div>
+                <label for="slug" class="block text-sm font-medium text-gray-700">{{ _("Your Booking Page URL (e.g., bookslot.app/your-name)") }}</label>
+                <div class="mt-1 flex rounded-md shadow-sm">
+                    <span class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">
+                        bookslot.app/
+                    </span>
+                    <input type="text" id="slug" name="slug" required class="flex-1 block w-full rounded-none rounded-r-md px-3 py-2 border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                </div>
+            </div>
+            <div>
+                <label for="phone" class="block text-sm font-medium text-gray-700">{{ _("Phone Number (optional, for WhatsApp notifications)") }}</label>
+                <input type="text" id="phone" name="phone" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+            </div>
+            <button type="submit" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                {{ _("Create Account") }}
+            </button>
         </form>
-        <p>{{ _('Already have an account?') }} <a href="/login">{{ _('Login here') }}</a></p>
-        {% if request.query_params.error == 'email_exists' %}
-            <p class="error-message">{{ _('An account with this email already exists.') }}</p>
-        {% elif request.query_params.error == 'slug_exists' %}
-            <p class="error-message">{{ _('This booking page URL is already taken. Please choose another.') }}</p>
-        {% elif request.query_params.error == 'invalid_slug' %}
-            <p class="error-message">{{ _('Invalid slug format. Use lowercase letters, numbers, and hyphens.') }}</p>
-        {% elif request.query_params.error == 'generic_error' %}
-            <p class="error-message">{{ _('An error occurred during signup. Please try again.') }}</p>
-        {% endif %}
-        <div class="language-toggle">
-            <a href="{{ request.url|update_query_param('lang', 'en') }}">English</a> |
-            <a href="{{ request.url|update_query_param('lang', 'ar') }}">العربية</a> |
-            <a href="{{ request.url|update_query_param('lang', 'fr') }}">Français</a>
+        <p class="mt-6 text-center text-sm text-gray-600">
+            {{ _("Already have an account?") }} <a href="/login" class="font-medium text-blue-600 hover:text-blue-500">{{ _("Log In") }}</a>
+        </p>
+        <div class="mt-8">
+            <form action="/set-language" method="post" class="inline-block">
+                <select name="lang" onchange="this.form.submit()" class="block w-full mt-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    <option value="en" {% if lang == "en" %}selected{% endif %}>English</option>
+                    <option value="ar" {% if lang == "ar" %}selected{% endif %}>العربية</option>
+                    <option value="fr" {% if lang == "fr" %}selected{% endif %}>Français</option>
+                </select>
+            </form>
         </div>
     </div>
 </body>

@@ -4,201 +4,309 @@ msgstr ""
 "POT-Creation-Date: 2023-10-27 10:00+0000\n"
 "PO-Revision-Date: 2023-10-27 10:00+0000\n"
 "Last-Translator: \n"
-"Language-Team: French <fr@example.com>\n"
+"Language-Team: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.13.0\n"
 "Language: fr\n"
+"X-Generator: Babel 2.13.0\n"
 
+#: src/main.py:59
+msgid "Welcome"
+msgstr "Bienvenue"
+
+#: src/main.py:64
+msgid "Register"
+msgstr "S'inscrire"
+
+#: src/main.py:73
+msgid "Email already registered"
+msgstr "Email déjà enregistré"
+
+#: src/main.py:76
+msgid "Business URL already taken"
+msgstr "URL de l'entreprise déjà prise"
+
+#: src/main.py:81
+msgid "Registration successful! Please log in."
+msgstr "Inscription réussie ! Veuillez vous connecter."
+
+#: src/main.py:83
+msgid "Registration failed: {e}"
+msgstr "Échec de l'inscription : {e}"
+
+#: src/main.py:88
 msgid "Login"
 msgstr "Connexion"
 
-msgid "Login to BookSlot"
-msgstr "Se connecter à BookSlot"
+#: src/main.py:99
+msgid "Incorrect email or password"
+msgstr "Email ou mot de passe incorrect"
 
-msgid "Email"
-msgstr "Email"
-
-msgid "Password"
-msgstr "Mot de passe"
-
-msgid "Don't have an account?"
-msgstr "Vous n'avez pas de compte ?"
-
-msgid "Sign up here"
-msgstr "Inscrivez-vous ici"
-
-msgid "Invalid credentials. Please try again."
-msgstr "Identifiants invalides. Veuillez réessayer."
-
-msgid "Sign Up"
-msgstr "Inscription"
-
-msgid "Sign Up for BookSlot"
-msgstr "S'inscrire à BookSlot"
-
-msgid "Your Name"
-msgstr "Votre nom"
-
-msgid "Business Name"
-msgstr "Nom de l'entreprise"
-
-msgid "Booking Page URL (e.g., bookslot.app/your-slug)"
-msgstr "URL de la page de réservation (ex: bookslot.app/votre-slug)"
-
-msgid "Lowercase letters, numbers, and hyphens only."
-msgstr "Lettres minuscules, chiffres et tirets uniquement."
-
-msgid "Phone Number (for WhatsApp notifications, optional)"
-msgstr "Numéro de téléphone (pour les notifications WhatsApp, facultatif)"
-
-msgid "Create Account"
-msgstr "Créer un compte"
-
-msgid "Already have an account?"
-msgstr "Vous avez déjà un compte ?"
-
-msgid "An account with this email already exists."
-msgstr "Un compte avec cet email existe déjà."
-
-msgid "This booking page URL is already taken. Please choose another."
-msgstr "Cette URL de page de réservation est déjà prise. Veuillez en choisir une autre."
-
-msgid "Invalid slug format. Use lowercase letters, numbers, and hyphens."
-msgstr "Format de slug invalide. Utilisez des lettres minuscules, des chiffres et des tirets."
-
-msgid "An error occurred during signup. Please try again."
-msgstr "Une erreur est survenue lors de l'inscription. Veuillez réessayer."
-
+#: src/main.py:126
 msgid "Dashboard"
 msgstr "Tableau de bord"
 
+#: src/main.py:180
+msgid "Profile updated successfully!"
+msgstr "Profil mis à jour avec succès !"
+
+#: src/main.py:202
+msgid "Error updating profile: {e}"
+msgstr "Erreur lors de la mise à jour du profil : {e}"
+
+#: src/main.py:210
+msgid "Booking page not found"
+msgstr "Page de réservation introuvable"
+
+#: src/main.py:270
+msgid "Your booking has been successfully confirmed!"
+msgstr "Votre réservation a été confirmée avec succès !"
+
+#: src/main.py:272
+msgid "Booking Confirmed"
+msgstr "Réservation confirmée"
+
+#: src/main.py:274
+msgid "Invalid date or time format."
+msgstr "Format de date ou d'heure invalide."
+
+#: src/main.py:291
+msgid "Failed to submit booking: {e}"
+msgstr "Échec de l'envoi de la réservation : {e}"
+
+#: templates/login.html:12
+msgid "Login to BookSlot"
+msgstr "Se connecter à BookSlot"
+
+#: templates/login.html:17
+msgid "Email:"
+msgstr "Email :"
+
+#: templates/login.html:19
+msgid "Password:"
+msgstr "Mot de passe :"
+
+#: templates/login.html:21
+msgid "Login"
+msgstr "Connexion"
+
+#: templates/login.html:22
+msgid "Don't have an account?"
+msgstr "Vous n'avez pas de compte ?"
+
+#: templates/login.html:22
+msgid "Register here"
+msgstr "Inscrivez-vous ici"
+
+#: templates/register.html:12
+msgid "Register for BookSlot"
+msgstr "S'inscrire à BookSlot"
+
+#: templates/register.html:17
+msgid "Your Name:"
+msgstr "Votre nom :"
+
+#: templates/register.html:20
+msgid "Email:"
+msgstr "Email :"
+
+#: templates/register.html:23
+msgid "Password:"
+msgstr "Mot de passe :"
+
+#: templates/register.html:26
+msgid "Business Name:"
+msgstr "Nom de l'entreprise :"
+
+#: templates/register.html:29
+msgid "Desired Booking Page URL (e.g., bookslot.app/your-business):"
+msgstr "URL de la page de réservation souhaitée (ex: bookslot.app/votre-entreprise) :"
+
+#: templates/register.html:30
+msgid "Lowercase letters, numbers, and hyphens only"
+msgstr "Lettres minuscules, chiffres et tirets uniquement"
+
+#: templates/register.html:33
+msgid "Your Phone Number (for WhatsApp notifications, optional):"
+msgstr "Votre numéro de téléphone (pour les notifications WhatsApp, facultatif) :"
+
+#: templates/register.html:36
+msgid "Register"
+msgstr "S'inscrire"
+
+#: templates/register.html:37
+msgid "Already have an account?"
+msgstr "Vous avez déjà un compte ?"
+
+#: templates/register.html:37
+msgid "Login here"
+msgstr "Connectez-vous ici"
+
+#: templates/dashboard.html:18
 msgid "Welcome,"
 msgstr "Bienvenue,"
 
-msgid "Your Business:"
-msgstr "Votre entreprise :"
+#: templates/dashboard.html:39
+msgid "Your Booking Page"
+msgstr "Votre page de réservation"
 
-msgid "Your Booking Page:"
-msgstr "Votre page de réservation :"
+#: templates/dashboard.html:40
+msgid "Share this link with your customers:"
+msgstr "Partagez ce lien avec vos clients :"
 
+#: templates/dashboard.html:42
+msgid "Current Business Name:"
+msgstr "Nom de l'entreprise actuel :"
+
+#: templates/dashboard.html:43
+msgid "Current Phone:"
+msgstr "Téléphone actuel :"
+
+#: templates/dashboard.html:43
+msgid "N/A"
+msgstr "N/A"
+
+#: templates/dashboard.html:47
 msgid "Upcoming Bookings"
-msgstr "Prochaines réservations"
+msgstr "Réservations à venir"
 
-msgid "Service"
-msgstr "Service"
+#: templates/dashboard.html:56
+msgid "Service:"
+msgstr "Service :"
 
-msgid "Date"
-msgstr "Date"
+#: templates/dashboard.html:57
+msgid "Customer:"
+msgstr "Client :"
 
-msgid "Time"
-msgstr "Heure"
+#: templates/dashboard.html:58
+msgid "Phone:"
+msgstr "Téléphone :"
 
-msgid "Customer"
-msgstr "Client"
-
-msgid "Phone"
-msgstr "Téléphone"
-
+#: templates/dashboard.html:64
 msgid "No upcoming bookings."
-msgstr "Pas de réservations à venir."
+msgstr "Aucune réservation à venir."
 
-msgid "Your Services"
-msgstr "Vos services"
+#: templates/dashboard.html:68
+msgid "Update Profile & Settings"
+msgstr "Mettre à jour le profil et les paramètres"
 
-msgid "minutes"
-msgstr "minutes"
+#: templates/dashboard.html:71
+msgid "Your Name:"
+msgstr "Votre nom :"
 
-msgid "No services set up yet."
-msgstr "Aucun service n'est configuré pour le moment."
+#: templates/dashboard.html:74
+msgid "Business Name:"
+msgstr "Nom de l'entreprise :"
 
-msgid "Your Availability"
-msgstr "Vos disponibilités"
+#: templates/dashboard.html:77
+msgid "Your Phone Number (for WhatsApp notifications):"
+msgstr "Votre numéro de téléphone (pour les notifications WhatsApp) :"
 
-msgid "Day"
-msgstr "Jour"
+#: templates/dashboard.html:80
+msgid "Services Offered (JSON Array):"
+msgstr "Services offerts (tableau JSON) :"
 
-msgid "No availability set up yet."
-msgstr "Aucune disponibilité n'est configurée pour le moment."
+#: templates/dashboard.html:82
+msgid "Example: [{'name': 'Service A', 'duration': 60, 'price': 50.0}, {'name': 'Service B', 'duration': 30, 'price': 30.0}]"
+msgstr "Exemple : [{'name': 'Service A', 'duration': 60, 'price': 50.0}, {'name': 'Service B', 'duration': 30, 'price': 30.0}]"
 
-msgid "Update Profile / Services / Availability"
-msgstr "Mettre à jour le profil / Services / Disponibilités"
+#: templates/dashboard.html:84
+msgid "Availability (JSON Object):"
+msgstr "Disponibilité (objet JSON) :"
 
-msgid "Profile Settings"
-msgstr "Paramètres du profil"
+#: templates/dashboard.html:86
+msgid "Example: {'Monday': [{'start_time': '09:00', 'end_time': '17:00'}], 'Tuesday': [{'start_time': '10:00', 'end_time': '18:00'}]}"
+msgstr "Exemple : {'Lundi': [{'start_time': '09:00', 'end_time': '17:00'}], 'Mardi': [{'start_time': '10:00', 'end_time': '18:00'}]} "
 
-msgid "Failed to update profile. Please try again."
-msgstr "Échec de la mise à jour du profil. Veuillez réessayer."
-
+#: templates/dashboard.html:88
 msgid "Update Profile"
 msgstr "Mettre à jour le profil"
 
-msgid "This section needs a dedicated UI for adding/editing services."
-msgstr "Cette section nécessite une interface utilisateur dédiée pour ajouter/modifier des services."
-
-msgid "This section needs a dedicated UI for setting daily availability."
-msgstr "Cette section nécessite une interface utilisateur dédiée pour définir la disponibilité quotidienne."
-
-msgid "Back to Dashboard"
-msgstr "Retour au tableau de bord"
-
+#: templates/booking_page.html:42
 msgid "Book an Appointment"
 msgstr "Réserver un rendez-vous"
 
-msgid "Book an Appointment with"
-msgstr "Réserver un rendez-vous avec"
-
+#: templates/booking_page.html:79
 msgid "Welcome to"
-msgstr "Bienvenue sur la page de"
+msgstr "Bienvenue chez"
 
-msgid "'s booking page."
-msgstr "de réservation."
+#: templates/booking_page.html:79
+msgid "Book your appointment easily below."
+msgstr "Réservez votre rendez-vous facilement ci-dessous."
 
-msgid "Select a Service"
-msgstr "Sélectionnez un service"
+#: templates/booking_page.html:86
+msgid "1. Select a Service"
+msgstr "1. Sélectionnez un service"
 
-msgid "Select a Date"
-msgstr "Sélectionnez une date"
+#: templates/booking_page.html:93
+msgid "No description provided."
+msgstr "Aucune description fournie."
 
-msgid "Select a Time Slot"
-msgstr "Sélectionnez un créneau horaire"
+#: templates/booking_page.html:94
+msgid "Duration:"
+msgstr "Durée :"
 
-msgid "Please select a date to see available time slots."
-msgstr "Veuillez sélectionner une date pour voir les créneaux horaires disponibles."
+#: templates/booking_page.html:94
+msgid "minutes"
+msgstr "minutes"
 
-msgid "Your Details"
-msgstr "Vos coordonnées"
+#: templates/booking_page.html:95
+msgid "Price:"
+msgstr "Prix :"
 
-msgid "Your Email"
-msgstr "Votre email"
+#: templates/booking_page.html:100
+msgid "No services available at the moment."
+msgstr "Aucun service disponible pour le moment."
 
-msgid "Your Phone Number (optional)"
-msgstr "Votre numéro de téléphone (facultatif)"
+#: templates/booking_page.html:104
+msgid "2. Select a Date"
+msgstr "2. Sélectionnez une date"
 
+#: templates/booking_page.html:105
+msgid "Date:"
+msgstr "Date :"
+
+#: templates/booking_page.html:109
+msgid "3. Select a Time"
+msgstr "3. Sélectionnez une heure"
+
+#: templates/booking_page.html:111
+msgid "Please select a service and date to see available times."
+msgstr "Veuillez sélectionner un service et une date pour voir les heures disponibles."
+
+#: templates/booking_page.html:115
+msgid "4. Your Details"
+msgstr "4. Vos coordonnées"
+
+#: templates/booking_page.html:116
+msgid "Your Name:"
+msgstr "Votre nom :"
+
+#: templates/booking_page.html:119
+msgid "Your Email:"
+msgstr "Votre email :"
+
+#: templates/booking_page.html:122
+msgid "Your Phone Number (optional, for WhatsApp notifications):"
+msgstr "Votre numéro de téléphone (facultatif, pour les notifications WhatsApp) :"
+
+#: templates/booking_page.html:126
 msgid "Confirm Booking"
 msgstr "Confirmer la réservation"
 
-msgid "No available slots for this date."
-msgstr "Aucun créneau disponible pour cette date."
+#: templates/booking_page.html:200
+msgid "No availability for this day."
+msgstr "Aucune disponibilité pour ce jour."
 
-msgid "Booking Confirmed!"
-msgstr "Réservation confirmée !"
+#: templates/booking_page.html:236
+msgid "No available times for this service and date."
+msgstr "Aucune heure disponible pour ce service et cette date."
 
-msgid "Thank you,"
-msgstr "Merci,"
+#: templates/booking_confirmation.html:10
+msgid "Booking Confirmation"
+msgstr "Confirmation de réservation"
 
-msgid "Your booking with"
-msgstr "Votre réservation avec"
-
-msgid "has been confirmed."
-msgstr "a été confirmée."
-
-msgid "Booking Details"
-msgstr "Détails de la réservation"
-
-msgid "A confirmation email has been sent to"
-msgstr "Un email de confirmation a été envoyé à"
-
-msgid "Book another appointment"
-msgstr "Réserver un autre rendez-vous"
+#: templates/booking_confirmation.html:12
+msgid "Go to home page"
+msgstr "Aller à la page d'accueil"

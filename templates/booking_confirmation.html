@@ -1,31 +1,30 @@
 <!DOCTYPE html>
-<html lang="{{ request.state.lang }}">
+<html lang="{{ current_locale() }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _('Booking Confirmed') }} - BookSlot</title>
+    <title>{{ title }} - BookSlot</title>
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
     <div class="container">
-        <h1>{{ _('Booking Confirmed!') }}</h1>
-        <p>{{ _('Thank you,') }} {{ booking.customer_name }}!</p>
-        <p>{{ _('Your booking with') }} {{ owner.business_name }} {{ _('has been confirmed.') }}</p>
-        
-        <h2>{{ _('Booking Details') }}</h2>
-        <ul>
-            <li><strong>{{ _('Service') }}:</strong> {{ booking.service_name }}</li>
-            <li><strong>{{ _('Date') }}:</strong> {{ booking.booking_date.strftime('%Y-%m-%d') }}</li>
-            <li><strong>{{ _('Time') }}:</strong> {{ booking.booking_time }}</li>
-            <li><strong>{{ _('Your Email') }}:</strong> {{ booking.customer_email }}</li>
-            {% if booking.customer_phone %}<li><strong>{{ _('Your Phone') }}:</strong> {{ booking.customer_phone }}</li>{% endif %}
-        </ul>
-        <p>{{ _('A confirmation email has been sent to') }} {{ booking.customer_email }}.</p>
-        <p><a href="/book/{{ owner.slug }}">{{ _('Book another appointment') }}</a></p>
-        <div class="language-toggle">
-            <a href="{{ request.url|update_query_param('lang', 'en') }}">English</a> |
-            <a href="{{ request.url|update_query_param('lang', 'ar') }}">العربية</a> |
-            <a href="{{ request.url|update_query_param('lang', 'fr') }}">Français</a>
+        <h1>{{ _("Booking Confirmation") }}</h1>
+        <p>{{ message }}</p>
+        <p><a href="/">{{ _("Go to home page") }}</a></p>
+
+        <div class="language-selector">
+            <form action="/set-language-redirect" method="post" style="display:inline;">
+                <input type="hidden" name="lang" value="en">
+                <button type="submit" {% if current_locale() == 'en' %}disabled{% endif %}>English</button>
+            </form>
+            <form action="/set-language-redirect" method="post" style="display:inline;">
+                <input type="hidden" name="lang" value="ar">
+                <button type="submit" {% if current_locale() == 'ar' %}disabled{% endif %}>العربية</button>
+            </form>
+            <form action="/set-language-redirect" method="post" style="display:inline;">
+                <input type="hidden" name="lang" value="fr">
+                <button type="submit" {% if current_locale() == 'fr' %}disabled{% endif %}>Français</button>
+            </form>
         </div>
     </div>
 </body>

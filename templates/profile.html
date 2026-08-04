@@ -1,62 +1,215 @@
 <!DOCTYPE html>
-<html lang="{{ request.state.lang }}">
+<html lang="{{ lang }}" {% if lang == 'ar' %}dir="rtl"{% endif %}>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _('Profile Settings') }} - BookSlot</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <title>{{ _("Profile - BookSlot") }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        {% if lang == 'ar' %}
+        body {
+            direction: rtl;
+            text-align: right;
+        }
+        .text-left { text-align: right; }
+        .text-right { text-align: left; }
+        {% endif %}
+    </style>
 </head>
-<body>
-    <div class="container">
-        <h1>{{ _('Profile Settings') }}</h1>
-        
-        {% if request.query_params.error == 'update_failed' %}
-            <p class="error-message">{{ _('Failed to update profile. Please try again.') }}</p>
-        {% endif %}
+<body class="bg-gray-100 font-sans">
+    <nav class="bg-blue-600 p-4 text-white shadow-md">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold">{{ _("BookSlot Profile") }}</h1>
+            <div class="flex items-center space-x-4">
+                <a href="/dashboard" class="bg-blue-700 hover:bg-blue-800 text-white font-bold py-2 px-4 rounded-md">
+                    {{ _("Dashboard") }}
+                </a>
+                <a href="/logout" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-md">
+                    {{ _("Logout") }}
+                </a>
+                <form action="/set-language" method="post" class="inline-block ml-4">
+                    <select name="lang" onchange="this.form.submit()" class="block w-full text-sm text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        <option value="en" {% if lang == "en" %}selected{% endif %}>English</option>
+                        <option value="ar" {% if lang == "ar" %}selected{% endif %}>العربية</option>
+                        <option value="fr" {% if lang == "fr" %}selected{% endif %}>Français</option>
+                    </select>
+                </form>
+            </div>
+        </div>
+    </nav>
 
-        <form action="/profile" method="post">
-            <label for="name">{{ _('Your Name') }}:</label>
-            <input type="text" id="name" name="name" value="{{ owner.name }}" required>
+    <div class="container mx-auto mt-8 p-4">
+        <div class="bg-white shadow-lg rounded-lg p-6">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">{{ _("Update Your Profile") }}</h2>
+            <form action="/dashboard/profile" method="post" class="space-y-4">
+                <div>
+                    <label for="name" class="block text-sm font-medium text-gray-700">{{ _("Your Name") }}</label>
+                    <input type="text" id="name" name="name" value="{{ owner.name }}" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div>
+                    <label for="business_name" class="block text-sm font-medium text-gray-700">{{ _("Business Name") }}</label>
+                    <input type="text" id="business_name" name="business_name" value="{{ owner.business_name }}" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div>
+                    <label for="phone" class="block text-sm font-medium text-gray-700">{{ _("Phone Number (for WhatsApp notifications)") }}</label>
+                    <input type="text" id="phone" name="phone" value="{{ owner.phone if owner.phone else '' }}" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                </div>
 
-            <label for="business_name">{{ _('Business Name') }}:</label>
-            <input type="text" id="business_name" name="business_name" value="{{ owner.business_name }}" required>
+                <h3 class="text-xl font-semibold text-gray-800 mt-8 mb-4">{{ _("Services Offered") }}</h3>
+                <div id="services-container" class="space-y-4">
+                    <!-- Services will be dynamically added here -->
+                </div>
+                <button type="button" id="add-service-btn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-md mt-4">{{ _("Add Service") }}</button>
 
-            <label for="phone">{{ _('Phone Number (for WhatsApp notifications, optional)') }}:</label>
-            <input type="tel" id="phone" name="phone" value="{{ owner.phone or '' }}">
+                <h3 class="text-xl font-semibold text-gray-800 mt-8 mb-4">{{ _("Availability") }}</h3>
+                <div id="availability-container" class="space-y-4">
+                    <!-- Availability will be dynamically added here -->
+                </div>
+                <button type="button" id="add-availability-btn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-md mt-4">{{ _("Add Availability Slot") }}</button>
 
-            <button type="submit">{{ _('Update Profile') }}</button>
-        </form>
 
-        <h2>{{ _('Your Services') }}</h2>
-        <p>{{ _('This section needs a dedicated UI for adding/editing services.') }}</p>
-        {% if services %}
-            <ul>
-                {% for service in services %}
-                    <li>{{ service.name }} ({{ service.duration_minutes }} {{ _('minutes') }}) - {{ service.price|format_currency(request.state.lang) }}</li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p>{{ _('No services set up yet.') }}</p>
-        {% endif %}
+                <input type="hidden" id="services_json" name="services_json">
+                <input type="hidden" id="availability_json" name="availability_json">
 
-        <h2>{{ _('Your Availability') }}</h2>
-        <p>{{ _('This section needs a dedicated UI for setting daily availability.') }}</p>
-        {% if availability.weekly_availability %}
-            <ul>
-                {% for av in availability.weekly_availability %}
-                    <li>{{ _('Day') }}: {{ av.day_of_week }} - {{ av.start_time }} to {{ av.end_time }}</li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p>{{ _('No availability set up yet.') }}</p>
-        {% endif %}
-
-        <p><a href="/dashboard">{{ _('Back to Dashboard') }}</a></p>
-        <div class="language-toggle">
-            <a href="{{ request.url|update_query_param('lang', 'en') }}">English</a> |
-            <a href="{{ request.url|update_query_param('lang', 'ar') }}">العربية</a> |
-            <a href="{{ request.url|update_query_param('lang', 'fr') }}">Français</a>
+                <button type="submit" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mt-8">
+                    {{ _("Update Profile") }}
+                </button>
+            </form>
         </div>
     </div>
+
+    <script>
+        const services = {{ services | tojson }};
+        const availability = {{ availability | tojson }};
+        const servicesContainer = document.getElementById('services-container');
+        const addServiceBtn = document.getElementById('add-service-btn');
+        const availabilityContainer = document.getElementById('availability-container');
+        const addAvailabilityBtn = document.getElementById('add-availability-btn');
+        const servicesJsonInput = document.getElementById('services_json');
+        const availabilityJsonInput = document.getElementById('availability_json');
+
+        function renderService(service = { name: '', duration: '', price: '', description: '' }, index) {
+            const div = document.createElement('div');
+            div.className = 'flex flex-col md:flex-row md:space-x-4 space-y-4 md:space-y-0 p-4 border border-gray-200 rounded-md bg-gray-50 relative';
+            div.innerHTML = `
+                <div class="flex-1">
+                    <label class="block text-sm font-medium text-gray-700">{{ _("Service Name") }}</label>
+                    <input type="text" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" value="${service.name}" data-service-field="name" required>
+                </div>
+                <div class="w-full md:w-1/4">
+                    <label class="block text-sm font-medium text-gray-700">{{ _("Duration (minutes)") }}</label>
+                    <input type="number" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" value="${service.duration}" data-service-field="duration" required>
+                </div>
+                <div class="w-full md:w-1/4">
+                    <label class="block text-sm font-medium text-gray-700">{{ _("Price") }}</label>
+                    <input type="number" step="0.01" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" value="${service.price}" data-service-field="price" required>
+                </div>
+                <div class="flex-1">
+                    <label class="block text-sm font-medium text-gray-700">{{ _("Description (optional)") }}</label>
+                    <input type="text" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" value="${service.description || ''}" data-service-field="description">
+                </div>
+                <button type="button" class="absolute top-2 right-2 text-red-500 hover:text-red-700" onclick="this.parentNode.remove(); updateServicesJson();">&times;</button>
+            `;
+            servicesContainer.appendChild(div);
+        }
+
+        function renderAvailabilitySlot(day = '', start = '', end = '', index) {
+            const div = document.createElement('div');
+            div.className = 'flex flex-col md:flex-row md:space-x-4 space-y-4 md:space-y-0 p-4 border border-gray-200 rounded-md bg-gray-50 relative';
+            div.innerHTML = `
+                <div class="w-full md:w-1/3">
+                    <label class="block text-sm font-medium text-gray-700">{{ _("Day of Week") }}</label>
+                    <select class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" data-availability-field="day_of_week" required>
+                        <option value="">{{ _("Select a day") }}</option>
+                        <option value="Monday" ${day === 'Monday' ? 'selected' : ''}>{{ _("Monday") }}</option>
+                        <option value="Tuesday" ${day === 'Tuesday' ? 'selected' : ''}>{{ _("Tuesday") }}</option>
+                        <option value="Wednesday" ${day === 'Wednesday' ? 'selected' : ''}>{{ _("Wednesday") }}</option>
+                        <option value="Thursday" ${day === 'Thursday' ? 'selected' : ''}>{{ _("Thursday") }}</option>
+                        <option value="Friday" ${day === 'Friday' ? 'selected' : ''}>{{ _("Friday") }}</option>
+                        <option value="Saturday" ${day === 'Saturday' ? 'selected' : ''}>{{ _("Saturday") }}</option>
+                        <option value="Sunday" ${day === 'Sunday' ? 'selected' : ''}>{{ _("Sunday") }}</option>
+                    </select>
+                </div>
+                <div class="w-full md:w-1/3">
+                    <label class="block text-sm font-medium text-gray-700">{{ _("Start Time") }}</label>
+                    <input type="time" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" value="${start}" data-availability-field="start_time" required>
+                </div>
+                <div class="w-full md:w-1/3">
+                    <label class="block text-sm font-medium text-gray-700">{{ _("End Time") }}</label>
+                    <input type="time" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" value="${end}" data-availability-field="end_time" required>
+                </div>
+                <button type="button" class="absolute top-2 right-2 text-red-500 hover:text-red-700" onclick="this.parentNode.remove(); updateAvailabilityJson();">&times;</button>
+            `;
+            availabilityContainer.appendChild(div);
+        }
+
+        function updateServicesJson() {
+            const currentServices = [];
+            servicesContainer.querySelectorAll('.flex.flex-col.md\\:flex-row').forEach(div => {
+                const service = {};
+                div.querySelectorAll('[data-service-field]').forEach(input => {
+                    const field = input.dataset.serviceField;
+                    let value = input.value;
+                    if (field === 'duration' || field === 'price') {
+                        value = parseFloat(value);
+                    }
+                    service[field] = value;
+                });
+                currentServices.push(service);
+            });
+            servicesJsonInput.value = JSON.stringify(currentServices);
+        }
+
+        function updateAvailabilityJson() {
+            const currentAvailability = {};
+            availabilityContainer.querySelectorAll('.flex.flex-col.md\\:flex-row').forEach(div => {
+                const day = div.querySelector('[data-availability-field="day_of_week"]').value;
+                const start_time = div.querySelector('[data-availability-field="start_time"]').value;
+                const end_time = div.querySelector('[data-availability-field="end_time"]').value;
+                if (day && start_time && end_time) {
+                    if (!currentAvailability[day]) {
+                        currentAvailability[day] = [];
+                    }
+                    currentAvailability[day].push({ start_time, end_time });
+                }
+            });
+            availabilityJsonInput.value = JSON.stringify(currentAvailability);
+        }
+
+        // Initial render for services
+        if (services && services.length > 0) {
+            services.forEach(renderService);
+        } else {
+            renderService(); // Add one empty service by default
+        }
+
+        // Initial render for availability
+        if (availability) {
+            Object.entries(availability).forEach(([day, slots]) => {
+                slots.forEach(slot => renderAvailabilitySlot(day, slot.start_time, slot.end_time));
+            });
+        } else {
+            renderAvailabilitySlot(); // Add one empty slot by default
+        }
+
+
+        addServiceBtn.addEventListener('click', () => {
+            renderService();
+            updateServicesJson();
+        });
+
+        addAvailabilityBtn.addEventListener('click', () => {
+            renderAvailabilitySlot();
+            updateAvailabilityJson();
+        });
+
+        // Update JSON inputs on any change within the containers
+        servicesContainer.addEventListener('input', updateServicesJson);
+        availabilityContainer.addEventListener('input', updateAvailabilityJson);
+
+        // Initial update to ensure hidden fields are populated on page load
+        updateServicesJson();
+        updateAvailabilityJson();
+    </script>
 </body>
 </html>
