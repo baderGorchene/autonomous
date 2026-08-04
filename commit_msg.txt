@@ -1,1 +1,1 @@
-Fix: Resolve 'No module named pytest' error by providing requirements.txt and minimal test setup
+Fix: Ensure pytest is installed by re-providing requirements.txt
