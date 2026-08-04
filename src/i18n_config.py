@@ -5,7 +5,7 @@ import os
 import logging
 from src.config import settings
 from urllib.parse import urlparse, urlunparse, parse_qs, urlencode
-from fastapi.templating import Jinja2Templates # Import Jinja2Templates
+from fastapi.templating import Jinja2Templates
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +37,7 @@ def get_jinja_templates(locale='en'):
     # Add a custom filter to update a specific query parameter in a URL
     # This is different from the standard 'urlencode' which encodes a dict to a query string.
     def update_query_param_filter(url, query_param_name, value):
-        parsed_url = urlparse(str(url)) # Ensure URL is string
+        parsed_url = urlparse(str(url))
         query_params = parse_qs(parsed_url.query)
         query_params[query_param_name] = [value]
         new_query = urlencode(query_params, doseq=True)
@@ -47,26 +47,29 @@ def get_jinja_templates(locale='en'):
 
     # Add a custom filter for currency formatting
     def format_currency_filter(value, lang_code, currency_code="USD"):
-        # This is a simplified example. For full i18n currency formatting,
-        # you'd use a library like Babel or a more robust custom implementation.
         try:
             numeric_value = float(value)
             if lang_code == 'ar':
-                # Example for Arabic, assuming SAR for now
                 return f"{numeric_value:,.2f} \u0631.\u0633"
             elif lang_code == 'fr':
-                # Example for French, assuming EUR
-                return f"{numeric_value:,.2f} \u20ac"
+                # For French, use space for thousands separator and comma for decimal separator.
+                s_value = f"{numeric_value:.2f}".replace('.', ',')
+                parts = []
+                int_part, dec_part = s_value.split(',')
+                for i in range(len(int_part), 0, -3):
+                    parts.insert(0, int_part[max(0, i-3):i])
+                formatted_int_part = ' '.join(parts)
+                return f"{formatted_int_part},{dec_part} \u20ac"
             else:
                 return f"${numeric_value:,.2f}"
         except (ValueError, TypeError):
-            return str(value) # Return original value if not a valid number
+            return str(value)
 
     env.filters['format_currency'] = format_currency_filter
 
     # Create and cache Jinja2Templates instance
     templates = Jinja2Templates(directory=TEMPLATES_DIR)
-    templates.env = env # Override the default env with our configured one
+    templates.env = env
     _templates_cache[locale] = templates
     
     return templates

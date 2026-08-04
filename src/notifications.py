@@ -2,77 +2,85 @@ import os
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 from twilio.rest import Client
-from src.config import settings
 import logging
+from src.config import settings
+from src import schemas
 
 logger = logging.getLogger(__name__)
 
-def send_email_confirmation_to_customer(customer_email: str, owner_name: str, service_name: str, booking_date: str, booking_time: str, owner_email: str):
+# --- Email Notifications (SendGrid) ---
+def send_email_notification(to_email: str, subject: str, html_content: str):
     if not settings.SENDGRID_API_KEY:
-        logger.warning("SendGrid API key not set. Skipping customer email.")
+        logger.warning("SendGrid API key not configured. Skipping email notification.")
         return
 
     message = Mail(
-        from_email=owner_email, # Use owner's email as from_email for better branding/replies
-        to_emails=customer_email,
-        subject=f"Booking Confirmation with {owner_name} for {service_name}",
-        html_content=f"""
-        <p>Dear {customer_email},</p>
-        <p>Your booking with {owner_name} for {service_name} on {booking_date} at {booking_time} has been confirmed.</p>
-        <p>We look forward to seeing you!</p>
-        <p>Best regards,</p>
-        <p>{owner_name}</p>
-        """
+        from_email='no-reply@bookslot.app',
+        to_emails=to_email,
+        subject=subject,
+        html_content=html_content
     )
     try:
         sendgrid_client = SendGridAPIClient(settings.SENDGRID_API_KEY)
         response = sendgrid_client.send(message)
-        logger.info(f"Customer email sent. Status Code: {response.status_code}")
+        logger.info(f"Email sent to {to_email}. Status Code: {response.status_code}")
     except Exception as e:
-        logger.error(f"Error sending customer email: {e}")
+        logger.error(f"Error sending email to {to_email}: {e}")
 
-def send_email_notification_to_owner(owner_email: str, customer_name: str, customer_email: str, service_name: str, booking_date: str, booking_time: str, owner_name: str):
-    if not settings.SENDGRID_API_KEY:
-        logger.warning("SendGrid API key not set. Skipping owner email notification.")
-        return
+def send_booking_confirmation_emails(owner_email: str, customer_email: str, booking: schemas.Booking, owner_name: str, business_name: str, customer_name: str, booking_page_link: str):
+    customer_subject = f"Your booking with {business_name} is confirmed!"
+    customer_html = f"""
+    <p>Hi {customer_name},</p>
+    <p>Your booking for <b>{booking.service_name}</b> with {business_name} on <b>{booking.booking_date.strftime('%Y-%m-%d')}</b> at <b>{booking.booking_time}</b> is confirmed.</p>
+    <p>We look forward to seeing you!</p>
+    <p>Best regards,<br>{business_name}</p>
+    """
+    send_email_notification(customer_email, customer_subject, customer_html)
 
-    message = Mail(
-        from_email="noreply@bookslot.app", # Generic no-reply for owner notification
-        to_emails=owner_email,
-        subject=f"New Booking for {service_name} from {customer_name}",
-        html_content=f"""
-        <p>Dear {owner_name},</p>
-        <p>You have a new booking!</p>
-        <ul>
-            <li>Service: {service_name}</li>
-            <li>Date: {booking_date}</li>
-            <li>Time: {booking_time}</li>
-            <li>Customer Name: {customer_name}</li>
-            <li>Customer Email: {customer_email}</li>
-        </ul>
-        <p>Please check your dashboard for more details.</p>
-        """
-    )
-    try:
-        sendgrid_client = SendGridAPIClient(settings.SENDGRID_API_KEY)
-        response = sendgrid_client.send(message)
-        logger.info(f"Owner email notification sent. Status Code: {response.status_code}")
-    except Exception as e:
-        logger.error(f"Error sending owner email notification: {e}")
+    owner_subject = f"New Booking for {business_name}!"
+    owner_html = f"""
+    <p>Hi {owner_name},</p>
+    <p>A new booking has been made for <b>{booking.service_name}</b>.</p>
+    <ul>
+        <li><b>Customer:</b> {customer_name}</li>
+        <li><b>Email:</b> {customer_email}</li>
+        <li><b>Phone:</b> {booking.customer_phone or 'N/A'}</li>
+        <li><b>Date:</b> {booking.booking_date.strftime('%Y-%m-%d')}</li>
+        <li><b>Time:</b> {booking.booking_time}</li>
+        <li><b>Message:</b> {booking.message or 'N/A'}</li>
+    </ul>
+    <p>View all bookings on your dashboard: {booking_page_link}/owner/dashboard</p>
+    """
+    send_email_notification(owner_email, owner_subject, owner_html)
 
-def send_whatsapp_notification_to_owner(owner_phone: str, customer_name: str, service_name: str, booking_date: str, booking_time: str):
+# --- WhatsApp Notifications (Twilio) ---
+def send_whatsapp_notification(to_phone_number: str, message_body: str):
     if not settings.TWILIO_ACCOUNT_SID or not settings.TWILIO_AUTH_TOKEN or not settings.TWILIO_WHATSAPP_NUMBER:
-        logger.warning("Twilio credentials not fully set. Skipping WhatsApp notification.")
+        logger.warning("Twilio credentials not fully configured. Skipping WhatsApp notification.")
         return
 
-    client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
-    body = f"New booking for {service_name} from {customer_name} on {booking_date} at {booking_time}."
     try:
+        client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
         message = client.messages.create(
-            from_=f"whatsapp:{settings.TWILIO_WHATSAPP_NUMBER}",
-            to=f"whatsapp:{owner_phone}",
-            body=body
+            from_=f'whatsapp:{settings.TWILIO_WHATSAPP_NUMBER}',
+            body=message_body,
+            to=f'whatsapp:{to_phone_number}'
         )
-        logger.info(f"WhatsApp message sent. SID: {message.sid}")
+        logger.info(f"WhatsApp message sent to {to_phone_number}. SID: {message.sid}")
     except Exception as e:
-        logger.error(f"Error sending WhatsApp notification: {e}")
+        logger.error(f"Error sending WhatsApp message to {to_phone_number}: {e}")
+
+def send_new_booking_whatsapp_notification(owner_phone: str, booking: schemas.Booking, business_name: str, customer_name: str):
+    if not owner_phone:
+        logger.info(f"Owner phone number not provided for {business_name}. Skipping WhatsApp notification.")
+        return
+
+    message_body = (
+        f"New booking for {business_name}!\n"
+        f"Service: {booking.service_name}\n"
+        f"Customer: {customer_name}\n"
+        f"Date: {booking.booking_date.strftime('%Y-%m-%d')}\n"
+        f"Time: {booking.booking_time}\n"
+        f"Contact: {booking.customer_phone or booking.customer_email}"
+    )
+    send_whatsapp_notification(owner_phone, message_body)

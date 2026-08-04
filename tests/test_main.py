@@ -2,122 +2,211 @@ import pytest
 from httpx import AsyncClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from src.main import app
 from src.database import Base, get_db
+from src.main import app
+from src import crud, models, security, schemas
 from src.config import settings
-import asyncio
-import os
+import json
+from datetime import datetime, timedelta
 
-# Override database settings for testing
 settings.DATABASE_URL = "sqlite:///./test.db"
 settings.TESTING = True
+settings.SECRET_KEY = "test-secret-key"
+settings.ACCESS_TOKEN_EXPIRE_MINUTES = 1
 
-# Setup a test database
 engine = create_engine(settings.DATABASE_URL, connect_args={"check_same_thread": False})
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 @pytest.fixture(name="db_session")
 def db_session_fixture():
-    """Create a clean database session for each test."""
-    Base.metadata.create_all(bind=engine) # Create tables
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
     db = TestingSessionLocal()
     try:
         yield db
     finally:
         db.close()
-        Base.metadata.drop_all(bind=engine) # Drop tables after test
 
 @pytest.fixture(name="client")
-async def client_fixture(db_session):
-    """Create an httpx client for testing FastAPI app."""
+async def client_fixture(db_session: TestingSessionLocal):
     def override_get_db():
-        yield db_session
+        try:
+            yield db_session
+        finally:
+            db_session.close()
+
     app.dependency_overrides[get_db] = override_get_db
     async with AsyncClient(app=app, base_url="http://test") as client:
         yield client
-    app.dependency_overrides = {} # Clean up overrides
+    app.dependency_overrides = {}
+
+@pytest.fixture
+def test_owner_data():
+    return {
+        "name": "Test Owner",
+        "email": "test@example.com",
+        "password": "testpassword",
+        "business_name": "Test Salon",
+        "slug": "test-salon",
+        "phone": "+1234567890"
+    }
+
+@pytest.fixture
+def setup_owner(db_session: TestingSessionLocal, test_owner_data):
+    owner_create = schemas.OwnerCreate(**test_owner_data)
+    owner = crud.create_owner(db_session, owner_create)
+    owner.services_json = json.dumps([
+        {"name": "Haircut", "description": "Standard haircut", "price": 25.00, "duration_minutes": 30},
+        {"name": "Massage", "description": "Relaxing massage", "price": 50.00, "duration_minutes": 60}
+    ])
+    owner.availability_json = json.dumps({
+        "Monday": [{"start_time": "09:00", "end_time": "17:00"}],
+        "Tuesday": [{"start_time": "09:00", "end_time": "17:00"}],
+    })
+    db_session.add(owner)
+    db_session.commit()
+    db_session.refresh(owner)
+    return owner
+
+@pytest.fixture
+async def authenticated_client(client: AsyncClient, setup_owner):
+    login_data = {"username": setup_owner.email, "password": "testpassword"}
+    response = await client.post("/token", data=login_data)
+    assert response.status_code == 200
+    token = response.json()["access_token"]
+    client.headers["Authorization"] = f"Bearer {token}"
+    return client
 
 @pytest.mark.asyncio
 async def test_health_check(client: AsyncClient):
     response = await client.get("/health")
     assert response.status_code == 200
-    assert response.json() == {"status": "ok"}
+    assert "BookSlot is healthy!" in response.text
 
 @pytest.mark.asyncio
-async def test_root_redirect_to_signup(client: AsyncClient):
-    response = await client.get("/", follow_redirects=False)
-    assert response.status_code == 302
-    assert response.headers["location"] == "/signup"
-
-@pytest.mark.asyncio
-async def test_signup_page(client: AsyncClient):
+async def test_owner_signup_and_login(client: AsyncClient, test_owner_data):
     response = await client.get("/signup")
     assert response.status_code == 200
-    assert "Sign Up - BookSlot" in response.text
-    assert "Your Name" in response.text
+    assert "Sign Up for BookSlot" in response.text
 
-@pytest.mark.asyncio
-async def test_owner_signup_and_login(client: AsyncClient):
-    # Test Signup
-    signup_data = {
-        "name": "Test Owner",
-        "email": "test@example.com",
-        "password": "testpassword",
-        "business_name": "Test Business",
-        "slug": "test-business",
-        "phone": "+1234567890"
-    }
-    response = await client.post("/signup", data=signup_data, follow_redirects=False)
-    assert response.status_code == 302
-    assert response.headers["location"] == "/login?lang=en"
+    response = await client.post("/signup", data=test_owner_data)
+    assert response.status_code == 303
+    assert response.headers["location"] == "/login"
 
-    # Test Login
-    login_data = {
-        "username": "test@example.com",
-        "password": "testpassword"
-    }
-    response = await client.post("/token", data=login_data, follow_redirects=False)
+    response = await client.post("/signup", data=test_owner_data)
+    assert response.status_code == 400
+    assert "Email already registered" in response.text
+
+    login_data = {"username": test_owner_data["email"], "password": test_owner_data["password"]}
+    response = await client.post("/token", data=login_data)
     assert response.status_code == 200
     assert "access_token" in response.json()
-    assert "token_type" in response.json()
 
 @pytest.mark.asyncio
-async def test_i18n_language_toggle_on_signup(client: AsyncClient):
-    response_en = await client.get("/signup?lang=en")
-    assert "Sign Up" in response_en.text
-    assert "Already have an account? Log In" in response_en.text
-
-    response_ar = await client.get("/signup?lang=ar")
-    assert "التسجيل" in response_ar.text
-    assert "هل لديك حساب بالفعل؟ تسجيل الدخول" in response_ar.text
-
-    response_fr = await client.get("/signup?lang=fr")
-    assert "S'inscrire" in response_fr.text
-    assert "Déjà un compte ? Se connecter" in response_fr.text
+async def test_owner_dashboard_access(authenticated_client: AsyncClient, setup_owner):
+    response = await authenticated_client.get("/owner/dashboard")
+    assert response.status_code == 200
+    assert f"Welcome, {setup_owner.name}!" in response.text
+    assert setup_owner.business_name in response.text
+    assert "Haircut" in response.text
 
 @pytest.mark.asyncio
-async def test_currency_formatting_on_booking_page(client: AsyncClient, db_session):
-    # First, create an owner to have a booking page
-    owner_data = {
-        "name": "Currency Test Owner",
-        "email": "currency@example.com",
-        "password": "securepassword",
-        "business_name": "Currency Clinic",
-        "slug": "currency-clinic",
-        "phone": "+1234567890"
+async def test_owner_profile_update(authenticated_client: AsyncClient, setup_owner):
+    new_name = "Updated Test Owner"
+    new_business_name = "Updated Business"
+    new_phone = "+9876543210"
+    update_data = {
+        "name": new_name,
+        "business_name": new_business_name,
+        "phone": new_phone
     }
-    await client.post("/signup", data=owner_data) # Signup the owner
+    response = await authenticated_client.post("/owner/profile", data=update_data)
+    assert response.status_code == 303
+    assert response.headers["location"] == "/owner/dashboard"
 
-    # Access booking page with different languages and check currency format
-    response_en = await client.get("/book/currency-clinic?lang=en")
-    assert response_en.status_code == 200
-    assert "$50.00" in response_en.text # Default service price in English
+    response = await authenticated_client.get("/owner/dashboard")
+    assert response.status_code == 200
+    assert new_name in response.text
+    assert new_business_name in response.text
+    assert new_phone in response.text
 
-    response_ar = await client.get("/book/currency-clinic?lang=ar")
-    assert response_ar.status_code == 200
-    # The Arabic currency filter returns "50.00 ر.س"
-    assert "50.00 \u0631.\u0633" in response_ar.text.replace('&#x200f;', '').replace('&#x200e;', '') # Remove potential RTL marks
+@pytest.mark.asyncio
+async def test_public_booking_page(client: AsyncClient, setup_owner):
+    response = await client.get(f"/{setup_owner.slug}")
+    assert response.status_code == 200
+    assert setup_owner.business_name in response.text
+    assert "Book Your Appointment" in response.text
+    assert "Haircut" in response.text
 
-    response_fr = await client.get("/book/currency-clinic?lang=fr")
-    assert response_fr.status_code == 200
-    assert "50,00 \u20ac" in response_fr.text
+@pytest.mark.asyncio
+async def test_booking_submission(client: AsyncClient, setup_owner):
+    booking_date = (datetime.now() + timedelta(days=7)).strftime('%Y-%m-%d')
+    booking_data = {
+        "customer_name": "Jane Doe",
+        "customer_email": "jane@example.com",
+        "customer_phone": "+1122334455",
+        "service_name": "Haircut",
+        "booking_date": booking_date,
+        "booking_time": "10:00",
+        "message": "Please be on time."
+    }
+    response = await client.post(f"/{setup_owner.slug}/book", data=booking_data)
+    assert response.status_code == 200
+    assert "Booking Confirmed!" in response.text
+    assert "Jane Doe" in response.text
+    assert "Haircut" in response.text
+
+    login_data = {"username": setup_owner.email, "password": "testpassword"}
+    login_response = await client.post("/token", data=login_data)
+    token = login_response.json()["access_token"]
+    client.headers["Authorization"] = f"Bearer {token}"
+    dashboard_response = await client.get("/owner/dashboard")
+    assert dashboard_response.status_code == 200
+    assert "Jane Doe" in dashboard_response.text
+    assert "10:00" in dashboard_response.text
+
+@pytest.mark.asyncio
+async def test_i18n_language_toggle(client: AsyncClient, setup_owner):
+    response = await client.get(f"/{setup_owner.slug}")
+    assert response.status_code == 200
+    assert "Book Your Appointment" in response.text
+    assert "Select Service" in response.text
+
+    response = await client.get(f"/{setup_owner.slug}?lang=ar")
+    assert response.status_code == 200
+    assert "احجز موعدك" in response.text
+    assert "اختر الخدمة" in response.text
+
+    response = await client.get(f"/{setup_owner.slug}?lang=fr")
+    assert response.status_code == 200
+    assert "Réservez votre rendez-vous" in response.text
+    assert "Sélectionner un service" in response.text
+
+@pytest.mark.asyncio
+async def test_currency_formatting_filter(client: AsyncClient, setup_owner):
+    response = await client.get(f"/{setup_owner.slug}?lang=en")
+    assert response.status_code == 200
+    assert "$25.00" in response.text
+    assert "$50.00" in response.text
+
+    db = TestingSessionLocal()
+    owner_from_db = crud.get_owner_by_slug(db, setup_owner.slug)
+    services = json.loads(owner_from_db.services_json)
+    services.append({"name": "Luxury Service", "description": "High-end service", "price": 1234.56, "duration_minutes": 120})
+    owner_from_db.services_json = json.dumps(services)
+    db.add(owner_from_db)
+    db.commit()
+    db.refresh(owner_from_db)
+    db.close()
+
+    response = await client.get(f"/{setup_owner.slug}?lang=ar")
+    assert response.status_code == 200
+    assert "25.00 ر.س" in response.text
+    assert "50.00 ر.س" in response.text
+    assert "1,234.56 ر.س" in response.text
+
+    response = await client.get(f"/{setup_owner.slug}?lang=fr")
+    assert response.status_code == 200
+    assert "25,00 €" in response.text
+    assert "50,00 €" in response.text
+    assert "1 234,56 €" in response.text
