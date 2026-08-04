@@ -50,6 +50,12 @@ def get_jinja_templates(locale='en'):
         try:
             numeric_value = float(value)
             if lang_code == 'ar':
+                # Arabic (Saudi Arabia) locale often uses Arabic numerals and specific currency symbol
+                # For simplicity and given the task, using common formatting. 
+                # Real localization might involve locale-specific formatting libraries.
+                # Using unicode for Arabic currency symbol if needed: \u0631.\u0633 for SAR (Riyal Saudi)
+                # The format string {numeric_value:,.2f} already handles thousands separator for English locale
+                # For Arabic, we explicitly format and append the symbol.
                 return f"{numeric_value:,.2f} \u0631.\u0633"
             elif lang_code == 'fr':
                 # For French, use space for thousands separator and comma for decimal separator.

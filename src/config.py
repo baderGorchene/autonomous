@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "sqlite:///./sql_app.db" # Use PostgreSQL in production
     TESTING: bool = False
 
-    _current_file_dir = os.Hdirname(os.path.abspath(__file__))
+    _current_file_dir = os.path.dirname(os.path.abspath(__file__))
     PROJECT_ROOT = os.path.abspath(os.path.join(_current_file_dir, os.pardir))
     LOCALES_DIR: str = os.path.join(PROJECT_ROOT, 'locales')
 
