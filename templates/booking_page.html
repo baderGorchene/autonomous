@@ -1,280 +1,127 @@
-<!DOCTYPE html>
-<html lang="{{ data.current_lang }}">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ data.business_name }} - {{ _("Book an Appointment") }}</title>
-    <link rel="stylesheet" href="/static/style.css">
-    <style>
-        /* Mobile-first approach */
-        body { font-family: sans-serif; margin: 0; padding: 0; background-color: #f4f7f6; color: #333; }
-        .container { max-width: 90%; margin: 20px auto; padding: 20px; background-color: #fff; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        h1, h2 { color: #007bff; text-align: center; margin-bottom: 20px; }
-        .business-info { text-align: center; margin-bottom: 30px; }
-        .service-selection, .date-selection, .time-selection, .customer-details { margin-bottom: 25px; padding: 15px; border: 1px solid #eee; border-radius: 6px; background-color: #fdfdfd; }
-        label { display: block; margin-bottom: 8px; font-weight: bold; color: #555; }
-        select, input[type="text"], input[type="email"], input[type="tel"], input[type="date"] {
-            width: calc(100% - 20px);
-            padding: 10px;
-            margin-bottom: 15px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
-            font-size: 16px;
-        }
-        button[type="submit"] {
-            background-color: #28a745;
-            color: white;
-            padding: 12px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 18px;
-            width: 100%;
-        }
-        button[type="submit"]:hover { background-color: #218838; }
-        .error-message { color: red; text-align: center; margin-bottom: 15px; }
-        .service-card {
-            border: 1px solid #ddd;
-            padding: 15px;
-            margin-bottom: 10px;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        .service-card.selected {
-            background-color: #e6f7ff;
-            border-color: #007bff;
-        }
-        .time-slot-button {
-            background-color: #007bff;
-            color: white;
-            padding: 8px 12px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            margin: 5px;
-            display: inline-block;
-        }
-        .time-slot-button:hover:not(.selected) {
-            background-color: #0056b3;
-        }
-        .time-slot-button.selected {
-            background-color: #28a745;
-        }
-        .time-slot-button[disabled] {
-            background-color: #cccccc;
-            cursor: not-allowed;
-        }
-        .language-selector { text-align: center; margin-top: 30px; }
-        .language-selector button { margin: 0 5px; padding: 8px 15px; border: 1px solid #007bff; background-color: #fff; color: #007bff; border-radius: 5px; cursor: pointer; }
-        .language-selector button:disabled { background-color: #007bff; color: white; border-color: #007bff; cursor: default; }
+{% extends "base.html" %}
+{% block title %}{{ owner.business_name }} - {{ _("Book Now") }}{% endblock %}
+{% block head_extra %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script>
+    function changeLanguage(lang) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('lang', lang);
+        window.location.href = url.toString();
+    }
 
-        /* Responsive adjustments */
-        @media (min-width: 768px) {
-            .container { max-width: 600px; }
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="language-selector">
-            <form action="/set-language-redirect" method="post" style="display:inline;">
-                <input type="hidden" name="lang" value="en">
-                <button type="submit" {% if data.current_lang == 'en' %}disabled{% endif %}>English</button>
-            </form>
-            <form action="/set-language-redirect" method="post" style="display:inline;">
-                <input type="hidden" name="lang" value="ar">
-                <button type="submit" {% if data.current_lang == 'ar' %}disabled{% endif %}>العربية</button>
-            </form>
-            <form action="/set-language-redirect" method="post" style="display:inline;">
-                <input type="hidden" name="lang" value="fr">
-                <button type="submit" {% if data.current_lang == 'fr' %}disabled{% endif %}>Français</button>
-            </form>
-        </div>
+    document.addEventListener('DOMContentLoaded', function() {
+        const dateInput = document.getElementById('booking_date');
+        const timeInput = document.getElementById('booking_time');
+        const serviceSelect = document.getElementById('service_name');
+        const availableSlots = {{ available_slots | tojson }};
 
-        <div class="business-info">
-            <h1>{{ data.business_name }}</h1>
-            <p>{{ _("Welcome to") }} {{ data.business_name }}! {{ _("Book your appointment easily below.") }}</p>
-        </div>
-
-        {% if error %}
-            <p class="error-message">{{ error }}</p>
-        {% endif %}
-
-        <form action="/{{ data.slug }}/book" method="post">
-            <div class="service-selection">
-                <h2>{{ _("1. Select a Service") }}</h2>
-                {% if data.services %}
-                    <div id="services-list">
-                        {% for service in data.services %}
-                            <div class="service-card" data-service-name="{{ service.name }}" data-service-duration="{{ service.duration }}" data-service-price="{{ service.price }}">
-                                <h3>{{ service.name }}</h3>
-                                <p>{{ service.description or _("No description provided.") }}</p>
-                                <p>{{ _("Duration:") }} {{ service.duration }} {{ _("minutes") }}</p>
-                                <p>{{ _("Price:") }} {{ service.price | currency('USD') }}</p>
-                            </div>
-                        {% endfor %}
-                    </div>
-                    <input type="hidden" name="service_name" id="selected_service_name" required>
-                {% else %}
-                    <p>{{ _("No services available at the moment.") }}</p>
-                {% endif %}
-            </div>
-
-            <div class="date-selection">
-                <h2>{{ _("2. Select a Date") }}</h2>
-                <label for="booking_date">{{ _("Date:") }}</label>
-                <input type="date" id="booking_date" name="booking_date" required>
-            </div>
-
-            <div class="time-selection">
-                <h2>{{ _("3. Select a Time") }}</h2>
-                <div id="time-slots">
-                    <p>{{ _("Please select a service and date to see available times.") }}</p>
-                </div>
-                <input type="hidden" name="booking_time" id="selected_booking_time" required>
-            </div>
-
-            <div class="customer-details">
-                <h2>{{ _("4. Your Details") }}</h2>
-                <label for="customer_name">{{ _("Your Name:") }}</label>
-                <input type="text" id="customer_name" name="customer_name" required>
-
-                <label for="customer_email">{{ _("Your Email:") }}</label>
-                <input type="email" id="customer_email" name="customer_email" required>
-
-                <label for="customer_phone">{{ _("Your Phone Number (optional, for WhatsApp notifications):") }}</label>
-                <input type="tel" id="customer_phone" name="customer_phone">
-            </div>
-
-            <button type="submit">{{ _("Confirm Booking") }}</button>
-        </form>
-    </div>
-
-    <script>
-        const services = {{ data.services | tojson }};
-        const availability = {{ data.availability | tojson }};
-        const selectedServiceNameInput = document.getElementById('selected_service_name');
-        const selectedBookingTimeInput = document.getElementById('selected_booking_time');
-        const bookingDateInput = document.getElementById('booking_date');
-        const timeSlotsContainer = document.getElementById('time-slots');
-        const serviceCards = document.querySelectorAll('.service-card');
-
-        let selectedService = null;
-        let selectedDate = null;
-
-        // Initialize date input to today and set min date
-        const today = new Date();
-        const yyyy = today.getFullYear();
-        const mm = String(today.getMonth() + 1).padStart(2, '0'); // Months start at 0!
-        const dd = String(today.getDate()).padStart(2, '0');
-        const todayFormatted = `${yyyy}-${mm}-${dd}`;
-        bookingDateInput.value = todayFormatted;
-        bookingDateInput.min = todayFormatted;
-        selectedDate = todayFormatted; // Set initial selected date
-
-        serviceCards.forEach(card => {
-            card.addEventListener('click', () => {
-                serviceCards.forEach(s => s.classList.remove('selected'));
-                card.classList.add('selected');
-                selectedService = {
-                    name: card.dataset.serviceName,
-                    duration: parseInt(card.dataset.serviceDuration),
-                    price: parseFloat(card.dataset.servicePrice)
-                };
-                selectedServiceNameInput.value = selectedService.name;
-                updateTimeSlots();
-            });
+        flatpickr(dateInput, {
+            dateFormat: "Y-m-d",
+            minDate: "today",
+            onChange: function(selectedDates, dateStr, instance) {
+                updateTimeSlots(dateStr);
+            }
         });
 
-        bookingDateInput.addEventListener('change', (event) => {
-            selectedDate = event.target.value;
-            updateTimeSlots();
-        });
+        function updateTimeSlots(selectedDate) {
+            const slotsForDate = availableSlots[selectedDate] || [];
+            timeInput.innerHTML = ''; // Clear existing options
 
-        function formatTime(hour, minute) {
-            const date = new Date();
-            date.setHours(hour, minute, 0, 0);
-            return date.toLocaleTimeString('{{ data.current_lang }}', { hour: '2-digit', minute: '2-digit', hour12: true });
-        }
-
-        function updateTimeSlots() {
-            timeSlotsContainer.innerHTML = '';
-            selectedBookingTimeInput.value = ''; // Reset selected time
-
-            if (!selectedService || !selectedDate) {
-                timeSlotsContainer.innerHTML = `<p>{{ _("Please select a service and date to see available times.") }}</p>`;
-                return;
-            }
-
-            const dayOfWeek = new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long' });
-            const dayAvailability = availability[dayOfWeek];
-
-            if (!dayAvailability || dayAvailability.length === 0) {
-                timeSlotsContainer.innerHTML = `<p>{{ _("No availability for this day.") }}</p>`;
-                return;
-            }
-
-            const availableSlots = [];
-            const serviceDuration = selectedService.duration; // in minutes
-
-            dayAvailability.forEach(slot => {
-                const [startHour, startMinute] = slot.start_time.split(':').map(Number);
-                const [endHour, endMinute] = slot.end_time.split(':').map(Number);
-
-                let currentSlotTime = new Date();
-                currentSlotTime.setHours(startHour, startMinute, 0, 0);
-
-                let endSlotTime = new Date();
-                endSlotTime.setHours(endHour, endMinute, 0, 0);
-
-                while (true) {
-                    const potentialEndTime = new Date(currentSlotTime.getTime() + serviceDuration * 60 * 1000);
-
-                    if (potentialEndTime.getTime() > endSlotTime.getTime()) {
-                        break; // Not enough time left for this service
-                    }
-
-                    // Check if the current slot is in the past for today's date
-                    const bookingDateObj = new Date(selectedDate);
-                    const now = new Date();
-                    let isPast = false;
-                    if (bookingDateObj.toDateString() === now.toDateString()) {
-                        if (potentialEndTime.getTime() <= now.getTime()) {
-                            isPast = true;
-                        }
-                    }
-
-                    const timeString = formatTime(currentSlotTime.getHours(), currentSlotTime.getMinutes());
-                    availableSlots.push({ time: timeString, disabled: isPast });
-
-                    currentSlotTime.setMinutes(currentSlotTime.getMinutes() + serviceDuration);
-                }
-            });
-
-            if (availableSlots.length === 0) {
-                timeSlotsContainer.innerHTML = `<p>{{ _("No available times for this service and date.") }}</p>`;
+            if (slotsForDate.length === 0) {
+                const option = document.createElement('option');
+                option.value = '';
+                option.textContent = '{{ _("No available slots") }}';
+                timeInput.appendChild(option);
+                timeInput.disabled = true;
             } else {
-                availableSlots.forEach(slot => {
-                    const button = document.createElement('button');
-                    button.type = 'button';
-                    button.classList.add('time-slot-button');
-                    button.textContent = slot.time;
-                    button.disabled = slot.disabled;
-                    if (!slot.disabled) {
-                        button.addEventListener('click', () => {
-                            document.querySelectorAll('.time-slot-button').forEach(btn => btn.classList.remove('selected'));
-                            button.classList.add('selected');
-                            selectedBookingTimeInput.value = slot.time;
-                        });
-                    }
-                    timeSlotsContainer.appendChild(button);
+                timeInput.disabled = false;
+                slotsForDate.forEach(slot => {
+                    const option = document.createElement('option');
+                    option.value = slot;
+                    option.textContent = slot;
+                    timeInput.appendChild(option);
                 });
             }
         }
 
-        // Initial update on page load
-        updateTimeSlots();
-    </script>
-</body>
-</html>
+        // Initialize time slots for the initially selected date (if any)
+        if (dateInput.value) {
+            updateTimeSlots(dateInput.value);
+        } else {
+            // Or for today if no date pre-selected
+            const today = new Date();
+            const todayStr = today.toISOString().split('T')[0];
+            updateTimeSlots(todayStr);
+        }
+    });
+</script>
+{% endblock %}
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-lg">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-bold text-gray-900">{{ owner.business_name }}</h1>
+            <div class="relative inline-block text-left">
+                <select onchange="changeLanguage(this.value)"
+                        class="block appearance-none bg-white border border-gray-300 hover:border-gray-400 px-4 py-2 pr-8 rounded shadow leading-tight focus:outline-none focus:shadow-outline">
+                    <option value="en" {% if get_locale() == 'en' %}selected{% endif %}>English</option>
+                    <option value="ar" {% if get_locale() == 'ar' %}selected{% endif %}>العربية</option>
+                    <option value="fr" {% if get_locale() == 'fr' %}selected{% endif %}>Français</option>
+                </select>
+            </div>
+        </div>
+
+        <p class="text-gray-600 mb-6">{{ _("Book your appointment with %s.") % owner.business_name }}</p>
+
+        {% if error %}
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+            <span class="block sm:inline">{{ error }}</span>
+        </div>
+        {% endif %}
+
+        <form action="/{{ owner.slug }}/book" method="post" class="space-y-4">
+            <div>
+                <label for="customer_name" class="block text-sm font-medium text-gray-700">{{ _("Your Name") }}</label>
+                <input type="text" id="customer_name" name="customer_name" required
+                       class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+            </div>
+            <div>
+                <label for="customer_email" class="block text-sm font-medium text-gray-700">{{ _("Your Email") }}</label>
+                <input type="email" id="customer_email" name="customer_email" required
+                       class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+            </div>
+            <div>
+                <label for="customer_phone" class="block text-sm font-medium text-gray-700">{{ _("Your Phone Number (optional)") }}</label>
+                <input type="tel" id="customer_phone" name="customer_phone"
+                       class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+            </div>
+            <div>
+                <label for="service_name" class="block text-sm font-medium text-gray-700">{{ _("Select Service") }}</label>
+                <select id="service_name" name="service_name" required
+                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    {% for service in services %}
+                    <option value="{{ service.name }}">{{ service.name }} ({{ service.price | format_currency(get_locale()) }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="booking_date" class="block text-sm font-medium text-gray-700">{{ _("Select Date") }}</label>
+                <input type="text" id="booking_date" name="booking_date" required placeholder="{{ _('Select Date') }}"
+                       class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+            </div>
+            <div>
+                <label for="booking_time" class="block text-sm font-medium text-gray-700">{{ _("Select Time") }}</label>
+                <select id="booking_time" name="booking_time" required
+                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    <option value="">{{ _("Select a date first") }}</option>
+                </select>
+            </div>
+            <button type="submit"
+                    class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                {{ _("Book Now") }}
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

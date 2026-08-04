@@ -1,36 +1,17 @@
 <!DOCTYPE html>
-<html lang="{{ current_lang }}">
+<html lang="{{ get_locale() }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}BookSlot{% endblock %}</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-        {% if current_lang == 'ar' %}
-        body { direction: rtl; text-align: right; }
-        {% endif %}
-    </style>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css"> {# Assuming static files will be served #}
     {% block head_extra %}{% endblock %}
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col">
-    <header class="bg-white shadow-sm py-4 px-6 flex justify-between items-center">
-        <h1 class="text-2xl font-bold text-gray-800">BookSlot</h1>
-        <div class="language-switcher">
-            <a href="{{ request.url|update_query_param('lang', 'en') }}" class="mx-1 {% if current_lang == 'en' %}font-bold text-blue-600{% else %}text-gray-600{% endif %}">EN</a>
-            <a href="{{ request.url|update_query_param('lang', 'ar') }}" class="mx-1 {% if current_lang == 'ar' %}font-bold text-blue-600{% else %}text-gray-600{% endif %}">AR</a>
-            <a href="{{ request.url|update_query_param('lang', 'fr') }}" class="mx-1 {% if current_lang == 'fr' %}font-bold text-blue-600{% else %}text-gray-600{% endif %}">FR</a>
-        </div>
-    </header>
-
-    <main class="flex-grow container mx-auto p-4">
+<body class="bg-gray-100 font-sans leading-normal tracking-normal">
+    <div class="container mx-auto p-4">
         {% block content %}{% endblock %}
-    </main>
-
-    <footer class="bg-gray-800 text-white py-4 px-6 text-center mt-auto">
-        <p>&copy; 2024 BookSlot. All rights reserved.</p>
-    </footer>
-
+    </div>
     {% block scripts %}{% endblock %}
 </body>
 </html>

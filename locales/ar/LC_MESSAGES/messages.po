@@ -1,312 +1,172 @@
+# Arabic translations for BookSlot
 msgid ""
 msgstr ""
 "Project-Id-Version: BookSlot\n"
 "POT-Creation-Date: 2023-10-27 10:00+0000\n"
 "PO-Revision-Date: 2023-10-27 10:00+0000\n"
 "Last-Translator: \n"
-"Language-Team: \n"
+"Language-Team: Arabic <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.15.0\n"
 "Language: ar\n"
-"X-Generator: Babel 2.13.0\n"
 
-#: src/main.py:59
-msgid "Welcome"
-msgstr "مرحباً"
+msgid "Sign Up"
+msgstr "التسجيل"
 
-#: src/main.py:64
-msgid "Register"
-msgstr "تسجيل"
+msgid "Create Your BookSlot Account"
+msgstr "إنشاء حسابك في BookSlot"
 
-#: src/main.py:73
 msgid "Email already registered"
 msgstr "البريد الإلكتروني مسجل بالفعل"
 
-#: src/main.py:76
-msgid "Business URL already taken"
-msgstr "رابط العمل محجوز بالفعل"
+msgid "Slug must be alphanumeric with optional hyphens"
+msgstr "يجب أن يكون الرابط أبجديًا رقميًا مع واصلات اختيارية"
 
-#: src/main.py:81
-msgid "Registration successful! Please log in."
-msgstr "تم التسجيل بنجاح! يرجى تسجيل الدخول."
+msgid "Booking page URL already taken"
+msgstr "رابط صفحة الحجز مأخوذ بالفعل"
 
-#: src/main.py:83
-msgid "Registration failed: {e}"
-msgstr "فشل التسجيل: {e}"
+msgid "An unexpected error occurred during signup."
+msgstr "حدث خطأ غير متوقع أثناء التسجيل."
 
-#: src/main.py:88
-msgid "Login"
-msgstr "تسجيل الدخول"
+msgid "Your Name"
+msgstr "اسمك"
 
-#: src/main.py:99
-msgid "Incorrect email or password"
-msgstr "بريد إلكتروني أو كلمة مرور غير صحيحة"
+msgid "Email Address"
+msgstr "عنوان البريد الإلكتروني"
 
-#: src/main.py:126
-msgid "Dashboard"
-msgstr "لوحة التحكم"
+msgid "Password"
+msgstr "كلمة المرور"
 
-#: src/main.py:180
-msgid "Profile updated successfully!"
-msgstr "تم تحديث الملف الشخصي بنجاح!"
+msgid "Business Name"
+msgstr "اسم العمل"
 
-#: src/main.py:202
-msgid "Error updating profile: {e}"
-msgstr "خطأ في تحديث الملف الشخصي: {e}"
+msgid "Phone Number (e.g., +1234567890)"
+msgstr "رقم الهاتف (مثال: +1234567890)"
 
-#: src/main.py:210
-msgid "Booking page not found"
-msgstr "صفحة الحجز غير موجودة"
+msgid "Booking Page URL (e.g., your-business)"
+msgstr "رابط صفحة الحجز (مثال: عملك)"
 
-#: src/main.py:270
-msgid "Your booking has been successfully confirmed!"
-msgstr "تم تأكيد حجزك بنجاح!"
-
-#: src/main.py:272
-msgid "Booking Confirmed"
-msgstr "تم تأكيد الحجز"
-
-#: src/main.py:274
-msgid "Invalid date or time format."
-msgstr "تنسيق التاريخ أو الوقت غير صالح."
-
-#: src/main.py:291
-msgid "Failed to submit booking: {e}"
-msgstr "فشل إرسال الحجز: {e}"
-
-#: templates/login.html:12
-msgid "Login to BookSlot"
-msgstr "تسجيل الدخول إلى BookSlot"
-
-#: templates/login.html:17
-msgid "Email:"
-msgstr "البريد الإلكتروني:"
-
-#: templates/login.html:19
-msgid "Password:"
-msgstr "كلمة المرور:"
-
-#: templates/login.html:21
-msgid "Login"
-msgstr "تسجيل الدخول"
-
-#: templates/login.html:22
-msgid "Don't have an account?"
-msgstr "ليس لديك حساب؟"
-
-#: templates/login.html:22
-msgid "Register here"
-msgstr "سجل هنا"
-
-#: templates/register.html:12
-msgid "Register for BookSlot"
-msgstr "التسجيل في BookSlot"
-
-#: templates/register.html:17
-msgid "Your Name:"
-msgstr "اسمك:"
-
-#: templates/register.html:20
-msgid "Email:"
-msgstr "البريد الإلكتروني:"
-
-#: templates/register.html:23
-msgid "Password:"
-msgstr "كلمة المرور:"
-
-#: templates/register.html:26
-msgid "Business Name:"
-msgstr "اسم العمل:"
-
-#: templates/register.html:29
-msgid "Desired Booking Page URL (e.g., bookslot.app/your-business):"
-msgstr "رابط صفحة الحجز المطلوب (مثال: bookslot.app/your-business):"
-
-#: templates/register.html:30
-msgid "Lowercase letters, numbers, and hyphens only"
-msgstr "أحرف صغيرة وأرقام وواصلات فقط"
-
-#: templates/register.html:33
-msgid "Your Phone Number (for WhatsApp notifications, optional):"
-msgstr "رقم هاتفك (لإشعارات واتساب، اختياري):"
-
-#: templates/register.html:36
-msgid "Register"
-msgstr "تسجيل"
-
-#: templates/register.html:37
 msgid "Already have an account?"
 msgstr "هل لديك حساب بالفعل؟"
 
-#: templates/register.html:37
-msgid "Login here"
-msgstr "سجل الدخول هنا"
+msgid "Log in"
+msgstr "تسجيل الدخول"
 
-#: templates/dashboard.html:18
-msgid "Welcome,"
-msgstr "مرحباً،"
+msgid "Login"
+msgstr "تسجيل الدخول"
 
-#: templates/dashboard.html:39
-msgid "Your Booking Page"
-msgstr "صفحة الحجز الخاصة بك"
+msgid "Log In to Your BookSlot Account"
+msgstr "تسجيل الدخول إلى حسابك في BookSlot"
 
-#: templates/dashboard.html:40
-msgid "Share this link with your customers:"
-msgstr "شارك هذا الرابط مع عملائك:"
+msgid "Incorrect email or password"
+msgstr "البريد الإلكتروني أو كلمة المرور غير صحيحة"
 
-#: templates/dashboard.html:42
-msgid "Current Business Name:"
-msgstr "اسم العمل الحالي:"
+msgid "Account created successfully! Please log in."
+msgstr "تم إنشاء الحساب بنجاح! يرجى تسجيل الدخول."
 
-#: templates/dashboard.html:43
-msgid "Current Phone:"
-msgstr "الهاتف الحالي:"
+msgid "Don't have an account?"
+msgstr "ليس لديك حساب؟"
 
-#: templates/dashboard.html:43
-msgid "N/A"
-msgstr "غير متاح"
+msgid "Sign up"
+msgstr "التسجيل"
 
-#: templates/dashboard.html:47
-msgid "Upcoming Bookings"
-msgstr "الحجوزات القادمة"
+msgid "Dashboard"
+msgstr "لوحة التحكم"
 
-#: templates/dashboard.html:56
-msgid "Service:"
-msgstr "الخدمة:"
+msgid "Welcome, %s!"
+msgstr "أهلاً بك، %s!"
 
-#: templates/dashboard.html:57
-msgid "Customer:"
-msgstr "العميل:"
+msgid "Logout"
+msgstr "تسجيل الخروج"
 
-#: templates/dashboard.html:58
-msgid "Phone:"
-msgstr "الهاتف:"
+msgid "Your Profile"
+msgstr "ملفك الشخصي"
 
-#: templates/dashboard.html:64
-msgid "No upcoming bookings."
-msgstr "لا توجد حجوزات قادمة."
+msgid "Name"
+msgstr "الاسم"
 
-#: templates/dashboard.html:68
-msgid "Update Profile & Settings"
-msgstr "تحديث الملف الشخصي والإعدادات"
-
-#: templates/dashboard.html:71
-msgid "Your Name:"
-msgstr "اسمك:"
-
-#: templates/dashboard.html:74
-msgid "Business Name:"
-msgstr "اسم العمل:"
-
-#: templates/dashboard.html:77
-msgid "Your Phone Number (for WhatsApp notifications):"
-msgstr "رقم هاتفك (لإشعارات واتساب):"
-
-#: templates/dashboard.html:80
-msgid "Services Offered (JSON Array):"
-msgstr "الخدمات المقدمة (مصفوفة JSON):"
-
-#: templates/dashboard.html:82
-msgid "Example: [{'name': 'Service A', 'duration': 60, 'price': 50.0}, {'name': 'Service B', 'duration': 30, 'price': 30.0}]"
-msgstr "مثال: [{'name': 'الخدمة أ', 'duration': 60, 'price': 50.0}, {'name': 'الخدمة ب', 'duration': 30, 'price': 30.0}]"
-
-#: templates/dashboard.html:84
-msgid "Availability (JSON Object):"
-msgstr "التوفر (كائن JSON):"
-
-#: templates/dashboard.html:86
-msgid "Example: {'Monday': [{'start_time': '09:00', 'end_time': '17:00'}], 'Tuesday': [{'start_time': '10:00', 'end_time': '18:00'}]}"
-msgstr "مثال: {'الاثنين': [{'start_time': '09:00', 'end_time': '17:00'}], 'الثلاثاء': [{'start_time': '10:00', 'end_time': '18:00'}]}."
-
-#: templates/dashboard.html:88
 msgid "Update Profile"
 msgstr "تحديث الملف الشخصي"
 
-#: templates/booking_page.html:42
-msgid "Book an Appointment"
-msgstr "احجز موعداً"
+msgid "Your Booking Page Link"
+msgstr "رابط صفحة الحجز الخاصة بك"
 
-#: templates/booking_page.html:79
-msgid "Welcome to"
-msgstr "أهلاً بك في"
+msgid "Upcoming Bookings"
+msgstr "الحجوزات القادمة"
 
-#: templates/booking_page.html:79
-msgid "Book your appointment easily below."
-msgstr "احجز موعدك بسهولة أدناه."
+msgid "Date"
+msgstr "التاريخ"
 
-#: templates/booking_page.html:86
-msgid "1. Select a Service"
-msgstr "1. اختر خدمة"
+msgid "Time"
+msgstr "الوقت"
 
-#: templates/booking_page.html:93
-msgid "No description provided."
-msgstr "لم يتم تقديم وصف."
+msgid "Service"
+msgstr "الخدمة"
 
-#: templates/booking_page.html:94
-msgid "Duration:"
-msgstr "المدة:"
+msgid "Customer"
+msgstr "العميل"
 
-#: templates/booking_page.html:94
-msgid "minutes"
-msgstr "دقيقة"
+msgid "Contact"
+msgstr "جهة الاتصال"
 
-#: templates/booking_page.html:95
-msgid "Price:"
-msgstr "السعر:"
+msgid "No upcoming bookings."
+msgstr "لا توجد حجوزات قادمة."
 
-#: templates/booking_page.html:100
-msgid "No services available at the moment."
-msgstr "لا توجد خدمات متاحة حالياً."
+msgid "Booking page not found"
+msgstr "صفحة الحجز غير موجودة"
 
-#: templates/booking_page.html:104
-msgid "2. Select a Date"
-msgstr "2. اختر تاريخاً"
+msgid "Book Now"
+msgstr "احجز الآن"
 
-#: templates/booking_page.html:105
-msgid "Date:"
-msgstr "التاريخ:"
+msgid "Book your appointment with %s."
+msgstr "احجز موعدك مع %s."
 
-#: templates/booking_page.html:109
-msgid "3. Select a Time"
-msgstr "3. اختر وقتاً"
+msgid "Your Email"
+msgstr "بريدك الإلكتروني"
 
-#: templates/booking_page.html:111
-msgid "Please select a service and date to see available times."
-msgstr "الرجاء اختيار خدمة وتاريخ لعرض الأوقات المتاحة."
+msgid "Your Phone Number (optional)"
+msgstr "رقم هاتفك (اختياري)"
 
-#: templates/booking_page.html:115
-msgid "4. Your Details"
-msgstr "4. تفاصيلك"
+msgid "Select Service"
+msgstr "اختر الخدمة"
 
-#: templates/booking_page.html:116
-msgid "Your Name:"
-msgstr "اسمك:"
+msgid "Select Date"
+msgstr "اختر التاريخ"
 
-#: templates/booking_page.html:119
-msgid "Your Email:"
-msgstr "بريدك الإلكتروني:"
+msgid "Select Time"
+msgstr "اختر الوقت"
 
-#: templates/booking_page.html:122
-msgid "Your Phone Number (optional, for WhatsApp notifications):"
-msgstr "رقم هاتفك (اختياري، لإشعارات واتساب):"
+msgid "No available slots"
+msgstr "لا توجد أوقات متاحة"
 
-#: templates/booking_page.html:126
-msgid "Confirm Booking"
-msgstr "تأكيد الحجز"
+msgid "Select a date first"
+msgstr "اختر تاريخًا أولاً"
 
-#: templates/booking_page.html:200
-msgid "No availability for this day."
-msgstr "لا يوجد توفر لهذا اليوم."
+msgid "Booking Confirmed"
+msgstr "تم تأكيد الحجز"
 
-#: templates/booking_page.html:236
-msgid "No available times for this service and date."
-msgstr "لا توجد أوقات متاحة لهذه الخدمة والتاريخ."
+msgid "Thank you, %s, for your booking with %s."
+msgstr "شكراً لك، %s، على حجزك مع %s."
 
-#: templates/booking_confirmation.html:10
-msgid "Booking Confirmation"
-msgstr "تأكيد الحجز"
+msgid "A confirmation email has been sent to %s."
+msgstr "تم إرسال بريد إلكتروني للتأكيد إلى %s."
 
-#: templates/booking_confirmation.html:12
-msgid "Go to home page"
-msgstr "الذهاب إلى الصفحة الرئيسية"
+msgid "You may also receive a WhatsApp confirmation at %s."
+msgstr "قد تتلقى أيضًا تأكيدًا عبر واتساب على %s."
+
+msgid "Back to booking page"
+msgstr "العودة إلى صفحة الحجز"
+
+msgid "Cannot book a slot in the past."
+msgstr "لا يمكن حجز موعد في الماضي."
+
+msgid "An unexpected error occurred during booking. Please try again."
+msgstr "حدث خطأ غير متوقع أثناء الحجز. يرجى المحاولة مرة أخرى."
+
+msgid "Profile updated successfully!"
+msgstr "تم تحديث الملف الشخصي بنجاح!"
+
+msgid "Failed to update profile. Please try again."
+msgstr "فشل تحديث الملف الشخصي. يرجى المحاولة مرة أخرى."

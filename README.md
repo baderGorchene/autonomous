@@ -1,85 +1,156 @@
-# BookSlot - Dead-Simple Booking Page
+# BookSlot
 
-BookSlot is a minimalist booking page solution designed for local service businesses. It aims to replace chaotic WhatsApp appointment management with a straightforward, shareable booking link. Customers can self-book, and business owners receive instant notifications. The platform supports bilingual (English + Arabic/French) operation from day one to cater to the MENA and North Africa markets.
+BookSlot is a dead-simple, bilingual (English, Arabic, French) booking page solution designed for local service businesses. It helps solo service providers manage appointments without the chaos of WhatsApp messages, offering a streamlined booking experience for both business owners and their clients.
 
-## Features (MVP)
+## Business Idea
 
-1.  **Owner Signup & Service Setup:** Business owners can register and define their services and availability.
-2.  **Public Booking Page:** A mobile-first, beautiful page (`bookslot.app/their-name`) where customers can book.
-3.  **Time Slot Availability:** Customers see real-time available time slots.
-4.  **Email & WhatsApp Notifications:** Both owner and customer receive booking confirmations.
-5.  **Simple Dashboard:** Owners can view their upcoming bookings.
-6.  **Bilingual Support:** English, Arabic, and French translations.
+**Problem:** Local service businesses (salons, clinics, tutors, mechanics, coaches) often manage appointments through WhatsApp, leading to disorganization, missed bookings, and constant back-and-forth messaging.
 
-## Monetization
+**Solution:** BookSlot provides a dedicated, shareable booking page (`bookslot.app/their-name`) where customers can self-book appointments. The owner receives instant notifications via WhatsApp/email, and customers don't need to create accounts.
 
-*   **Free:** Up to 20 bookings/month.
-*   **Premium ($19/month):** Unlimited bookings.
+**Target Market:** Solo service providers with 10-50 clients/week who are overwhelmed by manual appointment scheduling.
 
-## Target Audience
+**Key Features (MVP):**
+1.  **Owner Signup & Service Setup:** Business owners can register, define their services, and set their availability.
+2.  **Public Booking Page:** A mobile-first, beautiful, and shareable link for customers to book services.
+3.  **Time Slot Availability:** Customers can see and select available time slots.
+4.  **Email Confirmations:** Automated email confirmations sent to both the owner and the customer upon booking.
+5.  **Simple Dashboard:** Owners get a dashboard to view upcoming bookings and manage their profile.
+6.  **Bilingual Support:** English, Arabic, and French languages available from day one, targeting underserved MENA and North Africa markets.
 
-Solo service providers (salons, clinics, tutors, mechanics, coaches) with 10-50 clients/week who are overwhelmed by manual appointment scheduling via messaging apps.
+**Monetization:**
+*   Free for up to 20 bookings/month.
+*   $19/month for unlimited bookings.
+
+## Features
+
+*   **User Authentication:** Secure owner login and registration.
+*   **Service Management:** Owners can add, edit, and delete their services.
+*   **Availability Configuration:** Flexible setup for working hours and breaks.
+*   **Public Booking Page:** Responsive design, intuitive booking flow.
+*   **Booking Confirmation:** Email notifications for both parties.
+*   **Owner Dashboard:** Overview of upcoming appointments.
+*   **Internationalization (i18n):** Full support for English, Arabic, and French.
+*   **Robust Backend:** Built with FastAPI, SQLAlchemy, and Pydantic.
+*   **Notifications:** Integrated with SendGrid (email) and Twilio (WhatsApp).
 
 ## Technologies Used
 
-*   **Backend:** FastAPI (Python)
-*   **Database:** SQLAlchemy ORM with SQLite (development/testing), PostgreSQL (production)
-*   **Frontend:** Jinja2 Templates, Tailwind CSS (for styling)
+*   **Backend:** Python, FastAPI
+*   **Database:** SQLAlchemy (ORM), SQLite (development), PostgreSQL (production)
+*   **Frontend:** HTML, CSS (TailwindCSS or similar for styling, though not explicitly defined, responsive design is a focus), Jinja2 (templating)
 *   **Authentication:** JWT (JSON Web Tokens)
-*   **Notifications:** SendGrid (Email), Twilio (WhatsApp)
-*   **Internationalization (i18n):** `gettext`
+*   **Internationalization:** Babel
+*   **Notifications:** SendGrid (email), Twilio (WhatsApp)
+*   **Deployment:** Docker, Gunicorn
 
 ## Setup and Local Development
 
 ### Prerequisites
 
-*   Python 3.8+
+*   Python 3.11+
 *   `pip` (Python package installer)
+*   `git` (for cloning the repository)
 
-### 1. Clone the repository
+### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/bookslot.git
+git clone https://github.com/your-repo/bookslot.git # Replace with actual repo URL
 cd bookslot
 ```
 
-### 2. Create a virtual environment and install dependencies
+### 2. Create a Virtual Environment
+
+It's highly recommended to use a virtual environment to manage dependencies.
 
 ```bash
 python -m venv venv
-source venv/bin/activate  # On Windows: .\venv\Scripts\activate
+source venv/bin/activate # On Windows: .\venv\Scripts\activate
+```
+
+### 3. Install Dependencies
+
+```bash
 pip install -r requirements.txt
 ```
 
-### 3. Environment Variables
+### 4. Environment Variables
 
-Create a `.env` file in the project root based on `.env.example`:
-
-```dotenv
-# .env
-SECRET_KEY="your-super-secret-key-for-jwt"
-SENDGRID_API_KEY="your_sendgrid_api_key"
-TWILIO_ACCOUNT_SID="your_twilio_account_sid"
-TWILIO_AUTH_TOKEN="your_twilio_auth_token"
-TWILIO_WHATSAPP_NUMBER="+1XXXXXXXXXX" # Your Twilio WhatsApp enabled number
-DATABASE_URL="sqlite:///./sql_app.db" # Use a PostgreSQL URL in production
-```
-
-**Note:** For local development, `sqlite:///./sql_app.db` is sufficient. For production, switch to PostgreSQL.
-
-### 4. Initialize Database and Run Migrations (Optional, for production-like setup)
-
-BookSlot uses SQLAlchemy's declarative base. For initial setup, `main.py` creates tables automatically. For schema evolution, `Alembic` would be used.
-
-*   **Initial Table Creation (Development):** The `main.py` will create tables if they don't exist on startup.
-
-### 5. Run the application
+Create a `.env` file in the project root directory based on `example.env`.
 
 ```bash
-uvicorn src.main:app --reload
+cp example.env .env
 ```
 
-The application will be accessible at `http://127.0.0.1:8000`.
+Edit the `.env` file with your specific configurations. For local development, `DATABASE_URL` can remain `sqlite:///./sql_app.db`. You will need actual API keys for SendGrid and Twilio to test notifications.
+
+```dotenv
+# .env file
+SECRET_KEY="your-super-secret-key-for-development"
+DATABASE_URL="sqlite:///./sql_app.db"
+
+SENDGRID_API_KEY="YOUR_SENDGRID_API_KEY"
+TWILIO_ACCOUNT_SID="YOUR_TWILIO_ACCOUNT_SID"
+TWILIO_AUTH_TOKEN="YOUR_TWILIO_AUTH_TOKEN"
+TWILIO_WHATSAPP_NUMBER="whatsapp:+1234567890" # Your Twilio WhatsApp number
+```
+
+### 5. Initialize the Database
+
+The application uses SQLAlchemy to manage the database schema.
+
+```bash
+python -c "from src.database import create_tables; create_tables()"
+```
+
+This will create `sql_app.db` in your project root if you're using SQLite.
+
+### 6. Run the Application
+
+```bash
+uvicorn src.main:app --reload --port 8000
+```
+
+The application will be accessible at `http://127.0.0.1:8000`. The `--reload` flag is useful for development as it restarts the server on code changes.
+
+### 7. Accessing the Application
+
+*   **Owner Signup/Login:** `http://127.0.0.1:8000/owner/signup` or `http://127.0.0.1:8000/owner/login`
+*   **Owner Dashboard:** `http://127.0.0.1:8000/dashboard` (requires login)
+*   **Public Booking Page:** `http://127.0.0.1:8000/book/{owner_slug}` (e.g., `http://127.0.0.1:8000/book/john-doe`)
+
+## Internationalization (i18n)
+
+BookSlot supports English, Arabic, and French.
+
+### How to add/update translations
+
+1.  **Extract new strings:**
+    ```bash
+pybabel extract -F babel.cfg -o locales/messages.pot src templates
+    ```
+    (You might need to create a `babel.cfg` file first, see example below)
+
+2.  **Update existing language catalogs:**
+    ```bash
+pybabel update -i locales/messages.pot -d locales -l ar
+pybabel update -i locales/messages.pot -d locales -l fr
+    ```
+
+3.  **Translate strings:** Open the `.po` files (`locales/ar/LC_MESSAGES/messages.po`, `locales/fr/LC_MESSAGES/messages.po`) in a text editor or a PO editor (like Poedit) and add translations.
+
+4.  **Compile translations:**
+    ```bash
+pybabel compile -d locales
+    ```
+
+### `babel.cfg` example:
+
+```ini
+[python: src/**.py]
+[jinja2: templates/**.html]
+extensions=jinja2.ext.with_,jinja2.ext.autoescape,jinja2.ext.do,jinja2.ext.loopcontrols
+```
 
 ## Running Tests
 
@@ -87,143 +158,62 @@ The application will be accessible at `http://127.0.0.1:8000`.
 pytest
 ```
 
-## Internationalization (i18n)
-
-BookSlot uses `gettext` for internationalization. Translation files (`.po` and `.mo`) are located in the `locales/` directory.
-
-### To update translations:
-
-1.  **Extract new strings (from code and templates):**
-    ```bash
-    pybabel extract -F babel.cfg -o locales/messages.pot src/ templates/
-    ```
-    (You might need a `babel.cfg` file for this, see below)
-
-2.  **Update `.po` files for each language:**
-    ```bash
-    pybabel update -i locales/messages.pot -d locales -l ar
-    pybabel update -i locales/messages.pot -d locales -l fr
-    ```
-
-3.  **Translate strings** in `locales/ar/LC_MESSAGES/messages.po` and `locales/fr/LC_MESSAGES/messages.po`.
-
-4.  **Compile `.mo` files (required for application to use translations):**
-    ```bash
-    pybabel compile -d locales
-    ```
-
-**`babel.cfg` example:**
-
-```ini
-[python: **.py]
-[jinja2: **/templates/**.html]
-encoding = utf-8
-```
+Ensure all dependencies from `requirements.txt` are installed.
 
 ## Deployment
 
-BookSlot can be deployed using Docker for easy containerization.
+### Production Environment Variables
 
-### 1. Build the Docker Image
+For production, it's crucial to set environment variables securely.
 
-```bash
-docker build -t bookslot-app .
-```
+*   `SECRET_KEY`: Generate a strong, random key.
+*   `DATABASE_URL`: Use a robust database like PostgreSQL. Example: `postgresql://user:password@host:port/dbname`
+*   `SENDGRID_API_KEY`: Your production SendGrid API key.
+*   `TWILIO_ACCOUNT_SID`: Your production Twilio Account SID.
+*   `TWILIO_AUTH_TOKEN`: Your production Twilio Auth Token.
+*   `TWILIO_WHATSAPP_NUMBER`: Your production Twilio WhatsApp number.
+*   `WEB_CONCURRENCY`: Number of Gunicorn workers (e.g., `2 * CPU_CORES + 1`).
+*   `LOG_LEVEL`: `info`, `warning`, `error`, `debug`.
 
-### 2. Run the Docker Container
+### Docker Deployment
 
-```bash
-docker run -d -p 80:8000 --name bookslot-instance \
-    -e SECRET_KEY="your-production-secret-key" \
-    -e SENDGRID_API_KEY="your_sendgrid_api_key" \
-    -e TWILIO_ACCOUNT_SID="your_twilio_account_sid" \
-    -e TWILIO_AUTH_TOKEN="your_twilio_auth_token" \
-    -e TWILIO_WHATSAPP_NUMBER="+1XXXXXXXXXX" \
-    -e DATABASE_URL="postgresql://user:password@host:port/dbname" \
-    bookslot-app
-```
+The recommended way to deploy BookSlot is using Docker.
 
-**Important:** Ensure you replace placeholder values with actual production credentials and a PostgreSQL database URL.
+1.  **Build the Docker image:**
 
-### Example Deployment Script (`deploy.sh`)
+    ```bash
+docker build -t bookslot:latest .
+    ```
 
-This is a basic example. For production, consider using orchestration tools like Docker Compose, Kubernetes, or cloud-specific deployment services.
+2.  **Run the Docker container:**
 
-```bash
-#!/bin/bash
+    ```bash
+docker run -d --name bookslot_app \
+        -p 80:8000 \
+        -e SECRET_KEY="YOUR_PRODUCTION_SECRET_KEY" \
+        -e DATABASE_URL="postgresql://user:password@host:port/dbname" \
+        -e SENDGRID_API_KEY="YOUR_SENDGRID_API_KEY" \
+        -e TWILIO_ACCOUNT_SID="YOUR_TWILIO_ACCOUNT_SID" \
+        -e TWILIO_AUTH_TOKEN="YOUR_TWILIO_AUTH_TOKEN" \
+        -e TWILIO_WHATSAPP_NUMBER="whatsapp:+1234567890" \
+        bookslot:latest
+    ```
+    **Note:** For production, you would typically use a separate PostgreSQL container or a managed database service, and link them or configure the `DATABASE_URL` accordingly.
 
-# Stop and remove existing container (if any)
-docker stop bookslot-instance || true
-docker rm bookslot-instance || true
+### Gunicorn Configuration
 
-# Build the Docker image
-docker build -t bookslot-app .
+The `gunicorn_conf.py` file provides production-ready settings for Gunicorn workers, logging, and timeouts. Ensure it's configured appropriately for your server's resources.
 
-# Run the new container
-docker run -d -p 80:8000 --name bookslot-instance \
-    -e SECRET_KEY="${BOOKSLOT_SECRET_KEY}" \
-    -e SENDGRID_API_KEY="${BOOKSLOT_SENDGRID_API_KEY}" \
-    -e TWILIO_ACCOUNT_SID="${BOOKSLOT_TWILIO_ACCOUNT_SID}" \
-    -e TWILIO_AUTH_TOKEN="${BOOKSLOT_TWILIO_AUTH_TOKEN}" \
-    -e TWILIO_WHATSAPP_NUMBER="${BOOKSLOT_TWILIO_WHATSAPP_NUMBER}" \
-    -e DATABASE_URL="${BOOKSLOT_DATABASE_URL}" \
-    bookslot-app
+### Database Migrations (Future Enhancement)
 
-echo "BookSlot deployed and running on port 80"
-```
+For managing database schema changes in production, consider integrating a tool like `Alembic`. This MVP does not include explicit migration scripts, relying on `create_tables()` for initial setup.
 
-To use `deploy.sh`, set the environment variables in your shell or CI/CD system before running the script:
+## Contributing
 
-```bash
-export BOOKSLOT_SECRET_KEY="your-production-secret-key"
-export BOOKSLOT_SENDGRID_API_KEY="your_sendgrid_api_key"
-export BOOKSLOT_TWILIO_ACCOUNT_SID="your_twilio_account_sid"
-export BOOKSLOT_TWILIO_AUTH_TOKEN="your_twilio_auth_token"
-export BOOKSLOT_TWILIO_WHATSAPP_NUMBER="+1XXXXXXXXXX"
-export BOOKSLOT_DATABASE_URL="postgresql://user:password@host:port/dbname"
+Contributions are welcome! Please feel free to open issues or submit pull requests.
 
-bash deploy.sh
-```
+## License
 
-## Project Structure
+This project is licensed under the MIT License. (Or specify your chosen license)
 
-```
-bookslot/
-├── src/
-│   ├── __init__.py
-│   ├── config.py             # Application settings and environment variables
-│   ├── crud.py               # Database Create, Read, Update, Delete operations
-│   ├── database.py           # SQLAlchemy engine and session setup
-│   ├── dependencies.py       # FastAPI dependencies (e.g., auth, DB session)
-│   ├── i18n_config.py        # Internationalization setup for Jinja2
-│   ├── main.py               # Main FastAPI application, routes, middleware
-│   ├── models.py             # SQLAlchemy ORM models
-│   ├── notifications.py      # Email and WhatsApp notification logic
-│   └── schemas.py            # Pydantic models for data validation
-├── templates/
-│   ├── base.html             # Base template for common HTML structure
-│   ├── booking_page.html     # Public booking interface
-│   ├── booking_confirmation.html # Booking success page
-│   ├── dashboard.html        # Owner dashboard
-│   ├── index.html            # Landing page
-│   ├── login.html            # Owner login form
-│   ├── profile.html          # Owner profile edit form
-│   └── signup.html           # Owner signup form
-├── locales/
-│   ├── ar/
-│   │   └── LC_MESSAGES/
-│   │       ├── messages.po
-│   │       └── messages.mo
-│   ├── fr/
-│   │   └── LC_MESSAGES/
-│   │       ├── messages.po
-│   │       └── messages.mo
-│   └── messages.pot          # Translation template
-├── tests/
-│   └── test_main.py          # Pytest integration tests
-├── .env.example              # Example environment variables
-├── Dockerfile                # Docker build instructions
-├── deploy.sh                 # Example deployment script
-├── requirements.txt          # Python dependencies
-└── README.md                 # Project documentation
-```
+---

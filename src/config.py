@@ -2,18 +2,17 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 import os
 
 class Settings(BaseSettings):
-    # !!! IMPORTANT: Change this in production and keep it secret !!!
     SECRET_KEY: str = "super-secret-key"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
-    SENDGRID_API_KEY: str = ""
-    TWILIO_ACCOUNT_SID: str = ""
-    TWILIO_AUTH_TOKEN: str = ""
-    TWILIO_WHATSAPP_NUMBER: str = ""
-    GEMINI_API_KEY: str = "" # Currently not used in the application
+    SENDGRID_API_KEY: str = "" # Set via environment variable in production
+    TWILIO_ACCOUNT_SID: str = "" # Set via environment variable in production
+    TWILIO_AUTH_TOKEN: str = "" # Set via environment variable in production
+    TWILIO_WHATSAPP_NUMBER: str = "" # Set via environment variable in production
+    GEMINI_API_KEY: str = "" # Currently not used in the application, set via environment variable if used
 
-    DATABASE_URL: str = "sqlite:///./sql_app.db" # Use PostgreSQL in production
+    DATABASE_URL: str = "sqlite:///./sql_app.db"
     TESTING: bool = False
 
     _current_file_dir = os.path.dirname(os.path.abspath(__file__))

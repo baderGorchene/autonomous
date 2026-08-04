@@ -1,31 +1,20 @@
-<!DOCTYPE html>
-<html lang="{{ current_locale() }}">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ title }} - BookSlot</title>
-    <link rel="stylesheet" href="/static/style.css">
-</head>
-<body>
-    <div class="container">
-        <h1>{{ _("Booking Confirmation") }}</h1>
-        <p>{{ message }}</p>
-        <p><a href="/">{{ _("Go to home page") }}</a></p>
-
-        <div class="language-selector">
-            <form action="/set-language-redirect" method="post" style="display:inline;">
-                <input type="hidden" name="lang" value="en">
-                <button type="submit" {% if current_locale() == 'en' %}disabled{% endif %}>English</button>
-            </form>
-            <form action="/set-language-redirect" method="post" style="display:inline;">
-                <input type="hidden" name="lang" value="ar">
-                <button type="submit" {% if current_locale() == 'ar' %}disabled{% endif %}>العربية</button>
-            </form>
-            <form action="/set-language-redirect" method="post" style="display:inline;">
-                <input type="hidden" name="lang" value="fr">
-                <button type="submit" {% if current_locale() == 'fr' %}disabled{% endif %}>Français</button>
-            </form>
+{% extends "base.html" %}
+{% block title %}{{ _("Booking Confirmed") }} - BookSlot{% endblock %}
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md text-center">
+        <h2 class="text-2xl font-bold text-green-600 mb-4">{{ _("Booking Confirmed!") }}</h2>
+        <p class="text-gray-700 mb-4">{{ _("Thank you, %s, for your booking with %s.") % (booking.customer_name, owner.business_name) }}</p>
+        <p class="text-gray-700 mb-2"><strong>{{ _("Service") }}:</strong> {{ booking.service_name }}</p>
+        <p class="text-gray-700 mb-2"><strong>{{ _("Date") }}:</strong> {{ booking.booking_date.strftime('%Y-%m-%d') }}</p>
+        <p class="text-gray-700 mb-4"><strong>{{ _("Time") }}:</strong> {{ booking.booking_time.strftime('%H:%M') }}</p>
+        <p class="text-gray-600">{{ _("A confirmation email has been sent to %s.") % booking.customer_email }}</p>
+        {% if booking.customer_phone %}
+        <p class="text-gray-600">{{ _("You may also receive a WhatsApp confirmation at %s.") % booking.customer_phone }}</p>
+        {% endif %}
+        <div class="mt-6">
+            <a href="/{{ owner.slug }}" class="text-indigo-600 hover:text-indigo-900 font-medium">{{ _("Back to booking page") }}</a>
         </div>
     </div>
-</body>
-</html>
+</div>
+{% endblock %}

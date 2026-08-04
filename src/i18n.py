@@ -5,6 +5,7 @@ import os
 from threading import local
 from src.config import settings
 import logging
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
