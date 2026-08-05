@@ -1,1 +1,1 @@
-Fix: Add missing requirements.txt with pytest and core dependencies
+Add missing requirements.txt with pytest and other dependencies
