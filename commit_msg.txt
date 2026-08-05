@@ -1,1 +1,1 @@
-Add comprehensive requirements.txt with pytest and all project dependencies
+Fix: Ensure pytest is available by providing comprehensive requirements.txt
