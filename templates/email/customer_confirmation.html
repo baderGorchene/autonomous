@@ -1,40 +1,17 @@
 <!DOCTYPE html>
-<html lang="{{ _('en') }}">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _('Your Booking is Confirmed!') }}</title>
-    <style>
-        body { font-family: sans-serif; line-height: 1.6; color: #333; }
-        .container { max-width: 600px; margin: 20px auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
-        .header { text-align: center; margin-bottom: 20px; }
-        .header h1 { color: #4F46E5; }
-        .content { margin-bottom: 20px; }
-        .footer { text-align: center; font-size: 0.8em; color: #777; border-top: 1px solid #eee; padding-top: 10px; }
-        .button { display: inline-block; background-color: #4F46E5; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 5px; }
-    </style>
+    <meta charset="utf-8">
+    <title>{{ i18n('Your booking with {business_name} is confirmed', business_name=owner.business_name) }}</title>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>{{ _('Booking Confirmed!') }}</h1>
-        </div>
-        <div class="content">
-            <p>{{ _('Dear') }} {{ customer_name }},</p>
-            <p>{{ _('Your appointment with') }} <strong>{{ owner_business_name }}</strong> {{ _('for the service') }} <strong>{{ service_name }}</strong> {{ _('has been successfully confirmed!') }}</p>
-            <p>{{ _('Here are your booking details:') }}</p>
-            <ul>
-                <li><strong>{{ _('Service:') }}</strong> {{ service_name }}</li>
-                <li><strong>{{ _('Date:') }}</strong> {{ booking_date }}</li>
-                <li><strong>{{ _('Time:') }}</strong> {{ booking_time }}</li>
-            </ul>
-            <p>{{ _('We look forward to seeing you!') }}</p>
-            <p>{{ _('If you need to make changes, please contact') }} {{ owner_business_name }} {{ _('directly.') }}</p>
-        </div>
-        <div class="footer">
-            <p>{{ _('This is an automated email, please do not reply.') }}</p>
-            <p>&copy; 2024 BookSlot. {{ _('All rights reserved.') }}</p>
-        </div>
-    </div>
+    <h1>{{ i18n('Hello {customer_name},', customer_name=booking.customer_name) }}</h1>
+    <p>{{ i18n('Your booking with {business_name} is confirmed!', business_name=owner.business_name) }}</p>
+    <p><strong>{{ i18n('Service') }}:</strong> {{ booking.service_name }}</p>
+    <p><strong>{{ i18n('Date') }}:</strong> {{ booking.booking_date }}</p>
+    <p><strong>{{ i18n('Time') }}:</strong> {{ booking.booking_time }}</p>
+    <p>{{ i18n('We look forward to seeing you!') }}</p>
+    <p>{{ owner.business_name }}</p>
+    <p><a href="{{ settings.SERVER_NAME }}/{{ owner.slug }}">{{ i18n('Visit our booking page') }}</a></p>
 </body>
 </html>
