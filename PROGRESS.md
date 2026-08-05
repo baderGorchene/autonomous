@@ -1,3 +1,8 @@
+## Iteration 301
+_2026-08-05 21:10 UTC_
+
+Created `requirements.txt` at the project root with all project and testing dependencies, including `pytest`, to resolve the 'No module named pytest' error and enable test execution.
+
 ## Iteration 300
 _2026-08-05 19:36 UTC_
 
