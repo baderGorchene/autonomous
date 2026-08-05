@@ -1,1 +1,1 @@
-Docs: Add comprehensive README for setup and deployment
+FIX: Add pytest and related dependencies to requirements.txt
