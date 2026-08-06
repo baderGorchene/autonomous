@@ -1,1 +1,1 @@
-Fix: Ensure pytest is listed in requirements.txt
+Add requirements.txt with all project and test dependencies
