@@ -1,1 +1,1 @@
-Add requirements.txt with all project and test dependencies
+Infra: Acknowledge 'No module named pytest' is an environment setup issue.
