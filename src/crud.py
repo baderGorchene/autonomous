@@ -52,7 +52,7 @@ def create_booking(db: Session, booking: schemas.BookingCreate, owner_id: int):
     if booking_datetime < datetime.now():
         raise ValueError("Cannot book a time slot in the past.")
 
-    # Get owner to check availability
+    # Get owner to check availability and services
     owner = db.query(models.Owner).filter(models.Owner.id == owner_id).first()
     if not owner:
         raise ValueError("Owner not found.")
@@ -76,7 +76,23 @@ def create_booking(db: Session, booking: schemas.BookingCreate, owner_id: int):
     if booking_time_str not in day_slots:
         raise ValueError(f"The requested time slot {booking_time_str} on {day_name} is not available for booking.")
 
+    # --- NEW LOGIC: Retrieve service duration and include in booking --- 
+    service_duration_minutes = 0
+    try:
+        services_data = json.loads(owner.services_json)
+        selected_service = next((s for s in services_data if s["name"] == booking.service_name), None)
+        if not selected_service:
+            raise ValueError(f"Service '{booking.service_name}' not found for this owner.")
+        service_duration_minutes = selected_service.get("duration_minutes")
+        if not service_duration_minutes or not isinstance(service_duration_minutes, int) or service_duration_minutes <= 0:
+            raise ValueError(f"Service '{booking.service_name}' has an invalid or missing duration. Please contact the owner.")
+    except (json.JSONDecodeError, ValueError) as e:
+        raise ValueError(f"Error processing service details for booking: {e}")
+    # --- END NEW LOGIC ---
+
     # Check for existing bookings at the same time for this owner
+    # This check still only prevents exact start time overlaps. Duration-based overlap
+    # will be implemented in a future task.
     existing_booking = db.query(models.Booking).filter(
         models.Booking.owner_id == owner_id,
         models.Booking.booking_date == booking.booking_date,
@@ -86,7 +102,8 @@ def create_booking(db: Session, booking: schemas.BookingCreate, owner_id: int):
     if existing_booking:
         raise ValueError("This time slot is already booked. Please choose another time.")
 
-    db_booking = models.Booking(**booking.model_dump(), owner_id=owner_id)
+    # Create the booking with the retrieved service duration
+    db_booking = models.Booking(**booking.model_dump(), owner_id=owner_id, service_duration_minutes=service_duration_minutes)
     db.add(db_booking)
     db.commit()
     db.refresh(db_booking)
@@ -99,7 +116,17 @@ def update_owner_profile(db: Session, current_owner: models.Owner, owner_update:
     
     # Update services_json and availability_json if provided
     if owner_update.services_json is not None:
-        current_owner.services_json = owner_update.services_json
+        try:
+            # Validate the incoming services_json against the ServiceSchema
+            services_data = json.loads(owner_update.services_json)
+            # Ensure it's a list, even if empty
+            if not isinstance(services_data, list):
+                raise ValueError("services_json must be a JSON array of services.")
+            # Validate each service item against ServiceSchema
+            validated_services = [schemas.ServiceSchema(**service) for service in services_data]
+            current_owner.services_json = json.dumps([s.model_dump() for s in validated_services])
+        except (json.JSONDecodeError, ValueError) as e:
+            raise ValueError(f"Invalid services data: {e}")
     if owner_update.availability_json is not None:
         current_owner.availability_json = owner_update.availability_json
 

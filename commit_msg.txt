@@ -1,1 +1,1 @@
-Acknowledge persistent pytest environment issue
+Fix: Explicitly provide requirements.txt with all dependencies including pytest
