@@ -16,6 +16,11 @@ class Settings(BaseSettings):
     TWILIO_WHATSAPP_NUMBER: str = Field("", description="Twilio WhatsApp Sender Number (e.g., 'whatsapp:+1234567890'). Required for production. Set via environment variable.")
     GEMINI_API_KEY: str = Field("", description="Gemini API Key (currently not used).")
 
+    # Stripe API keys for payment processing
+    STRIPE_SECRET_KEY: str = Field("", description="Stripe Secret Key. Required for production. Set via environment variable.")
+    STRIPE_PUBLIC_KEY: str = Field("", description="Stripe Publishable Key. Required for production. Set via environment variable.")
+    STRIPE_WEBHOOK_SECRET: str = Field("", description="Stripe Webhook Secret. Required for production. Set via environment variable.") # New field
+
     # Database configuration. SQLite is for development/MVP. PostgreSQL or similar is REQUIRED for production.
     DATABASE_URL: str = Field("sqlite:///./sql_app.db", description="Database URL. Use a production-grade DB like PostgreSQL in production. Set via environment variable.")
     TESTING: bool = False # Set to True for test environments, False for production.

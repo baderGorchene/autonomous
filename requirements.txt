@@ -7,11 +7,11 @@ python-jose[cryptography]
 passlib[bcrypt]
 python-multipart
 jinja2
-babel
-python-gettext
+email-validator
 sendgrid
 twilio
-httpx
+babel
+stripe
 pytest
 pytest-asyncio
-python-dotenv
+httpx
