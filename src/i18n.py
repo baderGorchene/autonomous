@@ -53,4 +53,8 @@ def _(text: str, locale_code: Optional[str] = None) -> str:
 
     catalog = get_catalog(locale_code)
     translation = catalog.get(text)
-    return translation if translation is not None else text
+    
+    if translation is None:
+        logger.debug(f"Missing translation for '{text}' in locale '{locale_code}'")
+        return text # Fallback to original text if translation not found
+    return translation

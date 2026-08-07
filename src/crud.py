@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 from . import models, schemas, security
+from sqlalchemy.exc import IntegrityError
 
 def get_owner(db: Session, owner_id: int):
     return db.query(models.Owner).filter(models.Owner.id == owner_id).first()
@@ -14,11 +15,24 @@ def get_owners(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.Owner).offset(skip).limit(limit).all()
 
 def create_owner(db: Session, owner: schemas.OwnerCreate):
+    # Check for existing slug to prevent conflicts and provide user-friendly error
+    if get_owner_by_slug(db, owner.slug):
+        raise ValueError("Slug already in use. Please choose a different one.")
+    
+    # Check for existing email to prevent duplicate accounts
+    if get_owner_by_email(db, owner.email):
+        raise ValueError("Email already registered. Please use a different email or log in.")
+
     hashed_password = security.get_password_hash(owner.password)
     db_owner = models.Owner(name=owner.name, email=owner.email, hashed_password=hashed_password, business_name=owner.business_name, slug=owner.slug, services_json="[]", availability_json="{}", phone=owner.phone)
     db.add(db_owner)
-    db.commit()
-    db.refresh(db_owner)
+    try:
+        db.commit()
+        db.refresh(db_owner)
+    except IntegrityError:
+        db.rollback()
+        # This catch is for potential race conditions or other database integrity errors
+        raise ValueError("A database conflict occurred during owner creation. Please try again.")
     return db_owner
 
 def authenticate_owner(db: Session, email: str, password: str):

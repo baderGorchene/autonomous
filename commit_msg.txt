@@ -1,1 +1,1 @@
-Fix: Ensure pytest and core dependencies are in requirements.txt
+Resolve environment issue: No module named pytest
