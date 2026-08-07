@@ -1,1 +1,1 @@
-feat: Create requirements.txt with all project dependencies
+Address pytest module not found error by installing dependencies
