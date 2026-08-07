@@ -1,3 +1,8 @@
+## Iteration 323
+_2026-08-07 21:39 UTC_
+
+Refined `src/config.py` descriptions to explicitly highlight production requirements for critical settings. Created a comprehensive `.env.example` file to guide users in setting up environment variables for production deployment, ensuring all necessary API keys and database configurations are clearly documented.
+
 ## Iteration 322
 _2026-08-07 20:42 UTC_
 

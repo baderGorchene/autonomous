@@ -1,1 +1,1 @@
-Fix: Ensure pytest and all project dependencies are listed in requirements.txt
+Prepare for production deployment: Refine config and add .env.example
