@@ -1,7 +1,9 @@
+import json
+import calendar
 from sqlalchemy.orm import Session
 from . import models, schemas, security
 from sqlalchemy.exc import IntegrityError
-from datetime import datetime
+from datetime import datetime, time
 
 def get_owner(db: Session, owner_id: int):
     return db.query(models.Owner).filter(models.Owner.id == owner_id).first()
@@ -50,6 +52,40 @@ def create_booking(db: Session, booking: schemas.BookingCreate, owner_id: int):
     if booking_datetime < datetime.now():
         raise ValueError("Cannot book a time slot in the past.")
 
+    # Get owner to check availability
+    owner = db.query(models.Owner).filter(models.Owner.id == owner_id).first()
+    if not owner:
+        raise ValueError("Owner not found.")
+
+    # Parse owner's availability
+    try:
+        availability_data = json.loads(owner.availability_json)
+        available_slots_by_day = availability_data.get("slots", {})
+    except json.JSONDecodeError:
+        raise ValueError("Owner's availability data is malformed.")
+
+    # Determine day of week for booking
+    day_name = calendar.day_name[booking.booking_date.weekday()] # e.g., "Monday"
+    
+    # Check if the requested slot is available for that day
+    day_slots = available_slots_by_day.get(day_name, [])
+    
+    # Convert booking_time to string "HH:MM" for comparison with stored slots
+    booking_time_str = booking.booking_time.strftime("%H:%M")
+
+    if booking_time_str not in day_slots:
+        raise ValueError(f"The requested time slot {booking_time_str} on {day_name} is not available for booking.")
+
+    # Check for existing bookings at the same time for this owner
+    existing_booking = db.query(models.Booking).filter(
+        models.Booking.owner_id == owner_id,
+        models.Booking.booking_date == booking.booking_date,
+        models.Booking.booking_time == booking.booking_time
+    ).first()
+
+    if existing_booking:
+        raise ValueError("This time slot is already booked. Please choose another time.")
+
     db_booking = models.Booking(**booking.model_dump(), owner_id=owner_id)
     db.add(db_booking)
     db.commit()
@@ -60,6 +96,13 @@ def update_owner_profile(db: Session, current_owner: models.Owner, owner_update:
     current_owner.name = owner_update.name
     current_owner.business_name = owner_update.business_name
     current_owner.phone = owner_update.phone
+    
+    # Update services_json and availability_json if provided
+    if owner_update.services_json is not None:
+        current_owner.services_json = owner_update.services_json
+    if owner_update.availability_json is not None:
+        current_owner.availability_json = owner_update.availability_json
+
     db.add(current_owner)
     db.commit()
     db.refresh(current_owner)

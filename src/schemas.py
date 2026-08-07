@@ -1,57 +1,41 @@
 from pydantic import BaseModel, EmailStr, Field
-from typing import List, Dict, Any, Optional
-from datetime import datetime
+from datetime import date, time, datetime
+from typing import List, Optional
 
 class OwnerBase(BaseModel):
     name: str
     email: EmailStr
     business_name: str
-    slug: str = Field(..., regex="^[a-z0-9-]+$", min_length=3) # Slug for URL
+    slug: str = Field(..., min_length=3, max_length=50, pattern="^[a-z0-9-]+$")
     phone: Optional[str] = None
 
 class OwnerCreate(OwnerBase):
     password: str
 
-class OwnerProfileUpdate(BaseModel):
-    name: str
-    business_name: str
-    phone: Optional[str] = None
-    # No email or slug update for simplicity here, would require more complex logic
-
-class OwnerInDB(OwnerBase):
+class Owner(OwnerBase):
     id: int
-    hashed_password: str
-    services_json: str
-    availability_json: str
+    is_active: bool = True
+    services_json: str # JSON string of services
+    availability_json: str # JSON string of availability
 
     class Config:
         from_attributes = True
 
-class Service(BaseModel):
+class OwnerProfileUpdate(BaseModel):
     name: str
-    duration: int # in minutes
-    price: float
-    currency: str = "USD" # Default currency
+    business_name: str
+    phone: Optional[str] = None
+    services_json: Optional[str] = None
+    availability_json: Optional[str] = None
 
-class Availability(BaseModel):
-    day_of_week: int # 0-6 for Monday-Sunday
-    start_time: str # HH:MM
-    end_time: str # HH:MM
-
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-
-class TokenData(BaseModel):
-    email: Optional[str] = None
 
 class BookingBase(BaseModel):
     customer_name: str
     customer_email: EmailStr
     customer_phone: Optional[str] = None
     service_name: str
-    booking_date: str # YYYY-MM-DD
-    booking_time: str # HH:MM
+    booking_date: date
+    booking_time: time
 
 class BookingCreate(BookingBase):
     pass
@@ -64,5 +48,9 @@ class Booking(BookingBase):
     class Config:
         from_attributes = True
 
-class ErrorResponse(BaseModel):
-    detail: str
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class TokenData(BaseModel):
+    email: Optional[str] = None
