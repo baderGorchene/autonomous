@@ -1,49 +1,52 @@
-# BookSlot - Simple Booking Page for Local Services
+# BookSlot: A Simple Booking Page for Local Service Businesses
 
-BookSlot offers a dead-simple, shareable online booking page for local service businesses (salons, clinics, tutors, mechanics, coaches) to manage appointments efficiently, moving away from WhatsApp chaos. Customers can book themselves, and the owner receives instant WhatsApp/email notifications with booking details. No customer accounts are needed, making the booking process frictionless. The platform is bilingual (English + Arabic/French) from day one, targeting underserved markets like MENA and North Africa.
+BookSlot offers a dead-simple, shareable booking page for local service businesses to manage appointments efficiently, moving beyond WhatsApp chaos.
 
 ## Features
 
-*   **Owner Signup & Service Setup:** Easy registration and configuration of services and availability.
-*   **Public Booking Page:** A mobile-first, beautifully designed public page for customers to book services.
-*   **Time Slot Availability:** Owners define their available time slots, which customers can select.
-*   **Automated Notifications:** Email and WhatsApp notifications for both owners and customers upon booking.
-*   **Simple Dashboard:** Owners get a dashboard to view upcoming bookings and manage their profile.
-*   **Bilingual Support:** Full English, Arabic, and French support with a language toggle.
-*   **Error Handling:** Robust error handling for booking submissions and profile updates.
-*   **Responsive UI/UX:** Optimized user experience across various devices.
+*   **Owner Signup & Service Setup**: Business owners can register and define their services and availability.
+*   **Public Booking Page**: Customers can easily book appointments via a shareable link (e.g., `bookslot.app/their-name`).
+*   **Time Slot Availability**: Intelligent management of available booking slots.
+*   **Notifications**: Owners receive WhatsApp/email notifications for new bookings; customers receive email confirmations.
+*   **Simple Dashboard**: Owners can view upcoming bookings and manage their profile.
+*   **Bilingual Support**: English + Arabic/French from day one, targeting MENA and North Africa markets.
+*   **Mobile-First Design**: Responsive and user-friendly interface.
 
-## Tech Stack
+## Monetization
 
-*   **Backend:** FastAPI, Pydantic
-*   **Database:** SQLAlchemy (ORM), SQLite (development), PostgreSQL (production)
-*   **Templating:** Jinja2
-*   **Internationalization:** Babel
-*   **Notifications:** SendGrid (Email), Twilio (WhatsApp)
-*   **Authentication:** JWT
+*   Free for up to 20 bookings/month.
+*   $19/month for unlimited bookings.
 
-## Local Development Setup
+## Target Audience
 
-Follow these steps to get BookSlot running on your local machine.
+Solo service providers who have 10-50 clients/week and are looking for a straightforward solution to streamline their booking process.
+
+## Getting Started
+
+These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
 
 ### Prerequisites
 
 *   Python 3.9+
-*   pip (Python package installer)
-*   virtualenv (recommended)
+*   `pip` (Python package installer)
+*   `git` (for cloning the repository)
 
 ### Installation
 
 1.  **Clone the repository:**
     ```bash
-    git clone https://github.com/your-repo/bookslot.git
+    git clone https://github.com/your-username/bookslot.git # Replace with actual repo URL
     cd bookslot
     ```
 
 2.  **Create and activate a virtual environment:**
+    It's highly recommended to use a virtual environment to manage dependencies.
     ```bash
     python -m venv venv
-    source venv/bin/activate  # On Windows: venv\Scripts\activate
+    # On macOS/Linux:
+    source venv/bin/activate
+    # On Windows:
+    .\venv\Scripts\activate
     ```
 
 3.  **Install dependencies:**
@@ -51,93 +54,101 @@ Follow these steps to get BookSlot running on your local machine.
     pip install -r requirements.txt
     ```
 
-4.  **Create a `.env` file:**
-    Create a file named `.env` in the project root directory with the following content. Replace placeholder values with your actual credentials.
-    ```env
-    SECRET_KEY="your_super_secret_key_here_at_least_32_chars"
-    DATABASE_URL="sqlite:///./sql_app.db"
-    SENDGRID_API_KEY="your_sendgrid_api_key"
-    TWILIO_ACCOUNT_SID="your_twilio_account_sid"
-    TWILIO_AUTH_TOKEN="your_twilio_auth_token"
-    TWILIO_WHATSAPP_NUMBER="whatsapp:+1234567890" # Your Twilio WhatsApp enabled number
-    SERVER_NAME="http://localhost:8000"
-    # GEMINI_API_KEY="your_gemini_api_key" # Currently not used
-    ```
-    *   `SECRET_KEY`: A strong, random string essential for JWT security. Generate one with `openssl rand -hex 32`.
-    *   `DATABASE_URL`: For local development, SQLite is used. For production, a PostgreSQL URL is recommended.
-    *   `SENDGRID_API_KEY`: Obtain this from your SendGrid account.
-    *   `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_WHATSAPP_NUMBER`: Obtain these from your Twilio account. Ensure your Twilio number is WhatsApp-enabled.
-    *   `SERVER_NAME`: The base URL of your application. Important for generating correct links in emails.
-
-5.  **Initialize the database:**
+4.  **Database Setup:**
+    The application uses SQLite by default. If you wish to use a different database, update `DATABASE_URL` in your `.env` file.
     ```bash
-    python -m src.database create_tables
+    python -c "from src.database import create_tables; create_tables()"
     ```
-    This will create the `sql_app.db` file for SQLite.
+    This command will create the necessary database tables.
 
-6.  **Run the application:**
-    ```bash
-    uvicorn src.main:app --reload
-    ```
-    The application will be accessible at `http://localhost:8000`.
+### Configuration
 
-## Running Tests
+Create a `.env` file in the project root directory (same level as `src` folder) based on `src/config.py`.
+```
+SECRET_KEY="YOUR_SUPER_SECRET_KEY_HERE_MIN_32_CHARS"
+DATABASE_URL="sqlite:///./sql_app.db"
+SENDGRID_API_KEY="YOUR_SENDGRID_API_KEY" # Optional, for email notifications
+TWILIO_ACCOUNT_SID="YOUR_TWILIO_ACCOUNT_SID" # Optional, for WhatsApp notifications
+TWILIO_AUTH_TOKEN="YOUR_TWILIO_AUTH_TOKEN"
+TWILIO_WHATSAPP_NUMBER="whatsapp:+1234567890" # e.g., 'whatsapp:+14155238886'
+SERVER_NAME="http://localhost:8000" # Base URL for your application
+```
+*   **`SECRET_KEY`**: A strong, random string essential for JWT security. Generate a long random string (e.g., using `openssl rand -hex 32`).
+*   **`DATABASE_URL`**: Connection string for your database.
+*   **`SENDGRID_API_KEY`**: Required for email notifications.
+*   **`TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_WHATSAPP_NUMBER`**: Required for WhatsApp notifications.
+*   **`SERVER_NAME`**: The base URL where your application is hosted.
 
-To run the automated tests, ensure you have installed `pytest` (included in `requirements.txt`).
+### Running the Application
 
+To run the FastAPI application:
+
+```bash
+uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
+```
+The application will be accessible at `http://localhost:8000`.
+
+### Running Tests
+
+Ensure you have installed the test dependencies (`pytest`, `pytest-asyncio`, `httpx`).
 ```bash
 pytest
 ```
 
-## Deployment (Production)
+### Project Structure
 
-For production deployment, consider the following:
+```
+.
+├── src/
+│   ├── __init__.py
+│   ├── config.py             # Application settings and configurations
+│   ├── crud.py               # Database Create, Read, Update, Delete operations
+│   ├── database.py           # Database connection and session management
+│   ├── dependencies.py       # Dependency injection for FastAPI
+│   ├── i18n.py               # Internationalization (i18n) utilities
+│   ├── main.py               # Main FastAPI application entry point
+│   ├── models.py             # SQLAlchemy models
+│   ├── notifications.py      # Email and WhatsApp notification services
+│   ├── schemas.py            # Pydantic schemas for data validation
+│   ├── security.py           # Authentication and password hashing
+│   └── templates/            # Jinja2 HTML templates
+│       ├── base.html
+│       ├── booking_confirmation.html
+│       ├── booking_page.html
+│       ├── dashboard.html
+│       ├── login.html
+│       └── signup.html
+├── locales/                  # Translation files (e.g., ar, fr)
+│   ├── ar/
+│   │   └── LC_MESSAGES/
+│   │       └── messages.po
+│   └── fr/
+│       └── LC_MESSAGES/
+│           └── messages.po
+├── tests/                    # Unit and integration tests
+│   ├── __init__.py
+│   ├── conftest.py
+│   ├── test_api.py
+│   ├── test_i18n.py
+│   └── test_security.py
+├── .env.example              # Example environment variables file
+├── requirements.txt          # Python dependencies
+└── README.md                 # Project documentation
+```
 
-1.  **Environment Variables:** All variables in the `.env` file for local setup **must** be set as environment variables in your production environment. `SECRET_KEY`, `DATABASE_URL`, `SERVER_NAME`, and all notification service keys are critical.
+### Deployment
 
-    *   **Database:** It is highly recommended to use a robust database like PostgreSQL for production. Update `DATABASE_URL` to point to your PostgreSQL instance (e.g., `postgresql://user:password@host:port/dbname`).
-    *   **`SERVER_NAME`**: Set this to your actual domain (e.g., `https://bookslot.app`).
+For production deployment, consider using a WSGI server like Gunicorn with Uvicorn workers behind a reverse proxy (Nginx/Caddy). Ensure all environment variables are properly set in your production environment.
 
-2.  **Running the Application:** Use a production-ready ASGI server like Gunicorn with Uvicorn workers.
+Example Gunicorn command:
+```bash
+gunicorn src.main:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000
+```
 
-    ```bash
-    gunicorn src.main:app -w 4 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8000
-    ```
-    Adjust `-w` (number of workers) based on your server's CPU cores.
+### Contributing
 
-3.  **Reverse Proxy:** For better security, performance, and SSL termination, use a reverse proxy like Nginx or Caddy in front of Gunicorn.
+Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
-4.  **Containerization:** A `Dockerfile` is provided in the root directory for building a Docker image of the application, facilitating containerized deployment to platforms like Docker Swarm, Kubernetes, or cloud services.
+### License
 
-5.  **Database Migrations:** For managing database schema changes in production, consider integrating a tool like Alembic (not included in MVP but recommended for long-term projects).
-
-## Internationalization (i18n)
-
-BookSlot supports English, Arabic, and French. To add new languages or update existing translations:
-
-1.  **Extract new messages:**
-    ```bash
-    pybabel extract -F babel.cfg -o locales/messages.pot src
-    ```
-    (A `babel.cfg` file should be present in the project root to configure extraction.)
-
-2.  **Initialize a new language (e.g., Spanish 'es'):**
-    ```bash
-    pybabel init -i locales/messages.pot -d locales -l es
-    ```
-
-3.  **Update existing languages:**
-    ```bash
-    pybabel update -i locales/messages.pot -d locales
-    ```
-
-4.  **Translate:** Edit the `.po` files located in `locales/<lang_code>/LC_MESSAGES/messages.po`.
-
-5.  **Compile translations:**
-    ```bash
-    pybabel compile -d locales
-    ```
-
-## Monetization
-
-BookSlot offers a free tier for up to 20 bookings per month. For unlimited bookings, a subscription of $19/month is available.
+[MIT](https://choosealicense.com/licenses/mit/)
