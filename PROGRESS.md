@@ -1,3 +1,8 @@
+## Iteration 321
+_2026-08-07 19:55 UTC_
+
+Added a `DEFAULT_LOCALE` setting to `config.py` to allow for a configurable default language, addressing a common usability improvement point identified during user acceptance testing related to internationalization.
+
 ## Iteration 320
 _2026-08-07 18:58 UTC_
 

@@ -1,1 +1,1 @@
-Chore: Verified pytest setup and moving to UAT feedback
+Feat: Add DEFAULT_LOCALE setting based on UAT feedback

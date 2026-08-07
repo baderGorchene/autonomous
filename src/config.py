@@ -21,6 +21,9 @@ class Settings(BaseSettings):
     # e.g., "https://bookslot.app" or "http://localhost:8000"
     SERVER_NAME: str = Field("http://localhost:8000", description="Base URL of the application.")
 
+    # Default locale for the application (e.g., 'en', 'ar', 'fr')
+    DEFAULT_LOCALE: str = Field("en", description="Default language for the application.")
+
     _current_file_dir = os.path.dirname(os.path.abspath(__file__))
     PROJECT_ROOT = os.path.abspath(os.path.join(_current_file_dir, os.pardir))
     LOCALES_DIR: str = os.path.join(PROJECT_ROOT, 'locales')
