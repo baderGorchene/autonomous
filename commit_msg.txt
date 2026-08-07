@@ -1,1 +1,1 @@
-Fix: Explicitly provide requirements.txt with all dependencies including pytest
+Chore: Verified pytest setup and moving to UAT feedback
