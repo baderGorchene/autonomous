@@ -1,1 +1,1 @@
-Fix: Ensure pytest is available by providing comprehensive requirements.txt
+Acknowledge persistent pytest environment issue
