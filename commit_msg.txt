@@ -1,1 +1,1 @@
-Project ready for staging deployment and UAT
+Fix: Ensure pytest and core dependencies are in requirements.txt
