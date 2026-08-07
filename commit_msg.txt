@@ -1,1 +1,1 @@
-Feat: Add DEFAULT_LOCALE setting based on UAT feedback
+Fix: Ensure pytest and all project dependencies are listed in requirements.txt

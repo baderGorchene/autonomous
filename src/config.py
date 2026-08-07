@@ -8,18 +8,19 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
-    SENDGRID_API_KEY: str = Field("", description="SendGrid API Key for email notifications.")
-    TWILIO_ACCOUNT_SID: str = Field("", description="Twilio Account SID for WhatsApp notifications.")
-    TWILIO_AUTH_TOKEN: str = Field("", description="Twilio Auth Token for WhatsApp notifications.")
-    TWILIO_WHATSAPP_NUMBER: str = Field("", description="Twilio WhatsApp Sender Number (e.g., 'whatsapp:+1234567890').")
+    SENDGRID_API_KEY: str = Field("", description="SendGrid API Key for email notifications. Required for production.")
+    TWILIO_ACCOUNT_SID: str = Field("", description="Twilio Account SID for WhatsApp notifications. Required for production.")
+    TWILIO_AUTH_TOKEN: str = Field("", description="Twilio Auth Token for WhatsApp notifications. Required for production.")
+    TWILIO_WHATSAPP_NUMBER: str = Field("", description="Twilio WhatsApp Sender Number (e.g., 'whatsapp:+1234567890'). Required for production.")
     GEMINI_API_KEY: str = Field("", description="Gemini API Key (currently not used).")
 
-    DATABASE_URL: str = "sqlite:///./sql_app.db"
+    # For production, consider a robust database like PostgreSQL. SQLite is used for simplicity in development/MVP.
+    DATABASE_URL: str = Field("sqlite:///./sql_app.db", description="Database URL. Use a production-grade DB like PostgreSQL in production.")
     TESTING: bool = False
     
-    # Base URL for the application, used for generating links in emails/notifications
-    # e.g., "https://bookslot.app" or "http://localhost:8000"
-    SERVER_NAME: str = Field("http://localhost:8000", description="Base URL of the application.")
+    # Base URL for the application, used for generating links in emails/notifications.
+    # IMPORTANT: Must be set to the public domain (e.g., "https://bookslot.app") in production.
+    SERVER_NAME: str = Field("http://localhost:8000", description="Base URL of the application. Set to your public domain in production.")
 
     # Default locale for the application (e.g., 'en', 'ar', 'fr')
     DEFAULT_LOCALE: str = Field("en", description="Default language for the application.")
