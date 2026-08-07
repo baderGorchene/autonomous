@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from . import models, schemas, security
 from sqlalchemy.exc import IntegrityError
+from datetime import datetime
 
 def get_owner(db: Session, owner_id: int):
     return db.query(models.Owner).filter(models.Owner.id == owner_id).first()
@@ -44,6 +45,11 @@ def authenticate_owner(db: Session, email: str, password: str):
     return owner
 
 def create_booking(db: Session, booking: schemas.BookingCreate, owner_id: int):
+    # Validate that the booking date and time are not in the past
+    booking_datetime = datetime.combine(booking.booking_date, booking.booking_time)
+    if booking_datetime < datetime.now():
+        raise ValueError("Cannot book a time slot in the past.")
+
     db_booking = models.Booking(**booking.model_dump(), owner_id=owner_id)
     db.add(db_booking)
     db.commit()

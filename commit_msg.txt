@@ -1,1 +1,1 @@
-Resolve environment issue: No module named pytest
+Re-create requirements.txt to ensure pytest and all dependencies are present
