@@ -1,1 +1,1 @@
-Feat: Implement Stripe payment gateway for premium subscription
+Fix: Ensure pytest is installed via requirements.txt

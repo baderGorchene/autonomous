@@ -1,19 +1,17 @@
-from typing import Optional
-from datetime import datetime
+from typing import Dict, Optional
+import os
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 from twilio.rest import Client
 from .config import settings
-from . import models
-from .i18n import gettext_lazy as _ # Assuming i18n is also used for notification texts
 
 def send_email(to_email: str, subject: str, html_content: str):
     if not settings.SENDGRID_API_KEY:
-        print("SendGrid API key not configured. Skipping email.")
+        print(f"SendGrid API Key not set. Skipping email to {to_email} with subject '{subject}'.")
         return
 
     message = Mail(
-        from_email='no-reply@bookslot.app', # Replace with your verified sender
+        from_email=('noreply@bookslot.app', 'BookSlot'),
         to_emails=to_email,
         subject=subject,
         html_content=html_content
@@ -25,91 +23,66 @@ def send_email(to_email: str, subject: str, html_content: str):
     except Exception as e:
         print(f"Error sending email to {to_email}: {e}")
 
-def send_whatsapp_message(to_phone: str, message_body: str):
-    if not settings.TWILIO_ACCOUNT_SID or not settings.TWILIO_AUTH_TOKEN or not settings.TWILIO_WHATSAPP_NUMBER:
-        print("Twilio credentials not configured. Skipping WhatsApp message.")
+def send_whatsapp_notification(to_phone_number: Optional[str], booking_details: Dict):
+    if not to_phone_number or not settings.TWILIO_ACCOUNT_SID or not settings.TWILIO_AUTH_TOKEN or not settings.TWILIO_WHATSAPP_NUMBER:
+        print(f"Twilio credentials or recipient phone number not fully set. Skipping WhatsApp notification to {to_phone_number}.")
         return
 
     try:
         client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
+        
+        message_body = (
+            f"New booking for {booking_details['service_name']}!\n"
+            f"Customer: {booking_details['customer_name']} ({booking_details['customer_email']})\n"
+            f"Time: {booking_details['start_time']}\n"
+            f"Price: {booking_details['price']}"
+        )
+
         message = client.messages.create(
             from_=settings.TWILIO_WHATSAPP_NUMBER,
             body=message_body,
-            to=f"whatsapp:{to_phone}"
+            to=f"whatsapp:{to_phone_number}"
         )
-        print(f"WhatsApp message sent to {to_phone}. SID: {message.sid}")
+        print(f"WhatsApp message sent to {to_phone_number}. SID: {message.sid}")
     except Exception as e:
-        print(f"Error sending WhatsApp message to {to_phone}: {e}")
+        print(f"Error sending WhatsApp notification to {to_phone_number}: {e}")
 
-def send_booking_confirmation_email(booking: models.Booking, owner: models.Owner, locale: str = 'en'):
-    # This function needs to be locale-aware for subject and body
-    # For simplicity, I'll use placeholders for i18n functions
-    # In a real app, you'd pass the locale or use a context-aware i18n system.
-    # Here, I'm simulating it by directly including service_name.
-
-    # Example: Subject and body could be rendered from templates or constructed dynamically
-    # For a full i18n solution, this would involve a proper translation context.
-    # Here, I'm simulating it by directly including service_name.
-
-    subject = _("Booking Confirmation for your appointment at {business_name}", locale=locale).format(business_name=owner.business_name)
-    customer_html_content = f"""
-    <html>
-        <body>
-            <p>{_("Dear {customer_name},", locale=locale).format(customer_name=booking.customer_name)}</p>
-            <p>{_("Your booking for {service_name} at {business_name} has been confirmed.", locale=locale).format(service_name=booking.service_name, business_name=owner.business_name)}</p>
-            <p>{_("Details:", locale=locale)}</p>
-            <ul>
-                <li>{_("Service:", locale=locale)} {booking.service_name}</li>
-                <li>{_("Date:", locale=locale)} {booking.booking_date.strftime('%Y-%m-%d')}</li>
-                <li>{_("Time:", locale=locale)} {booking.booking_time.strftime('%H:%M')}</li>
-                <li>{_("Business:", locale=locale)} {owner.business_name}</li>
-            </ul>
-            <p>{_("Thank you!", locale=locale)}</p>
-        </body>
-    </html>
+def send_booking_confirmation_email(owner_email: str, customer_email: str, booking_details: Dict):
+    owner_subject = f"New Booking: {booking_details['service_name']} on {booking_details['start_time']}"
+    owner_html = f"""
+    <p>Dear {booking_details['owner_name']},</p>
+    <p>You have a new booking!</p>
+    <ul>
+        <li>Service: {booking_details['service_name']}</li>
+        <li>Customer: {booking_details['customer_name']} ({booking_details['customer_email']}{f', {booking_details["customer_phone"]}' if booking_details['customer_phone'] else ''})</li>
+        <li>Time: {booking_details['start_time']} - {booking_details['end_time']}</li>
+        <li>Price: {booking_details['price']}</li>
+    </ul>
+    <p>Thank you!</p>
     """
-    send_email(booking.customer_email, subject, customer_html_content)
+    send_email(owner_email, owner_subject, owner_html)
 
-    owner_subject = _("New Booking Received for {service_name}!", locale=locale).format(service_name=booking.service_name)
-    owner_html_content = f"""
-    <html>
-        <body>
-            <p>{_("Dear {owner_name},", locale=locale).format(owner_name=owner.name)}</p>
-            <p>{_("You have received a new booking:", locale=locale)}</p>
-            <ul>
-                <li>{_("Service:", locale=locale)} {booking.service_name}</li>
-                <li>{_("Customer Name:", locale=locale)} {booking.customer_name}</li>
-                <li>{_("Customer Email:", locale=locale)} {booking.customer_email}</li>
-                <li>{_("Customer Phone:", locale=locale)} {booking.customer_phone if booking.customer_phone else _('N/A', locale=locale)}</li>
-                <li>{_("Date:", locale=locale)} {booking.booking_date.strftime('%Y-%m-%d')}</li>
-                <li>{_("Time:", locale=locale)} {booking.booking_time.strftime('%H:%M')}</li>
-            </ul>
-            <p>{_("Manage your bookings:", locale=locale)} <a href=\"{settings.SERVER_NAME}/dashboard\">{settings.SERVER_NAME}/dashboard</a></p>
-        </body>
-    </html>
+    customer_subject = f"Your Booking for {booking_details['service_name']} is Confirmed!"
+    customer_html = f"""
+    <p>Dear {booking_details['customer_name']},</p>
+    <p>Your booking for <b>{booking_details['service_name']}</b> with {booking_details['owner_name']} has been confirmed.</p>
+    <ul>
+        <li>Time: {booking_details['start_time']} - {booking_details['end_time']}</li>
+        <li>Price: {booking_details['price']}</li>
+        <li>Location/Details: (provided by owner)</li>
+    </ul>
+    <p>We look forward to seeing you!</p>
     """
-    send_email(owner.email, owner_subject, owner_html_content)
+    send_email(customer_email, customer_subject, customer_html)
 
-def send_owner_whatsapp_notification(booking: models.Booking, owner: models.Owner, locale: str = 'en'):
-    if not owner.phone:
-        return
-    message_body = _("New Booking for {service_name}!\nCustomer: {customer_name}\nDate: {booking_date}\nTime: {booking_time}\nEmail: {customer_email}\nPhone: {customer_phone}", locale=locale).format(
-        service_name=booking.service_name,
-        customer_name=booking.customer_name,
-        booking_date=booking.booking_date.strftime('%Y-%m-%d'),
-        booking_time=booking.booking_time.strftime('%H:%M'),
-        customer_email=booking.customer_email,
-        customer_phone=booking.customer_phone if booking.customer_phone else _('N/A', locale=locale)
-    )
-    send_whatsapp_message(owner.phone, message_body)
-
-def send_customer_whatsapp_notification(booking: models.Booking, owner: models.Owner, locale: str = 'en'):
-    if not booking.customer_phone:
-        return
-    message_body = _("Your booking for {service_name} at {business_name} is confirmed!\nDate: {booking_date}\nTime: {booking_time}", locale=locale).format(
-        service_name=booking.service_name,
-        business_name=owner.business_name,
-        booking_date=booking.booking_date.strftime('%Y-%m-%d'),
-        booking_time=booking.booking_time.strftime('%H:%M')
-    )
-    send_whatsapp_message(booking.customer_phone, message_body)
+def send_premium_confirmation_email(owner_email: str, owner_name: str):
+    subject = "Welcome to BookSlot Premium!"
+    html_content = f"""
+    <p>Dear {owner_name},</p>
+    <p>Congratulations! You have successfully upgraded to BookSlot Premium.</p>
+    <p>You now have access to unlimited bookings and all premium features.</p>
+    <p>Thank you for being a valued BookSlot customer!</p>
+    <p>Best regards,</p>
+    <p>The BookSlot Team</p>
+    """
+    send_email(owner_email, subject, html_content)

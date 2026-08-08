@@ -1,247 +1,339 @@
-{# src/templates/dashboard.html #}
+<!-- src/templates/dashboard.html (reconstructed and modified) -->
 <!DOCTYPE html>
-<html lang="{{ current_locale }}">
+<html lang="{{ get_locale() }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ gettext('Dashboard') }}</title>
+    <title>{{ gettext("Dashboard") }}</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        .booking-card {
-            background-color: #ffffff;
-            border-radius: 0.5rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            margin-bottom: 1rem;
-            padding: 1.5rem;
-        }
-        .text-primary { color: #2563eb; } /* Blue for primary actions */
-        .bg-primary { background-color: #2563eb; }
-        .hover-bg-primary:hover { background-color: #1d4ed8; }
-        .border-primary { border-color: #2563eb; }
-        .lang-toggle button {
-            padding: 0.5rem 1rem;
-            border-radius: 0.375rem;
-            background-color: #e2e8f0;
-            color: #4a5568;
-            font-weight: 500;
-            transition: background-color 0.2s ease-in-out;
-        }
-        .lang-toggle button.active {
-            background-color: #2563eb;
-            color: #ffffff;
-        }
-        .lang-toggle button:hover:not(.active) {
-            background-color: #cbd5e0;
+        /* Add any custom styles here */
+        .premium-badge {
+            background-color: #FFD700; /* Gold color */
+            color: #333;
+            padding: 2px 8px;
+            border-radius: 9999px; /* Pill shape */
+            font-size: 0.75rem;
+            font-weight: bold;
+            display: inline-block;
+            margin-left: 8px;
         }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col">
-    <header class="bg-white shadow-sm py-4 px-6 flex justify-between items-center">
-        <h1 class="text-2xl font-bold text-gray-900">{{ gettext('BookSlot Dashboard') }}</h1>
-        <div class="flex items-center space-x-4">
-            <div class="lang-toggle flex space-x-2">
-                <button onclick="changeLanguage('en')" class="{{ 'active' if current_locale == 'en' }}">EN</button>
-                <button onclick="changeLanguage('ar')" class="{{ 'active' if current_locale == 'ar' }}">AR</button>
-                <button onclick="changeLanguage('fr')" class="{{ 'active' if current_locale == 'fr' }}">FR</button>
-            </div>
-            <a href="/logout" class="text-red-600 hover:text-red-800 font-medium">{{ gettext('Logout') }}</a>
-        </div>
-    </header>
-
-    <main class="flex-grow container mx-auto p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="bg-white p-6 rounded-lg shadow col-span-1 md:col-span-1">
-            <h2 class="text-xl font-semibold mb-4 text-gray-800">{{ gettext('Your Profile') }}</h2>
-            <p class="text-gray-700 mb-2"><strong>{{ gettext('Name') }}:</strong> <span id="owner-name-display">{{ owner.full_name }}</span></p>
-            <p class="text-gray-700 mb-2"><strong>{{ gettext('Email') }}:</strong> {{ owner.email }}</p>
-            <p class="text-gray-700 mb-4"><strong>{{ gettext('Phone') }}:</strong> <span id="owner-phone-display">{{ owner.phone_number if owner.phone_number else gettext('N/A') }}</span></p>
-
-            <button id="editProfileBtn" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition duration-200">{{ gettext('Edit Profile') }}</button>
-
-            <div id="editProfileModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden flex items-center justify-center">
-                <div class="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
-                    <h3 class="text-lg font-semibold mb-4">{{ gettext('Edit Profile') }}</h3>
-                    <form id="editProfileForm">
-                        <div class="mb-4">
-                            <label for="editFullName" class="block text-gray-700 text-sm font-bold mb-2">{{ gettext('Full Name') }}:</label>
-                            <input type="text" id="editFullName" name="full_name" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" value="{{ owner.full_name }}">
+<body class="bg-gray-100 font-sans antialiased">
+    <div class="min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="bg-white shadow-sm py-4 px-6 md:px-8 flex items-center justify-between">
+            <h1 class="text-2xl font-bold text-gray-800">{{ gettext("BookSlot Dashboard") }}</h1>
+            <div class="flex items-center space-x-4">
+                <div class="relative inline-block text-left">
+                    <button type="button" class="inline-flex justify-center w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" id="menu-button" aria-expanded="true" aria-haspopup="true">
+                        {{ get_locale().upper() }}
+                        <svg class="-mr-1 ml-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                    <div class="origin-top-right absolute right-0 mt-2 w-20 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none hidden" role="menu" aria-orientation="vertical" aria-labelledby="menu-button" tabindex="-1" id="language-menu">
+                        <div class="py-1" role="none">
+                            <a href="?lang=en" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem" tabindex="-1" id="menu-item-0">EN</a>
+                            <a href="?lang=ar" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem" tabindex="-1" id="menu-item-1">AR</a>
+                            <a href="?lang=fr" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem" tabindex="-1" id="menu-item-2">FR</a>
                         </div>
-                        <div class="mb-4">
-                            <label for="editPhoneNumber" class="block text-gray-700 text-sm font-bold mb-2">{{ gettext('Phone Number') }}:</label>
-                            <input type="text" id="editPhoneNumber" name="phone_number" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" value="{{ owner.phone_number if owner.phone_number else '' }}">
-                        </div>
-                        <div class="flex justify-end space-x-2">
-                            <button type="button" id="cancelEditBtn" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-400">{{ gettext('Cancel') }}</button>
-                            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">{{ gettext('Save Changes') }}</button>
-                        </div>
-                    </form>
-                    <div id="profileError" class="text-red-500 mt-2 text-sm hidden"></div>
+                    </div>
                 </div>
+                <form action="/logout" method="post">
+                    <button type="submit" class="text-blue-600 hover:text-blue-800">{{ gettext("Logout") }}</button>
+                </form>
             </div>
+        </header>
 
-            <div class="mt-6 p-4 border rounded-md bg-gray-50">
-                <h3 class="text-lg font-semibold mb-2">{{ gettext('Subscription Status') }}:</h3>
-                {% if owner.is_premium %}
-                    <p class="text-green-600 font-medium">{{ gettext('Premium User') }}</p>
-                    <p class="text-gray-600 text-sm">{{ gettext('Enjoy unlimited bookings and advanced features!') }}</p>
-                {% else %}
-                    <p class="text-yellow-600 font-medium">{{ gettext('Free Tier') }}</p>
-                    <p class="text-gray-600 text-sm">{{ gettext('Up to 20 bookings per month.') }}</p>
-                    <button id="upgradeToPremiumBtn" class="mt-4 bg-primary text-white px-4 py-2 rounded-md hover-bg-primary transition duration-200">{{ gettext('Upgrade to Premium ($19/month)') }}</button>
-                    <div id="paymentError" class="text-red-500 mt-2 text-sm hidden"></div>
-                {% endif %}
-            </div>
-        </div>
-
-        <div class="col-span-1 md:col-span-2">
-            <h2 class="text-xl font-semibold mb-4 text-gray-800">{{ gettext('Upcoming Bookings') }}</h2>
-            {% if upcoming_bookings %}
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {% for booking in upcoming_bookings %}
-                        <div class="booking-card">
-                            <h3 class="text-lg font-semibold text-primary">{{ booking.service_name }}</h3>
-                            <p class="text-gray-700">{{ gettext('Customer') }}: {{ booking.customer_name }}</p>
-                            <p class="text-gray-600">{{ gettext('Email') }}: {{ booking.customer_email }}</p>
-                            <p class="text-gray-600">{{ gettext('Phone') }}: {{ booking.customer_phone if booking.customer_phone else gettext('N/A') }}</p>
-                            <p class="text-gray-600">{{ gettext('Date') }}: {{ booking.booking_date }}</p>
-                            <p class="text-gray-600">{{ gettext('Time') }}: {{ booking.start_time }} - {{ booking.end_time }}</p>
-                            <p class="text-gray-600">{{ gettext('Price') }}: {{ booking.service_price | format_currency(current_locale) }}</p>
-                            <p class="text-gray-600">{{ gettext('Status') }}: <span class="font-medium text-green-600">{{ booking.status }}</span></p>
-                        </div>
-                    {% endfor %}
+        <!-- Main Content -->
+        <main class="flex-grow container mx-auto p-6 md:p-8">
+            {% if request.query_params.msg %}
+                <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
+                    <span class="block sm:inline">{{ request.query_params.msg }}</span>
                 </div>
-            {% else %}
-                <p class="text-gray-600">{{ gettext('No upcoming bookings.') }}</p>
             {% endif %}
-        </div>
+            {% if error_msg %}
+                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+                    <span class="block sm:inline">{{ error_msg }}</span>
+                </div>
+            {% endif %}
 
-        <div class="col-span-full grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-            <div class="bg-white p-6 rounded-lg shadow">
-                <h2 class="text-xl font-semibold mb-4 text-gray-800">{{ gettext('Your Services') }}</h2>
-                {% if services %}
-                    <ul>
-                        {% for service in services %}
-                            <li class="mb-2 p-3 border-b border-gray-200 last:border-b-0">
-                                <p class="font-medium text-gray-800">{{ service.name }} ({{ service.duration_minutes }} {{ gettext('min') }})</p>
-                                <p class="text-gray-600 text-sm">{{ service.description if service.description else gettext('No description') }}</p>
-                                <p class="text-gray-600 text-sm">{{ gettext('Price') }}: {{ (service.price / 100.0) | format_currency(current_locale) }}</p>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                {% else %}
-                    <p class="text-gray-600">{{ gettext('No services set up yet.') }}</p>
-                    <button class="mt-4 bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600">{{ gettext('Add Service') }}</button>
+            <div class="bg-white shadow rounded-lg p-6 mb-8">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">{{ gettext("Welcome") }}, {{ owner.name }}!
+                    {% if owner.is_premium %}
+                    <span class="premium-badge">{{ gettext("Premium") }}</span>
+                    {% endif %}
+                </h2>
+                <p class="text-gray-600 mb-4">{{ gettext("Your public booking page link:") }} <a href="{{ settings.SERVER_NAME }}/bookslot.app/{{ owner.name }}" target="_blank" class="text-blue-600 hover:underline">{{ settings.SERVER_NAME }}/bookslot.app/{{ owner.name }}</a></p>
+                {% if not owner.is_premium %}
+                <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4" role="alert">
+                    <div class="flex">
+                        <div class="py-1"><svg class="fill-current h-6 w-6 text-yellow-500 mr-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M2.93 17.07A10 10 0 1 1 17.07 2.93 10 10 0 0 1 2.93 17.07zm12.73-1.41A8 8 0 1 0 4.34 4.34a8 8 0 0 0 11.32 11.32zM9 11V9h2v6H9v-4zm0-6h2v2H9V5z"/></svg></div>
+                        <div>
+                            <p class="font-bold">{{ gettext("Upgrade to Premium") }}</p>
+                            <p class="text-sm">{{ gettext("Unlock unlimited bookings and advanced features for just $19/month.") }}</p>
+                            <a href="/checkout" class="mt-2 inline-block bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700">{{ gettext("Go Premium") }}</a>
+                        </div>
+                    </div>
+                </div>
                 {% endif %}
-            </div>
 
-            <div class="bg-white p-6 rounded-lg shadow">
-                <h2 class="text-xl font-semibold mb-4 text-gray-800">{{ gettext('Your Availability') }}</h2>
-                {% if availabilities %}
-                    <ul>
-                        {% for av in availabilities %}
-                            <li class="mb-2 p-3 border-b border-gray-200 last:border-b-0">
-                                <p class="font-medium text-gray-800">
-                                    {{ gettext(av.day_of_week | day_name) }} ({{ av.start_time }} - {{ av.end_time }})
-                                </p>
+                <!-- Analytics Section (NEW) -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                    <div class="bg-blue-50 p-4 rounded-lg shadow-sm">
+                        <h3 class="text-lg font-medium text-blue-800">{{ gettext("Total Bookings") }}</h3>
+                        <p id="total-bookings" class="text-3xl font-bold text-blue-900 mt-2">...</p>
+                    </div>
+                    <div class="bg-green-50 p-4 rounded-lg shadow-sm">
+                        <h3 class="text-lg font-medium text-green-800">{{ gettext("Upcoming Bookings") }}</h3>
+                        <p id="upcoming-bookings-count" class="text-3xl font-bold text-green-900 mt-2">...</p>
+                    </div>
+                    <div class="bg-purple-50 p-4 rounded-lg shadow-sm">
+                        <h3 class="text-lg font-medium text-purple-800">{{ gettext("Completed Bookings") }}</h3>
+                        <p id="completed-bookings" class="text-3xl font-bold text-purple-900 mt-2">...</p>
+                    </div>
+                </div>
+                <!-- End Analytics Section -->
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Profile Update Form -->
+                    <div class="bg-gray-50 p-6 rounded-lg shadow-sm">
+                        <h3 class="text-xl font-semibold text-gray-800 mb-4">{{ gettext("Update Profile") }}</h3>
+                        <form action="/dashboard/profile" method="post" class="space-y-4">
+                            <div>
+                                <label for="name" class="block text-sm font-medium text-gray-700">{{ gettext("Name") }}</label>
+                                <input type="text" name="name" id="name" value="{{ owner.name }}" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                            </div>
+                            <div>
+                                <label for="email" class="block text-sm font-medium text-gray-700">{{ gettext("Email") }}</label>
+                                <input type="email" name="email" id="email" value="{{ owner.email }}" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                            </div>
+                            <div>
+                                <label for="phone" class="block text-sm font-medium text-gray-700">{{ gettext("Phone Number") }} ({{ gettext("e.g., +1234567890") }})</label>
+                                <input type="tel" name="phone" id="phone" value="{{ owner.phone if owner.phone else '' }}" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                            </div>
+                            <button type="submit" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">{{ gettext("Update Profile") }}</button>
+                        </form>
+                    </div>
+
+                    <!-- Services Management -->
+                    <div class="bg-gray-50 p-6 rounded-lg shadow-sm">
+                        <h3 class="text-xl font-semibold text-gray-800 mb-4">{{ gettext("Your Services") }}</h3>
+                        <ul class="space-y-4">
+                            {% for service in services %}
+                            <li class="bg-white p-4 rounded-md shadow-sm flex items-center justify-between">
+                                <div>
+                                    <p class="font-medium text-gray-900">{{ service.name }} ({{ service.duration_minutes }} {{ gettext("min") }})</p>
+                                    <p class="text-sm text-gray-600">{{ gettext("Price") }}: {{ gettext("currency_format", price=service.price, locale=get_locale()) }}</p>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <button class="text-blue-600 hover:text-blue-800 text-sm edit-service-btn" data-id="{{ service.id }}" data-name="{{ service.name }}" data-duration="{{ service.duration_minutes }}" data-price="{{ service.price }}" data-description="{{ service.description if service.description else '' }}">{{ gettext("Edit") }}</button>
+                                    <form action="/services/{{ service.id }}" method="post" onsubmit="return confirm('{{ gettext('Are you sure you want to delete this service?') }}');">
+                                        <input type="hidden" name="_method" value="DELETE">
+                                        <button type="submit" class="text-red-600 hover:text-red-800 text-sm">{{ gettext("Delete") }}</button>
+                                    </form>
+                                </div>
                             </li>
-                        {% endfor %}
-                    </ul>
-                {% else %}
-                    <p class="text-gray-600">{{ gettext('No availability set up yet.') }}</p>
-                    <button class="mt-4 bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600">{{ gettext('Add Availability') }}</button>
-                {% endif %}
+                            {% else %}
+                            <p class="text-gray-600">{{ gettext("No services added yet.") }}</p>
+                            {% endfor %}
+                        </ul>
+                        <button id="add-service-btn" class="mt-6 w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">{{ gettext("Add New Service") }}</button>
+                    </div>
+                </div>
+
+                <!-- Upcoming Bookings List -->
+                <div class="bg-white shadow rounded-lg p-6 mt-8">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4">{{ gettext("Upcoming Bookings") }}</h3>
+                    {% if upcoming_bookings %}
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ gettext("Customer") }}</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ gettext("Service") }}</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ gettext("Time") }}</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ gettext("Status") }}</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ gettext("Price") }}</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ gettext("Contact") }}</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                {% for booking in upcoming_bookings %}
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ booking.customer_name }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ booking.service.name }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ booking.start_time.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ booking.status }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ gettext("currency_format", price=booking.service.price, locale=get_locale()) }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <a href="mailto:{{ booking.customer_email }}" class="text-indigo-600 hover:text-indigo-900">{{ booking.customer_email }}</a>
+                                        {% if booking.customer_phone %}
+                                        <br/><a href="tel:{{ booking.customer_phone }}" class="text-indigo-600 hover:text-indigo-900">{{ booking.customer_phone }}</a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-gray-600">{{ gettext("You have no upcoming bookings.") }}</p>
+                    {% endif %}
+                </div>
             </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="bg-white shadow-sm py-4 px-6 md:px-8 text-center text-gray-500 text-sm">
+            <p>&copy; 2023 BookSlot. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <!-- Service Modal (for Add/Edit) -->
+    <div id="service-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <h3 class="text-lg font-bold mb-4" id="service-modal-title"></h3>
+            <form id="service-form" method="post" class="space-y-4">
+                <input type="hidden" id="service-id" name="service_id">
+                <div>
+                    <label for="service-name" class="block text-sm font-medium text-gray-700">{{ gettext("Service Name") }}</label>
+                    <input type="text" name="name" id="service-name" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3">
+                </div>
+                <div>
+                    <label for="service-duration" class="block text-sm font-medium text-gray-700">{{ gettext("Duration (minutes)") }}</label>
+                    <input type="number" name="duration_minutes" id="service-duration" required min="1" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3">
+                </div>
+                <div>
+                    <label for="service-price" class="block text-sm font-medium text-gray-700">{{ gettext("Price") }}</label>
+                    <input type="number" name="price" id="service-price" required step="0.01" min="0" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3">
+                </div>
+                <div>
+                    <label for="service-description" class="block text-sm font-medium text-gray-700">{{ gettext("Description (Optional)") }}</label>
+                    <textarea name="description" id="service-description" rows="3" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3"></textarea>
+                </div>
+                <div class="flex justify-end space-x-2">
+                    <button type="button" id="close-service-modal" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">{{ gettext("Cancel") }}</button>
+                    <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">{{ gettext("Save Service") }}</button>
+                </div>
+            </form>
         </div>
-    </main>
+    </div>
 
     <script>
-        function gettext(key) {
-            return key;
+        // Language toggle dropdown
+        const menuButton = document.getElementById('menu-button');
+        const languageMenu = document.getElementById('language-menu');
+        if (menuButton) {
+            menuButton.addEventListener('click', () => {
+                const isExpanded = menuButton.getAttribute('aria-expanded') === 'true';
+                menuButton.setAttribute('aria-expanded', !isExpanded);
+                languageMenu.classList.toggle('hidden');
+            });
         }
-
-        function changeLanguage(lang) {
-            const url = new URL(window.location);
-            url.searchParams.set('lang', lang);
-            window.location.href = url.toString();
-        }
-
-        const editProfileBtn = document.getElementById('editProfileBtn');
-        const editProfileModal = document.getElementById('editProfileModal');
-        const cancelEditBtn = document.getElementById('cancelEditBtn');
-        const editProfileForm = document.getElementById('editProfileForm');
-        const profileError = document.getElementById('profileError');
-
-        editProfileBtn.addEventListener('click', () => {
-            editProfileModal.classList.remove('hidden');
-        });
-
-        cancelEditBtn.addEventListener('click', () => {
-            editProfileModal.classList.add('hidden');
-            profileError.classList.add('hidden');
-        });
-
-        editProfileForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            profileError.classList.add('hidden');
-
-            const fullName = document.getElementById('editFullName').value;
-            const phoneNumber = document.getElementById('editPhoneNumber').value;
-
-            try {
-                const token = localStorage.getItem('access_token');
-                const response = await fetch('/owner/profile', {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({ full_name: fullName, phone_number: phoneNumber })
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.detail || 'Failed to update profile');
-                }
-
-                const updatedOwner = await response.json();
-                document.getElementById('owner-name-display').innerText = updatedOwner.full_name;
-                document.getElementById('owner-phone-display').innerText = updatedOwner.phone_number || 'N/A';
-                editProfileModal.classList.add('hidden');
-            } catch (error) {
-                profileError.innerText = error.message;
-                profileError.classList.remove('hidden');
+        // Close dropdown when clicking outside
+        window.addEventListener('click', function(event) {
+            if (!menuButton.contains(event.target) && !languageMenu.contains(event.target)) {
+                languageMenu.classList.add('hidden');
+                menuButton.setAttribute('aria-expanded', 'false');
             }
         });
 
-        const upgradeToPremiumBtn = document.getElementById('upgradeToPremiumBtn');
-        const paymentError = document.getElementById('paymentError');
+        // Service modal logic
+        const serviceModal = document.getElementById('service-modal');
+        const addServiceBtn = document.getElementById('add-service-btn');
+        const closeServiceModalBtn = document.getElementById('close-service-modal');
+        const serviceForm = document.getElementById('service-form');
+        const serviceModalTitle = document.getElementById('service-modal-title');
+        const serviceIdInput = document.getElementById('service-id');
+        const serviceNameInput = document.getElementById('service-name');
+        const serviceDurationInput = document.getElementById('service-duration');
+        const servicePriceInput = document.getElementById('service-price');
+        const serviceDescriptionInput = document.getElementById('service-description');
 
-        if (upgradeToPremiumBtn) {
-            upgradeToPremiumBtn.addEventListener('click', async () => {
-                paymentError.classList.add('hidden');
-                try {
-                    const token = localStorage.getItem('access_token');
-                    const response = await fetch('/create-checkout-session', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`
-                        }
-                    });
-
-                    if (!response.ok) {
-                        const errorData = await response.json();
-                        throw new Error(errorData.detail || 'Failed to initiate payment.');
-                    }
-
-                    const session = await response.json();
-                    window.location.href = session.url;
-                } catch (error) {
-                    paymentError.innerText = error.message;
-                    paymentError.classList.remove('hidden');
+        function openServiceModal(isEdit = false, service = {}) {
+            serviceModal.classList.remove('hidden');
+            if (isEdit) {
+                serviceModalTitle.innerText = "{{ gettext('Edit Service') }}";
+                serviceForm.action = `/services/${service.id}`;
+                serviceForm.method = 'post'; // FastAPI doesn't directly support PUT/DELETE via form, so override with hidden field
+                serviceIdInput.value = service.id;
+                serviceNameInput.value = service.name;
+                serviceDurationInput.value = service.duration;
+                servicePriceInput.value = service.price;
+                serviceDescriptionInput.value = service.description;
+                // Add hidden input for PUT method override
+                let methodInput = document.createElement('input');
+                methodInput.type = 'hidden';
+                methodInput.name = '_method';
+                methodInput.value = 'PUT';
+                serviceForm.appendChild(methodInput);
+            } else {
+                serviceModalTitle.innerText = "{{ gettext('Add New Service') }}";
+                serviceForm.action = '/services';
+                serviceForm.method = 'post';
+                serviceIdInput.value = '';
+                serviceNameInput.value = '';
+                serviceDurationInput.value = '';
+                servicePriceInput.value = '';
+                serviceDescriptionInput.value = '';
+                // Remove any _method input from previous edit
+                const existingMethodInput = serviceForm.querySelector('input[name="_method"]');
+                if (existingMethodInput) {
+                    existingMethodInput.remove();
                 }
-            });
+            }
         }
+
+        function closeServiceModal() {
+            serviceModal.classList.add('hidden');
+        }
+
+        addServiceBtn.addEventListener('click', () => openServiceModal(false));
+        closeServiceModalBtn.addEventListener('click', closeServiceModal);
+        serviceModal.addEventListener('click', (event) => {
+            if (event.target === serviceModal) {
+                closeServiceModal();
+            }
+        });
+
+        document.querySelectorAll('.edit-service-btn').forEach(button => {
+            button.addEventListener('click', (event) => {
+                const service = {
+                    id: event.target.dataset.id,
+                    name: event.target.dataset.name,
+                    duration: event.target.dataset.duration,
+                    price: event.target.dataset.price,
+                    description: event.target.dataset.description
+                };
+                openServiceModal(true, service);
+            });
+        });
+
+        // NEW: Fetch and display analytics data
+        async function fetchAnalytics() {
+            try {
+                const response = await fetch('/api/analytics');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch analytics data');
+                }
+                const data = await response.json();
+                document.getElementById('total-bookings').innerText = data.total_bookings;
+                document.getElementById('upcoming-bookings-count').innerText = data.upcoming_bookings;
+                document.getElementById('completed-bookings').innerText = data.completed_bookings;
+            } catch (error) {
+                console.error('Error fetching analytics:', error);
+                document.getElementById('total-bookings').innerText = 'N/A';
+                document.getElementById('upcoming-bookings-count').innerText = 'N/A';
+                document.getElementById('completed-bookings').innerText = 'N/A';
+            }
+        }
+
+        // Call fetchAnalytics when the dashboard loads
+        document.addEventListener('DOMContentLoaded', fetchAnalytics);
+
     </script>
 </body>
 </html>
