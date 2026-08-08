@@ -1,28 +1,26 @@
-{% extends "base.html" %}
-{% block title %}{{ 'Login' | i18n }}{% endblock %}
-{% block content %}
-<div class="max-w-md mx-auto bg-white p-8 rounded-lg shadow-md mt-10">
-    <h2 class="text-2xl font-bold text-center mb-6">{{ 'Log In to Your BookSlot Account' | i18n }}</h2>
-    {% if error %}
-        <p class="error-message text-center">{{ error | i18n }}</p>
-    {% endif %}
-    <form hx-post="/login" hx-swap="outerHTML" hx-target="#login-form-container" id="login-form-container">
-        <div class="mb-4">
-            <label for="username" class="block text-gray-700 text-sm font-bold mb-2">{{ 'Email' | i18n }}:</label>
-            <input type="email" id="username" name="username" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
-        </div>
-        <div class="mb-6">
-            <label for="password" class="block text-gray-700 text-sm font-bold mb-2">{{ 'Password' | i18n }}:</label>
-            <input type="password" id="password" name="password" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
-        </div>
-        <div class="flex items-center justify-between">
-            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                {{ 'Log In' | i18n }}
-            </button>
-            <a class="inline-block align-baseline font-bold text-sm text-indigo-600 hover:text-indigo-800" href="/signup">
-                {{ 'Don\'t have an account? Sign Up' | i18n }}
-            </a>
-        </div>
-    </form>
-</div>
-{% endblock %}
+<!DOCTYPE html>
+<html lang="{{ current_locale }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">{{ _("Login to BookSlot") }}</h2>
+        <form action="/token" method="POST" class="space-y-4">
+            <div>
+                <label for="email" class="block text-sm font-medium text-gray-700">{{ _("Email Address") }}</label>
+                <input type="email" id="email" name="email" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+            <div>
+                <label for="password" class="block text-sm font-medium text-gray-700">{{ _("Password") }}</label>
+                <input type="password" id="password" name="password" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+            <button type="submit" class="bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition-colors w-full">{{ _("Login") }}</button>
+        </form>
+        <p class="mt-6 text-center text-gray-600">{{ _("Don't have an account?") }} <a href="/signup" class="text-indigo-600 hover:underline">{{ _("Sign Up here") }}</a></p>
+    </div>
+</body>
+</html>

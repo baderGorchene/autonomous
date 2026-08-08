@@ -1,66 +1,62 @@
-<!-- templates/booking_page.html -->
-{% extends "base.html" %}
-{% block title %}{{ _("Book an Appointment with {owner_name}").format(owner_name=owner.name) }}{% endblock %}
-
-{% block content %}
-<div class="container mx-auto p-4 flex justify-center">
-    <div class="bg-white shadow-md rounded-lg p-8 w-full max-w-2xl">
-        <h1 class="text-3xl font-bold mb-6 text-center">{{ _("Book an Appointment with {owner_name}").format(owner_name=owner.name) }}</h1>
-
-        <div class="mb-4 text-center">
-            <a href="?lang=en" class="text-blue-500 hover:underline {% if current_locale == 'en' %}font-bold{% endif %}">English</a> |
-            <a href="?lang=ar" class="text-blue-500 hover:underline {% if current_locale == 'ar' %}font-bold{% endif %}">العربية</a> |
-            <a href="?lang=fr" class="text-blue-500 hover:underline {% if current_locale == 'fr' %}font-bold{% endif %}">Français</a>
+<!DOCTYPE html>
+<html lang="{{ current_locale }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+    <header class="bg-indigo-600 text-white p-4 shadow-md">
+        <div class="container mx-auto">
+            <h1 class="text-2xl font-bold">{{ _("Book an Appointment with {owner_name}").format(owner_name=owner.name) }}</h1>
         </div>
-
-        <p class="text-gray-700 mb-6 text-center">{{ _("Please fill out the form below to book your service.") }}</p>
-
-        <form action="/book/{{ owner.name }}/confirm" method="post" class="space-y-6">
-            <div>
-                <label for="customer_name" class="block text-sm font-medium text-gray-700">{{ _("Your Name") }}:</label>
-                <input type="text" id="customer_name" name="customer_name" required
-                       class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
-            </div>
-            <div>
-                <label for="customer_email" class="block text-sm font-medium text-gray-700">{{ _("Your Email") }}:</label>
-                <input type="email" id="customer_email" name="customer_email" required
-                       class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
-            </div>
-            <div>
-                <label for="customer_phone" class="block text-sm font-medium text-gray-700">{{ _("Your Phone Number (WhatsApp)") }}:</label>
-                <input type="tel" id="customer_phone" name="customer_phone"
-                       class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" placeholder="+1234567890">
-            </div>
-
-            <div>
-                <label for="service_id" class="block text-sm font-medium text-gray-700">{{ _("Select a Service") }}:</label>
-                <select id="service_id" name="service_id" required
-                        class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
-                    <option value="">{{ _("Choose a service...") }}</option>
-                    {% for service in services %}
-                        <option value="{{ service.id }}">{{ service.name }} - {{ service.price | format_currency(current_locale, 'USD') }} ({{ service.duration_minutes }} {{ _("minutes") }})</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div>
-                <label for="booking_date" class="block text-sm font-medium text-gray-700">{{ _("Select Date") }}:</label>
-                <input type="date" id="booking_date" name="booking_date" required
-                       class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
-            </div>
-
-            <div>
-                <label for="booking_time" class="block text-sm font-medium text-gray-700">{{ _("Select Time") }}:</label>
-                <input type="time" id="booking_time" name="booking_time" required
-                       class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
-                <p class="text-sm text-gray-500 mt-1">{{ _("Note: Availability is not fully dynamic yet. Please select a reasonable time.") }}</p>
-            </div>
-
-            <button type="submit"
-                    class="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                {{ _("Book Now") }}
-            </button>
-        </form>
-    </div>
-</div>
-{% endblock %}
+        <div class="lang-switcher">
+            <select onchange="window.location.href='/set_language/' + this.value">
+                <option value="en" {% if current_locale == 'en' %}selected{% endif %}>English</option>
+                <option value="ar" {% if current_locale == 'ar' %}selected{% endif %}>العربية</option>
+                <option value="fr" {% if current_locale == 'fr' %}selected{% endif %}>Français</option>
+            </select>
+        </div>
+    </header>
+    <main class="container mx-auto p-4 flex-grow">
+        <div class="bg-white p-6 rounded-lg shadow-md max-w-2xl mx-auto">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">{{ _("Book Your Service") }}</h2>
+            <form action="{{ request.url_for('submit_booking', owner_name=owner.name) }}" method="POST" class="space-y-4">
+                <div>
+                    <label for="service_id" class="block text-sm font-medium text-gray-700">{{ _("Select Service") }}</label>
+                    <select id="service_id" name="service_id" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        {% for service in services %}
+                            <option value="{{ service.id }}">{{ service.name }} ({{ service.duration_minutes }} {{ _("minutes") }}) - {{ service.price | format_currency('USD', current_locale) }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label for="customer_name" class="block text-sm font-medium text-gray-700">{{ _("Your Name") }}</label>
+                    <input type="text" id="customer_name" name="customer_name" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div>
+                    <label for="customer_email" class="block text-sm font-medium text-gray-700">{{ _("Your Email") }}</label>
+                    <input type="email" id="customer_email" name="customer_email" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div>
+                    <label for="customer_phone" class="block text-sm font-medium text-gray-700">{{ _("Your Phone (optional)") }}</label>
+                    <input type="text" id="customer_phone" name="customer_phone" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div>
+                    <label for="booking_date" class="block text-sm font-medium text-gray-700">{{ _("Date") }}</label>
+                    <input type="date" id="booking_date" name="booking_date" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div>
+                    <label for="booking_time" class="block text-sm font-medium text-gray-700">{{ _("Time") }}</label>
+                    <input type="time" id="booking_time" name="booking_time" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <button type="submit" class="bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition-colors w-full">{{ _("Book Now") }}</button>
+            </form>
+        </div>
+    </main>
+    <footer class="bg-gray-800 text-white p-4 text-center mt-8">
+        <p>&copy; 2023 BookSlot. {{ _("All rights reserved.") }}</p>
+    </footer>
+</body>
+</html>

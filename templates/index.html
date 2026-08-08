@@ -1,32 +1,17 @@
 <!DOCTYPE html>
-<html lang="{{ lang }}">
+<html lang="{{ current_locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _("Welcome to BookSlot") }}</title>
+    <title>{{ title }}</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen">
-    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md text-center">
-        <h1 class="text-3xl font-bold text-gray-800 mb-6">{{ _("Welcome to BookSlot") }}</h1>
-        <p class="text-gray-600 mb-8">{{ _("Your dead-simple booking page for local service businesses.") }}</p>
-        <div class="space-y-4">
-            <a href="/signup" class="block w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                {{ _("Sign Up") }}
-            </a>
-            <a href="/login" class="block w-full bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                {{ _("Log In") }}
-            </a>
-        </div>
-        <div class="mt-8">
-            <form action="/set-language" method="post" class="inline-block">
-                <select name="lang" onchange="this.form.submit()" class="block w-full mt-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                    <option value="en" {% if lang == "en" %}selected{% endif %}>English</option>
-                    <option value="ar" {% if lang == "ar" %}selected{% endif %}>العربية</option>
-                    <option value="fr" {% if lang == "fr" %}selected{% endif %}>Français</option>
-                </select>
-            </form>
-        </div>
+    <div class="bg-white p-8 rounded-lg shadow-md text-center">
+        <h1 class="text-3xl font-bold text-gray-800 mb-4">{{ _("Welcome to BookSlot") }}</h1>
+        <p class="text-gray-600 mb-6">{{ _("Your dead-simple booking page for local services.") }}</p>
+        <a href="/login" class="bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition-colors inline-block mr-2">{{ _("Login") }}</a>
+        <a href="/signup" class="bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition-colors inline-block">{{ _("Sign Up") }}</a>
     </div>
 </body>
 </html>

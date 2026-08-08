@@ -1,1 +1,1 @@
-Implemented backend logic for advanced analytics metrics
+Feat: Integrate refined analytics into dashboard UI

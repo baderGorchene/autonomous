@@ -1,37 +1,33 @@
 <!DOCTYPE html>
-<html lang="{{ request.state.lang }}">
+<html lang="{{ request.cookies.get('lang', 'en') }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _("Booking Confirmed!") }}</title>
-    <link rel="stylesheet" href="/static/css/style.css">
+    <title>{{ _("Booking Confirmed!", request) }}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css">
     <style>
-        body { font-family: sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4; color: #333; }
-        .container { max-width: 600px; margin: 20px auto; background-color: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        h1 { text-align: center; color: #28a745; }
-        p { text-align: center; line-height: 1.6; }
-        ul { list-style: none; padding: 0; text-align: center; }
-        ul li { margin-bottom: 10px; }
-        strong { color: #0056b3; }
-        a { color: #007bff; text-decoration: none; }
-        a:hover { text-decoration: underline; }
+        body { font-family: 'Inter', sans-serif; background-color: #f4f7f6; color: #333; }
+        .container { max-width: 600px; }
+        .btn-primary { background-color: #4c51bf; color: white; padding: 0.75rem 1.5rem; border-radius: 0.375rem; transition: background-color 0.2s; }
+        .btn-primary:hover { background-color: #5a62d8; }
     </style>
 </head>
-<body>
-    <div class="container">
-        <h1>{{ _("Booking Confirmed!") }}</h1>
-        <p>{{ _("Thank you,") }} <strong>{{ booking.customer_name }}</strong>! {{ _("Your booking with") }} <strong>{{ owner.business_name }}</strong> {{ _("has been successfully confirmed.") }}</p>
-        <p>{{ _("You will receive a confirmation email and WhatsApp message shortly.") }}</p>
+<body class="flex flex-col items-center justify-center min-h-screen p-4">
+    <div class="container bg-white p-8 rounded-lg shadow-md w-full text-center">
+        <h1 class="text-3xl font-bold text-green-600 mb-4">{{ _("Booking Confirmed!", request) }}</h1>
+        <p class="text-lg text-gray-700 mb-6">{{ _("Thank you, {{ booking.customer_name }}! Your appointment has been successfully booked.", request) }}</p>
         
-        <h2>{{ _("Booking Details:") }}</h2>
-        <ul>
-            <li><strong>{{ _("Service:") }}</strong> {{ booking.service_name }}</li>
-            <li><strong>{{ _("Date:") }}</strong> {{ booking.booking_date }}</li>
-            <li><strong>{{ _("Time:") }}</strong> {{ booking.booking_time }}</li>
-            <li><strong>{{ _("Business:") }}</strong> {{ owner.business_name }}</li>
-            <li><strong>{{ _("Owner Contact:") }}</strong> {{ owner.email }} / {{ owner.phone }}</li>
-        </ul>
-        <p><a href="/bookslot.app/{{ owner.slug }}">{{ _("Book another slot") }}</a> | <a href="/">{{ _("Go to Homepage") }}</a></p>
+        <div class="text-left mb-8 space-y-2">
+            <p><strong>{{ _("Service:", request) }}</strong> {{ service.name }}</p>
+            <p><strong>{{ _("With:", request) }}</strong> {{ owner.name }}</p>
+            <p><strong>{{ _("Date & Time:", request) }}</strong> {{ format_datetime(booking.booking_time, request, "%Y-%m-%d %H:%M") }}</p>
+            <p><strong>{{ _("Your Email:", request) }}</strong> {{ booking.customer_email }}</p>
+            <p><strong>{{ _("Your Phone:", request) }}</strong> {{ booking.customer_phone }}</p>
+        </div>
+
+        <p class="text-gray-600 mb-8">{{ _("A confirmation email has been sent to your inbox.", request) }}</p>
+
+        <a href="/bookslot.app/{{ owner.name }}" class="btn-primary inline-block">{{ _("Book Another Appointment", request) }}</a>
     </div>
 </body>
 </html>

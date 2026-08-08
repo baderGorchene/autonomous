@@ -1,25 +1,16 @@
 <!DOCTYPE html>
-<html lang="{{ request.state.lang }}">
+<html lang="{{ locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ gettext("Error") }}</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <title>{{ __('Error') }} {{ status_code }}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
-    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md text-center">
-        <h1 class="text-3xl font-bold mb-4 text-red-600">{{ gettext("An Error Occurred") }}</h1>
-        <p class="text-gray-700 mb-6">{{ detail if detail else gettext("Something went wrong. Please try again later.") }}</p>
-        <a href="/" class="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition duration-200 inline-block">{{ gettext("Go to Home") }}</a>
-        
-        <div class="mt-8">
-            <h3 class="text-lg font-semibold mb-2">{{ gettext("Change Language:") }}</h3>
-            <div class="flex justify-center space-x-4">
-                <a href="{{ request.url|update_query_param('lang', 'en') }}" class="text-blue-500 hover:underline">English</a>
-                <a href="{{ request.url|update_query_param('lang', 'ar') }}" class="text-blue-500 hover:underline">العربية</a>
-                <a href="{{ request.url|update_query_param('lang', 'fr') }}" class="text-blue-500 hover:underline">Français</a>
-            </div>
-        </div>
+<body>
+    <div class="container">
+        <h1>{{ __('Error') }} {{ status_code }}</h1>
+        <p>{{ detail }}</p>
+        <a href="/" class="btn btn-primary">{{ __('Go to Home') }}</a>
     </div>
 </body>
 </html>

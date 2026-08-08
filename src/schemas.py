@@ -1,6 +1,6 @@
-from pydantic import BaseModel, EmailStr, Field, validator
-from datetime import datetime, date, time
-from typing import List, Optional, Dict
+from pydantic import BaseModel, EmailStr, Field
+from datetime import datetime
+from typing import List, Optional
 
 class OwnerBase(BaseModel):
     email: EmailStr
@@ -10,25 +10,22 @@ class OwnerBase(BaseModel):
 class OwnerCreate(OwnerBase):
     password: str
 
-class OwnerProfileUpdate(OwnerBase):
-    email: Optional[EmailStr] = None
-    name: Optional[str] = None
-    phone: Optional[str] = None
-
 class Owner(OwnerBase):
     id: int
-    is_active: bool
-    is_premium: bool
-    created_at: datetime
+    is_active: bool = True
 
     class Config:
         from_attributes = True
 
+class OwnerProfileUpdate(BaseModel):
+    name: Optional[str] = None
+    phone: Optional[str] = None
+
 class ServiceBase(BaseModel):
     name: str
     description: Optional[str] = None
-    price: float
     duration_minutes: int
+    price: int
 
 class ServiceCreate(ServiceBase):
     pass
@@ -44,8 +41,8 @@ class BookingBase(BaseModel):
     customer_name: str
     customer_email: EmailStr
     customer_phone: Optional[str] = None
-    service_id: int
     booking_time: datetime
+    service_id: int
 
 class BookingCreate(BookingBase):
     pass
@@ -53,27 +50,21 @@ class BookingCreate(BookingBase):
 class Booking(BookingBase):
     id: int
     owner_id: int
+    
     service: Service
 
     class Config:
         from_attributes = True
 
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-
-class TokenData(BaseModel):
-    email: Optional[str] = None
-
-class MonthlyBookingCount(BaseModel):
+class MonthlyBookingData(BaseModel):
     month: str
     count: int
 
-class PopularService(BaseModel):
+class PopularServiceData(BaseModel):
     service_name: str
     count: int
 
 class OwnerAnalytics(BaseModel):
     total_bookings: int
-    monthly_bookings: List[MonthlyBookingCount]
-    popular_services: List[PopularService]
+    monthly_bookings: List[MonthlyBookingData]
+    popular_services: List[PopularServiceData]

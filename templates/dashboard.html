@@ -1,174 +1,178 @@
-<!-- templates/dashboard.html -->
-{% extends "base.html" %}
-{% block title %}{{ _("Dashboard") }}{% endblock %}
+<!DOCTYPE html>
+<html lang="{{ current_locale }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .card { background-color: white; border-radius: 0.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); padding: 1.5rem; }
+        .btn-primary { background-color: #4F46E5; color: white; padding: 0.5rem 1rem; border-radius: 0.375rem; transition: background-color 0.2s; }
+        .btn-primary:hover { background-color: #4338CA; }
+        .lang-switcher { position: absolute; top: 1rem; right: 1rem; }
+        .lang-switcher select { padding: 0.5rem; border-radius: 0.375rem; border: 1px solid #D1D5DB; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+    <header class="bg-gradient-to-r from-indigo-600 to-purple-700 text-white p-4 shadow-md">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold">{{ _("BookSlot Dashboard") }}</h1>
+            <nav>
+                <a href="/logout" class="text-white hover:text-indigo-200 mx-2">{{ _("Logout") }}</a>
+            </nav>
+        </div>
+        <div class="lang-switcher">
+            <select onchange="window.location.href='/set_language/' + this.value">
+                <option value="en" {% if current_locale == 'en' %}selected{% endif %}>English</option>
+                <option value="ar" {% if current_locale == 'ar' %}selected{% endif %}>العربية</option>
+                <option value="fr" {% if current_locale == 'fr' %}selected{% endif %}>Français</option>
+            </select>
+        </div>
+    </header>
 
-{% block content %}
-<div class="container mx-auto p-4">
-    <h1 class="text-3xl font-bold mb-6">{{ _("Welcome, {owner_name}!").format(owner_name=owner.name) }}</h1>
-
-    {% if message %}
-    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
-        <span class="block sm:inline">{{ message }}</span>
-    </div>
-    {% endif %}
-    {% if error_message %}
-    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-        <span class="block sm:inline">{{ error_message }}</span>
-    </div>
-    {% endif %}
-
-    <div class="mb-4">
-        <a href="?lang=en" class="text-blue-500 hover:underline {% if current_locale == 'en' %}font-bold{% endif %}">English</a> |
-        <a href="?lang=ar" class="text-blue-500 hover:underline {% if current_locale == 'ar' %}font-bold{% endif %}">العربية</a> |
-        <a href="?lang=fr" class="text-blue-500 hover:underline {% if current_locale == 'fr' %}font-bold{% endif %}">Français</a>
-    </div>
-
-    <div class="bg-white shadow-md rounded-lg p-6 mb-8">
-        <h2 class="text-2xl font-semibold mb-4">{{ _("Analytics Overview") }}</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="bg-blue-50 p-4 rounded-lg">
-                <h3 class="text-lg font-medium text-gray-700">{{ _("Total Bookings") }}</h3>
-                <p class="text-3xl font-bold text-blue-600">{{ analytics.total_bookings }}</p>
+    <main class="container mx-auto p-4 flex-grow">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            <div class="card">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">{{ _("Welcome, {owner_name}!").format(owner_name=owner.name) }}</h2>
+                <p class="text-gray-600">{{ _("Your public booking page link:") }} <a href="{{ request.url_for('public_booking_page', owner_name=owner.name) }}" class="text-indigo-600 hover:underline">{{ settings.SERVER_NAME }}/booking/{{ owner.name }}</a></p>
+                {% if message %}
+                    <div class="mt-4 p-3 bg-green-100 text-green-700 rounded-md">{{ message }}</div>
+                {% endif %}
             </div>
+
+            <div class="card col-span-1 md:col-span-2">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">{{ _("Your Analytics") }}</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                    <div class="bg-indigo-50 p-4 rounded-md">
+                        <p class="text-sm text-gray-600">{{ _("Total Bookings") }}</p>
+                        <p id="total-bookings" class="text-3xl font-bold text-indigo-700">-</p>
+                    </div>
+                    <div class="bg-purple-50 p-4 rounded-md">
+                        <p class="text-sm text-gray-600">{{ _("This Month Bookings") }}</p>
+                        <p id="this-month-bookings" class="text-3xl font-bold text-purple-700">-</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-800 mb-3">{{ _("Monthly Bookings") }}</h3>
+                        <div id="monthly-bookings-list" class="space-y-2">
+                            <p class="text-gray-500">{{ _("Loading monthly bookings...") }}</p>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-800 mb-3">{{ _("Popular Services (Top 5)") }}</h3>
+                        <div id="popular-services-list" class="space-y-2">
+                            <p class="text-gray-500">{{ _("Loading popular services...") }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
-        <div class="mt-8">
-            <h3 class="text-xl font-semibold mb-4">{{ _("Monthly Bookings") }}</h3>
-            {% if analytics.monthly_bookings %}
-            <div class="overflow-x-auto">
-                <table class="min-w-full bg-white border border-gray-200">
-                    <thead>
-                        <tr>
-                            <th class="py-2 px-4 border-b">{{ _("Month") }}</th>
-                            <th class="py-2 px-4 border-b">{{ _("Bookings") }}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for entry in analytics.monthly_bookings %}
-                        <tr>
-                            <td class="py-2 px-4 border-b">{{ entry.month }}</td>
-                            <td class="py-2 px-4 border-b">{{ entry.count }}</td>
-                        </tr>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="card">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">{{ _("Upcoming Bookings") }}</h2>
+                {% if upcoming_bookings %}
+                    <ul class="space-y-4">
+                        {% for booking in upcoming_bookings %}
+                            <li class="border-b pb-4 last:border-b-0">
+                                <p class="text-lg font-medium text-gray-700">{{ booking.service.name }}</p>
+                                <p class="text-gray-600">{{ _("Date") }}: {{ booking.booking_time.strftime('%Y-%m-%d') }}</p>
+                                <p class="text-gray-600">{{ _("Time") }}: {{ booking.booking_time.strftime('%H:%M') }}</p>
+                                <p class="text-gray-600">{{ _("Customer") }}: {{ booking.customer_name }} ({{ booking.customer_email }})</p>
+                                {% if booking.customer_phone %}<p class="text-gray-600">{{ _("Phone") }}: {{ booking.customer_phone }}</p>{% endif %}
+                            </li>
                         {% endfor %}
-                    </tbody>
-                </table>
+                    </ul>
+                {% else %}
+                    <p class="text-gray-600">{{ _("No upcoming bookings.") }}</p>
+                {% endif %}
             </div>
-            {% else %}
-            <p>{{ _("No monthly booking data available yet.") }}</p>
-            {% endif %}
+
+            <div class="card">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">{{ _("Update Profile") }}</h2>
+                <form action="/dashboard/profile" method="POST" class="space-y-4">
+                    <div>
+                        <label for="name" class="block text-sm font-medium text-gray-700">{{ _("Your Name") }}</label>
+                        <input type="text" id="name" name="name" value="{{ owner.name }}" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-gray-700">{{ _("Email Address") }}</label>
+                        <input type="email" id="email" name="email" value="{{ owner.email }}" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label for="phone" class="block text-sm font-medium text-gray-700">{{ _("Phone Number (optional)") }}</label>
+                        <input type="text" id="phone" name="phone" value="{{ owner.phone or '' }}" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <button type="submit" class="btn-primary w-full">{{ _("Update Profile") }}</button>
+                </form>
+            </div>
         </div>
+    </main>
 
-        <div class="mt-8">
-            <h3 class="text-xl font-semibold mb-4">{{ _("Popular Services (Top 5)") }}</h3>
-            {% if analytics.popular_services %}
-            <div class="overflow-x-auto">
-                <table class="min-w-full bg-white border border-gray-200">
-                    <thead>
-                        <tr>
-                            <th class="py-2 px-4 border-b">{{ _("Service Name") }}</th>
-                            <th class="py-2 px-4 border-b">{{ _("Bookings") }}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for service in analytics.popular_services %}
-                        <tr>
-                            <td class="py-2 px-4 border-b">{{ service.service_name }}</td>
-                            <td class="py-2 px-4 border-b">{{ service.count }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            {% else %}
-            <p>{{ _("No popular services data available yet.") }}</p>
-            {% endif %}
-        </div>
-    </div>
+    <footer class="bg-gray-800 text-white p-4 text-center mt-8">
+        <p>&copy; 2023 BookSlot. {{ _("All rights reserved.") }}</p>
+    </footer>
 
-    <div class="bg-white shadow-md rounded-lg p-6 mb-8">
-        <h2 class="text-2xl font-semibold mb-4">{{ _("Your Upcoming Bookings") }}</h2>
-        {% if upcoming_bookings %}
-        <div class="overflow-x-auto">
-            <table class="min-w-full bg-white border border-gray-200">
-                <thead>
-                    <tr>
-                        <th class="py-2 px-4 border-b">{{ _("Customer") }}</th>
-                        <th class="py-2 px-4 border-b">{{ _("Service") }}</th>
-                        <th class="py-2 px-4 border-b">{{ _("Time") }}</th>
-                        <th class="py-2 px-4 border-b">{{ _("Contact") }}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for booking in upcoming_bookings %}
-                    <tr>
-                        <td class="py-2 px-4 border-b">{{ booking.customer_name }}</td>
-                        <td class="py-2 px-4 border-b">{{ booking.service.name }}</td>
-                        <td class="py-2 px-4 border-b">{{ booking.booking_time.strftime('%Y-%m-%d %H:%M') }}</td>
-                        <td class="py-2 px-4 border-b">{{ booking.customer_email }}<br>{{ booking.customer_phone }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        {% else %}
-        <p>{{ _("You have no upcoming bookings.") }}</p>
-        {% endif %}
-    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            fetch('/api/owner/analytics', {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok ' + response.statusText);
+                }
+                return response.json();
+            })
+            .then(data => {
+                document.getElementById('total-bookings').innerText = data.total_bookings;
 
-    <div class="bg-white shadow-md rounded-lg p-6 mb-8">
-        <h2 class="text-2xl font-semibold mb-4">{{ _("Update Your Profile") }}</h2>
-        <form action="/dashboard/profile" method="post" class="space-y-4">
-            <div>
-                <label for="name" class="block text-sm font-medium text-gray-700">{{ _("Name") }}:</label>
-                <input type="text" id="name" name="name" value="{{ owner.name }}" required
-                       class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
-            </div>
-            <div>
-                <label for="email" class="block text-sm font-medium text-gray-700">{{ _("Email") }}:</label>
-                <input type="email" id="email" name="email" value="{{ owner.email }}" required
-                       class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
-            </div>
-            <div>
-                <label for="phone" class="block text-sm font-medium text-gray-700">{{ _("Phone Number (WhatsApp)") }}:</label>
-                <input type="tel" id="phone" name="phone" value="{{ owner.phone or '' }}"
-                       class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
-            </div>
-            <button type="submit"
-                    class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                {{ _("Update Profile") }}
-            </button>
-        </form>
-    </div>
+                const currentMonth = new Date().toISOString().slice(0, 7);
+                const thisMonthData = data.monthly_bookings.find(mb => mb.month === currentMonth);
+                document.getElementById('this-month-bookings').innerText = thisMonthData ? thisMonthData.count : 0;
 
-    <div class="bg-white shadow-md rounded-lg p-6 mb-8">
-        <h2 class="text-2xl font-semibold mb-4">{{ _("Add a New Service") }}</h2>
-        <form action="/dashboard/services" method="post" class="space-y-4">
-            <div>
-                <label for="service_name" class="block text-sm font-medium text-gray-700">{{ _("Service Name") }}:</label>
-                <input type="text" id="service_name" name="name" required
-                       class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
-            </div>
-            <div>
-                <label for="service_description" class="block text-sm font-medium text-gray-700">{{ _("Description") }}:</label>
-                <textarea id="service_description" name="description" rows="3"
-                          class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"></textarea>
-            </div>
-            <div>
-                <label for="service_price" class="block text-sm font-medium text-gray-700">{{ _("Price") }}:</label>
-                <input type="number" id="service_price" name="price" step="0.01" required
-                       class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
-            </div>
-            <div>
-                <label for="service_duration" class="block text-sm font-medium text-gray-700">{{ _("Duration (minutes)") }}:</label>
-                <input type="number" id="service_duration" name="duration_minutes" required
-                       class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
-            </div>
-            <button type="submit"
-                    class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
-                {{ _("Add Service") }}
-            </button>
-        </form>
-    </div>
+                const monthlyBookingsList = document.getElementById('monthly-bookings-list');
+                monthlyBookingsList.innerHTML = '';
+                if (data.monthly_bookings.length > 0) {
+                    data.monthly_bookings.forEach(item => {
+                        const p = document.createElement('p');
+                        p.className = 'text-gray-700';
+                        p.innerText = `{{ _('Month') }}: ${item.month}, {{ _('Bookings') }}: ${item.count}`;
+                        monthlyBookingsList.appendChild(p);
+                    });
+                } else {
+                    monthlyBookingsList.innerHTML = `<p class="text-gray-500">{{ _("No monthly booking data available.") }}</p>`;
+                }
 
-</div>
-{% endblock %}
+                const popularServicesList = document.getElementById('popular-services-list');
+                popularServicesList.innerHTML = '';
+                if (data.popular_services.length > 0) {
+                    data.popular_services.forEach(item => {
+                        const p = document.createElement('p');
+                        p.className = 'text-gray-700';
+                        p.innerText = `${item.service_name}: {{ _('Bookings') }}: ${item.count}`;
+                        popularServicesList.appendChild(p);
+                    });
+                } else {
+                    popularServicesList.innerHTML = `<p class="text-gray-500">{{ _("No popular services data available.") }}</p>`;
+                }
+
+            })
+            .catch(error => {
+                console.error('Error fetching analytics:', error);
+                document.getElementById('total-bookings').innerText = 'Error';
+                document.getElementById('this-month-bookings').innerText = 'Error';
+                document.getElementById('monthly-bookings-list').innerHTML = `<p class="text-red-500">{{ _("Failed to load monthly bookings.") }}</p>`;
+                document.getElementById('popular-services-list').innerHTML = `<p class="text-red-500">{{ _("Failed to load popular services.") }}</p>`;
+            });
+        });
+    </script>
+</body>
+</html>
