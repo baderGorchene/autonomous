@@ -1,8 +1,40 @@
-<p>Hello {{ booking.customer_name }},</p>
-<p>Your booking with {{ owner.business_name }} has been confirmed!</p>
-<p><strong>Service:</strong> {{ booking.service_name }}</p>
-<p><strong>Date:</strong> {{ booking.booking_date.strftime('%Y-%m-%d') }}</p>
-<p><strong>Time:</strong> {{ booking.booking_time }}</p>
-<p>We look forward to seeing you!</p>
-<p>Thank you,</p>
-<p>{{ owner.business_name }}</p>
+<!-- templates/email/customer_booking_confirmation.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body { font-family: sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background-color: #f9f9f9; }
+        .header { text-align: center; margin-bottom: 20px; }
+        .header h1 { color: #4CAF50; }
+        .content { margin-bottom: 20px; }
+        .footer { text-align: center; font-size: 0.8em; color: #777; }
+        .button { display: inline-block; padding: 10px 20px; margin-top: 20px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>{{ __("Booking Confirmed!") }}</h1>
+        </div>
+        <div class="content">
+            <p>Dear {{ booking.customer_name }},</p>
+            <p>Your booking for <strong>{{ booking.service.name }}</strong> with {{ owner.name }} has been confirmed.</p>
+            <p><strong>{{ __("Date:") }}</strong> {{ booking.start_time.strftime('%A, %B %d, %Y') }}</p>
+            <p><strong>{{ __("Time:") }}</strong> {{ booking.start_time.strftime('%I:%M %p') }}</p>
+            <p><strong>{{ __("Duration:") }}</strong> {{ booking.service.duration_minutes }} {{ __("minutes") }}</p>
+
+            {% if booking.is_recurring %}
+            <p>This is part of a recurring series. You will receive separate confirmations for each future booking in the series.</p>
+            {% endif %}
+
+            <p>{{ __("We look forward to seeing you!") }}</p>
+            <p>Best regards,<br>{{ owner.name }}</p>
+        </div>
+        <div class="footer">
+            <p>&copy; {{ current_year }} BookSlot. {{ __("All rights reserved.") }}</p>
+        </div>
+    </div>
+</body>
+</html>

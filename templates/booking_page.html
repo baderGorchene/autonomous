@@ -1,62 +1,213 @@
+{# templates/booking_page.html #}
 <!DOCTYPE html>
-<html lang="{{ current_locale }}">
+<html lang="{{ request.state.locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ title }}</title>
+    <title>{{ owner.name }} - {{ __("Book an Appointment") }}</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .flatpickr-calendar { z-index: 9999; }
+        {% if request.state.locale == 'ar' %}
+        body { direction: rtl; text-align: right; }
+        {% endif %}
+    </style>
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col">
-    <header class="bg-indigo-600 text-white p-4 shadow-md">
-        <div class="container mx-auto">
-            <h1 class="text-2xl font-bold">{{ _("Book an Appointment with {owner_name}").format(owner_name=owner.name) }}</h1>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+    <div class="max-w-md w-full bg-white rounded-lg shadow-xl p-8 space-y-6">
+        <div class="text-center">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ owner.name }}</h1>
+            <p class="text-gray-600">{{ __("Book your next appointment effortlessly") }}</p>
         </div>
-        <div class="lang-switcher">
-            <select onchange="window.location.href='/set_language/' + this.value">
-                <option value="en" {% if current_locale == 'en' %}selected{% endif %}>English</option>
-                <option value="ar" {% if current_locale == 'ar' %}selected{% endif %}>العربية</option>
-                <option value="fr" {% if current_locale == 'fr' %}selected{% endif %}>Français</option>
-            </select>
-        </div>
-    </header>
-    <main class="container mx-auto p-4 flex-grow">
-        <div class="bg-white p-6 rounded-lg shadow-md max-w-2xl mx-auto">
-            <h2 class="text-xl font-semibold text-gray-800 mb-4">{{ _("Book Your Service") }}</h2>
-            <form action="{{ request.url_for('submit_booking', owner_name=owner.name) }}" method="POST" class="space-y-4">
-                <div>
-                    <label for="service_id" class="block text-sm font-medium text-gray-700">{{ _("Select Service") }}</label>
-                    <select id="service_id" name="service_id" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500">
-                        {% for service in services %}
-                            <option value="{{ service.id }}">{{ service.name }} ({{ service.duration_minutes }} {{ _("minutes") }}) - {{ service.price | format_currency('USD', current_locale) }}</option>
-                        {% endfor %}
+
+        <form id="bookingForm" method="post" action="/book/{{ owner.name }}">
+            {% if error_message %}
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+                <strong class="font-bold">{{ __("Error!") }}</strong>
+                <span class="block sm:inline">{{ error_message }}</span>
+            </div>
+            {% endif %}
+
+            <div class="mb-4">
+                <label for="customer_name" class="block text-sm font-medium text-gray-700">{{ __("Your Name") }}</label>
+                <input type="text" id="customer_name" name="customer_name" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" required>
+            </div>
+
+            <div class="mb-4">
+                <label for="customer_email" class="block text-sm font-medium text-gray-700">{{ __("Your Email") }}</label>
+                <input type="email" id="customer_email" name="customer_email" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" required>
+            </div>
+
+            <div class="mb-4">
+                <label for="customer_phone" class="block text-sm font-medium text-gray-700">{{ __("Your Phone (Optional)") }}</label>
+                <input type="tel" id="customer_phone" name="customer_phone" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+
+            <div class="mb-4">
+                <label for="service_id" class="block text-sm font-medium text-gray-700">{{ __("Select Service") }}</label>
+                <select id="service_id" name="service_id" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md" required>
+                    <option value="">{{ __("Choose a service") }}</option>
+                    {% for service in services %}
+                        <option value="{{ service.id }}" data-duration="{{ service.duration_minutes }}">{{ service.name }} ({{ service.duration_minutes }} {{ __("min") }}) - {{ service.price | format_currency(request.state.locale) }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="mb-4">
+                <label for="booking_date" class="block text-sm font-medium text-gray-700">{{ __("Select Date") }}</label>
+                <input type="text" id="booking_date" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="{{ __("Select a date") }}" required>
+            </div>
+
+            <div class="mb-4">
+                <label for="booking_time" class="block text-sm font-medium text-gray-700">{{ __("Select Time") }}</label>
+                <select id="booking_time" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md" required>
+                    <option value="">{{ __("Choose a time slot") }}</option>
+                </select>
+                <input type="hidden" id="booking_start_time" name="booking_start_time">
+                <input type="hidden" id="booking_end_time" name="booking_end_time">
+            </div>
+
+            <div class="mb-4">
+                <label for="isRecurring" class="flex items-center space-x-2 cursor-pointer">
+                    <input type="checkbox" id="isRecurring" name="is_recurring" class="form-checkbox h-5 w-5 text-indigo-600">
+                    <span class="text-gray-700">{{ __("Make this a recurring booking?") }}</span>
+                </label>
+            </div>
+
+            <div id="recurringOptions" class="hidden bg-gray-50 p-4 rounded-md mb-4">
+                <div class="mb-4">
+                    <label for="recurrencePattern" class="block text-sm font-medium text-gray-700">{{ __("Recurrence Pattern") }}</label>
+                    <select id="recurrencePattern" name="recurrence_pattern" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                        <option value="weekly">{{ __("Weekly") }}</option>
+                        <option value="bi-weekly">{{ __("Bi-Weekly") }}</option>
+                        <option value="monthly">{{ __("Monthly") }}</option>
+                        <option value="daily">{{ __("Daily") }}</option>
                     </select>
                 </div>
-                <div>
-                    <label for="customer_name" class="block text-sm font-medium text-gray-700">{{ _("Your Name") }}</label>
-                    <input type="text" id="customer_name" name="customer_name" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500">
+                <div class="mb-4">
+                    <label for="recurrenceEndDate" class="block text-sm font-medium text-gray-700">{{ __("Recurrence End Date") }}</label>
+                    <input type="date" id="recurrenceEndDate" name="recurrence_end_date" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
                 </div>
-                <div>
-                    <label for="customer_email" class="block text-sm font-medium text-gray-700">{{ _("Your Email") }}</label>
-                    <input type="email" id="customer_email" name="customer_email" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500">
-                </div>
-                <div>
-                    <label for="customer_phone" class="block text-sm font-medium text-gray-700">{{ _("Your Phone (optional)") }}</label>
-                    <input type="text" id="customer_phone" name="customer_phone" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500">
-                </div>
-                <div>
-                    <label for="booking_date" class="block text-sm font-medium text-gray-700">{{ _("Date") }}</label>
-                    <input type="date" id="booking_date" name="booking_date" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500">
-                </div>
-                <div>
-                    <label for="booking_time" class="block text-sm font-medium text-gray-700">{{ _("Time") }}</label>
-                    <input type="time" id="booking_time" name="booking_time" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500">
-                </div>
-                <button type="submit" class="bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition-colors w-full">{{ _("Book Now") }}</button>
-            </form>
+            </div>
+
+            <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                {{ __("Book Now") }}
+            </button>
+        </form>
+
+        <div class="text-center mt-6 text-sm text-gray-500">
+            <p>&copy; {{ current_year }} BookSlot. {{ __("All rights reserved.") }}</p>
+            <div class="mt-2 space-x-4">
+                <a href="/set-locale/en" class="hover:underline">English</a>
+                <a href="/set-locale/ar" class="hover:underline">العربية</a>
+                <a href="/set-locale/fr" class="hover:underline">Français</a>
+            </div>
         </div>
-    </main>
-    <footer class="bg-gray-800 text-white p-4 text-center mt-8">
-        <p>&copy; 2023 BookSlot. {{ _("All rights reserved.") }}</p>
-    </footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const bookingDateInput = document.getElementById('booking_date');
+            const bookingTimeSelect = document.getElementById('booking_time');
+            const serviceSelect = document.getElementById('service_id');
+            const bookingStartTimeInput = document.getElementById('booking_start_time');
+            const bookingEndTimeInput = document.getElementById('booking_end_time');
+            const isRecurringCheckbox = document.getElementById('isRecurring');
+            const recurringOptionsDiv = document.getElementById('recurringOptions');
+            const recurrencePatternSelect = document.getElementById('recurrencePattern');
+            const recurrenceEndDateInput = document.getElementById('recurrenceEndDate');
+
+            let selectedServiceDuration = 0;
+
+            flatpickr(bookingDateInput, {
+                dateFormat: "Y-m-d",
+                minDate: "today",
+                onChange: function(selectedDates, dateStr, instance) {
+                    updateAvailableTimes(dateStr);
+                }
+            });
+
+            serviceSelect.addEventListener('change', function() {
+                const selectedOption = this.options[this.selectedIndex];
+                selectedServiceDuration = selectedOption.dataset.duration ? parseInt(selectedOption.dataset.duration) : 0;
+                if (bookingDateInput.value) {
+                    updateAvailableTimes(bookingDateInput.value);
+                }
+            });
+
+            function updateAvailableTimes(selectedDate) {
+                bookingTimeSelect.innerHTML = '<option value="">{{ __("Choose a time slot") }}</option>';
+                if (!selectedServiceDuration) {
+                    return;
+                }
+
+                const allAvailableSlots = JSON.parse('{{ available_slots | tojson | safe }}');
+                const filteredSlots = allAvailableSlots.filter(slot => {
+                    const slotDate = new Date(slot.start).toISOString().split('T')[0];
+                    return slotDate === selectedDate;
+                });
+
+                filteredSlots.forEach(slot => {
+                    const slotStart = new Date(slot.start);
+                    const slotEnd = new Date(slot.end);
+                    const serviceEnd = new Date(slotStart.getTime() + selectedServiceDuration * 60 * 1000);
+
+                    // Ensure the service duration fits within the available slot
+                    if (serviceEnd <= slotEnd) {
+                        const option = document.createElement('option');
+                        option.value = slot.start;
+                        option.textContent = slotStart.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                        bookingTimeSelect.appendChild(option);
+                    }
+                });
+            }
+
+            bookingTimeSelect.addEventListener('change', function() {
+                const selectedStartTimeStr = this.value;
+                if (selectedStartTimeStr && selectedServiceDuration) {
+                    const selectedStartTime = new Date(selectedStartTimeStr);
+                    const selectedEndTime = new Date(selectedStartTime.getTime() + selectedServiceDuration * 60 * 1000);
+                    bookingStartTimeInput.value = selectedStartTime.toISOString();
+                    bookingEndTimeInput.value = selectedEndTime.toISOString();
+                } else {
+                    bookingStartTimeInput.value = '';
+                    bookingEndTimeInput.value = '';
+                }
+            });
+
+            isRecurringCheckbox.addEventListener('change', function() {
+                if (this.checked) {
+                    recurringOptionsDiv.classList.remove('hidden');
+                    recurrencePatternSelect.setAttribute('required', 'true');
+                    recurrenceEndDateInput.setAttribute('required', 'true');
+                } else {
+                    recurringOptionsDiv.classList.add('hidden');
+                    recurrencePatternSelect.removeAttribute('required');
+                    recurrenceEndDateInput.removeAttribute('required');
+                    recurrencePatternSelect.value = 'weekly';
+                    recurrenceEndDateInput.value = '';
+                }
+            });
+
+            // Set min date for recurrence end date to be after selected booking date
+            flatpickr(recurrenceEndDateInput, {
+                dateFormat: "Y-m-d",
+                minDate: "today", // Default minDate
+                onOpen: function(selectedDates, dateStr, instance) {
+                    if (bookingDateInput.value) {
+                        instance.set('minDate', bookingDateInput.value);
+                    }
+                }
+            });
+
+            // Initial state for recurrence options
+            if (isRecurringCheckbox.checked) {
+                recurringOptionsDiv.classList.remove('hidden');
+            }
+        });
+    </script>
 </body>
 </html>
