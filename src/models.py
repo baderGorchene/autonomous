@@ -1,86 +1,77 @@
-from sqlalchemy import create_engine, Column, Integer, String, Boolean, DateTime, ForeignKey, Date, Time, Text
-from sqlalchemy.orm import declarative_base, sessionmaker, relationship, Mapped, mapped_column
-from datetime import datetime, date, time
-import json
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, DateTime, Time, Text, Date
+from sqlalchemy.orm import relationship
+from sqlalchemy.ext.declarative import declarative_base
+from datetime import datetime, time, date
 
 Base = declarative_base()
 
 class Owner(Base):
     __tablename__ = "owners"
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    email: Mapped[str] = mapped_column(String, unique=True, index=True)
-    hashed_password: Mapped[str] = mapped_column(String)
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-    name: Mapped[str] = mapped_column(String)
-    phone: Mapped[str] = mapped_column(String, nullable=True)
-    profile_picture_url: Mapped[str] = mapped_column(String, nullable=True)
-    booking_page_slug: Mapped[str] = mapped_column(String, unique=True, index=True)
-    currency: Mapped[str] = mapped_column(String, default="USD")
-    locale: Mapped[str] = mapped_column(String, default="en")
 
-    # Stripe subscription fields
-    stripe_customer_id: Mapped[str] = mapped_column(String, nullable=True, index=True)
-    stripe_subscription_id: Mapped[str] = mapped_column(String, nullable=True, index=True)
-    subscription_status: Mapped[str] = mapped_column(String, default="free") # free, active, cancelled, past_due
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String, unique=True, index=True)
+    hashed_password = Column(String)
+    is_active = Column(Boolean, default=True)
+    name = Column(String, nullable=True)
+    phone = Column(String, nullable=True)
+    whatsapp_number = Column(String, nullable=True)
+    currency = Column(String, default="USD")
+    locale = Column(String, default="en")
+    stripe_customer_id = Column(String, nullable=True)
+    subscription_status = Column(String, default="free") # 'free', 'premium', 'canceled'
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    services: Mapped[list["Service"]] = relationship(back_populates="owner", cascade="all, delete-orphan")
-    availabilities: Mapped[list["Availability"]] = relationship(back_populates="owner", cascade="all, delete-orphan") # Changed to AvailabilityRule
-    bookings: Mapped[list["Booking"]] = relationship(back_populates="owner", cascade="all, delete-orphan")
+    services = relationship("Service", back_populates="owner")
+    bookings = relationship("Booking", back_populates="owner")
+    recurring_availability_rules = relationship("RecurringAvailabilityRule", back_populates="owner")
 
 class Service(Base):
     __tablename__ = "services"
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    owner_id: Mapped[int] = mapped_column(Integer, ForeignKey("owners.id"))
-    name: Mapped[str] = mapped_column(String)
-    description: Mapped[str] = mapped_column(String, nullable=True)
-    duration_minutes: Mapped[int] = mapped_column(Integer)
-    price: Mapped[float] = mapped_column(Integer) # Storing as integer (cents) is better for currency
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
-    owner: Mapped["Owner"] = relationship(back_populates="services")
-    bookings: Mapped[list["Booking"]] = relationship(back_populates="service", cascade="all, delete-orphan")
+    id = Column(Integer, primary_key=True, index=True)
+    owner_id = Column(Integer, ForeignKey("owners.id"))
+    name = Column(String, index=True)
+    description = Column(String, nullable=True)
+    duration_minutes = Column(Integer)
+    price = Column(Integer) # Price in cents
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-# Refactored Availability to store recurrence rules and patterns
-class Availability(Base):
-    __tablename__ = "availabilities"
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    owner_id: Mapped[int] = mapped_column(Integer, ForeignKey("owners.id"))
-    
-    # Daily time range for the rule
-    start_time_of_day: Mapped[time] = mapped_column(Time(timezone=False)) # e.g., 09:00:00
-    end_time_of_day: Mapped[time] = mapped_column(Time(timezone=False))   # e.g., 17:00:00
-
-    # Recurrence rule string (iCalendar RRULE format, e.g., "FREQ=WEEKLY;BYDAY=MO,WE,FR")
-    rrule_string: Mapped[str] = mapped_column(String, nullable=True)
-    
-    # Period for which this rule is active
-    start_date: Mapped[date] = mapped_column(Date) # When the pattern begins
-    end_date: Mapped[date] = mapped_column(Date, nullable=True) # When the pattern ends (optional)
-    
-    # Exceptions: dates when the rule does NOT apply (JSON string of YYYY-MM-DD dates)
-    exception_dates_json: Mapped[str] = mapped_column(String, default="[]") 
-
-    owner: Mapped["Owner"] = relationship(back_populates="availabilities")
-    
-    @property
-    def exception_dates(self) -> list[date]:
-        return [date.fromisoformat(d) for d in json.loads(self.exception_dates_json)]
-
-    @exception_dates.setter
-    def exception_dates(self, dates: list[date]):
-        self.exception_dates_json = json.dumps([d.isoformat() for d in dates])
+    owner = relationship("Owner", back_populates="services")
 
 class Booking(Base):
     __tablename__ = "bookings"
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    owner_id: Mapped[int] = mapped_column(Integer, ForeignKey("owners.id"))
-    service_id: Mapped[int] = mapped_column(Integer, ForeignKey("services.id"))
-    customer_name: Mapped[str] = mapped_column(String)
-    customer_email: Mapped[str] = mapped_column(String)
-    customer_phone: Mapped[str] = mapped_column(String, nullable=True)
-    start_time: Mapped[datetime] = mapped_column(DateTime(timezone=True))
-    end_time: Mapped[datetime] = mapped_column(DateTime(timezone=True))
-    status: Mapped[str] = mapped_column(String, default="confirmed") # confirmed, cancelled, completed
 
-    owner: Mapped["Owner"] = relationship(back_populates="bookings")
-    service: Mapped["Service"] = relationship(back_populates="bookings")
+    id = Column(Integer, primary_key=True, index=True)
+    owner_id = Column(Integer, ForeignKey("owners.id"))
+    customer_name = Column(String)
+    customer_email = Column(String)
+    customer_phone = Column(String, nullable=True)
+    booking_time = Column(DateTime, index=True)
+    service_name = Column(String) # Denormalized for easier display
+    service_duration = Column(Integer)
+    service_price = Column(Integer)
+    status = Column(String, default="confirmed") # e.g., 'confirmed', 'canceled', 'completed'
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    owner = relationship("Owner", back_populates="bookings")
+
+class RecurringAvailabilityRule(Base):
+    __tablename__ = "recurring_availability_rules"
+
+    id = Column(Integer, primary_key=True, index=True)
+    owner_id = Column(Integer, ForeignKey("owners.id"))
+    rrule_string = Column(Text, nullable=False) # Stores the RRULE string, e.g., "FREQ=WEEKLY;BYDAY=MO,WE,FR"
+    rule_start_date = Column(Date, nullable=False) # When this rule effectively starts applying
+    rule_end_date = Column(Date, nullable=True) # When this rule effectively stops applying (optional)
+    start_time = Column(Time, nullable=False)   # Start time of availability on the recurring days
+    end_time = Column(Time, nullable=False)     # End time of availability on the recurring days
+    slot_duration = Column(Integer, default=30) # Duration of each bookable slot in minutes
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    owner = relationship("Owner", back_populates="recurring_availability_rules")

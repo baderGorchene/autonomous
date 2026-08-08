@@ -1,39 +1,38 @@
-from fastapi import FastAPI, Depends, HTTPException, status, Request, Form, Response
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi import FastAPI, Depends, HTTPException, status, Request, Response, Query
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from fastapi.templating import Jinja2Templates
-from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
-from sqlalchemy import func, extract, and_
+from sqlalchemy import func, extract
 from datetime import datetime, timedelta, date, time
 from typing import List, Annotated, Optional
-from babel.dates import format_currency
-import json
-import gettext
+from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.templating import Jinja2Templates
+from starlette.middleware.sessions import SessionMiddleware
+from starlette.background import BackgroundTasks
+from starlette.responses import JSONResponse
+from gettext import gettext as _ # Import gettext for i18n
+from babel.numbers import format_currency
+import stripe
 import os
-import locale as sys_locale # To set system locale for babel
 
 from . import models, schemas, security, notifications
 from .database import SessionLocal, engine
 from .config import settings
 
-# Stripe imports
-import stripe
+from dateutil.rrule import rrulestr, rrule, DAILY, WEEKLY, MO, TU, WE, TH, FR, SA, SU
 
-# Initialize Stripe
-stripe.api_key = settings.STRIPE_SECRET_KEY
-
+# Ensure tables are created
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
-# Setup templates and static files
-templates = Jinja2Templates(directory="src/templates")
-app.mount("/static", StaticFiles(directory="src/static"), name="static")
-app.mount("/locales", StaticFiles(directory=settings.LOCALES_DIR), name="locales")
+# Add Session Middleware for language and other session data
+app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
 
-# OAuth2 setup
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+# Templates setup
+templates = Jinja2Templates(directory="src/templates")
+
+# Stripe configuration
+stripe.api_key = settings.STRIPE_SECRET_KEY
 
 # Dependency to get DB session
 def get_db():
@@ -43,92 +42,39 @@ def get_db():
     finally:
         db.close()
 
-# Dependency to get current owner
-async def get_current_owner(token: Annotated[str, Depends(oauth2_scheme)], db: Session = Depends(get_db)):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    try:
-        payload = security.decode_access_token(token)
-        email: str = payload.get("sub")
-        if email is None:
-            raise credentials_exception
-        token_data = schemas.TokenData(email=email)
-    except Exception:
-        raise credentials_exception
-    owner = db.query(models.Owner).filter(models.Owner.email == token_data.email).first()
-    if owner is None:
-        raise credentials_exception
-    return owner
-
-# Internationalization setup
-def get_locale(request: Request) -> str:
-    # Priority: URL param > cookie > owner setting > default
-    locale_param = request.query_params.get("lang")
-    if locale_param in ["en", "ar", "fr"]:
-        return locale_param
-    
-    locale_cookie = request.cookies.get("locale")
-    if locale_cookie in ["en", "ar", "fr"]:
-        return locale_cookie
-        
-    # If owner is logged in, use owner's locale. This requires current_owner dependency
-    # For public pages, we can't rely on current_owner
-    # For now, we'll just use the default if no param/cookie
-    return settings.DEFAULT_LOCALE
-
+# Jinja2 Global Functions and Filters for i18n and currency
 @app.middleware("http")
-async def add_i18n_middleware(request: Request, call_next):
-    locale = get_locale(request)
+async def add_i18n_and_context_middleware(request: Request, call_next):
+    # Set default locale or get from session/header
+    request.state.locale = request.session.get("locale", settings.DEFAULT_LOCALE)
     
-    # Set the locale for gettext
-    try:
-        # For system-wide locale (e.g. for babel format_currency)
-        # This might not be thread-safe in async environments, but generally works for simple cases
-        sys_locale.setlocale(sys_locale.LC_ALL, f"{locale}_{locale.upper()}.UTF-8")
-    except sys_locale.Error:
-        # Fallback if locale not found on system
-        sys_locale.setlocale(sys_locale.LC_ALL, 'C.UTF-8')
+    # Make _ (gettext) available in templates
+    templates.env.globals['gettext'] = _
+    templates.env.globals['_'] = _
+    templates.env.globals['current_locale'] = request.state.locale
 
-    lang_translation = gettext.translation('messages', localedir=settings.LOCALES_DIR, languages=[locale], fallback=True)
-    request.state.gettext = lang_translation.gettext
-    request.state.locale = locale
+    # Currency formatting filter for Jinja2
+    def currency_filter(value, currency_code=None, locale=None):
+        if value is None:
+            return ""
+        # Assume value is in cents, convert to main unit
+        amount = value / 100
+        # Use request.state.locale if locale is not explicitly provided
+        effective_locale = locale if locale else request.state.locale
+        effective_currency_code = currency_code if currency_code else "USD" # Default to USD
+        return format_currency(amount, effective_currency_code, locale=effective_locale)
+
+    templates.env.filters['currency'] = currency_filter
+
     response = await call_next(request)
-    response.set_cookie(key="locale", value=locale, httponly=False, expires=3600*24*30) # 30 days
     return response
 
-templates.env.globals['gettext'] = lambda s: s # Default for non-request context
-templates.env.globals['ngettext'] = lambda s, p, n: s
-templates.env.globals['locale'] = settings.DEFAULT_LOCALE
-
-@app.get("/health")
+@app.get("/health", status_code=status.HTTP_200_OK)
 async def health_check():
-    return {"status": "ok"}
-
-# --- Authentication Endpoints ---
-@app.post("/owner/signup", response_model=schemas.Owner)
-def create_owner(owner: schemas.OwnerCreate, db: Session = Depends(get_db)):
-    db_owner = db.query(models.Owner).filter(models.Owner.email == owner.email).first()
-    if db_owner:
-        raise HTTPException(status_code=400, detail="Email already registered")
-    hashed_password = security.get_password_hash(owner.password)
-    db_owner = models.Owner(
-        email=owner.email, 
-        hashed_password=hashed_password, 
-        name=owner.name, 
-        phone=owner.phone,
-        booking_page_slug=owner.booking_page_slug,
-        locale=owner.locale or settings.DEFAULT_LOCALE
-    )
-    db.add(db_owner)
-    db.commit()
-    db.refresh(db_owner)
-    return db_owner
+    return {"status": "ok", "message": "Service is healthy"}
 
 @app.post("/token", response_model=schemas.Token)
-def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: Session = Depends(get_db)):
+async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: Session = Depends(get_db)):
     owner = security.authenticate_owner(db, form_data.username, form_data.password)
     if not owner:
         raise HTTPException(
@@ -136,307 +82,740 @@ def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depen
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = security.create_access_token(
-        data={"sub": owner.email}, expires_delta=access_token_expires
+        data={"sub": owner.email}
     )
     return {"access_token": access_token, "token_type": "bearer"}
 
-# --- Owner Profile Endpoints ---
+@app.post("/owners/register", response_model=schemas.Owner, status_code=status.HTTP_201_CREATED)
+def register_owner(owner: schemas.OwnerCreate, db: Session = Depends(get_db)):
+    db_owner = db.query(models.Owner).filter(models.Owner.email == owner.email).first()
+    if db_owner:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    hashed_password = security.get_password_hash(owner.password)
+    db_owner = models.Owner(email=owner.email, hashed_password=hashed_password, name=owner.name, phone=owner.phone, whatsapp_number=owner.whatsapp_number, currency=owner.currency, locale=owner.locale)
+    db.add(db_owner)
+    db.commit()
+    db.refresh(db_owner)
+
+    # Create Stripe Customer
+    try:
+        stripe_customer = stripe.Customer.create(email=owner.email, name=owner.name)
+        db_owner.stripe_customer_id = stripe_customer.id
+        db.commit()
+        db.refresh(db_owner)
+    except stripe.error.StripeError as e:
+        print(f"Stripe customer creation failed: {e}")
+        # Log the error, but don't prevent owner registration for now
+
+    return db_owner
+
 @app.get("/owner/me", response_model=schemas.Owner)
-def read_owner_me(current_owner: Annotated[models.Owner, Depends(get_current_owner)]):
+def read_owner_me(current_owner: Annotated[schemas.Owner, Depends(security.get_current_owner)]):
     return current_owner
 
 @app.put("/owner/me", response_model=schemas.Owner)
 def update_owner_me(
     owner_update: schemas.OwnerUpdate,
-    current_owner: Annotated[models.Owner, Depends(get_current_owner)],
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_owner: schemas.Owner = Depends(security.get_current_owner)
 ):
-    for field, value in owner_update.dict(exclude_unset=True).items():
-        setattr(current_owner, field, value)
+    # Prevent changing email to an already registered one
+    if owner_update.email and owner_update.email != current_owner.email:
+        existing_owner = db.query(models.Owner).filter(models.Owner.email == owner_update.email).first()
+        if existing_owner:
+            raise HTTPException(status_code=400, detail="Email already registered by another user.")
+
+    for key, value in owner_update.model_dump(exclude_unset=True).items():
+        if key == "password" and value:
+            setattr(current_owner, "hashed_password", security.get_password_hash(value))
+        elif key != "id": # Prevent updating id
+            setattr(current_owner, key, value)
+
     db.commit()
     db.refresh(current_owner)
     return current_owner
 
-# --- Service Endpoints ---
-@app.post("/owner/services", response_model=schemas.Service)
-def create_service_for_owner(
+@app.post("/owner/services", response_model=schemas.Service, status_code=status.HTTP_201_CREATED)
+def create_service(
     service: schemas.ServiceCreate,
-    current_owner: Annotated[models.Owner, Depends(get_current_owner)],
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_owner: schemas.Owner = Depends(security.get_current_owner)
 ):
-    db_service = models.Service(**service.dict(), owner_id=current_owner.id)
+    db_service = models.Service(**service.model_dump(), owner_id=current_owner.id)
     db.add(db_service)
     db.commit()
     db.refresh(db_service)
     return db_service
 
 @app.get("/owner/services", response_model=List[schemas.Service])
-def read_services_for_owner(
-    current_owner: Annotated[models.Owner, Depends(get_current_owner)],
-    db: Session = Depends(get_db)
+def get_owner_services(
+    db: Session = Depends(get_db),
+    current_owner: schemas.Owner = Depends(security.get_current_owner)
 ):
-    return current_owner.services
+    return db.query(models.Service).filter(models.Service.owner_id == current_owner.id).all()
 
-# --- Availability Endpoints (MODIFIED) ---
-@app.post("/owner/availability", response_model=schemas.Availability)
-def create_availability_for_owner(
-    availability: schemas.AvailabilityCreate,
-    current_owner: Annotated[models.Owner, Depends(get_current_owner)],
-    db: Session = Depends(get_db)
+@app.get("/owner/services/{service_id}", response_model=schemas.Service)
+def get_owner_service(
+    service_id: int,
+    db: Session = Depends(get_db),
+    current_owner: schemas.Owner = Depends(security.get_current_owner)
 ):
-    # Basic validation for time range and dates
-    if availability.start_time_of_day >= availability.end_time_of_day:
-        raise HTTPException(status_code=400, detail="End time must be after start time")
-    if availability.end_date and availability.start_date > availability.end_date:
-        raise HTTPException(status_code=400, detail="End date must be after start date")
-
-    db_availability = models.Availability(
-        start_time_of_day=availability.start_time_of_day,
-        end_time_of_day=availability.end_time_of_day,
-        rrule_string=availability.rrule_string,
-        start_date=availability.start_date,
-        end_date=availability.end_date,
-        owner_id=current_owner.id
-    )
-    # Handle exception_dates property setter
-    db_availability.exception_dates = availability.exception_dates or []
-
-    db.add(db_availability)
-    db.commit()
-    db.refresh(db_availability)
-    return db_availability
-
-@app.get("/owner/availability", response_model=List[schemas.Availability])
-def read_availability_for_owner(
-    current_owner: Annotated[models.Owner, Depends(get_current_owner)],
-    db: Session = Depends(get_db)
-):
-    return current_owner.availabilities
-
-# --- Booking Endpoints ---
-# Simplified /book/{owner_name} endpoint, assuming it fetches services and a way to book
-@app.get("/book/{owner_slug}", response_class=HTMLResponse)
-async def booking_page(owner_slug: str, request: Request, db: Session = Depends(get_db)):
-    owner = db.query(models.Owner).filter(models.Owner.booking_page_slug == owner_slug).first()
-    if not owner:
-        raise HTTPException(status_code=404, detail="Owner not found")
-
-    services = db.query(models.Service).filter(models.Service.owner_id == owner.id, models.Service.is_active == True).all()
-    
-    # For this step, we are not generating slots from the new availability model yet.
-    # This will be part of the next task. For now, it might just display basic info or
-    # assume simple pre-defined slots.
-    
-    _ = request.state.gettext
-    return templates.TemplateResponse(
-        "booking_page.html",
-        {
-            "request": request,
-            "owner": owner,
-            "services": services,
-            "locale": request.state.locale,
-            "_": _,
-            "title": _("Book an Appointment with {owner_name}").format(owner_name=owner.name)
-        }
-    )
-
-@app.post("/book/{owner_slug}/submit", response_model=schemas.BookingConfirmation)
-async def submit_booking(
-    owner_slug: str,
-    booking_data: schemas.BookingCreate,
-    request: Request,
-    db: Session = Depends(get_db)
-):
-    owner = db.query(models.Owner).filter(models.Owner.booking_page_slug == owner_slug).first()
-    if not owner:
-        raise HTTPException(status_code=404, detail="Owner not found")
-    
-    service = db.query(models.Service).filter(
-        models.Service.id == booking_data.service_id,
-        models.Service.owner_id == owner.id
+    db_service = db.query(models.Service).filter(
+        models.Service.id == service_id,
+        models.Service.owner_id == current_owner.id
     ).first()
-    if not service:
-        raise HTTPException(status_code=404, detail="Service not found or does not belong to this owner")
+    if db_service is None:
+        raise HTTPException(status_code=404, detail="Service not found")
+    return db_service
 
-    # In a real scenario, check availability here using the new Availability model
-    # For this task, we assume availability check is done at UI or simplified
-    # This part will be heavily modified in the next task.
+@app.put("/owner/services/{service_id}", response_model=schemas.Service)
+def update_owner_service(
+    service_id: int,
+    service_update: schemas.ServiceUpdate,
+    db: Session = Depends(get_db),
+    current_owner: schemas.Owner = Depends(security.get_current_owner)
+):
+    db_service = db.query(models.Service).filter(
+        models.Service.id == service_id,
+        models.Service.owner_id == current_owner.id
+    ).first()
+    if db_service is None:
+        raise HTTPException(status_code=404, detail="Service not found")
     
-    end_time = booking_data.start_time + timedelta(minutes=service.duration_minutes)
+    for key, value in service_update.model_dump(exclude_unset=True).items():
+        setattr(db_service, key, value)
+    
+    db.commit()
+    db.refresh(db_service)
+    return db_service
 
-    db_booking = models.Booking(
-        owner_id=owner.id,
-        service_id=service.id,
-        customer_name=booking_data.customer_name,
-        customer_email=booking_data.customer_email,
-        customer_phone=booking_data.customer_phone,
-        start_time=booking_data.start_time,
-        end_time=end_time,
-        status="confirmed"
-    )
+@app.delete("/owner/services/{service_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_owner_service(
+    service_id: int,
+    db: Session = Depends(get_db),
+    current_owner: schemas.Owner = Depends(security.get_current_owner)
+):
+    db_service = db.query(models.Service).filter(
+        models.Service.id == service_id,
+        models.Service.owner_id == current_owner.id
+    ).first()
+    if db_service is None:
+        raise HTTPException(status_code=404, detail="Service not found")
+    
+    db.delete(db_service)
+    db.commit()
+    return {"ok": True}
+
+# Helper function to generate slots from recurring rules
+def generate_slots(
+    owner_id: int,
+    start_date: date,
+    end_date: date,
+    db: Session
+) -> List[datetime]:
+    rules = db.query(models.RecurringAvailabilityRule).filter(
+        models.RecurringAvailabilityRule.owner_id == owner_id,
+        models.RecurringAvailabilityRule.is_active == True
+    ).all()
+
+    all_potential_slots = set() # Use a set to avoid duplicates
+
+    for rule in rules:
+        try:
+            # The dtstart for rrulestr should be the first effective start of the rule
+            rule_dtstart_datetime = datetime.combine(rule.rule_start_date, rule.start_time)
+            
+            # The rrule_string should only contain the RRULE part, not DTSTART.
+            # rrulestr will use the provided dtstart if it's not in the string.
+            r = rrulestr(rule.rrule_string, dtstart=rule_dtstart_datetime)
+
+            # Define the period for which we want to generate slots, respecting query and rule bounds
+            query_period_start = datetime.combine(start_date, time.min)
+            query_period_end = datetime.combine(end_date, time.max) # Go till end of the day
+
+            effective_period_start = max(query_period_start, rule_dtstart_datetime)
+            effective_period_end = query_period_end
+            if rule.rule_end_date:
+                effective_period_end = min(query_period_end, datetime.combine(rule.rule_end_date, time.max)) # End of rule_end_date
+
+            # Generate occurrences within the effective period
+            # rrule.between includes the start and end if they are occurrences.
+            # We want occurrences *on* or *after* effective_period_start and *on* or *before* effective_period_end.
+            occurrences = list(r.between(
+                after=effective_period_start - timedelta(microseconds=1), 
+                before=effective_period_end + timedelta(microseconds=1), 
+                inc=True
+            ))
+            
+            # For each occurrence date, generate time slots
+            for occ in occurrences:
+                # The 'occ' here will be a datetime object based on `rule_dtstart` and `rrule_string`.
+                # We need to adjust its time part to be `rule.start_time` and `rule.end_time`.
+                # The `occ.date()` gives us the date part for which the rule applies.
+                
+                current_slot_start = datetime.combine(occ.date(), rule.start_time)
+                current_slot_end = datetime.combine(occ.date(), rule.end_time)
+
+                while current_slot_start + timedelta(minutes=rule.slot_duration) <= current_slot_end:
+                    all_potential_slots.add(current_slot_start)
+                    current_slot_start += timedelta(minutes=rule.slot_duration)
+
+        except Exception as e:
+            print(f"Error processing rrule_string '{rule.rrule_string}' for rule {rule.id}: {e}")
+            continue
+
+    # Filter out already booked slots
+    existing_bookings = db.query(models.Booking).filter(
+        models.Booking.owner_id == owner_id,
+        models.Booking.booking_time >= datetime.combine(start_date, time.min),
+        models.Booking.booking_time <= datetime.combine(end_date, time.max)
+    ).all()
+    
+    booked_slots = {b.booking_time for b in existing_bookings}
+
+    # Filter out booked slots
+    available_slots = [slot for slot in all_potential_slots if slot not in booked_slots]
+    
+    return sorted(available_slots)
+
+@app.get("/owner/available_slots", response_model=List[datetime])
+def get_available_slots_for_owner(
+    start_date: date = Query(..., description="Start date for slot generation (YYYY-MM-DD)"),
+    end_date: date = Query(..., description="End date for slot generation (YYYY-MM-DD)"),
+    db: Session = Depends(get_db),
+    current_owner: schemas.Owner = Depends(security.get_current_owner),
+):
+    if start_date > end_date:
+        raise HTTPException(status_code=400, detail="start_date cannot be after end_date")
+    
+    return generate_slots(current_owner.id, start_date, end_date, db)
+
+@app.get("/public/owners/{owner_id}/available_slots", response_model=List[datetime])
+def get_public_available_slots(
+    owner_id: int,
+    start_date: date = Query(..., description="Start date for slot generation (YYYY-MM-DD)"),
+    end_date: date = Query(..., description="End date for slot generation (YYYY-MM-DD)"),
+    db: Session = Depends(get_db),
+):
+    db_owner = db.query(models.Owner).filter(models.Owner.id == owner_id).first()
+    if not db_owner:
+        raise HTTPException(status_code=404, detail="Owner not found")
+
+    if start_date > end_date:
+        raise HTTPException(status_code=400, detail="start_date cannot be after end_date")
+    
+    # Ensure the date range isn't too large for public queries to prevent abuse
+    if (end_date - start_date).days > 30: # Limit to 30 days
+        raise HTTPException(status_code=400, detail="Date range for public slot query cannot exceed 30 days.")
+
+    return generate_slots(owner_id, start_date, end_date, db)
+
+@app.post("/owner/availability/recurring", response_model=schemas.RecurringAvailabilityRule)
+def create_recurring_availability_rule(
+    rule: schemas.RecurringAvailabilityRuleCreate,
+    db: Session = Depends(get_db),
+    current_owner: schemas.Owner = Depends(security.get_current_owner),
+):
+    db_rule = models.RecurringAvailabilityRule(**rule.model_dump(), owner_id=current_owner.id)
+    db.add(db_rule)
+    db.commit()
+    db.refresh(db_rule)
+    return db_rule
+
+@app.get("/owner/availability/recurring", response_model=List[schemas.RecurringAvailabilityRule])
+def get_recurring_availability_rules(
+    db: Session = Depends(get_db),
+    current_owner: schemas.Owner = Depends(security.get_current_owner),
+):
+    return db.query(models.RecurringAvailabilityRule).filter(models.RecurringAvailabilityRule.owner_id == current_owner.id).all()
+
+@app.get("/owner/availability/recurring/{rule_id}", response_model=schemas.RecurringAvailabilityRule)
+def get_recurring_availability_rule(
+    rule_id: int,
+    db: Session = Depends(get_db),
+    current_owner: schemas.Owner = Depends(security.get_current_owner),
+):
+    db_rule = db.query(models.RecurringAvailabilityRule).filter(
+        models.RecurringAvailabilityRule.id == rule_id,
+        models.RecurringAvailabilityRule.owner_id == current_owner.id
+    ).first()
+    if db_rule is None:
+        raise HTTPException(status_code=404, detail="Recurring availability rule not found")
+    return db_rule
+
+@app.put("/owner/availability/recurring/{rule_id}", response_model=schemas.RecurringAvailabilityRule)
+def update_recurring_availability_rule(
+    rule_id: int,
+    rule: schemas.RecurringAvailabilityRuleUpdate,
+    db: Session = Depends(get_db),
+    current_owner: schemas.Owner = Depends(security.get_current_owner),
+):
+    db_rule = db.query(models.RecurringAvailabilityRule).filter(
+        models.RecurringAvailabilityRule.id == rule_id,
+        models.RecurringAvailabilityRule.owner_id == current_owner.id
+    ).first()
+    if db_rule is None:
+        raise HTTPException(status_code=404, detail="Recurring availability rule not found")
+
+    for key, value in rule.model_dump(exclude_unset=True).items():
+        setattr(db_rule, key, value)
+    db.commit()
+    db.refresh(db_rule)
+    return db_rule
+
+@app.delete("/owner/availability/recurring/{rule_id}", status_code=204)
+def delete_recurring_availability_rule(
+    rule_id: int,
+    db: Session = Depends(get_db),
+    current_owner: schemas.Owner = Depends(security.get_current_owner),
+):
+    db_rule = db.query(models.RecurringAvailabilityRule).filter(
+        models.RecurringAvailabilityRule.id == rule_id,
+        models.RecurringAvailabilityRule.owner_id == current_owner.id
+    ).first()
+    if db_rule is None:
+        raise HTTPException(status_code=404, detail="Recurring availability rule not found")
+    db.delete(db_rule)
+    db.commit()
+    return {"ok": True}
+
+
+@app.post("/bookings", response_model=schemas.Booking)
+def create_booking(
+    booking: schemas.BookingCreate,
+    db: Session = Depends(get_db),
+    background_tasks: BackgroundTasks = BackgroundTasks()
+):
+    db_owner = db.query(models.Owner).filter(models.Owner.id == booking.owner_id).first()
+    if not db_owner:
+        raise HTTPException(status_code=404, detail="Owner not found")
+
+    # Validate if the requested booking_time is a valid, available slot
+    # Generate slots for the day of the booking
+    booking_date = booking.booking_time.date()
+    available_slots_for_day = generate_slots(booking.owner_id, booking_date, booking_date, db)
+
+    if booking.booking_time not in available_slots_for_day:
+        raise HTTPException(status_code=400, detail="Requested booking time is not available or already booked.")
+    
+    # Check if a booking already exists for this exact time - generate_slots already filters this, but good for explicit check
+    existing_booking = db.query(models.Booking).filter(
+        models.Booking.owner_id == booking.owner_id,
+        models.Booking.booking_time == booking.booking_time
+    ).first()
+    if existing_booking:
+        raise HTTPException(status_code=409, detail="This slot is already booked.")
+
+    db_booking = models.Booking(**booking.model_dump())
     db.add(db_booking)
     db.commit()
     db.refresh(db_booking)
 
-    # Send notifications (simplified for this context)
-    # notifications.send_email_confirmation(owner, db_booking, service, to_customer=True)
-    # notifications.send_email_confirmation(owner, db_booking, service, to_customer=False)
-    # notifications.send_whatsapp_notification(owner, db_booking, service)
-
-    _ = request.state.gettext
-    return schemas.BookingConfirmation(
-        message=_("Booking confirmed successfully!"),
-        booking_details=schemas.Booking.from_orm(db_booking)
-    )
-
-@app.get("/booking-confirmation", response_class=HTMLResponse)
-async def booking_confirmation_page(request: Request):
-    _ = request.state.gettext
-    return templates.TemplateResponse(
-        "booking_confirmation.html",
-        {"request": request, "_": _}
-    )
+    background_tasks.add_task(notifications.send_booking_confirmation_email, db_booking, db_owner)
+    if db_owner.whatsapp_number:
+        background_tasks.add_task(notifications.send_booking_confirmation_whatsapp, db_booking, db_owner)
         
-# --- Owner Dashboard Endpoints ---
-@app.get("/dashboard", response_class=HTMLResponse)
-async def owner_dashboard(
-    request: Request,
-    current_owner: Annotated[models.Owner, Depends(get_current_owner)],
-    db: Session = Depends(get_db)
+    return db_booking
+
+@app.get("/bookings/{booking_id}", response_model=schemas.Booking)
+def get_booking(booking_id: int, db: Session = Depends(get_db)):
+    db_booking = db.query(models.Booking).filter(models.Booking.id == booking_id).first()
+    if db_booking is None:
+        raise HTTPException(status_code=404, detail="Booking not found")
+    return db_booking
+
+@app.get("/owner/bookings", response_model=List[schemas.Booking])
+def get_owner_bookings(
+    db: Session = Depends(get_db),
+    current_owner: schemas.Owner = Depends(security.get_current_owner)
 ):
-    _ = request.state.gettext
+    return db.query(models.Booking).filter(models.Booking.owner_id == current_owner.id).order_by(models.Booking.booking_time).all()
+
+@app.put("/owner/bookings/{booking_id}", response_model=schemas.Booking)
+def update_owner_booking(
+    booking_id: int,
+    booking_update: schemas.BookingUpdate,
+    db: Session = Depends(get_db),
+    current_owner: schemas.Owner = Depends(security.get_current_owner)
+):
+    db_booking = db.query(models.Booking).filter(
+        models.Booking.id == booking_id,
+        models.Booking.owner_id == current_owner.id
+    ).first()
+    if db_booking is None:
+        raise HTTPException(status_code=404, detail="Booking not found")
+
+    for key, value in booking_update.model_dump(exclude_unset=True).items():
+        setattr(db_booking, key, value)
     
-    # Fetch upcoming bookings
-    now = datetime.now()
-    upcoming_bookings = db.query(models.Booking).filter(
+    db.commit()
+    db.refresh(db_booking)
+    return db_booking
+
+@app.get("/{owner_name}", response_class=HTMLResponse)
+async def booking_page(request: Request, owner_name: str, db: Session = Depends(get_db)):
+    owner = db.query(models.Owner).filter(func.lower(models.Owner.name) == func.lower(owner_name)).first()
+    if not owner:
+        raise HTTPException(status_code=404, detail="Owner not found")
+    return templates.TemplateResponse("booking_page.html", {"request": request, "owner": owner, "_" : request.state.gettext, "current_locale": request.state.locale})
+
+@app.get("/booking_confirmation", response_class=HTMLResponse)
+async def booking_confirmation(request: Request, booking_id: int, db: Session = Depends(get_db)):
+    booking = db.query(models.Booking).filter(models.Booking.id == booking_id).first()
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+    owner = db.query(models.Owner).filter(models.Owner.id == booking.owner_id).first()
+    if not owner:
+        raise HTTPException(status_code=404, detail="Owner not found for booking")
+    return templates.TemplateResponse("booking_confirmation.html", {"request": request, "booking": booking, "owner": owner, "_" : request.state.gettext, "current_locale": request.state.locale})
+
+@app.get("/owner/dashboard", response_class=HTMLResponse)
+async def owner_dashboard(request: Request, db: Session = Depends(get_db), current_owner: schemas.Owner = Depends(security.get_current_owner)):
+    # Fetch analytics data
+    today = date.today()
+    start_of_month = today.replace(day=1)
+    end_of_month = (start_of_month + timedelta(days=32)).replace(day=1) - timedelta(days=1)
+
+    monthly_bookings_count = db.query(models.Booking).filter(
         models.Booking.owner_id == current_owner.id,
-        models.Booking.start_time >= now
-    ).order_by(models.Booking.start_time).all()
+        models.Booking.booking_time >= start_of_month,
+        models.Booking.booking_time <= end_of_month
+    ).count()
 
-    # Fetch services
-    services = db.query(models.Service).filter(models.Service.owner_id == current_owner.id).all()
+    # Popular services (top 3 for the month)
+    popular_services_data = db.query(
+        models.Booking.service_name,
+        func.count(models.Booking.id).label('service_count')
+    ).filter(
+        models.Booking.owner_id == current_owner.id,
+        models.Booking.booking_time >= start_of_month,
+        models.Booking.booking_time <= end_of_month
+    ).group_by(models.Booking.service_name)
+    .order_by(func.count(models.Booking.id).desc())
+    .limit(3).all()
+    
+    popular_services = []
+    for service_name, service_count in popular_services_data:
+        popular_services.append({"name": service_name, "count": service_count})
 
-    # Fetch analytics (simplified as per previous steps)
-    # This should use the dedicated analytics endpoint or a service
-    analytics = {
-        "total_bookings_this_month": 0,
-        "monthly_booking_counts": [],
-        "popular_services": []
+    return templates.TemplateResponse("dashboard.html", {
+        "request": request, 
+        "owner": current_owner,
+        "_" : request.state.gettext,
+        "current_locale": request.state.locale,
+        "monthly_bookings_count": monthly_bookings_count,
+        "popular_services": popular_services
+    })
+
+@app.get("/owner/analytics/monthly_summary", response_model=dict)
+async def get_monthly_summary(
+    db: Session = Depends(get_db),
+    current_owner: schemas.Owner = Depends(security.get_current_owner)
+):
+    today = date.today()
+    start_of_month = today.replace(day=1)
+    end_of_month = (start_of_month + timedelta(days=32)).replace(day=1) - timedelta(days=1)
+
+    monthly_bookings_count = db.query(models.Booking).filter(
+        models.Booking.owner_id == current_owner.id,
+        models.Booking.booking_time >= start_of_month,
+        models.Booking.booking_time <= end_of_month
+    ).count()
+
+    total_revenue_cents = db.query(func.sum(models.Booking.service_price)).filter(
+        models.Booking.owner_id == current_owner.id,
+        models.Booking.booking_time >= start_of_month,
+        models.Booking.booking_time <= end_of_month
+    ).scalar() or 0
+
+    return {
+        "monthly_bookings_count": monthly_bookings_count,
+        "total_revenue_cents": total_revenue_cents,
     }
-    
-    # For this task, we are not changing the dashboard UI for advanced availability setup yet.
-    # This will be part of the next task.
-    
-    return templates.TemplateResponse(
-        "dashboard.html",
-        {
-            "request": request,
-            "owner": current_owner,
-            "upcoming_bookings": upcoming_bookings,
-            "services": services,
-            "analytics": analytics,
-            "locale": request.state.locale,
-            "_": _,
-            "format_currency": lambda value, currency: format_currency(value, currency, locale=request.state.locale)
-        }
-    )
 
-# --- Stripe Webhook Endpoint ---
+
+@app.get("/owner/analytics/popular_services", response_model=List[dict])
+async def get_popular_services(
+    db: Session = Depends(get_db),
+    current_owner: schemas.Owner = Depends(security.get_current_owner)
+):
+    today = date.today()
+    start_of_month = today.replace(day=1)
+    end_of_month = (start_of_month + timedelta(days=32)).replace(day=1) - timedelta(days=1)
+
+    popular_services_data = db.query(
+        models.Booking.service_name,
+        func.count(models.Booking.id).label('service_count')
+    ).filter(
+        models.Booking.owner_id == current_owner.id,
+        models.Booking.booking_time >= start_of_month,
+        models.Booking.booking_time <= end_of_month
+    ).group_by(models.Booking.service_name)
+    .order_by(func.count(models.Booking.id).desc())
+    .limit(3).all()
+    
+    popular_services = []
+    for service_name, service_count in popular_services_data:
+        popular_services.append({"name": service_name, "count": service_count})
+    
+    return popular_services
+
+
+@app.post("/create-checkout-session")
+async def create_checkout_session(request: Request, current_owner: schemas.Owner = Depends(security.get_current_owner)):
+    if not current_owner.stripe_customer_id:
+        raise HTTPException(status_code=400, detail="Stripe customer ID not found for this owner.")
+    
+    try:
+        checkout_session = stripe.checkout.Session.create(
+            customer=current_owner.stripe_customer_id,
+            line_items=[
+                {
+                    'price': settings.STRIPE_PRICE_ID,
+                    'quantity': 1,
+                },
+            ],
+            mode='subscription',
+            success_url=f"{settings.SERVER_NAME}/owner/dashboard?session_id={{CHECKOUT_SESSION_ID}}&status=success",
+            cancel_url=f"{settings.SERVER_NAME}/owner/dashboard?status=cancel",
+        )
+        return RedirectResponse(checkout_session.url, status_code=303)
+    except stripe.error.StripeError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
 @app.post("/stripe-webhook")
 async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
     payload = await request.body()
-    sig_header = request.headers.get("stripe-signature")
-    event = None
+    sig_header = request.headers.get('stripe-signature')
 
     try:
         event = stripe.Webhook.construct_event(
             payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
         )
     except ValueError as e:
+        # Invalid payload
         raise HTTPException(status_code=400, detail=str(e))
     except stripe.error.SignatureVerificationError as e:
+        # Invalid signature
         raise HTTPException(status_code=400, detail=str(e))
 
     # Handle the event
-    if event["type"] == "checkout.session.completed":
-        session = event["data"]["object"]
-        customer_id = session.get("customer")
-        subscription_id = session.get("subscription")
-        
-        owner = db.query(models.Owner).filter(models.Owner.stripe_customer_id == customer_id).first()
-        if owner:
-            owner.stripe_subscription_id = subscription_id
-            owner.subscription_status = "active"
-            db.commit()
-    elif event["type"] == "customer.subscription.updated":
-        subscription = event["data"]["object"]
-        owner = db.query(models.Owner).filter(models.Owner.stripe_subscription_id == subscription.id).first()
-        if owner:
-            owner.subscription_status = subscription.status # e.g., 'active', 'canceled', 'past_due'
-            db.commit()
-    elif event["type"] == "customer.subscription.deleted":
-        subscription = event["data"]["object"]
-        owner = db.query(models.Owner).filter(models.Owner.stripe_subscription_id == subscription.id).first()
-        if owner:
-            owner.subscription_status = "cancelled"
-            owner.stripe_subscription_id = None # Optionally clear
-            db.commit()
-    
-    return {"status": "success"}
+    if event['type'] == 'checkout.session.completed':
+        session = event['data']['object']
+        customer_id = session.get('customer')
+        subscription_id = session.get('subscription')
 
-# --- Admin Panel (Simplified) ---
-# Placeholder for admin panel - actual implementation would require admin auth
+        if customer_id and subscription_id:
+            owner = db.query(models.Owner).filter(models.Owner.stripe_customer_id == customer_id).first()
+            if owner:
+                owner.subscription_status = "premium"
+                # You might want to store the subscription_id on the owner model too
+                db.commit()
+                print(f"Owner {owner.id} subscribed to premium plan.")
+            else:
+                print(f"Owner not found for Stripe customer ID: {customer_id}")
+
+    elif event['type'] == 'customer.subscription.deleted':
+        subscription = event['data']['object']
+        customer_id = subscription.get('customer')
+
+        if customer_id:
+            owner = db.query(models.Owner).filter(models.Owner.stripe_customer_id == customer_id).first()
+            if owner:
+                owner.subscription_status = "free"
+                db.commit()
+                print(f"Owner {owner.id}'s subscription canceled.")
+            else:
+                print(f"Owner not found for Stripe customer ID: {customer_id}")
+
+    # ... handle other event types
+
+    return JSONResponse(status_code=200, content={'status': 'success'})
+
+@app.post("/manage-subscription")
+async def manage_subscription(request: Request, current_owner: schemas.Owner = Depends(security.get_current_owner)):
+    if not current_owner.stripe_customer_id:
+        raise HTTPException(status_code=400, detail="Stripe customer ID not found for this owner.")
+
+    try:
+        # Get the customer's current subscriptions
+        subscriptions = stripe.Subscription.list(customer=current_owner.stripe_customer_id, status='active', limit=1)
+        
+        if subscriptions.data:
+            # If there's an active subscription, create a customer portal session
+            session = stripe.billing_portal.Session.create(
+                customer=current_owner.stripe_customer_id,
+                return_url=f"{settings.SERVER_NAME}/owner/dashboard",
+            )
+            return RedirectResponse(session.url, status_code=303)
+        else:
+            # If no active subscription, redirect to checkout to subscribe
+            return RedirectResponse(url="/create-checkout-session", status_code=303)
+            
+    except stripe.error.StripeError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.post("/set_locale")
+async def set_locale(request: Request, locale: str = Query(..., min_length=2, max_length=5)):
+    request.session["locale"] = locale
+    # Redirect back to the page the user came from
+    return RedirectResponse(url=request.headers.get("referer", "/"), status_code=302)
+
+
+# Admin Panel Routes (Basic CRUD for Owners)
 @app.get("/admin/owners", response_model=List[schemas.Owner])
-def admin_list_owners(db: Session = Depends(get_db)):
+def get_all_owners(db: Session = Depends(get_db)):
     # In a real app, this would require admin authentication
     return db.query(models.Owner).all()
 
-# --- Analytics API Endpoint (as per previous steps) ---
-@app.get("/api/owner/analytics", response_model=schemas.DashboardAnalytics)
-def get_owner_analytics(
-    current_owner: Annotated[models.Owner, Depends(get_current_owner)],
+@app.get("/admin/owners/{owner_id}", response_model=schemas.Owner)
+def get_owner_by_id(owner_id: int, db: Session = Depends(get_db)):
+    # In a real app, this would require admin authentication
+    owner = db.query(models.Owner).filter(models.Owner.id == owner_id).first()
+    if not owner: 
+        raise HTTPException(status_code=404, detail="Owner not found")
+    return owner
+
+@app.put("/admin/owners/{owner_id}", response_model=schemas.Owner)
+def update_owner(owner_id: int, owner_update: schemas.OwnerUpdate, db: Session = Depends(get_db)):
+    # In a real app, this would require admin authentication
+    db_owner = db.query(models.Owner).filter(models.Owner.id == owner_id).first()
+    if not db_owner:
+        raise HTTPException(status_code=404, detail="Owner not found")
+    
+    # Prevent changing email to an already registered one by another owner
+    if owner_update.email and owner_update.email != db_owner.email:
+        existing_owner = db.query(models.Owner).filter(models.Owner.email == owner_update.email).first()
+        if existing_owner and existing_owner.id != owner_id:
+            raise HTTPException(status_code=400, detail="Email already registered by another owner.")
+
+    for key, value in owner_update.model_dump(exclude_unset=True).items():
+        if key == "password" and value:
+            setattr(db_owner, "hashed_password", security.get_password_hash(value))
+        else:
+            setattr(db_owner, key, value)
+    
+    db.commit()
+    db.refresh(db_owner)
+    return db_owner
+
+@app.delete("/admin/owners/{owner_id}", status_code=204)
+def delete_owner(owner_id: int, db: Session = Depends(get_db)):
+    # In a real app, this would require admin authentication
+    db_owner = db.query(models.Owner).filter(models.Owner.id == owner_id).first()
+    if not db_owner:
+        raise HTTPException(status_code=404, detail="Owner not found")
+    db.delete(db_owner)
+    db.commit()
+    return {"ok": True}
+
+# Admin Panel Routes for Services (CRUD per owner)
+@app.get("/admin/owners/{owner_id}/services", response_model=List[schemas.Service])
+def get_owner_services_admin(owner_id: int, db: Session = Depends(get_db)):
+    # In a real app, this would require admin authentication
+    return db.query(models.Service).filter(models.Service.owner_id == owner_id).all()
+
+@app.post("/admin/owners/{owner_id}/services", response_model=schemas.Service, status_code=status.HTTP_201_CREATED)
+def create_service_admin(
+    owner_id: int,
+    service: schemas.ServiceCreate,
     db: Session = Depends(get_db)
 ):
-    now = datetime.now()
+    # In a real app, this would require admin authentication
+    db_owner = db.query(models.Owner).filter(models.Owner.id == owner_id).first()
+    if not db_owner:
+        raise HTTPException(status_code=404, detail="Owner not found")
+    db_service = models.Service(**service.model_dump(), owner_id=owner_id)
+    db.add(db_service)
+    db.commit()
+    db.refresh(db_service)
+    return db_service
+
+@app.put("/admin/owners/{owner_id}/services/{service_id}", response_model=schemas.Service)
+def update_service_admin(
+    owner_id: int,
+    service_id: int,
+    service_update: schemas.ServiceUpdate,
+    db: Session = Depends(get_db)
+):
+    # In a real app, this would require admin authentication
+    db_service = db.query(models.Service).filter(
+        models.Service.id == service_id,
+        models.Service.owner_id == owner_id
+    ).first()
+    if db_service is None:
+        raise HTTPException(status_code=404, detail="Service not found for this owner")
     
-    # Total bookings this month
-    total_bookings_this_month = db.query(models.Booking).filter(
-        models.Booking.owner_id == current_owner.id,
-        extract('year', models.Booking.start_time) == now.year,
-        extract('month', models.Booking.start_time) == now.month
-    ).count()
+    for key, value in service_update.model_dump(exclude_unset=True).items():
+        setattr(db_service, key, value)
+    
+    db.commit()
+    db.refresh(db_service)
+    return db_service
 
-    # Monthly booking counts for the last 6 months
-    monthly_booking_counts = []
-    for i in range(6):
-        target_month = (now.replace(day=1) - timedelta(days=30*i)).month
-        target_year = (now.replace(day=1) - timedelta(days=30*i)).year
-        count = db.query(models.Booking).filter(
-            models.Booking.owner_id == current_owner.id,
-            extract('year', models.Booking.start_time) == target_year,
-            extract('month', models.Booking.start_time) == target_month
-        ).count()
-        monthly_booking_counts.append(schemas.BookingCount(month=f"{target_year}-{target_month:02d}", count=count))
-    monthly_booking_counts.reverse() # Show oldest first
+@app.delete("/admin/owners/{owner_id}/services/{service_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_service_admin(
+    owner_id: int,
+    service_id: int,
+    db: Session = Depends(get_db)
+):
+    # In a real app, this would require admin authentication
+    db_service = db.query(models.Service).filter(
+        models.Service.id == service_id,
+        models.Service.owner_id == owner_id
+    ).first()
+    if db_service is None:
+        raise HTTPException(status_code=404, detail="Service not found for this owner")
+    
+    db.delete(db_service)
+    db.commit()
+    return {"ok": True}
 
-    # Popular services
-    popular_services = db.query(
-        models.Service.name,
-        func.count(models.Booking.id).label("booking_count")
-    ).join(models.Booking).filter(
-        models.Booking.owner_id == current_owner.id,
-        models.Service.owner_id == current_owner.id # Ensure service belongs to owner
-    ).group_by(models.Service.name).order_by(func.count(models.Booking.id).desc()).limit(5).all()
+# Admin Panel Routes for Bookings (CRUD per owner)
+@app.get("/admin/owners/{owner_id}/bookings", response_model=List[schemas.Booking])
+def get_owner_bookings_admin(owner_id: int, db: Session = Depends(get_db)):
+    # In a real app, this would require admin authentication
+    return db.query(models.Booking).filter(models.Booking.owner_id == owner_id).order_by(models.Booking.booking_time).all()
 
-    popular_services_schemas = [
-        schemas.PopularService(service_name=name, booking_count=count)
-        for name, count in popular_services
-    ]
+@app.put("/admin/owners/{owner_id}/bookings/{booking_id}", response_model=schemas.Booking)
+def update_booking_admin(
+    owner_id: int,
+    booking_id: int,
+    booking_update: schemas.BookingUpdate,
+    db: Session = Depends(get_db)
+):
+    # In a real app, this would require admin authentication
+    db_booking = db.query(models.Booking).filter(
+        models.Booking.id == booking_id,
+        models.Booking.owner_id == owner_id
+    ).first()
+    if db_booking is None:
+        raise HTTPException(status_code=404, detail="Booking not found for this owner")
 
-    return schemas.DashboardAnalytics(
-        total_bookings_this_month=total_bookings_this_month,
-        monthly_booking_counts=monthly_booking_counts,
-        popular_services=popular_services_schemas
-    )
+    for key, value in booking_update.model_dump(exclude_unset=True).items():
+        setattr(db_booking, key, value)
+    
+    db.commit()
+    db.refresh(db_booking)
+    return db_booking
+
+@app.delete("/admin/owners/{owner_id}/bookings/{booking_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_booking_admin(
+    owner_id: int,
+    booking_id: int,
+    db: Session = Depends(get_db)
+):
+    # In a real app, this would require admin authentication
+    db_booking = db.query(models.Booking).filter(
+        models.Booking.id == booking_id,
+        models.Booking.owner_id == owner_id
+    ).first()
+    if db_booking is None:
+        raise HTTPException(status_code=404, detail="Booking not found for this owner")
+    
+    db.delete(db_booking)
+    db.commit()
+    return {"ok": True}

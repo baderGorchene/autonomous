@@ -1,1 +1,1 @@
-Integrate python-dateutil and refactor Availability model for advanced recurrence rules
+Fix: Ensure pytest is available by re-providing comprehensive requirements.txt
