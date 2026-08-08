@@ -1,1 +1,1 @@
-Fix: Recreate requirements.txt to resolve 'No module named pytest'
+Feat: Update booking page UI with recurrence options

@@ -1,3 +1,8 @@
+## Iteration 344
+_2026-08-08 21:32 UTC_
+
+Updated `templates/booking_page.html` to include UI elements for recurring bookings, such as frequency, interval, days of the week, and end conditions (never, after X occurrences, on date Y). Added JavaScript for dynamic display of these options based on user selections and ensured all new text is internationalized.
+
 ## Iteration 343
 _2026-08-08 20:31 UTC_
 

@@ -1,212 +1,317 @@
-{# templates/booking_page.html #}
 <!DOCTYPE html>
-<html lang="{{ request.state.locale }}">
+<html lang="{{ locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ owner.name }} - {{ __("Book an Appointment") }}</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <title>{{ owner.name }} - {{ _('Book a Service') }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        .flatpickr-calendar { z-index: 9999; }
-        {% if request.state.locale == 'ar' %}
-        body { direction: rtl; text-align: right; }
-        {% endif %}
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8f9fa; }
+        .booking-container { max-width: 600px; margin: 30px auto; padding: 30px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); background-color: #ffffff; }
+        .header { text-align: center; margin-bottom: 30px; }
+        .header h1 { color: #343a40; font-weight: 700; margin-bottom: 10px; }
+        .header p { color: #6c757d; font-size: 1.1em; }
+        .service-card { border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px; margin-bottom: 20px; background-color: #fcfcfc; }
+        .service-card h4 { color: #007bff; margin-bottom: 10px; }
+        .service-card .price { font-weight: bold; color: #28a745; }
+        .form-group label { font-weight: 600; color: #495057; margin-bottom: 8px; }
+        .btn-primary { background-color: #007bff; border-color: #007bff; padding: 10px 20px; font-size: 1.1em; border-radius: 5px; }
+        .btn-primary:hover { background-color: #0056b3; border-color: #0056b3; }
+        .time-slot-btn { display: inline-block; padding: 8px 15px; margin: 5px; border: 1px solid #007bff; border-radius: 5px; background-color: #e7f3ff; color: #007bff; cursor: pointer; transition: all 0.2s; }
+        .time-slot-btn:hover { background-color: #007bff; color: #ffffff; }
+        .time-slot-btn.selected { background-color: #007bff; color: #ffffff; border-color: #007bff; }
+        .time-slot-btn.disabled { background-color: #f0f0f0; color: #a0a0a0; border-color: #d0d0d0; cursor: not-allowed; }
+        .alert-error { color: #dc3545; background-color: #f8d7da; border-color: #f5c6cb; padding: 10px; border-radius: 5px; margin-bottom: 15px; }
+        .language-toggle { text-align: right; margin-bottom: 20px; }
+        .language-toggle a { margin-left: 10px; text-decoration: none; color: #007bff; }
+        .language-toggle a.active { font-weight: bold; }
+        .footer { text-align: center; margin-top: 40px; color: #6c757d; font-size: 0.9em; }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
-    <div class="max-w-md w-full bg-white rounded-lg shadow-xl p-8 space-y-6">
-        <div class="text-center">
-            <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ owner.name }}</h1>
-            <p class="text-gray-600">{{ __("Book your next appointment effortlessly") }}</p>
+<body>
+    <div class="booking-container">
+        <div class="language-toggle">
+            <a href="?lang=en" class="{{ 'active' if locale == 'en' else '' }}">English</a>
+            <a href="?lang=ar" class="{{ 'active' if locale == 'ar' else '' }}">العربية</a>
+            <a href="?lang=fr" class="{{ 'active' if locale == 'fr' else '' }}">Français</a>
         </div>
 
-        <form id="bookingForm" method="post" action="/book/{{ owner.name }}">
-            {% if error_message %}
-            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-                <strong class="font-bold">{{ __("Error!") }}</strong>
-                <span class="block sm:inline">{{ error_message }}</span>
-            </div>
-            {% endif %}
+        <div class="header">
+            <h1>{{ owner.name }}</h1>
+            <p>{{ _('Book your service with ease') }}</p>
+        </div>
 
-            <div class="mb-4">
-                <label for="customer_name" class="block text-sm font-medium text-gray-700">{{ __("Your Name") }}</label>
-                <input type="text" id="customer_name" name="customer_name" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" required>
+        {% if error_message %}
+            <div class="alert alert-danger" role="alert">
+                {{ error_message }}
             </div>
+        {% endif %}
 
-            <div class="mb-4">
-                <label for="customer_email" class="block text-sm font-medium text-gray-700">{{ __("Your Email") }}</label>
-                <input type="email" id="customer_email" name="customer_email" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" required>
-            </div>
+        <form id="bookingForm" method="post" action="/book/{{ owner.slug }}">
+            <input type="hidden" name="owner_id" value="{{ owner.id }}">
 
-            <div class="mb-4">
-                <label for="customer_phone" class="block text-sm font-medium text-gray-700">{{ __("Your Phone (Optional)") }}</label>
-                <input type="tel" id="customer_phone" name="customer_phone" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-            </div>
-
-            <div class="mb-4">
-                <label for="service_id" class="block text-sm font-medium text-gray-700">{{ __("Select Service") }}</label>
-                <select id="service_id" name="service_id" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md" required>
-                    <option value="">{{ __("Choose a service") }}</option>
+            <div class="form-group mb-4">
+                <label for="service_id" class="form-label">{{ _('Select a Service') }}</label>
+                <select class="form-select" id="service_id" name="service_id" required>
+                    <option value="">{{ _('Choose...') }}</option>
                     {% for service in services %}
-                        <option value="{{ service.id }}" data-duration="{{ service.duration_minutes }}">{{ service.name }} ({{ service.duration_minutes }} {{ __("min") }}) - {{ service.price | format_currency(request.state.locale) }}</option>
+                        <option value="{{ service.id }}" {% if service.id == selected_service_id %}selected{% endif %}>
+                            {{ service.name }} - {{ service.duration_minutes }} {{ _('min') }} - {{ service.price | format_currency(locale) }}
+                        </option>
                     {% endfor %}
                 </select>
             </div>
 
-            <div class="mb-4">
-                <label for="booking_date" class="block text-sm font-medium text-gray-700">{{ __("Select Date") }}</label>
-                <input type="text" id="booking_date" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="{{ __("Select a date") }}" required>
+            <div class="form-group mb-4">
+                <label for="booking_date" class="form-label">{{ _('Select Date') }}</label>
+                <input type="date" class="form-control" id="booking_date" name="booking_date" required min="{{ today_date }}" value="{{ selected_date }}">
             </div>
 
-            <div class="mb-4">
-                <label for="booking_time" class="block text-sm font-medium text-gray-700">{{ __("Select Time") }}</label>
-                <select id="booking_time" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md" required>
-                    <option value="">{{ __("Choose a time slot") }}</option>
-                </select>
-                <input type="hidden" id="booking_start_time" name="booking_start_time">
-                <input type="hidden" id="booking_end_time" name="booking_end_time">
+            <div class="form-group mb-4">
+                <label class="form-label">{{ _('Select Time') }}</label>
+                <div id="time_slots_container">
+                    {% if available_slots %}
+                        {% for slot in available_slots %}
+                            <button type="button" class="time-slot-btn {% if slot == selected_time %}selected{% endif %}" data-time="{{ slot }}">{{ slot }}</button>
+                        {% endfor %}
+                    {% else %}
+                        <p>{{ _('No available slots for this date. Please choose another date.') }}</p>
+                    {% endif %}
+                </div>
+                <input type="hidden" id="booking_time" name="booking_time" value="{{ selected_time }}">
             </div>
 
-            <div class="mb-4">
-                <label for="isRecurring" class="flex items-center space-x-2 cursor-pointer">
-                    <input type="checkbox" id="isRecurring" name="is_recurring" class="form-checkbox h-5 w-5 text-indigo-600">
-                    <span class="text-gray-700">{{ __("Make this a recurring booking?") }}</span>
+            <!-- Recurrence Options Start -->
+            <div class="form-group mb-4">
+                <label for="is_recurring" class="form-check-label d-flex align-items-center">
+                    <input type="checkbox" id="is_recurring" name="is_recurring" class="form-check-input me-2">
+                    <span>{{ _('Make this a recurring booking') }}</span>
                 </label>
             </div>
 
-            <div id="recurringOptions" class="hidden bg-gray-50 p-4 rounded-md mb-4">
-                <div class="mb-4">
-                    <label for="recurrencePattern" class="block text-sm font-medium text-gray-700">{{ __("Recurrence Pattern") }}</label>
-                    <select id="recurrencePattern" name="recurrence_pattern" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-                        <option value="weekly">{{ __("Weekly") }}</option>
-                        <option value="bi-weekly">{{ __("Bi-Weekly") }}</option>
-                        <option value="monthly">{{ __("Monthly") }}</option>
-                        <option value="daily">{{ __("Daily") }}</option>
+            <div id="recurrence_options" style="display: none;">
+                <h5 class="mb-3">{{ _('Recurrence Options') }}</h5>
+
+                <div class="form-group mb-3">
+                    <label for="recurrence_frequency" class="form-label">{{ _('Repeats every') }}</label>
+                    <div class="d-flex align-items-center">
+                        <input type="number" id="recurrence_interval" name="recurrence_interval" class="form-control me-2" value="1" min="1" style="width: 70px;">
+                        <select id="recurrence_frequency" name="recurrence_frequency" class="form-select">
+                            <option value="day">{{ _('Day') }}</option>
+                            <option value="week">{{ _('Week') }}</option>
+                            <option value="month">{{ _('Month') }}</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group mb-3" id="weekly_recurrence_days" style="display: none;">
+                    <label class="form-label">{{ _('Repeat on') }}</label>
+                    <div class="d-flex flex-wrap">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="day_mon" name="recurrence_days_of_week" value="MON">
+                            <label class="form-check-label" for="day_mon">{{ _('Mon') }}</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="day_tue" name="recurrence_days_of_week" value="TUE">
+                            <label class="form-check-label" for="day_tue">{{ _('Tue') }}</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="day_wed" name="recurrence_days_of_week" value="WED">
+                            <label class="form-check-label" for="day_wed">{{ _('Wed') }}</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="day_thu" name="recurrence_days_of_week" value="THU">
+                            <label class="form-check-label" for="day_thu">{{ _('Thu') }}</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="day_fri" name="recurrence_days_of_week" value="FRI">
+                            <label class="form-check-label" for="day_fri">{{ _('Fri') }}</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="day_sat" name="recurrence_days_of_week" value="SAT">
+                            <label class="form-check-label" for="day_sat">{{ _('Sat') }}</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="day_sun" name="recurrence_days_of_week" value="SUN">
+                            <label class="form-check-label" for="day_sun">{{ _('Sun') }}</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="recurrence_end_type" class="form-label">{{ _('Ends') }}</label>
+                    <select id="recurrence_end_type" name="recurrence_end_type" class="form-select">
+                        <option value="never">{{ _('Never') }}</option>
+                        <option value="after_occurrences">{{ _('After') }}</option>
+                        <option value="on_date">{{ _('On date') }}</option>
                     </select>
                 </div>
-                <div class="mb-4">
-                    <label for="recurrenceEndDate" class="block text-sm font-medium text-gray-700">{{ __("Recurrence End Date") }}</label>
-                    <input type="date" id="recurrenceEndDate" name="recurrence_end_date" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+
+                <div class="form-group mb-3" id="end_after_occurrences_options" style="display: none;">
+                    <div class="d-flex align-items-center">
+                        <input type="number" id="recurrence_end_occurrences" name="recurrence_end_occurrences" class="form-control me-2" value="10" min="1" style="width: 70px;">
+                        <span>{{ _('occurrences') }}</span>
+                    </div>
+                </div>
+
+                <div class="form-group mb-3" id="end_on_date_options" style="display: none;">
+                    <input type="date" id="recurrence_end_date" name="recurrence_end_date" class="form-control">
                 </div>
             </div>
+            <!-- Recurrence Options End -->
 
-            <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                {{ __("Book Now") }}
-            </button>
+            <h5 class="mb-3 mt-4">{{ _('Your Details') }}</h5>
+            <div class="form-group mb-3">
+                <label for="customer_name" class="form-label">{{ _('Your Name') }}</label>
+                <input type="text" class="form-control" id="customer_name" name="customer_name" required>
+            </div>
+            <div class="form-group mb-3">
+                <label for="customer_email" class="form-label">{{ _('Your Email') }}</label>
+                <input type="email" class="form-control" id="customer_email" name="customer_email" required>
+            </div>
+            <div class="form-group mb-4">
+                <label for="customer_phone" class="form-label">{{ _('Your Phone Number (WhatsApp preferred)') }}</label>
+                <input type="tel" class="form-control" id="customer_phone" name="customer_phone" placeholder="+1234567890" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">{{ _('Book Now') }}</button>
         </form>
 
-        <div class="text-center mt-6 text-sm text-gray-500">
-            <p>&copy; {{ current_year }} BookSlot. {{ __("All rights reserved.") }}</p>
-            <div class="mt-2 space-x-4">
-                <a href="/set-locale/en" class="hover:underline">English</a>
-                <a href="/set-locale/ar" class="hover:underline">العربية</a>
-                <a href="/set-locale/fr" class="hover:underline">Français</a>
-            </div>
+        <div class="footer">
+            <p>&copy; 2023 BookSlot. {{ _('All rights reserved.') }}</p>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Time slot selection logic
+            const timeSlotsContainer = document.getElementById('time_slots_container');
+            const bookingTimeInput = document.getElementById('booking_time');
+
+            if (timeSlotsContainer) {
+                timeSlotsContainer.addEventListener('click', function(event) {
+                    if (event.target.classList.contains('time-slot-btn') && !event.target.classList.contains('disabled')) {
+                        // Remove selected class from all buttons
+                        document.querySelectorAll('.time-slot-btn').forEach(btn => {
+                            btn.classList.remove('selected');
+                        });
+                        // Add selected class to the clicked button
+                        event.target.classList.add('selected');
+                        // Update hidden input value
+                        bookingTimeInput.value = event.target.dataset.time;
+                    }
+                });
+            }
+
+            // Date change logic to fetch new slots
             const bookingDateInput = document.getElementById('booking_date');
-            const bookingTimeSelect = document.getElementById('booking_time');
-            const serviceSelect = document.getElementById('service_id');
-            const bookingStartTimeInput = document.getElementById('booking_start_time');
-            const bookingEndTimeInput = document.getElementById('booking_end_time');
-            const isRecurringCheckbox = document.getElementById('isRecurring');
-            const recurringOptionsDiv = document.getElementById('recurringOptions');
-            const recurrencePatternSelect = document.getElementById('recurrencePattern');
-            const recurrenceEndDateInput = document.getElementById('recurrenceEndDate');
+            const serviceIdInput = document.getElementById('service_id');
 
-            let selectedServiceDuration = 0;
+            function fetchAvailableSlots() {
+                const selectedDate = bookingDateInput.value;
+                const selectedServiceId = serviceIdInput.value;
+                const ownerSlug = "{{ owner.slug }}"; // Assuming owner.slug is available in the template
 
-            flatpickr(bookingDateInput, {
-                dateFormat: "Y-m-d",
-                minDate: "today",
-                onChange: function(selectedDates, dateStr, instance) {
-                    updateAvailableTimes(dateStr);
+                if (selectedDate && selectedServiceId) {
+                    fetch(`/api/availability/${ownerSlug}?service_id=${selectedServiceId}&date=${selectedDate}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            const slotsContainer = document.getElementById('time_slots_container');
+                            slotsContainer.innerHTML = ''; // Clear existing slots
+                            bookingTimeInput.value = ''; // Clear selected time
+
+                            if (data.available_slots && data.available_slots.length > 0) {
+                                data.available_slots.forEach(slot => {
+                                    const button = document.createElement('button');
+                                    button.type = 'button';
+                                    button.classList.add('time-slot-btn');
+                                    button.dataset.time = slot;
+                                    button.textContent = slot;
+                                    slotsContainer.appendChild(button);
+                                });
+                            } else {
+                                slotsContainer.innerHTML = `<p>{{ _('No available slots for this date. Please choose another date.') }}</p>`;
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error fetching availability:', error);
+                            const slotsContainer = document.getElementById('time_slots_container');
+                            slotsContainer.innerHTML = `<p class="alert-error">{{ _('Error fetching available slots. Please try again.') }}</p>`;
+                        });
                 }
-            });
-
-            serviceSelect.addEventListener('change', function() {
-                const selectedOption = this.options[this.selectedIndex];
-                selectedServiceDuration = selectedOption.dataset.duration ? parseInt(selectedOption.dataset.duration) : 0;
-                if (bookingDateInput.value) {
-                    updateAvailableTimes(bookingDateInput.value);
-                }
-            });
-
-            function updateAvailableTimes(selectedDate) {
-                bookingTimeSelect.innerHTML = '<option value="">{{ __("Choose a time slot") }}</option>';
-                if (!selectedServiceDuration) {
-                    return;
-                }
-
-                const allAvailableSlots = JSON.parse('{{ available_slots | tojson | safe }}');
-                const filteredSlots = allAvailableSlots.filter(slot => {
-                    const slotDate = new Date(slot.start).toISOString().split('T')[0];
-                    return slotDate === selectedDate;
-                });
-
-                filteredSlots.forEach(slot => {
-                    const slotStart = new Date(slot.start);
-                    const slotEnd = new Date(slot.end);
-                    const serviceEnd = new Date(slotStart.getTime() + selectedServiceDuration * 60 * 1000);
-
-                    // Ensure the service duration fits within the available slot
-                    if (serviceEnd <= slotEnd) {
-                        const option = document.createElement('option');
-                        option.value = slot.start;
-                        option.textContent = slotStart.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                        bookingTimeSelect.appendChild(option);
-                    }
-                });
             }
 
-            bookingTimeSelect.addEventListener('change', function() {
-                const selectedStartTimeStr = this.value;
-                if (selectedStartTimeStr && selectedServiceDuration) {
-                    const selectedStartTime = new Date(selectedStartTimeStr);
-                    const selectedEndTime = new Date(selectedStartTime.getTime() + selectedServiceDuration * 60 * 1000);
-                    bookingStartTimeInput.value = selectedStartTime.toISOString();
-                    bookingEndTimeInput.value = selectedEndTime.toISOString();
-                } else {
-                    bookingStartTimeInput.value = '';
-                    bookingEndTimeInput.value = '';
-                }
-            });
+            bookingDateInput.addEventListener('change', fetchAvailableSlots);
+            serviceIdInput.addEventListener('change', fetchAvailableSlots);
 
-            isRecurringCheckbox.addEventListener('change', function() {
-                if (this.checked) {
-                    recurringOptionsDiv.classList.remove('hidden');
-                    recurrencePatternSelect.setAttribute('required', 'true');
-                    recurrenceEndDateInput.setAttribute('required', 'true');
-                } else {
-                    recurringOptionsDiv.classList.add('hidden');
-                    recurrencePatternSelect.removeAttribute('required');
-                    recurrenceEndDateInput.removeAttribute('required');
-                    recurrencePatternSelect.value = 'weekly';
-                    recurrenceEndDateInput.value = '';
-                }
-            });
+            // Initial fetch if date and service are pre-selected
+            if (bookingDateInput.value && serviceIdInput.value) {
+                fetchAvailableSlots();
+            }
 
-            // Set min date for recurrence end date to be after selected booking date
-            flatpickr(recurrenceEndDateInput, {
-                dateFormat: "Y-m-d",
-                minDate: "today", // Default minDate
-                onOpen: function(selectedDates, dateStr, instance) {
-                    if (bookingDateInput.value) {
-                        instance.set('minDate', bookingDateInput.value);
+            // Recurrence Options JS Logic
+            const isRecurringCheckbox = document.getElementById('is_recurring');
+            const recurrenceOptionsDiv = document.getElementById('recurrence_options');
+            const recurrenceFrequencySelect = document.getElementById('recurrence_frequency');
+            const weeklyRecurrenceDaysDiv = document.getElementById('weekly_recurrence_days');
+            const recurrenceEndTypeSelect = document.getElementById('recurrence_end_type');
+            const endAfterOccurrencesOptionsDiv = document.getElementById('end_after_occurrences_options');
+            const endOnDateOptionsDiv = document.getElementById('end_on_date_options');
+            const recurrenceEndDateInput = document.getElementById('recurrence_end_date');
+
+            function toggleRecurrenceOptions() {
+                if (isRecurringCheckbox.checked) {
+                    recurrenceOptionsDiv.style.display = 'block';
+                    updateRecurrenceFrequencyDisplay();
+                    updateRecurrenceEndTypeDisplay();
+                } else {
+                    recurrenceOptionsDiv.style.display = 'none';
+                }
+            }
+
+            function updateRecurrenceFrequencyDisplay() {
+                if (recurrenceFrequencySelect.value === 'week') {
+                    weeklyRecurrenceDaysDiv.style.display = 'block';
+                } else {
+                    weeklyRecurrenceDaysDiv.style.display = 'none';
+                }
+            }
+
+            function updateRecurrenceEndTypeDisplay() {
+                const selectedEndType = recurrenceEndTypeSelect.value;
+                if (selectedEndType === 'after_occurrences') {
+                    endAfterOccurrencesOptionsDiv.style.display = 'block';
+                    endOnDateOptionsDiv.style.display = 'none';
+                    // Set min date for recurrence_end_date if needed. Not strictly required here.
+                } else if (selectedEndType === 'on_date') {
+                    endAfterOccurrencesOptionsDiv.style.display = 'none';
+                    endOnDateOptionsDiv.style.display = 'block';
+                    // Ensure end date is not before start date
+                    recurrenceEndDateInput.min = bookingDateInput.value;
+                } else { // never
+                    endAfterOccurrencesOptionsDiv.style.display = 'none';
+                    endOnDateOptionsDiv.style.display = 'none';
+                }
+            }
+
+            isRecurringCheckbox.addEventListener('change', toggleRecurrenceOptions);
+            recurrenceFrequencySelect.addEventListener('change', updateRecurrenceFrequencyDisplay);
+            recurrenceEndTypeSelect.addEventListener('change', updateRecurrenceEndTypeDisplay);
+            bookingDateInput.addEventListener('change', function() {
+                // When booking date changes, update min for recurrence end date
+                if (recurrenceEndTypeSelect.value === 'on_date') {
+                    recurrenceEndDateInput.min = bookingDateInput.value;
+                    if (recurrenceEndDateInput.value < bookingDateInput.value) {
+                        recurrenceEndDateInput.value = bookingDateInput.value;
                     }
                 }
             });
 
-            // Initial state for recurrence options
-            if (isRecurringCheckbox.checked) {
-                recurringOptionsDiv.classList.remove('hidden');
-            }
+
+            // Initial call to set correct display based on default values
+            toggleRecurrenceOptions();
         });
     </script>
 </body>
