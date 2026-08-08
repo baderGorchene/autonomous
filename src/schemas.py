@@ -1,11 +1,11 @@
 from pydantic import BaseModel, EmailStr, Field
-from datetime import datetime
-from typing import List, Optional, Any, Dict
+from datetime import datetime, time, date
+from typing import List, Optional
 
-# Existing schemas (minimal representation for context)
+# --- Auth & User Schemas ---
 class OwnerBase(BaseModel):
     email: EmailStr
-    name: str
+    name: Optional[str] = None
     phone: Optional[str] = None
 
 class OwnerCreate(OwnerBase):
@@ -13,14 +13,11 @@ class OwnerCreate(OwnerBase):
 
 class OwnerProfileUpdate(BaseModel):
     name: Optional[str] = None
-    email: Optional[EmailStr] = None
     phone: Optional[str] = None
 
-class OwnerInDB(OwnerBase):
+class Owner(OwnerBase):
     id: int
-    hashed_password: str
-    is_active: bool = True
-    is_premium: bool = False
+    is_active: bool
 
     class Config:
         from_attributes = True
@@ -32,20 +29,15 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     email: Optional[str] = None
 
+# --- Service Schemas ---
 class ServiceBase(BaseModel):
     name: str
+    description: Optional[str] = None
     duration_minutes: int
     price: float
-    description: Optional[str] = None
 
 class ServiceCreate(ServiceBase):
     pass
-
-class ServiceUpdate(ServiceBase):
-    name: Optional[str] = None
-    duration_minutes: Optional[int] = None
-    price: Optional[float] = None
-    description: Optional[str] = None
 
 class Service(ServiceBase):
     id: int
@@ -54,41 +46,60 @@ class Service(ServiceBase):
     class Config:
         from_attributes = True
 
-class BookingBase(BaseModel):
-    service_id: int
-    customer_name: str
-    customer_email: EmailStr
-    customer_phone: Optional[str] = None
-    start_time: datetime
-    end_time: datetime
-    status: str = "pending"
+# --- Availability Schemas ---
+class AvailabilityBase(BaseModel):
+    day_of_week: int  # 0=Monday, 6=Sunday
+    start_time: time
+    end_time: time
 
-class BookingCreate(BookingBase):
+class AvailabilityCreate(AvailabilityBase):
     pass
 
-class BookingResponse(BookingBase):
+class Availability(AvailabilityBase):
     id: int
     owner_id: int
 
     class Config:
         from_attributes = True
 
-class BookingDisplay(BaseModel):
-    id: int
-    service_name: str
+# --- Booking Schemas ---
+class BookingBase(BaseModel):
+    service_id: int
     customer_name: str
     customer_email: EmailStr
     customer_phone: Optional[str] = None
-    start_time: datetime
-    end_time: datetime
-    status: str
-    price: float
+    booking_time: datetime
+
+class BookingCreate(BookingBase):
+    pass
+
+class Booking(BookingBase):
+    id: int
+    owner_id: int
 
     class Config:
         from_attributes = True
 
-# New schema for analytics
-class AnalyticsResponse(BaseModel):
+# --- Stripe Schemas ---
+class CreateCheckoutSession(BaseModel):
+    price_id: str
+    success_url: str
+    cancel_url: str
+
+class StripeWebhookEvent(BaseModel):
+    id: str
+    object: str
+    api_version: str
+    created: int
+    data: dict
+    livemode: bool
+    pending_webhooks: int
+    request: Optional[dict]
+    type: str
+
+# --- Analytics Schemas ---
+class BookingAnalytics(BaseModel):
     total_bookings: int
-    upcoming_bookings: int
-    completed_bookings: int
+
+    class Config:
+        from_attributes = True

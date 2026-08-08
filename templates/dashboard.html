@@ -1,345 +1,206 @@
-{% extends "base.html" %}
-{% block title %}Dashboard - BookSlot{% endblock %}
-
-{% block content %}
-<div class="container mx-auto p-4 md:p-8">
-    <div class="flex justify-between items-center mb-6">
-        <h1 class="text-3xl font-bold text-gray-800">{{ _('Dashboard', request) }}</h1>
-        <div class="flex items-center space-x-2">
-            <a href="/set_language/en" class="text-blue-600 hover:underline text-sm">EN</a>
-            <span class="text-gray-400">|</span>
-            <a href="/set_language/ar" class="text-blue-600 hover:underline text-sm">AR</a>
-            <span class="text-gray-400">|</span>
-            <a href="/set_language/fr" class="text-blue-600 hover:underline text-sm">FR</a>
+<!DOCTYPE html>
+<html lang="{{ locale }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ _('Dashboard') }} - BookSlot</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="bg-gray-100 font-sans leading-normal tracking-normal">
+    <nav class="bg-white p-4 shadow-md">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="/dashboard" class="text-2xl font-bold text-indigo-600">BookSlot</a>
+            <div class="flex items-center space-x-4">
+                <div class="relative inline-block text-left">
+                    <button type="button" class="inline-flex justify-center w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" id="menu-button" aria-expanded="true" aria-haspopup="true">
+                        {{ locale.upper() }}
+                        <svg class="-mr-1 ml-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                    <div class="origin-top-right absolute right-0 mt-2 w-24 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none hidden" role="menu" aria-orientation="vertical" aria-labelledby="menu-button" tabindex="-1" id="language-dropdown">
+                        <div class="py-1" role="none">
+                            <a href="?lang=en" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem" tabindex="-1" id="menu-item-0">English</a>
+                            <a href="?lang=ar" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem" tabindex="-1" id="menu-item-1">العربية</a>
+                            <a href="?lang=fr" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem" tabindex="-1" id="menu-item-2">Français</a>
+                        </div>
+                    </div>
+                </div>
+                <a href="#" id="logout-button" class="text-indigo-600 hover:text-indigo-800">{{ _('Logout') }}</a>
+            </div>
         </div>
-    </div>
+    </nav>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        <!-- Profile Card -->
-        <div class="bg-white shadow rounded-lg p-6 border border-gray-200">
-            <h2 class="text-xl font-semibold text-gray-700 mb-4">{{ _('Your Profile', request) }}</h2>
-            <p class="text-gray-600 mb-2"><strong>{{ _('Name', request) }}:</strong> {{ owner.name }}</p>
-            <p class="text-gray-600 mb-2"><strong>{{ _('Business', request) }}:</strong> {{ owner.business_name }}</p>
-            <p class="text-gray-600 mb-2"><strong>{{ _('Email', request) }}:</strong> {{ owner.email }}</p>
-            <p class="text-gray-600 mb-2"><strong>{{ _('Phone', request) }}:</strong> {{ owner.phone if owner.phone else _('Not set', request) }}</p>
-            <p class="text-gray-600 mb-2"><strong>{{ _('Currency', request) }}:</strong> {{ owner.currency }}</p>
-            <p class="text-gray-600 mb-2"><strong>{{ _('Language', request) }}:</strong> {{ owner.locale }}</p>
-            <p class="text-gray-600 mb-4"><strong>{{ _('Subscription', request) }}:</strong> {{ owner.subscription_status.name.capitalize() }}</p>
+    <div class="container mx-auto p-4">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6">{{ _('Welcome') }}, {{ owner.name or owner.email }}!</h1>
 
-            {% if owner.subscription_status.name == 'FREE' %}
-            <form action="/create-checkout-session" method="POST">
-                <button type="submit" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition duration-150 ease-in-out">
-                    {{ _('Upgrade to Premium', request) }}
-                </button>
-            </form>
-            {% endif %}
-            <button onclick="toggleModal('profileModal')" class="mt-4 w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-150 ease-in-out">
-                {{ _('Edit Profile', request) }}
-            </button>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-lg font-medium text-gray-700 mb-2">{{ _('Your Public Booking Page') }}</h2>
+                <p class="text-gray-600 mb-4">{{ _('Share this link with your clients:') }}</p>
+                <a href="/bookslot/{{ owner.name }}" target="_blank" class="text-indigo-600 hover:underline break-all">{{ server_name }}/bookslot/{{ owner.name }}</a>
+            </div>
+
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-lg font-medium text-gray-700 mb-2">{{ _('Profile Settings') }}</h2>
+                <form id="profile-form" class="space-y-4">
+                    <div>
+                        <label for="name" class="block text-sm font-medium text-gray-700">{{ _('Name') }}</label>
+                        <input type="text" id="name" name="name" value="{{ owner.name or '' }}" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-gray-700">{{ _('Email') }}</label>
+                        <input type="email" id="email" name="email" value="{{ owner.email }}" disabled class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 bg-gray-50 cursor-not-allowed">
+                    </div>
+                    <div>
+                        <label for="phone" class="block text-sm font-medium text-gray-700">{{ _('Phone Number') }}</label>
+                        <input type="tel" id="phone" name="phone" value="{{ owner.phone or '' }}" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <button type="submit" class="w-full bg-indigo-600 text-white p-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">{{ _('Update Profile') }}</button>
+                    <p id="profile-message" class="text-center mt-2 text-sm"></p>
+                </form>
+            </div>
+
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-lg font-medium text-gray-700 mb-2">{{ _('Your Services') }}</h2>
+                <ul class="list-disc list-inside mb-4">
+                    {% for service in services %}
+                        <li>{{ service.name }} ({{ service.duration_minutes }} {{ _('min') }} / {{ service.price | currency_format(locale) }})</li>
+                    {% else %}
+                        <li>{{ _('No services added yet.') }}</li>
+                    {% endfor %}
+                </ul>
+                <button class="w-full bg-green-600 text-white p-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">{{ _('Add New Service') }}</button>
+            </div>
         </div>
 
-        <!-- Analytics Card -->
-        <div class="bg-white shadow rounded-lg p-6 border border-gray-200">
-            <h2 class="text-xl font-semibold text-gray-700 mb-4">{{ _('Analytics', request) }}</h2>
-            <p class="text-gray-600 mb-2"><strong>{{ _('Total Bookings', request) }}:</strong> {{ analytics.total_bookings }}</p>
-            <p class="text-gray-600 mb-2"><strong>{{ _('Bookings (Last 7 Days)', request) }}:</strong> {{ analytics.last_7_days_bookings }}</p>
-            <p class="text-gray-600 mb-2"><strong>{{ _('Bookings (Last 30 Days)', request) }}:</strong> {{ analytics.last_30_days_bookings }}</p>
-            <h3 class="text-lg font-medium text-gray-700 mt-4 mb-2">{{ _('Bookings by Service', request) }}:</h3>
-            {% if analytics.bookings_by_service %}
-                <ul class="list-disc list-inside text-gray-600">
-                    {% for service_name, count in analytics.bookings_by_service.items() %}
-                        <li>{{ service_name }}: {{ count }}</li>
+        <h2 class="text-2xl font-semibold mb-4">{{ _('Your Analytics') }}</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h3 class="text-lg font-medium text-gray-700 mb-2">{{ _('Total Bookings') }}</h3>
+                <p id="total-bookings" class="text-4xl font-bold text-indigo-600">0</p>
+            </div>
+            <!-- Add more analytics cards here if needed -->
+        </div>
+
+        <h2 class="text-2xl font-semibold mb-4">{{ _('Upcoming Bookings') }}</h2>
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            {% if upcoming_bookings %}
+                <ul class="divide-y divide-gray-200">
+                    {% for booking in upcoming_bookings %}
+                        <li class="py-4">
+                            <p class="text-lg font-medium text-gray-900">{{ booking.service.name }}</p>
+                            <p class="text-sm text-gray-600">{{ booking.display_time }}</p>
+                            <p class="text-sm text-gray-600">{{ _('Client:') }} {{ booking.customer_name }} ({{ booking.customer_email }})</p>
+                            {% if booking.customer_phone %}
+                                <p class="text-sm text-gray-600">{{ _('Phone:') }} {{ booking.customer_phone }}</p>
+                            {% endif %}
+                        </li>
                     {% endfor %}
                 </ul>
             {% else %}
-                <p class="text-gray-600">{{ _('No bookings yet for any service.', request) }}</p>
+                <p class="text-gray-600">{{ _('No upcoming bookings.') }}</p>
             {% endif %}
         </div>
 
-        <!-- Quick Links / CTAs -->
-        <div class="bg-white shadow rounded-lg p-6 border border-gray-200">
-            <h2 class="text-xl font-semibold text-gray-700 mb-4">{{ _('Quick Actions', request) }}</h2>
-            <a href="/{{ owner.name }}" target="_blank" class="block bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 text-center mb-3 transition duration-150 ease-in-out">{{ _('View My Booking Page', request) }}</a>
-            <button onclick="toggleModal('serviceModal')" class="w-full bg-purple-500 text-white py-2 px-4 rounded-md hover:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition duration-150 ease-in-out mb-3">
-                {{ _('Add New Service', request) }}
-            </button>
-            <button onclick="toggleModal('availabilityModal')" class="w-full bg-orange-500 text-white py-2 px-4 rounded-md hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transition duration-150 ease-in-out">
-                {{ _('Set Availability', request) }}
-            </button>
-        </div>
     </div>
 
-    <!-- Upcoming Bookings -->
-    <div class="bg-white shadow rounded-lg p-6 border border-gray-200 mb-8">
-        <h2 class="text-xl font-semibold text-gray-700 mb-4">{{ _('Upcoming Bookings', request) }}</h2>
-        {% if upcoming_bookings %}
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ _('Customer Name', request) }}</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ _('Service', request) }}</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ _('Date', request) }}</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ _('Time', request) }}</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ _('Price', request) }}</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ _('Phone', request) }}</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ _('Email', request) }}</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    {% for booking in upcoming_bookings %}
-                    <tr>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ booking.customer_name }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ booking.service.name }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ booking.booking_date.strftime('%Y-%m-%d') }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ booking.booking_date.strftime('%H:%M') }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ booking.service.price | format_currency(owner.currency, owner.locale) }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ booking.customer_phone if booking.customer_phone else _('N/A', request) }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ booking.customer_email }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        {% else %}
-        <p class="text-gray-600">{{ _('No upcoming bookings.', request) }}</p>
-        {% endif %}
-    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const accessToken = localStorage.getItem('access_token');
 
-    <!-- Services List -->
-    <div class="bg-white shadow rounded-lg p-6 border border-gray-200 mb-8">
-        <h2 class="text-xl font-semibold text-gray-700 mb-4">{{ _('My Services', request) }}</h2>
-        {% if services %}
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ _('Name', request) }}</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ _('Description', request) }}</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ _('Duration', request) }}</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ _('Price', request) }}</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    {% for service in services %}
-                    <tr>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ service.name }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ service.description if service.description else _('N/A', request) }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ service.duration_minutes }} {{ _('minutes', request) }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ service.price | format_currency(owner.currency, owner.locale) }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        {% else %}
-        <p class="text-gray-600">{{ _('No services added yet. Add one to get started!', request) }}</p>
-        {% endif %}
-    </div>
-
-    <!-- Profile Edit Modal -->
-    <div id="profileModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
-        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">{{ _('Edit Profile', request) }}</h3>
-            <form id="profileUpdateForm">
-                <div class="mb-4">
-                    <label for="name" class="block text-sm font-medium text-gray-700">{{ _('Name', request) }}</label>
-                    <input type="text" id="name" name="name" value="{{ owner.name }}" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                </div>
-                <div class="mb-4">
-                    <label for="business_name" class="block text-sm font-medium text-gray-700">{{ _('Business Name', request) }}</label>
-                    <input type="text" id="business_name" name="business_name" value="{{ owner.business_name }}" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                </div>
-                <div class="mb-4">
-                    <label for="phone" class="block text-sm font-medium text-gray-700">{{ _('Phone Number', request) }}</label>
-                    <input type="text" id="phone" name="phone" value="{{ owner.phone if owner.phone else '' }}" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                </div>
-                <div class="mb-4">
-                    <label for="currency" class="block text-sm font-medium text-gray-700">{{ _('Currency', request) }}</label>
-                    <select id="currency" name="currency" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                        <option value="USD" {% if owner.currency == 'USD' %}selected{% endif %}>USD</option>
-                        <option value="EUR" {% if owner.currency == 'EUR' %}selected{% endif %}>EUR</option>
-                        <option value="AED" {% if owner.currency == 'AED' %}selected{% endif %}>AED</option>
-                        <option value="SAR" {% if owner.currency == 'SAR' %}selected{% endif %}>SAR</option>
-                        <option value="EGP" {% if owner.currency == 'EGP' %}selected{% endif %}>EGP</option>
-                        <option value="MAD" {% if owner.currency == 'MAD' %}selected{% endif %}>MAD</option>
-                    </select>
-                </div>
-                <div class="mb-4">
-                    <label for="locale" class="block text-sm font-medium text-gray-700">{{ _('Preferred Language', request) }}</label>
-                    <select id="locale" name="locale" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                        <option value="en" {% if owner.locale == 'en' %}selected{% endif %}>English</option>
-                        <option value="ar" {% if owner.locale == 'ar' %}selected{% endif %}>العربية</option>
-                        <option value="fr" {% if owner.locale == 'fr' %}selected{% endif %}>Français</option>
-                    </select>
-                </div>
-                <div class="flex justify-end space-x-2">
-                    <button type="button" onclick="toggleModal('profileModal')" class="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400">{{ _('Cancel', request) }}</button>
-                    <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">{{ _('Save Changes', request) }}</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Service Add Modal -->
-    <div id="serviceModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
-        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">{{ _('Add New Service', request) }}</h3>
-            <form id="serviceAddForm">
-                <div class="mb-4">
-                    <label for="service_name" class="block text-sm font-medium text-gray-700">{{ _('Service Name', request) }}</label>
-                    <input type="text" id="service_name" name="name" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                </div>
-                <div class="mb-4">
-                    <label for="service_description" class="block text-sm font-medium text-gray-700">{{ _('Description', request) }}</label>
-                    <textarea id="service_description" name="description" rows="3" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></textarea>
-                </div>
-                <div class="mb-4">
-                    <label for="service_duration" class="block text-sm font-medium text-gray-700">{{ _('Duration (minutes)', request) }}</label>
-                    <input type="number" id="service_duration" name="duration_minutes" required min="1" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                </div>
-                <div class="mb-4">
-                    <label for="service_price" class="block text-sm font-medium text-gray-700">{{ _('Price', request) }} ({{ owner.currency }})</label>
-                    <input type="number" id="service_price" name="price" required min="0" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                </div>
-                <div class="flex justify-end space-x-2">
-                    <button type="button" onclick="toggleModal('serviceModal')" class="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400">{{ _('Cancel', request) }}</button>
-                    <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">{{ _('Add Service', request) }}</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Availability Add Modal -->
-    <div id="availabilityModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
-        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">{{ _('Set Availability', request) }}</h3>
-            <form id="availabilityAddForm">
-                <div class="mb-4">
-                    <label for="day_of_week" class="block text-sm font-medium text-gray-700">{{ _('Day of Week', request) }}</label>
-                    <select id="day_of_week" name="day_of_week" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                        <option value="0">{{ _('Monday', request) }}</option>
-                        <option value="1">{{ _('Tuesday', request) }}</option>
-                        <option value="2">{{ _('Wednesday', request) }}</option>
-                        <option value="3">{{ _('Thursday', request) }}</option>
-                        <option value="4">{{ _('Friday', request) }}</option>
-                        <option value="5">{{ _('Saturday', request) }}</option>
-                        <option value="6">{{ _('Sunday', request) }}</option>
-                    </select>
-                </div>
-                <div class="mb-4">
-                    <label for="start_time" class="block text-sm font-medium text-gray-700">{{ _('Start Time', request) }}</label>
-                    <input type="time" id="start_time" name="start_time" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                </div>
-                <div class="mb-4">
-                    <label for="end_time" class="block text-sm font-medium text-gray-700">{{ _('End Time', request) }}</label>
-                    <input type="time" id="end_time" name="end_time" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                </div>
-                <div class="flex justify-end space-x-2">
-                    <button type="button" onclick="toggleModal('availabilityModal')" class="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400">{{ _('Cancel', request) }}</button>
-                    <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">{{ _('Add Availability', request) }}</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<script>
-    function toggleModal(modalId) {
-        document.getElementById(modalId).classList.toggle('hidden');
-    }
-
-    document.getElementById('profileUpdateForm').addEventListener('submit', async function(event) {
-        event.preventDefault();
-        const formData = new FormData(event.target);
-        const data = Object.fromEntries(formData.entries());
-
-        try {
-            const response = await fetch('/dashboard/update_profile', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + localStorage.getItem('access_token')
-                },
-                body: JSON.stringify(data)
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                alert(`Error: ${errorData.detail || 'Failed to update profile.'}`);
-                return;
+            // Language dropdown toggle
+            const menuButton = document.getElementById('menu-button');
+            const languageDropdown = document.getElementById('language-dropdown');
+            if (menuButton && languageDropdown) {
+                menuButton.addEventListener('click', () => {
+                    languageDropdown.classList.toggle('hidden');
+                });
+                window.addEventListener('click', (event) => {
+                    if (!menuButton.contains(event.target) && !languageDropdown.contains(event.target)) {
+                        languageDropdown.classList.add('hidden');
+                    }
+                });
             }
 
-            alert('Profile updated successfully!');
-            toggleModal('profileModal');
-            location.reload(); // Reload to reflect changes
-        } catch (error) {
-            console.error('Error updating profile:', error);
-            alert('An unexpected error occurred.');
-        }
-    });
-
-    document.getElementById('serviceAddForm').addEventListener('submit', async function(event) {
-        event.preventDefault();
-        const formData = new FormData(event.target);
-        const data = Object.fromEntries(formData.entries());
-        data.duration_minutes = parseInt(data.duration_minutes);
-        data.price = parseInt(data.price);
-
-        try {
-            const response = await fetch('/services/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + localStorage.getItem('access_token')
-                },
-                body: JSON.stringify(data)
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                alert(`Error: ${errorData.detail || 'Failed to add service.'}`);
-                return;
+            // Logout functionality
+            const logoutButton = document.getElementById('logout-button');
+            if (logoutButton) {
+                logoutButton.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    localStorage.removeItem('access_token');
+                    window.location.href = '/login';
+                });
             }
 
-            alert('Service added successfully!');
-            toggleModal('serviceModal');
-            location.reload(); // Reload to reflect changes
-        } catch (error) {
-            console.error('Error adding service:', error);
-            alert('An unexpected error occurred.');
-        }
-    });
+            // Profile update functionality
+            const profileForm = document.getElementById('profile-form');
+            const profileMessage = document.getElementById('profile-message');
+            if (profileForm && profileMessage) {
+                profileForm.addEventListener('submit', async function(event) {
+                    event.preventDefault();
 
-    document.getElementById('availabilityAddForm').addEventListener('submit', async function(event) {
-        event.preventDefault();
-        const formData = new FormData(event.target);
-        const data = Object.fromEntries(formData.entries());
-        data.day_of_week = parseInt(data.day_of_week);
+                    const name = document.getElementById('name').value;
+                    const phone = document.getElementById('phone').value;
 
-        try {
-            const response = await fetch('/availabilities/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + localStorage.getItem('access_token')
-                },
-                body: JSON.stringify(data)
-            });
+                    try {
+                        const response = await fetch('/api/owner/profile', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${accessToken}`
+                            },
+                            body: JSON.stringify({ name, phone })
+                        });
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                alert(`Error: ${errorData.detail || 'Failed to add availability.'}`);
-                return;
+                        const data = await response.json();
+
+                        if (response.ok) {
+                            profileMessage.textContent = '{{ _("Profile updated successfully!") }}';
+                            profileMessage.className = 'text-center mt-2 text-sm text-green-600';
+                            // Optionally update the welcome message without full reload
+                            const welcomeMessage = document.querySelector('h1');
+                            if (welcomeMessage) {
+                                welcomeMessage.textContent = `{{ _('Welcome') }}, ${data.name || data.email}!`;
+                            }
+                        } else {
+                            profileMessage.textContent = data.detail || '{{ _("Failed to update profile.") }}';
+                            profileMessage.className = 'text-center mt-2 text-sm text-red-600';
+                        }
+                    } catch (error) {
+                        console.error('Error updating profile:', error);
+                        profileMessage.textContent = '{{ _("An error occurred while updating profile.") }}';
+                        profileMessage.className = 'text-center mt-2 text-sm text-red-600';
+                    }
+                });
             }
 
-            alert('Availability added successfully!');
-            toggleModal('availabilityModal');
-            location.reload(); // Reload to reflect changes
-        } catch (error) {
-            console.error('Error adding availability:', error);
-            alert('An unexpected error occurred.');
-        }
-    });
-</script>
-{% endblock %}
+            // Fetch Analytics Data
+            const fetchAnalytics = async () => {
+                try {
+                    const response = await fetch('/api/owner/analytics', {
+                        headers: {
+                            'Authorization': `Bearer ${accessToken}`
+                        }
+                    });
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const data = await response.json();
+                    document.getElementById('total-bookings').textContent = data.total_bookings;
+                } catch (error) {
+                    console.error('Error fetching analytics:', error);
+                    document.getElementById('total-bookings').textContent = 'N/A';
+                }
+            };
+
+            if (accessToken) {
+                fetchAnalytics();
+            } else {
+                console.warn('No access token found. Analytics not fetched.');
+            }
+        });
+    </script>
+</body>
+</html>

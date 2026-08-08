@@ -1,19 +1,16 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, Float, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Text
 from sqlalchemy.orm import relationship
-from sqlalchemy.ext.declarative import declarative_base
-from datetime import datetime
-
-Base = declarative_base()
+from sqlalchemy.sql import func
+from .database import Base
 
 class Owner(Base):
     __tablename__ = "owners"
-
     id = Column(Integer, primary_key=True, index=True)
-    email = Column(String, unique=True, index=True, nullable=False)
-    name = Column(String, nullable=False)
-    phone = Column(String, nullable=True)
-    hashed_password = Column(String, nullable=False)
+    email = Column(String, unique=True, index=True)
+    hashed_password = Column(String)
     is_active = Column(Boolean, default=True)
+    name = Column(String)
+    phone = Column(String, nullable=True)
     is_premium = Column(Boolean, default=False)
 
     services = relationship("Service", back_populates="owner")
@@ -21,30 +18,26 @@ class Owner(Base):
 
 class Service(Base):
     __tablename__ = "services"
-
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, index=True, nullable=False)
-    duration_minutes = Column(Integer, nullable=False)
-    price = Column(Float, nullable=False)
-    description = Column(String, nullable=True)
-    owner_id = Column(Integer, ForeignKey("owners.id"), nullable=False)
+    owner_id = Column(Integer, ForeignKey("owners.id"))
+    name = Column(String)
+    description = Column(Text, nullable=True)
+    duration_minutes = Column(Integer)
+    price = Column(Integer)
 
     owner = relationship("Owner", back_populates="services")
-    bookings = relationship("Booking", back_populates="service")
 
 class Booking(Base):
     __tablename__ = "bookings"
-
     id = Column(Integer, primary_key=True, index=True)
-    service_id = Column(Integer, ForeignKey("services.id"), nullable=False)
-    owner_id = Column(Integer, ForeignKey("owners.id"), nullable=False)
-    customer_name = Column(String, nullable=False)
-    customer_email = Column(String, nullable=False)
+    owner_id = Column(Integer, ForeignKey("owners.id"))
+    service_id = Column(Integer, ForeignKey("services.id"))
+    customer_name = Column(String)
+    customer_email = Column(String)
     customer_phone = Column(String, nullable=True)
-    start_time = Column(DateTime, nullable=False)
-    end_time = Column(DateTime, nullable=False)
-    status = Column(String, default="pending", nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    booking_time = Column(DateTime)
+    status = Column(String, default="pending")
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     owner = relationship("Owner", back_populates="bookings")
-    service = relationship("Service", back_populates="bookings")
+    service = relationship("Service")

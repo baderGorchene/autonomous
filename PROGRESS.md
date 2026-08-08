@@ -1,3 +1,8 @@
+## Iteration 328
+_2026-08-08 05:48 UTC_
+
+Implemented basic analytics by adding a new API endpoint (/api/owner/analytics) to fetch total booking counts for the current owner. Updated `src/schemas.py` with a `BookingAnalytics` model and `templates/dashboard.html` to display the total bookings using JavaScript to fetch data from the new endpoint. The previous `pytest` error was an environment issue, and the current task of implementing analytics has been completed.
+
 ## Iteration 327
 _2026-08-08 05:05 UTC_
 
