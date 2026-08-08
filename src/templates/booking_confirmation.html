@@ -1,41 +1,12 @@
-<!DOCTYPE html>
-<html lang="{{ locale }}">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ gettext('Booking Confirmed!') }}</title>
-    <link rel="stylesheet" href="/static/css/style.css">
-</head>
-<body>
-    <header>
-        <h1>{{ gettext('Booking Confirmed!') }}</h1>
-        <div class="lang-toggle">
-            <a href="#" onclick="changeLanguage('en'); return false;">EN</a> |
-            <a href="#" onclick="changeLanguage('ar'); return false;">AR</a> |
-            <a href="#" onclick="changeLanguage('fr'); return false;">FR</a>
-        </div>
-    </header>
-    <main>
-        <h2>{{ gettext('Thank you,') }} {{ booking.customer_name }}!</h2>
-        <p>{{ gettext('Your booking for') }} <strong>{{ service.name }}</strong> {{ gettext('with') }} {{ owner.name }} {{ gettext('has been successfully confirmed.') }}</p>
-        <p>{{ gettext('Details') }}:</p>
-        <ul>
-            <li><strong>{{ gettext('Service') }}:</strong> {{ service.name }}</li>
-            <li><strong>{{ gettext('Date & Time') }}:</strong> {{ booking.booking_time.strftime('%Y-%m-%d %H:%M') }}</li>
-            <li><strong>{{ gettext('Owner') }}:</strong> {{ owner.name }}</li>
-            <li><strong>{{ gettext('Owner Contact') }}:</strong> {{ owner.email }}</li>
-        </ul>
-        <p>{{ gettext('A confirmation email has been sent to') }} {{ booking.customer_email }}.</p>
-        <p><a href="/">{{ gettext('Return to Home') }}</a></p>
-    </main>
-    <footer>
-        <p>&copy; 2023 BookSlot. {{ gettext('All rights reserved.') }}</p>
-    </footer>
-    <script>
-        function changeLanguage(lang) {
-            document.cookie = "lang=" + lang + "; path=/; max-age=31536000";
-            location.reload();
-        }
-    </script>
-</body>
-</html>
+{% extends "base.html" %}
+{% block title %}{{ _('Booking Confirmation') }}{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto bg-white p-8 border border-gray-200 rounded-lg shadow-md text-center">
+    <h2 class="text-3xl font-bold text-green-600 mb-4">{{ _('Booking Confirmed!') }}</h2>
+    <p class="text-gray-700 mb-6">{{ _('Thank you for your booking.') }} {{ _('A confirmation email has been sent to you.') }}</p>
+    <a href="/book/{{ owner.name }}" class="inline-block bg-indigo-600 text-white px-6 py-3 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+        {{ _('Book Another Service') }}
+    </a>
+</div>
+{% endblock %}

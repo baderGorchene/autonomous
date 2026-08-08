@@ -4,6 +4,18 @@ from datetime import datetime, timedelta
 from sqlalchemy import func, extract
 from typing import Optional, List
 
+# Admin CRUD operations
+def get_admin_by_email(db: Session, email: str):
+    return db.query(models.Admin).filter(models.Admin.email == email).first()
+
+def create_admin(db: Session, admin: schemas.AdminCreate, hashed_password: str):
+    db_admin = models.Admin(email=admin.email, hashed_password=hashed_password, name=admin.name)
+    db.add(db_admin)
+    db.commit()
+    db.refresh(db_admin)
+    return db_admin
+
+# Owner CRUD operations
 def get_owner_by_email(db: Session, email: str):
     return db.query(models.Owner).filter(models.Owner.email == email).first()
 
@@ -21,8 +33,10 @@ def get_owners(db: Session, skip: int = 0, limit: int = 100) -> List[models.Owne
     return db.query(models.Owner).offset(skip).limit(limit).all()
 
 def update_owner_by_admin(db: Session, owner: models.Owner, owner_update: schemas.OwnerAdminUpdate):
-    for field, value in owner_update.model_dump(exclude_unset=True).items():
+    update_data = owner_update.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
         setattr(owner, field, value)
+    db.add(owner)
     db.commit()
     db.refresh(owner)
     return owner

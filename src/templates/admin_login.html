@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="{{ request.state.locale }}" dir="{{ 'rtl' if request.state.locale == 'ar' else 'ltr' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ _("Admin Login") }} - BookSlot</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css">
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+        <h1 class="text-2xl font-bold text-center mb-6">{{ _("Admin Login") }}</h1>
+        <form action="/admin/token" method="post">
+            <div class="mb-4">
+                <label for="username" class="block text-gray-700 text-sm font-bold mb-2">{{ _("Email") }}:</label>
+                <input type="email" id="username" name="username" required
+                       class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+            </div>
+            <div class="mb-6">
+                <label for="password" class="block text-gray-700 text-sm font-bold mb-2">{{ _("Password") }}:</label>
+                <input type="password" id="password" name="password" required
+                       class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline">
+            </div>
+            <div class="flex items-center justify-between">
+                <button type="submit"
+                        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                    {{ _("Login") }}
+                </button>
+            </div>
+        </form>
+        {% if error %}
+            <p class="text-red-500 text-sm mt-4 text-center">{{ error }}</p>
+        {% endif %}
+    </div>
+    {% include "language_toggle.html" %}
+</body>
+</html>

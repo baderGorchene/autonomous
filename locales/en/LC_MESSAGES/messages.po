@@ -1,25 +1,24 @@
-# English translations for BookSlot
+# English translations for BookSlot.
+# Copyright (C) 2024 BookSlot
+# This file is distributed under the same license as the BookSlot project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2024.
+#
 msgid ""
 msgstr ""
 "Project-Id-Version: BookSlot\n"
-"POT-Creation-Date: 2023-10-27 10:00+0000\n"
-"PO-Revision-Date: 2023-10-27 10:00+0000\n"
-"Last-Translator: \n"
-"Language-Team: \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-05-20 10:00+0000\n"
+"PO-Revision-Date: 2024-05-20 10:00+0000\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: English <LL@li.org>\n"
+"Language: en\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel, version 2.13.0\n"
-"Language: en\n"
-
-msgid "BookSlot"
-msgstr "BookSlot"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 msgid "Dashboard"
 msgstr "Dashboard"
-
-msgid "Services"
-msgstr "Services"
 
 msgid "Profile"
 msgstr "Profile"
@@ -27,62 +26,29 @@ msgstr "Profile"
 msgid "Subscription"
 msgstr "Subscription"
 
-msgid "Sign Out"
-msgstr "Sign Out"
+msgid "Logout"
+msgstr "Logout"
 
-msgid "Language"
-msgstr "Language"
-
-msgid "Hello"
-msgstr "Hello"
+msgid "Welcome"
+msgstr "Welcome"
 
 msgid "Total Bookings"
 msgstr "Total Bookings"
 
-msgid "Current Plan"
-msgstr "Current Plan"
-
-msgid "Free"
-msgstr "Free"
-
-msgid "Premium"
-msgstr "Premium"
+msgid "Subscription Status"
+msgstr "Subscription Status"
 
 msgid "Manage Subscription"
 msgstr "Manage Subscription"
 
-msgid "Upcoming Booking"
-msgstr "Upcoming Booking"
+msgid "Your Public Booking Page"
+msgstr "Your Public Booking Page"
 
-msgid "No upcoming bookings."
-msgstr "No upcoming bookings."
-
-msgid "Monthly Bookings"
-msgstr "Monthly Bookings"
-
-msgid "Bookings"
-msgstr "Bookings"
-
-msgid "Number of Bookings"
-msgstr "Number of Bookings"
-
-msgid "Month"
-msgstr "Month"
-
-msgid "Popular Services"
-msgstr "Popular Services"
-
-msgid "bookings"
-msgstr "bookings"
-
-msgid "No services booked yet."
-msgstr "No services booked yet."
+msgid "Share this link with your customers!"
+msgstr "Share this link with your customers!"
 
 msgid "Upcoming Bookings"
 msgstr "Upcoming Bookings"
-
-msgid "Service"
-msgstr "Service"
 
 msgid "Customer"
 msgstr "Customer"
@@ -93,56 +59,158 @@ msgstr "Time"
 msgid "Contact"
 msgstr "Contact"
 
-msgid "You have no upcoming bookings."
-msgstr "You have no upcoming bookings."
+msgid "No upcoming bookings."
+msgstr "No upcoming bookings."
 
-msgid "Subscription Management"
-msgstr "Subscription Management"
+msgid "Monthly Bookings"
+msgstr "Monthly Bookings"
 
-msgid "Your Current Plan"
-msgstr "Your Current Plan"
+msgid "No monthly booking data available."
+msgstr "No monthly booking data available."
 
-msgid "Premium Plan"
-msgstr "Premium Plan"
+msgid "Popular Services"
+msgstr "Popular Services"
 
-msgid "Unlimited bookings"
-msgstr "Unlimited bookings"
+msgid "No popular services data available."
+msgstr "No popular services data available."
 
-msgid "Free Plan"
-msgstr "Free Plan"
+msgid "Book with"
+msgstr "Book with"
 
-msgid "Up to 20 bookings/month"
-msgstr "Up to 20 bookings/month"
+msgid "Book an Appointment with"
+msgstr "Book an Appointment with"
 
-msgid "Upgrade to Premium"
-msgstr "Upgrade to Premium"
+msgid "Select Service"
+msgstr "Select Service"
 
-msgid "month"
-msgstr "month"
+msgid "minutes"
+msgstr "minutes"
 
-msgid "Thank you for being a premium subscriber!"
-msgstr "Thank you for being a premium subscriber!"
+msgid "Your Name"
+msgstr "Your Name"
 
-msgid "Manage Billing"
-msgstr "Manage Billing"
+msgid "Your Email"
+msgstr "Your Email"
 
-msgid "via Stripe"
-msgstr "via Stripe"
+msgid "Your Phone (Optional)"
+msgstr "Your Phone (Optional)"
 
-msgid "Note: Managing billing will redirect you to a secure Stripe portal."
-msgstr "Note: Managing billing will redirect you to a secure Stripe portal."
+msgid "Select Date"
+msgstr "Select Date"
 
-msgid "Your subscription will automatically renew unless canceled."
-msgstr "Your subscription will automatically renew unless canceled."
+msgid "Select Time"
+msgstr "Select Time"
 
-msgid "Your BookSlot Subscription is Active!"
-msgstr "Your BookSlot Subscription is Active!"
+msgid "Confirm Booking"
+msgstr "Confirm Booking"
 
-msgid "Dear %s,\n\nYour BookSlot %s subscription is now active. You can enjoy all premium features.\n\nThank you for choosing BookSlot!\n\nBest regards,\nBookSlot Team"
-msgstr "Dear %s,\n\nYour BookSlot %s subscription is now active. You can enjoy all premium features.\n\nThank you for choosing BookSlot!\n\nBest regards,\nBookSlot Team"
+msgid "Booking Confirmed!"
+msgstr "Booking Confirmed!"
 
-msgid "Your BookSlot Subscription Has Been Canceled"
-msgstr "Your BookSlot Subscription Has Been Canceled"
+msgid "Thank you for your booking."
+msgstr "Thank you for your booking."
 
-msgid "Dear %s,\n\nYour BookSlot subscription has been canceled. We're sorry to see you go!\n\nIf you have any questions, please contact us.\n\nBest regards,\nBookSlot Team"
-msgstr "Dear %s,\n\nYour BookSlot subscription has been canceled. We're sorry to see you go!\n\nIf you have any questions, please contact us.\n\nBest regards,\nBookSlot Team"
+msgid "A confirmation email has been sent to you."
+msgstr "A confirmation email has been sent to you."
+
+msgid "Book Another Service"
+msgstr "Book Another Service"
+
+msgid "Login"
+msgstr "Login"
+
+msgid "Login to BookSlot"
+msgstr "Login to BookSlot"
+
+msgid "Email address"
+msgstr "Email address"
+
+msgid "Password"
+msgstr "Password"
+
+msgid "Sign in"
+msgstr "Sign in"
+
+msgid "Don’t have an account?"
+msgstr "Don’t have an account?"
+
+msgid "Sign up"
+msgstr "Sign up"
+
+msgid "Register"
+msgstr "Register"
+
+msgid "Create your BookSlot Account"
+msgstr "Create your BookSlot Account"
+
+msgid "Your Name"
+msgstr "Your Name"
+
+msgid "Phone Number (Optional)"
+msgstr "Phone Number (Optional)"
+
+msgid "Update Profile"
+msgstr "Update Profile"
+
+msgid "Your Profile"
+msgstr "Your Profile"
+
+msgid "Name"
+msgstr "Name"
+
+msgid "Email address"
+msgstr "Email address"
+
+msgid "Phone Number (Optional)"
+msgstr "Phone Number (Optional)"
+
+msgid "Profile updated successfully!"
+msgstr "Profile updated successfully!"
+
+msgid "Manage Your Subscription"
+msgstr "Manage Your Subscription"
+
+msgid "Current Status"
+msgstr "Current Status"
+
+msgid "Upgrade to premium for unlimited bookings!"
+msgstr "Upgrade to premium for unlimited bookings!"
+
+msgid "You have unlimited bookings."
+msgstr "You have unlimited bookings."
+
+msgid "Upgrade to Premium ($19/month)"
+msgstr "Upgrade to Premium ($19/month)"
+
+msgid "You are already a premium subscriber."
+msgstr "You are already a premium subscriber."
+
+msgid "Admin Dashboard"
+msgstr "Admin Dashboard"
+
+msgid "Manage Owners"
+msgstr "Manage Owners"
+
+msgid "Here you can view, update, and delete owner accounts."
+msgstr "Here you can view, update, and delete owner accounts."
+
+msgid "View All Owners"
+msgstr "View All Owners"
+
+msgid "Owner Operations (API Endpoints)"
+msgstr "Owner Operations (API Endpoints)"
+
+msgid "List all owners."
+msgstr "List all owners."
+
+msgid "Get details of a specific owner."
+msgstr "Get details of a specific owner."
+
+msgid "Update an owner (e.g., subscription status, admin flag)."
+msgstr "Update an owner (e.g., subscription status, admin flag)."
+
+msgid "Delete an owner."
+msgstr "Delete an owner."
+
+msgid "These operations require an authenticated admin token."
+msgstr "These operations require an authenticated admin token."

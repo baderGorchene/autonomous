@@ -1,103 +1,79 @@
-<!DOCTYPE html>
-<html lang="{{ locale }}">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ gettext('Owner Dashboard') }}</title>
-    <link rel="stylesheet" href="/static/css/style.css">
-</head>
-<body>
-    <header>
-        <h1>{{ gettext('Welcome,') }} {{ current_owner.name }}!</h1>
-        <nav>
-            <a href="/subscription">{{ gettext('Manage Subscription') }}</a>
-            <a href="/logout">{{ gettext('Logout') }}</a>
-            {% if current_owner.is_admin %}
-            <a href="/admin/dashboard" style="color: red;">{{ gettext('Admin Panel') }}</a>
-            {% endif %}
-            <div class="lang-toggle">
-                <a href="#" onclick="changeLanguage('en'); return false;">EN</a> |
-                <a href="#" onclick="changeLanguage('ar'); return false;">AR</a> |
-                <a href="#" onclick="changeLanguage('fr'); return false;">FR</a>
-            </div>
-        </nav>
-    </header>
-    <main>
-        <section>
-            <h2>{{ gettext('Your Profile') }}</h2>
-            <form action="/profile/update" method="post">
-                <label for="name">{{ gettext('Name') }}:</label>
-                <input type="text" id="name" name="name" value="{{ current_owner.name }}" required><br>
-                <label for="email">{{ gettext('Email') }}:</label>
-                <input type="email" id="email" name="email" value="{{ current_owner.email }}" required><br>
-                <label for="phone">{{ gettext('Phone') }}:</label>
-                <input type="text" id="phone" name="phone" value="{{ current_owner.phone if current_owner.phone else '' }}"><br>
-                <button type="submit">{{ gettext('Update Profile') }}</button>
-            </form>
-            <p>{{ gettext('Subscription Status') }}: {{ current_owner.subscription_status }}</p>
-            <p>{{ gettext('Your Public Booking Page Link') }}: <a href="{{ request.url_for('public_booking_page', owner_name=current_owner.name) }}">{{ request.url_for('public_booking_page', owner_name=current_owner.name) }}</a></p>
-            {% if error %}
-                <p style="color: red;">{{ error }}</p>
-            {% endif %}
-        </section>
+{% extends "base.html" %}
+{% block title %}{{ _('Dashboard') }}{% endblock %}
 
-        <section>
-            <h2>{{ gettext('Your Services') }}</h2>
-            {% if services %}
-                <ul>
-                    {% for service in services %}
-                        <li>{{ service.name }} ({{ service.price | currency_format(locale) }} for {{ service.duration_minutes }} {{ gettext('minutes') }})</li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p>{{ gettext('No services set up yet.') }}</p>
-            {% endif %}
-            <button>{{ gettext('Add/Manage Services') }}</button>
-        </section>
+{% block content %}
+<h2 class="text-3xl font-bold text-gray-800 mb-6">{{ _('Welcome') }}, {{ owner.name }}!</h2>
 
-        <section>
-            <h2>{{ gettext('Upcoming Bookings') }}</h2>
-            {% if upcoming_bookings %}
-                <ul>
-                    {% for booking in upcoming_bookings %}
-                        <li>
-                            <strong>{{ booking.service.name }}</strong> {{ gettext('with') }} {{ booking.customer_name }}
-                            {{ gettext('on') }} {{ booking.booking_time.strftime('%Y-%m-%d %H:%M') }}
-                            ({{ gettext('Customer Email') }}: {{ booking.customer_email }})
-                            ({{ gettext('Customer Phone') }}: {{ booking.customer_phone if booking.customer_phone else gettext('N/A') }})
-                        </li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p>{{ gettext('No upcoming bookings.') }}</p>
-            {% endif %}
-        </section>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+    <div class="bg-white shadow-md rounded-lg p-6">
+        <h3 class="text-xl font-semibold text-gray-900 mb-3">{{ _('Total Bookings') }}</h3>
+        <p class="text-4xl font-bold text-indigo-600">{{ analytics.total_bookings }}</p>
+    </div>
+    <div class="bg-white shadow-md rounded-lg p-6">
+        <h3 class="text-xl font-semibold text-gray-900 mb-3">{{ _('Subscription Status') }}</h3>
+        <p class="text-2xl font-bold {% if owner.subscription_status == 'premium' %}text-green-600{% else %}text-yellow-600{% endif %}">
+            {{ owner.subscription_status | capitalize }}
+        </p>
+        <a href="/subscription" class="text-indigo-600 hover:underline mt-2 inline-block">{{ _('Manage Subscription') }}</a>
+    </div>
+    <div class="bg-white shadow-md rounded-lg p-6">
+        <h3 class="text-xl font-semibold text-gray-900 mb-3">{{ _('Your Public Booking Page') }}</h3>
+        <p class="text-indigo-600 break-all">
+            <a href="/book/{{ owner.name }}" target="_blank" class="hover:underline">
+                {{ request.url.scheme }}://{{ request.url.netloc }}/book/{{ owner.name }}
+            </a>
+        </p>
+        <p class="text-sm text-gray-500 mt-2">{{ _('Share this link with your customers!') }}</p>
+    </div>
+</div>
 
-        <section>
-            <h2>{{ gettext('Analytics') }}</h2>
-            <p>{{ gettext('Total Bookings') }}: {{ analytics.total_bookings }}</p>
-            <h3>{{ gettext('Monthly Bookings') }}</h3>
-            <ul>
-                {% for item in analytics.monthly_bookings %}
-                    <li>{{ item.month }}: {{ item.count }} {{ gettext('bookings') }}</li>
-                {% endfor %}
-            </ul>
-            <h3>{{ gettext('Popular Services') }}</h3>
-            <ul>
-                {% for item in analytics.popular_services %}
-                    <li>{{ item.service_name }}: {{ item.count }} {{ gettext('bookings') }}</li>
-                {% endfor %}
-            </ul>
-        </section>
-    </main>
-    <footer>
-        <p>&copy; 2023 BookSlot. {{ gettext('All rights reserved.') }}</p>
-    </footer>
-    <script>
-        function changeLanguage(lang) {
-            document.cookie = "lang=" + lang + "; path=/; max-age=31536000";
-            location.reload();
-        }
-    </script>
-</body>
-</html>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="bg-white shadow-md rounded-lg p-6">
+        <h3 class="text-xl font-semibold text-gray-900 mb-4">{{ _('Upcoming Bookings') }}</h3>
+        {% if bookings %}
+        <ul class="divide-y divide-gray-200">
+            {% for booking in bookings %}
+            <li class="py-4">
+                <p class="text-lg font-medium text-gray-900">{{ booking.service.name }}</p>
+                <p class="text-gray-700">{{ _('Customer') }}: {{ booking.customer_name }}</p>
+                <p class="text-gray-700">{{ _('Time') }}: {{ booking.booking_time.strftime('%Y-%m-%d %H:%M') }}</p>
+                <p class="text-gray-700">{{ _('Contact') }}: {{ booking.customer_email }}{% if booking.customer_phone %} / {{ booking.customer_phone }}{% endif %}</p>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-gray-600">{{ _('No upcoming bookings.') }}</p>
+        {% endif %}
+    </div>
+
+    <div class="bg-white shadow-md rounded-lg p-6">
+        <h3 class="text-xl font-semibold text-gray-900 mb-4">{{ _('Monthly Bookings') }}</h3>
+        {% if analytics.monthly_bookings %}
+        <ul class="divide-y divide-gray-200">
+            {% for month_data in analytics.monthly_bookings %}
+            <li class="py-2 flex justify-between items-center">
+                <span class="text-gray-700">{{ month_data.month }}</span>
+                <span class="text-indigo-600 font-semibold">{{ month_data.count }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-gray-600">{{ _('No monthly booking data available.') }}</p>
+        {% endif %}
+
+        <h3 class="text-xl font-semibold text-gray-900 mt-6 mb-4">{{ _('Popular Services') }}</h3>
+        {% if analytics.popular_services %}
+        <ul class="divide-y divide-gray-200">
+            {% for service_data in analytics.popular_services %}
+            <li class="py-2 flex justify-between items-center">
+                <span class="text-gray-700">{{ service_data.service_name }}</span>
+                <span class="text-indigo-600 font-semibold">{{ service_data.count }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-gray-600">{{ _('No popular services data available.') }}</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

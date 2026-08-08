@@ -1,255 +1,321 @@
-from fastapi import FastAPI, Depends, HTTPException, status, Request, Form, Response, APIRouter
+from fastapi import FastAPI, Depends, HTTPException, status, Request, Form, Response
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy.orm import Session
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
-from sqlalchemy.orm import Session
-from datetime import timedelta, datetime
-import os
+from fastapi.encoders import jsonable_encoder
+from typing import List, Optional
+from datetime import datetime, time, timedelta
+import pytz
 import stripe
-from babel.dates import format_date, format_time, format_datetime
+import json
+import gettext
+from gettext import gettext as _ # Alias for direct use of gettext
+from babel.dates import format_date, format_datetime, format_time
 from babel.numbers import format_currency
-from gettext import translation, bindtextdomain, textdomain
-import locale as sys_locale # Not directly used for i18n, but for potential system locale queries if needed
 
-# Import custom modules
-from . import crud, models, schemas, security
+from . import crud, models, schemas, security, notifications
 from .database import SessionLocal, engine, get_db
 from .config import settings
-from .notifications import send_booking_confirmation_email, send_owner_notification_email, send_whatsapp_message
 
-# Ensure tables are created
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
-# Mount static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
-
-# Templates setup
 templates = Jinja2Templates(directory="templates")
 
-# Stripe setup
-stripe.api_key = settings.STRIPE_SECRET_KEY
+# Internationalization setup
+locales_dir = settings.LOCALES_DIR
+LANGUAGES = {"en": "English", "ar": "العربية", "fr": "Français"}
 
-# i18n setup
-def get_locale(request: Request) -> str:
-    lang_cookie = request.cookies.get("lang")
-    if lang_cookie and lang_cookie in ["en", "ar", "fr"]:
-        return lang_cookie
+def get_locale(request: Request):
+    # Try to get language from cookie
+    lang = request.cookies.get("lang")
+    if lang and lang in LANGUAGES:
+        return lang
+    # Fallback to Accept-Language header (simplified, might need more robust parsing)
+    accept_language = request.headers.get("Accept-Language", settings.DEFAULT_LOCALE)
+    for lang_code in accept_language.split(','):
+        lang_code = lang_code.split(';')[0].strip().lower()
+        if lang_code in LANGUAGES:
+            return lang_code
     return settings.DEFAULT_LOCALE
 
-def get_translations(locale: str):
+def get_translator(request: Request):
+    lang = get_locale(request)
     try:
-        # Ensure the domain is bound to the correct directory
-        bindtextdomain('messages', settings.LOCALES_DIR)
-        # Set the textdomain for the current process
-        textdomain('messages')
-        # Get the translation object for the specified locale
-        _t = translation('messages', settings.LOCALES_DIR, languages=[locale]).gettext
+        # Load translation for the determined language
+        t = gettext.translation('messages', locales_dir, languages=[lang], fallback=True)
+        t.install()
+        return t.gettext
     except Exception as e:
-        print(f"Error loading translation for locale {locale}: {e}")
-        _t = lambda x: x # Fallback to original string if translation fails
-    return _t
+        print(f"Error loading translation for {lang}: {e}")
+        return gettext.gettext # Fallback to default gettext
 
 @app.middleware("http")
 async def add_i18n_context(request: Request, call_next):
-    # Handle language setting from query param and update cookie
-    lang_param = request.query_params.get("lang")
-    if lang_param and lang_param in ["en", "ar", "fr"]:
-        response = RedirectResponse(url=request.url.remove_query_params(keys=["lang"]), status_code=status.HTTP_302_FOUND)
-        response.set_cookie(key="lang", value=lang_param, httponly=True, max_age=30*24*60*60) # 30 days
-        return response
+    _ = get_translator(request)
+    request.state.gettext = _
 
-    locale = get_locale(request)
-    _ = get_translations(locale)
-    request.state.locale = locale
-    request.state._ = _
-
-    # Add Jinja2 globals for i18n
-    templates.env.globals['gettext'] = _
-    templates.env.globals['locale'] = locale
-    templates.env.globals['format_datetime'] = lambda dt, format='medium': format_datetime(dt, format=format, locale=locale)
-    templates.env.globals['format_date'] = lambda d, format='medium': format_date(d, format=format, locale=locale)
-    templates.env.globals['format_time'] = lambda t, format='medium': format_time(t, format=format, locale=locale)
-    
-    # Currency formatting, assuming price is in cents and currency is 'USD' for simplicity in MVP
-    # In a real app, currency should be configurable per owner/service
-    templates.env.globals['format_currency'] = lambda amount, currency: format_currency(amount / 100, currency, locale=locale) # Assuming price is in cents
+    # Add locale and formatters to request state for templates
+    request.state.locale = get_locale(request)
+    request.state.format_datetime = lambda dt, format='medium', locale=request.state.locale: format_datetime(dt, format=format, locale=locale)
+    request.state.format_date = lambda d, format='medium', locale=request.state.locale: format_date(d, format=format, locale=locale)
+    request.state.format_time = lambda t, format='medium', locale=request.state.locale: format_time(t, format=format, locale=locale)
+    request.state.format_currency = lambda amount, currency, locale=request.state.locale: format_currency(amount, currency, locale=locale)
 
     response = await call_next(request)
     return response
 
-# Root route
-@app.get("/", response_class=HTMLResponse)
-async def read_root(request: Request):
-    _ = request.state._
-    return templates.TemplateResponse("index.html", {"request": request, "title": _("Welcome to BookSlot")})
+@app.get("/health", response_class=HTMLResponse)
+async def health_check():
+    return "OK"
 
-# Owner authentication routes
+@app.get("/set-language/{lang}")
+async def set_language(lang: str, response: Response):
+    if lang in LANGUAGES:
+        response.set_cookie(key="lang", value=lang, httponly=True, max_age=3600*24*30) # 30 days
+    return RedirectResponse(url="/", status_code=status.HTTP_302_FOUND) # Redirect to home or referrer
+
+
 @app.post("/token", response_model=schemas.Token)
 async def login_for_access_token(request: Request, db: Session = Depends(get_db), form_data: OAuth2PasswordRequestForm = Depends()):
-    _ = request.state._
-    owner = security.authenticate_owner(db, form_data.username, form_data.password)
-    if not owner:
+    owner = crud.get_owner_by_email(db, email=form_data.username)
+    if not owner or not security.verify_password(form_data.password, owner.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=_("Incorrect username or password"),
+            detail=request.state.gettext("Incorrect email or password"),
             headers={"WWW-Authenticate": "Bearer"},
         )
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = security.create_access_token(
         data={"sub": owner.email}, expires_delta=access_token_expires
     )
-    # Redirect to dashboard on successful login
-    response = RedirectResponse(url=app.url_path_for("owner_dashboard"), status_code=status.HTTP_302_FOUND)
-    response.set_cookie(key="access_token", value=f"Bearer {access_token}", httponly=True, max_age=access_token_expires.total_seconds())
+    # Redirect to dashboard after successful login
+    response = RedirectResponse(url="/dashboard", status_code=status.HTTP_302_FOUND)
+    response.set_cookie(key="access_token", value=access_token, httponly=True, max_age=access_token_expires.total_seconds())
+    response.set_cookie(key="token_type", value="bearer", httponly=True, max_age=access_token_expires.total_seconds())
     return response
 
-@app.get("/login", response_class=HTMLResponse)
-async def login_page(request: Request):
-    _ = request.state._
-    return templates.TemplateResponse("login.html", {"request": request, "title": _("Login")})
-
-@app.get("/logout", response_class=RedirectResponse)
-async def logout(request: Request):
-    response = RedirectResponse(url=app.url_path_for("login_page"), status_code=status.HTTP_302_FOUND)
-    response.delete_cookie(key="access_token")
-    return response
+@app.get("/", response_class=HTMLResponse)
+async def read_root(request: Request, db: Session = Depends(get_db)):
+    _ = request.state.gettext
+    return templates.TemplateResponse("index.html", {"request": request, "languages": LANGUAGES, "_": _})
 
 @app.get("/register", response_class=HTMLResponse)
 async def register_page(request: Request):
-    _ = request.state._
-    return templates.TemplateResponse("register.html", {"request": request, "title": _("Register")})
+    _ = request.state.gettext
+    return templates.TemplateResponse("register.html", {"request": request, "languages": LANGUAGES, "_": _})
 
-@app.post("/register", response_class=RedirectResponse)
-async def register_owner(request: Request, db: Session = Depends(get_db), name: str = Form(...), email: EmailStr = Form(...), phone: Optional[str] = Form(None), password: str = Form(...)):
-    _ = request.state._
+@app.post("/register", response_class=HTMLResponse)
+async def register_owner(request: Request, db: Session = Depends(get_db),
+                         name: str = Form(...), email: str = Form(...),
+                         password: str = Form(...), phone: Optional[str] = Form(None)):
+    _ = request.state.gettext
     db_owner = crud.get_owner_by_email(db, email=email)
     if db_owner:
-        raise HTTPException(status_code=400, detail=_("Email already registered"))
+        return templates.TemplateResponse("register.html", {"request": request, "error": _("Email already registered"), "languages": LANGUAGES, "_": _})
 
     hashed_password = security.get_password_hash(password)
-    owner_create = schemas.OwnerCreate(name=name, email=email, phone=phone, password=password) # password is not hashed yet in schema
+    owner_create = schemas.OwnerCreate(name=name, email=email, password=password, phone=phone)
     owner = crud.create_owner(db=db, owner=owner_create, hashed_password=hashed_password)
-    
-    # Auto-login after registration
+
+    # Log in the owner immediately after registration
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = security.create_access_token(
         data={"sub": owner.email}, expires_delta=access_token_expires
     )
-    response = RedirectResponse(url=app.url_path_for("owner_dashboard"), status_code=status.HTTP_302_FOUND)
-    response.set_cookie(key="access_token", value=f"Bearer {access_token}", httponly=True, max_age=access_token_expires.total_seconds())
+    response = RedirectResponse(url="/dashboard", status_code=status.HTTP_302_FOUND)
+    response.set_cookie(key="access_token", value=access_token, httponly=True, max_age=access_token_expires.total_seconds())
+    response.set_cookie(key="token_type", value="bearer", httponly=True, max_age=access_token_expires.total_seconds())
     return response
 
-# Owner dashboard and profile management
 @app.get("/dashboard", response_class=HTMLResponse)
-async def owner_dashboard(request: Request, current_user: models.Owner = Depends(security.get_current_active_owner), db: Session = Depends(get_db)):
-    _ = request.state._
-    bookings = crud.get_owner_upcoming_bookings(db, owner_id=current_user.id)
-    services = crud.get_owner_services(db, owner_id=current_user.id)
-    return templates.TemplateResponse("dashboard.html", {"request": request, "owner": current_user, "bookings": bookings, "services": services, "title": _("Dashboard")})
+async def owner_dashboard(request: Request, db: Session = Depends(get_db), current_owner: models.Owner = Depends(security.get_current_owner)):
+    _ = request.state.gettext
+    services = crud.get_owner_services(db, owner_id=current_owner.id)
+    bookings = crud.get_owner_upcoming_bookings(db, owner_id=current_owner.id)
+    analytics_data = crud.get_owner_analytics(db, owner_id=current_owner.id)
+    return templates.TemplateResponse("dashboard.html", {
+        "request": request,
+        "owner": current_owner,
+        "services": services,
+        "bookings": bookings,
+        "analytics": analytics_data,
+        "languages": LANGUAGES,
+        "_": _,
+        "settings": settings,
+        "stripe_public_key": settings.STRIPE_PUBLIC_KEY
+    })
 
-@app.get("/profile", response_class=HTMLResponse)
-async def owner_profile_page(request: Request, current_user: models.Owner = Depends(security.get_current_active_owner)):
-    _ = request.state._
-    return templates.TemplateResponse("profile.html", {"request": request, "owner": current_user, "title": _("Profile")})
-
-@app.post("/profile", response_class=RedirectResponse)
-async def update_owner_profile(
-    request: Request,
-    current_user: models.Owner = Depends(security.get_current_active_owner),
-    db: Session = Depends(get_db),
-    name: str = Form(...),
-    phone: Optional[str] = Form(None)
-):
-    _ = request.state._
-    owner_update = schemas.OwnerProfileUpdate(name=name, phone=phone if phone else None)
+@app.post("/dashboard/profile", response_class=HTMLResponse)
+async def update_owner_profile_endpoint(request: Request, db: Session = Depends(get_db),
+                                        current_owner: models.Owner = Depends(security.get_current_owner),
+                                        name: str = Form(...), phone: Optional[str] = Form(None)):
+    _ = request.state.gettext
     try:
-        crud.update_owner_profile(db, current_user, owner_update)
-        return RedirectResponse(url=app.url_path_for("owner_profile_page"), status_code=status.HTTP_302_FOUND)
+        owner_update = schemas.OwnerProfileUpdate(name=name, phone=phone)
+        crud.update_owner_profile(db, current_owner, owner_update)
+        return RedirectResponse(url="/dashboard?message=" + _("Profile updated successfully!"), status_code=status.HTTP_302_FOUND)
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        return RedirectResponse(url="/dashboard?error=" + _("Error updating profile: ") + str(e), status_code=status.HTTP_302_FOUND)
 
-# Public booking page
-@app.get("/book/{owner_name}", response_class=HTMLResponse)
+@app.get("/logout", response_class=HTMLResponse)
+async def logout(response: Response):
+    response = RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
+    response.delete_cookie(key="access_token")
+    response.delete_cookie(key="token_type")
+    return response
+
+@app.get("/{owner_name}", response_class=HTMLResponse)
 async def booking_page(request: Request, owner_name: str, db: Session = Depends(get_db)):
-    _ = request.state._
+    _ = request.state.gettext
     owner = db.query(models.Owner).filter(models.Owner.name == owner_name).first()
     if not owner:
-        raise HTTPException(status_code=404, detail=_("Owner not found"))
-    services = crud.get_owner_services(db, owner.id)
-    return templates.TemplateResponse("booking_page.html", {"request": request, "owner": owner, "services": services, "title": _("Book an Appointment")})
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=_("Owner not found"))
 
-@app.post("/book/{owner_name}/submit", response_class=RedirectResponse)
-async def submit_booking(
-    request: Request,
-    owner_name: str,
-    db: Session = Depends(get_db),
-    customer_name: str = Form(...),
-    customer_email: EmailStr = Form(...),
-    customer_phone: Optional[str] = Form(None),
-    booking_date: str = Form(...), # YYYY-MM-DD
-    booking_time: str = Form(...), # HH:MM
-    service_id: int = Form(...)
-):
-    _ = request.state._
+    services = crud.get_owner_services(db, owner_id=owner.id)
+    if not services:
+        return templates.TemplateResponse("booking_page.html", {
+            "request": request,
+            "owner": owner,
+            "services": [],
+            "error": _("No services available for this owner."),
+            "languages": LANGUAGES,
+            "_": _
+        })
+
+    # Group availability by service
+    services_with_availability = []
+    for service in services:
+        availability_slots = []
+        for avail in service.availability:
+            availability_slots.append({
+                "day_of_week": avail.day_of_week,
+                "start_time": avail.start_time,
+                "end_time": avail.end_time
+            })
+        services_with_availability.append({
+            "id": service.id,
+            "name": service.name,
+            "description": service.description,
+            "duration_minutes": service.duration_minutes,
+            "price": service.price,
+            "availability": availability_slots
+        })
+
+    return templates.TemplateResponse("booking_page.html", {
+        "request": request,
+        "owner": owner,
+        "services": services_with_availability,
+        "languages": LANGUAGES,
+        "_": _
+    })
+
+@app.post("/{owner_name}/book", response_class=HTMLResponse)
+async def submit_booking(request: Request, owner_name: str, db: Session = Depends(get_db),
+                         service_id: int = Form(...),
+                         customer_name: str = Form(...),
+                         customer_email: EmailStr = Form(...),
+                         customer_phone: Optional[str] = Form(None),
+                         booking_date: str = Form(...),
+                         booking_time_str: str = Form(...)):
+    _ = request.state.gettext
     owner = db.query(models.Owner).filter(models.Owner.name == owner_name).first()
     if not owner:
-        raise HTTPException(status_code=404, detail=_("Owner not found"))
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=_("Owner not found"))
 
-    service = crud.get_service_by_id(db, service_id)
+    service = crud.get_service_by_id(db, service_id=service_id)
     if not service or service.owner_id != owner.id:
-        raise HTTPException(status_code=400, detail=_("Invalid service selected"))
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=_("Service not found for this owner"))
 
     try:
-        booking_datetime_str = f"{booking_date} {booking_time}"
-        booking_dt = datetime.strptime(booking_datetime_str, "%Y-%m-%d %H:%M")
+        # Combine date and time string and parse with timezone awareness
+        booking_datetime_str = f"{booking_date} {booking_time_str}"
+        # Assume UTC for stored times, or a specific timezone for the owner
+        # For simplicity, let's assume incoming booking_time_str is in owner's local time (if specified)
+        # or just parse as naive and then localize (or assume UTC for now)
+        # For now, let's treat booking_datetime_str as naive and convert to UTC for storage
+        booking_datetime_naive = datetime.strptime(booking_datetime_str, "%Y-%m-%d %H:%M")
+        booking_datetime_utc = pytz.utc.localize(booking_datetime_naive) # Assuming naive datetime is UTC for simplicity
+
+        # Basic availability check (needs to be more robust for real-world)
+        # This is a minimal check; actual implementation needs to consider service duration, existing bookings, etc.
+        # For MVP, we assume the UI only presents available slots.
+        # This part requires a more sophisticated calendar/scheduling library as per roadmap.
+
+        booking_data = schemas.BookingCreate(
+            service_id=service.id,
+            customer_name=customer_name,
+            customer_email=customer_email,
+            customer_phone=customer_phone,
+            booking_time=booking_datetime_utc
+        )
+        booking = crud.create_booking(db, booking_data, owner_id=owner.id)
+
+        # Send notifications
+        notifications.send_owner_notification(owner, service, booking)
+        notifications.send_customer_confirmation(owner, service, booking)
+
+        # Redirect to a confirmation page
+        return RedirectResponse(url=f"/{owner_name}/booking-confirmation/{booking.id}", status_code=status.HTTP_302_FOUND)
+
     except ValueError:
-        raise HTTPException(status_code=400, detail=_("Invalid date or time format"))
-
-    if booking_dt < datetime.now():
-        raise HTTPException(status_code=400, detail=_("Booking time cannot be in the past"))
-
-    booking_data = schemas.BookingCreate(
-        customer_name=customer_name,
-        customer_email=customer_email,
-        customer_phone=customer_phone if customer_phone else None,
-        booking_time=booking_dt,
-        service_id=service_id
-    )
-    
-    try:
-        db_booking = crud.create_booking(db, booking_data, owner.id)
+        return templates.TemplateResponse("booking_page.html", {
+            "request": request,
+            "owner": owner,
+            "services": crud.get_owner_services(db, owner.id),
+            "error": _("Invalid date or time format."),
+            "languages": LANGUAGES,
+            "_": _
+        })
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        # Log the error for debugging
+        print(f"Booking error: {e}")
+        return templates.TemplateResponse("booking_page.html", {
+            "request": request,
+            "owner": owner,
+            "services": crud.get_owner_services(db, owner.id),
+            "error": _("An error occurred during booking. Please try again."),
+            "languages": LANGUAGES,
+            "_": _
+        })
 
-    # Send notifications
-    try:
-        await send_booking_confirmation_email(owner, db_booking, service)
-        await send_owner_notification_email(owner, db_booking, service)
-        if owner.phone and settings.TWILIO_WHATSAPP_NUMBER: # Only send WhatsApp if owner has phone and Twilio is configured
-            await send_whatsapp_message(owner, db_booking, service)
-    except Exception as e:
-        # Log the error but don't prevent booking completion
-        print(f"Notification sending failed: {e}")
+@app.get("/{owner_name}/booking-confirmation/{booking_id}", response_class=HTMLResponse)
+async def booking_confirmation_page(request: Request, owner_name: str, booking_id: int, db: Session = Depends(get_db)):
+    _ = request.state.gettext
+    owner = db.query(models.Owner).filter(models.Owner.name == owner_name).first()
+    if not owner:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=_("Owner not found"))
 
-    return RedirectResponse(url=app.url_path_for("booking_confirmation_page"), status_code=status.HTTP_302_FOUND)
+    booking = db.query(models.Booking).filter(models.Booking.id == booking_id, models.Booking.owner_id == owner.id).first()
+    if not booking:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=_("Booking not found"))
 
-@app.get("/booking-confirmation", response_class=HTMLResponse)
-async def booking_confirmation_page(request: Request):
-    _ = request.state._
-    return templates.TemplateResponse("booking_confirmation.html", {"request": request, "title": _("Booking Confirmed")})
+    service = crud.get_service_by_id(db, booking.service_id)
+    if not service:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=_("Service not found for this booking"))
 
-# Stripe payment and subscription management
+    # Pass the locale-aware formatters to the template
+    return templates.TemplateResponse("booking_confirmation.html", {
+        "request": request,
+        "owner": owner,
+        "booking": booking,
+        "service": service,
+        "languages": LANGUAGES,
+        "_": _
+    })
+
+# Stripe related endpoints
 @app.post("/create-checkout-session")
-async def create_checkout_session(
-    request: Request,
-    current_user: models.Owner = Depends(security.get_current_active_owner),
-    db: Session = Depends(get_db)
-):
-    _ = request.state._
+async def create_checkout_session(request: Request, current_owner: models.Owner = Depends(security.get_current_owner), db: Session = Depends(get_db)):
+    _ = request.state.gettext
     try:
+        if not settings.STRIPE_PRICE_ID:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=_("Stripe Price ID is not configured."))
+
         checkout_session = stripe.checkout.Session.create(
             line_items=[
                 {
@@ -258,17 +324,22 @@ async def create_checkout_session(
                 },
             ],
             mode='subscription',
-            success_url=f"{settings.SERVER_NAME}/dashboard?success=true",
-            cancel_url=f"{settings.SERVER_NAME}/subscription-management?cancelled=true",
-            customer_email=current_user.email,
-            client_reference_id=str(current_user.id) # Link to owner in Stripe
+            success_url=f"{settings.SERVER_NAME}/dashboard?session_id={{CHECKOUT_SESSION_ID}}",
+            cancel_url=f"{settings.SERVER_NAME}/dashboard?canceled=true",
+            customer_email=current_owner.email,
+            client_reference_id=str(current_owner.id),
+            metadata={
+                "owner_id": current_owner.id,
+                "owner_email": current_owner.email,
+            }
         )
         return RedirectResponse(checkout_session.url, status_code=status.HTTP_303_SEE_OTHER)
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=_("Error creating checkout session: ") + str(e))
 
 @app.post("/stripe-webhook")
 async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
+    _ = request.state.gettext
     payload = await request.body()
     sig_header = request.headers.get('stripe-signature')
 
@@ -278,110 +349,116 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
         )
     except ValueError as e:
         # Invalid payload
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=_("Invalid payload"))
     except stripe.error.SignatureVerificationError as e:
         # Invalid signature
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=_("Invalid signature"))
 
     # Handle the event
     if event['type'] == 'checkout.session.completed':
         session = event['data']['object']
-        owner_id = session.get('client_reference_id')
+        owner_id = session.get('metadata', {}).get('owner_id')
         customer_id = session.get('customer')
         subscription_id = session.get('subscription')
 
         if owner_id and customer_id and subscription_id:
             owner = crud.get_owner(db, int(owner_id))
             if owner:
-                crud.update_owner_subscription_status(db, owner, "premium", customer_id, subscription_id)
-                print(f"Owner {owner.id} upgraded to premium. Stripe Customer ID: {customer_id}, Subscription ID: {subscription_id}")
+                crud.update_owner_subscription_status(db, owner, "premium", stripe_customer_id=customer_id, stripe_subscription_id=subscription_id)
+                print(f"Owner {owner.id} upgraded to premium. Customer ID: {customer_id}, Subscription ID: {subscription_id}")
             else:
                 print(f"Owner with ID {owner_id} not found for subscription update.")
+        else:
+            print("Missing owner_id, customer_id, or subscription_id in checkout.session.completed event.")
 
     elif event['type'] == 'customer.subscription.deleted':
         subscription = event['data']['object']
         customer_id = subscription.get('customer')
-
+        
         owner = db.query(models.Owner).filter(models.Owner.stripe_customer_id == customer_id).first()
         if owner:
-            crud.update_owner_subscription_status(db, owner, "cancelled")
-            print(f"Owner {owner.id} subscription cancelled.")
+            crud.update_owner_subscription_status(db, owner, "free", stripe_subscription_id=None)
+            print(f"Owner {owner.id} subscription deleted. Reverted to free.")
         else:
-            print(f"Owner with Stripe Customer ID {customer_id} not found for subscription cancellation.")
+            print(f"Owner with Stripe Customer ID {customer_id} not found for subscription deletion.")
 
-    return Response(status_code=200)
+    elif event['type'] == 'invoice.payment_failed':
+        invoice = event['data']['object']
+        customer_id = invoice.get('customer')
+        # Optionally handle payment failures, e.g., notify owner
+        print(f"Payment failed for customer {customer_id}.")
 
-@app.get("/analytics", response_model=schemas.OwnerAnalytics)
-async def get_owner_analytics_data(current_user: models.Owner = Depends(security.get_current_active_owner), db: Session = Depends(get_db)):
-    _ = request.state._
-    analytics_data = crud.get_owner_analytics(db, current_user.id)
-    return schemas.OwnerAnalytics(**analytics_data)
+    return Response(status_code=status.HTTP_200_OK)
 
-@app.get("/subscription-management", response_class=HTMLResponse)
-async def subscription_management_page(request: Request, current_user: models.Owner = Depends(security.get_current_active_owner)):
-    _ = request.state._
-    stripe_public_key = settings.STRIPE_PUBLIC_KEY
-    return templates.TemplateResponse("subscription_management.html", {
+# Admin Endpoints
+@app.post("/admin/token", response_model=schemas.Token)
+async def admin_login_for_access_token(request: Request, db: Session = Depends(get_db), form_data: OAuth2PasswordRequestForm = Depends()):
+    _ = request.state.gettext
+    admin = crud.get_admin_by_email(db, email=form_data.username)
+    if not admin or not security.verify_password(form_data.password, admin.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=_("Incorrect admin email or password"),
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = security.create_admin_access_token(
+        data={"sub": admin.email}, expires_delta=access_token_expires
+    )
+    # This token is for API access. For UI, we'll redirect and set cookie.
+    response = RedirectResponse(url="/admin", status_code=status.HTTP_302_FOUND)
+    response.set_cookie(key="admin_access_token", value=access_token, httponly=True, max_age=access_token_expires.total_seconds())
+    response.set_cookie(key="admin_token_type", value="bearer", httponly=True, max_age=access_token_expires.total_seconds())
+    return response
+
+@app.get("/admin/login", response_class=HTMLResponse)
+async def admin_login_page(request: Request):
+    _ = request.state.gettext
+    return templates.TemplateResponse("admin_login.html", {"request": request, "languages": LANGUAGES, "_": _})
+
+@app.get("/admin", response_class=HTMLResponse)
+async def admin_dashboard_page(request: Request, db: Session = Depends(get_db), current_admin: models.Admin = Depends(security.get_current_active_admin)):
+    _ = request.state.gettext
+    owners = crud.get_owners(db) # Fetch all owners for display
+    return templates.TemplateResponse("admin_dashboard.html", {
         "request": request,
-        "owner": current_user,
-        "stripe_public_key": stripe_public_key,
-        "title": _("Subscription Management")
+        "admin": current_admin,
+        "owners": owners,
+        "languages": LANGUAGES,
+        "_": _
     })
 
-# Admin specific routes
-admin_router = APIRouter(
-    prefix="/admin",
-    tags=["admin"],
-    dependencies=[Depends(security.get_current_admin_user)], # All admin routes require admin privileges
-    responses={403: {"description": "Not authenticated as admin"}},
-)
+@app.get("/admin/logout", response_class=HTMLResponse)
+async def admin_logout(response: Response):
+    response = RedirectResponse(url="/admin/login", status_code=status.HTTP_302_FOUND)
+    response.delete_cookie(key="admin_access_token")
+    response.delete_cookie(key="admin_token_type")
+    return response
 
-@admin_router.get("/dashboard", response_class=HTMLResponse)
-async def admin_dashboard(request: Request, db: Session = Depends(get_db)):
-    _ = request.state._
-    owners = crud.get_owners(db)
-    return templates.TemplateResponse("admin_dashboard.html", {"request": request, "owners": owners, "title": _("Admin Dashboard")})
+# API endpoints for admin to manage owners
+@app.get("/admin/api/owners", response_model=List[schemas.Owner])
+async def get_all_owners(db: Session = Depends(get_db), current_admin: models.Admin = Depends(security.get_current_active_admin), skip: int = 0, limit: int = 100):
+    owners = crud.get_owners(db, skip=skip, limit=limit)
+    return owners
 
-@admin_router.get("/owners/{owner_id}", response_class=HTMLResponse)
-async def admin_owner_detail(request: Request, owner_id: int, db: Session = Depends(get_db)):
-    _ = request.state._
-    owner = crud.get_owner(db, owner_id=owner_id)
+@app.get("/admin/api/owners/{owner_id}", response_model=schemas.Owner)
+async def get_owner_details(owner_id: int, db: Session = Depends(get_db), current_admin: models.Admin = Depends(security.get_current_active_admin)):
+    owner = crud.get_owner(db, owner_id)
     if not owner:
-        raise HTTPException(status_code=404, detail=_("Owner not found"))
-    return templates.TemplateResponse("admin_owner_detail.html", {"request": request, "owner": owner, "title": _("Manage Owner")})
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Owner not found")
+    return owner
 
-@admin_router.post("/owners/{owner_id}/update", response_class=RedirectResponse)
-async def admin_update_owner(
-    request: Request,
-    owner_id: int,
-    name: str = Form(...),
-    email: EmailStr = Form(...),
-    phone: Optional[str] = Form(None),
-    subscription_status: str = Form(...),
-    is_admin: bool = Form(False),
-    db: Session = Depends(get_db)
-):
-    _ = request.state._
-    owner = crud.get_owner(db, owner_id=owner_id)
+@app.put("/admin/api/owners/{owner_id}", response_model=schemas.Owner)
+async def update_owner_details_by_admin(owner_id: int, owner_update: schemas.OwnerAdminUpdate, db: Session = Depends(get_db), current_admin: models.Admin = Depends(security.get_current_active_admin)):
+    owner = crud.get_owner(db, owner_id)
     if not owner:
-        raise HTTPException(status_code=404, detail=_("Owner not found"))
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Owner not found")
+    updated_owner = crud.update_owner_by_admin(db, owner, owner_update)
+    return updated_owner
 
-    owner_update = schemas.OwnerAdminUpdate(
-        name=name,
-        email=email,
-        phone=phone if phone else None,
-        subscription_status=subscription_status,
-        is_admin=is_admin
-    )
-    crud.update_owner_by_admin(db, owner, owner_update)
-    return RedirectResponse(url=app.url_path_for("admin_owner_detail", owner_id=owner_id), status_code=status.HTTP_302_FOUND)
-
-@admin_router.post("/owners/{owner_id}/delete", response_class=RedirectResponse)
-async def admin_delete_owner(request: Request, owner_id: int, db: Session = Depends(get_db)):
-    _ = request.state._
-    success = crud.delete_owner(db, owner_id=owner_id)
+@app.delete("/admin/api/owners/{owner_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_owner_by_admin(owner_id: int, db: Session = Depends(get_db), current_admin: models.Admin = Depends(security.get_current_active_admin)):
+    success = crud.delete_owner(db, owner_id)
     if not success:
-        raise HTTPException(status_code=404, detail=_("Owner not found"))
-    return RedirectResponse(url=app.url_path_for("admin_dashboard"), status_code=status.HTTP_302_FOUND)
-
-app.include_router(admin_router)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Owner not found")
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

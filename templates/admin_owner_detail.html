@@ -1,50 +1,85 @@
 <!DOCTYPE html>
-<html lang="{{ locale }}">
+<html lang="{{ lang }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ title }} - {{ owner.name }}</title>
-    <link rel="stylesheet" href="/static/css/styles.css">
+    <title>{{ _('Edit Owner') }} - {{ owner.name }}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        body { font-family: sans-serif; margin: 20px; background-color: #f4f7f6; }
+        .container { max-width: 600px; margin: 40px auto; padding: 30px; border: 1px solid #e0e0e0; border-radius: 8px; background-color: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        h1 { text-align: center; color: #333; margin-bottom: 30px; }
+        form div { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; color: #555; }
+        input[type="text"], input[type="email"], select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 16px;
+            transition: border-color 0.2s;
+        }
+        input[type="text"]:focus, input[type="email"]:focus, select:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+        input[type="checkbox"] {
+            margin-right: 8px;
+            transform: scale(1.2);
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 17px;
+            width: 100%;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .back-link { display: block; margin-top: 30px; text-align: center; text-decoration: none; color: #007bff; font-weight: bold; }
+        .back-link:hover { text-decoration: underline; }
+    </style>
 </head>
 <body>
     <div class="container">
-        <div class="language-toggle">
-            <a href="?lang=en" class="{{ 'active' if locale == 'en' }}">English</a> |
-            <a href="?lang=ar" class="{{ 'active' if locale == 'ar' }}">العربية</a> |
-            <a href="?lang=fr" class="{{ 'active' if locale == 'fr' }}">Français</a>
-        </div>
-        <h1>{{ gettext("Manage Owner") }}: {{ owner.name }}</h1>
+        <h1>{{ _('Edit Owner') }}: {{ owner.name }}</h1>
 
         <form action="{{ url_for('admin_update_owner', owner_id=owner.id) }}" method="post">
-            <div class="form-group">
-                <label for="name">{{ gettext("Name") }}:</label>
+            <div>
+                <label for="name">{{ _('Name') }}:</label>
                 <input type="text" id="name" name="name" value="{{ owner.name }}" required>
             </div>
-            <div class="form-group">
-                <label for="email">{{ gettext("Email") }}:</label>
+            <div>
+                <label for="email">{{ _('Email') }}:</label>
                 <input type="email" id="email" name="email" value="{{ owner.email }}" required>
             </div>
-            <div class="form-group">
-                <label for="phone">{{ gettext("Phone") }}:</label>
+            <div>
+                <label for="phone">{{ _('Phone') }}:</label>
                 <input type="text" id="phone" name="phone" value="{{ owner.phone if owner.phone else '' }}">
             </div>
-            <div class="form-group">
-                <label for="subscription_status">{{ gettext("Subscription Status") }}:</label>
+            <div>
+                <label for="subscription_status">{{ _('Subscription Status') }}:</label>
                 <select id="subscription_status" name="subscription_status">
-                    <option value="free" {% if owner.subscription_status == 'free' %}selected{% endif %}>{{ gettext("Free") }}</option>
-                    <option value="premium" {% if owner.subscription_status == 'premium' %}selected{% endif %}>{{ gettext("Premium") }}</option>
-                    <option value="cancelled" {% if owner.subscription_status == 'cancelled' %}selected{% endif %}>{{ gettext("Cancelled") }}</option>
+                    <option value="free" {% if owner.subscription_status == 'free' %}selected{% endif %}>{{ _('Free') }}</option>
+                    <option value="premium" {% if owner.subscription_status == 'premium' %}selected{% endif %}>{{ _('Premium') }}</option>
                 </select>
             </div>
-            <div class="form-group">
-                <input type="checkbox" id="is_admin" name="is_admin" {% if owner.is_admin %}checked{% endif %}>
-                <label for="is_admin">{{ gettext("Is Admin") }}</label>
+            <div>
+                <label>
+                    <input type="checkbox" id="is_admin" name="is_admin" value="true" {% if owner.is_admin %}checked{% endif %}>
+                    {{ _('Is Admin') }}
+                </label>
             </div>
-            <div class="form-actions">
-                <button type="submit">{{ gettext("Update Owner") }}</button>
-            </div>
+            <button type="submit">{{ _('Update Owner') }}</button>
         </form>
-        <a href="{{ url_for('admin_dashboard') }}" class="back-link">{{ gettext("Back to Admin Dashboard") }}</a>
+
+        <a href="{{ url_for('admin_dashboard') }}" class="back-link">{{ _('Back to Admin Dashboard') }}</a>
     </div>
 </body>
 </html>

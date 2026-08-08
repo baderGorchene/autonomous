@@ -1,58 +1,66 @@
-<!DOCTYPE html>
-<html lang="{{ locale }}">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ gettext('Book a Slot with') }} {{ owner.name }}</title>
-    <link rel="stylesheet" href="/static/css/style.css">
-</head>
-<body>
-    <header>
-        <h1>{{ gettext('Book a Slot with') }} {{ owner.name }}</h1>
-        <div class="lang-toggle">
-            <a href="#" onclick="changeLanguage('en'); return false;">EN</a> |
-            <a href="#" onclick="changeLanguage('ar'); return false;">AR</a> |
-            <a href="#" onclick="changeLanguage('fr'); return false;">FR</a>
-        </div>
-    </header>
-    <main>
-        {% if error %}
-            <p style="color: red;">{{ error }}</p>
-        {% endif %}
-        <form action="/booking/{{ owner.name }}/submit" method="post">
-            <label for="customer_name">{{ gettext('Your Name') }}:</label>
-            <input type="text" id="customer_name" name="customer_name" required><br>
+{% extends "base.html" %}
+{% block title %}{{ _('Book with') }} {{ owner.name }}{% endblock %}
 
-            <label for="customer_email">{{ gettext('Your Email') }}:</label>
-            <input type="email" id="customer_email" name="customer_email" required><br>
+{% block content %}
+<div class="max-w-xl mx-auto bg-white p-8 border border-gray-200 rounded-lg shadow-md">
+    <h2 class="text-3xl font-bold text-gray-800 mb-6 text-center">{{ _('Book an Appointment with') }} {{ owner.name }}</h2>
 
-            <label for="customer_phone">{{ gettext('Your Phone (Optional)') }}:</label>
-            <input type="text" id="customer_phone" name="customer_phone"><br>
-
-            <label for="service_id">{{ gettext('Select Service') }}:</label>
-            <select id="service_id" name="service_id" required>
+    <form action="/book/{{ owner.name }}/submit" method="post" class="space-y-6">
+        <div>
+            <label for="service_id" class="block text-sm font-medium text-gray-700">{{ _('Select Service') }}</label>
+            <select id="service_id" name="service_id" required
+                    class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
                 {% for service in services %}
-                    <option value="{{ service.id }}">{{ service.name }} ({{ service.price | currency_format(locale) }} - {{ service.duration_minutes }} {{ gettext('minutes') }})</option>
+                    <option value="{{ service.id }}">{{ service.name }} - {{ service.price | currency('USD', current_lang) }} ({{ service.duration_minutes }} {{ _('minutes') }})</option>
                 {% endfor %}
-            </select><br>
+            </select>
+        </div>
 
-            <label for="booking_date">{{ gettext('Date') }}:</label>
-            <input type="date" id="booking_date" name="booking_date" required min="{{ 'now' | strftime('%Y-%m-%d') }}"><br>
+        <div>
+            <label for="customer_name" class="block text-sm font-medium text-gray-700">{{ _('Your Name') }}</label>
+            <input type="text" id="customer_name" name="customer_name" required
+                   class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+        </div>
 
-            <label for="booking_time">{{ gettext('Time') }}:</label>
-            <input type="time" id="booking_time" name="booking_time" required><br>
+        <div>
+            <label for="customer_email" class="block text-sm font-medium text-gray-700">{{ _('Your Email') }}</label>
+            <input type="email" id="customer_email" name="customer_email" required
+                   class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+        </div>
 
-            <button type="submit">{{ gettext('Book Now') }}</button>
-        </form>
-    </main>
-    <footer>
-        <p>&copy; 2023 BookSlot. {{ gettext('All rights reserved.') }}</p>
-    </footer>
-    <script>
-        function changeLanguage(lang) {
-            document.cookie = "lang=" + lang + "; path=/; max-age=31536000";
-            location.reload();
-        }
-    </script>
-</body>
-</html>
+        <div>
+            <label for="customer_phone" class="block text-sm font-medium text-gray-700">{{ _('Your Phone (Optional)') }}</label>
+            <input type="tel" id="customer_phone" name="customer_phone"
+                   class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+        </div>
+
+        <div>
+            <label for="booking_date" class="block text-sm font-medium text-gray-700">{{ _('Select Date') }}</label>
+            <input type="date" id="booking_date" name="booking_date" required
+                   class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+        </div>
+
+        <div>
+            <label for="booking_time" class="block text-sm font-medium text-gray-700">{{ _('Select Time') }}</label>
+            <input type="time" id="booking_time" name="booking_time" required
+                   class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+        </div>
+
+        <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+            {{ _('Confirm Booking') }}
+        </button>
+    </form>
+</div>
+
+<script>
+    // Set min date to today for booking_date input
+    document.addEventListener('DOMContentLoaded', function() {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0'); // Months start at 0!
+        const dd = String(today.getDate()).padStart(2, '0');
+        const minDate = `${yyyy}-${mm}-${dd}`;
+        document.getElementById('booking_date').setAttribute('min', minDate);
+    });
+</script>
+{% endblock %}

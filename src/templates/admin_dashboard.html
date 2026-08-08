@@ -1,56 +1,224 @@
-<!-- src/templates/admin_dashboard.html -->
 <!DOCTYPE html>
-<html lang="{{ request.state.locale }}">
+<html lang="{{ request.state.locale }}" dir="{{ 'rtl' if request.state.locale == 'ar' else 'ltr' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _('Admin Dashboard') }}</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+    <title>{{ _("Admin Dashboard") }} - BookSlot</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </head>
 <body class="bg-gray-100 font-sans leading-normal tracking-normal">
-    <header class="bg-white shadow-md p-4 flex justify-between items-center">
-        <h1 class="text-2xl font-bold text-gray-800">{{ _('Admin Dashboard') }}</h1>
-        <nav>
-            <a href="/dashboard" class="text-blue-600 hover:text-blue-800 mx-2">{{ _('Owner Dashboard') }}</a>
-            <a href="/logout" class="text-red-600 hover:text-red-800 mx-2">{{ _('Logout') }}</a>
-            <a href="/set_locale/en" class="text-gray-600 hover:text-gray-800 mx-1">EN</a>
-            <a href="/set_locale/ar" class="text-gray-600 hover:text-gray-800 mx-1">AR</a>
-            <a href="/set_locale/fr" class="text-gray-600 hover:text-gray-800 mx-1">FR</a>
-        </nav>
-    </header>
-
-    <main class="container mx-auto mt-8 p-4">
-        <h2 class="text-xl font-semibold mb-4">{{ _('Manage Owners') }}</h2>
-        <div class="bg-white shadow-md rounded-lg p-6">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead>
-                    <tr>
-                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ _('ID') }}</th>
-                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ _('Name') }}</th>
-                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ _('Email') }}</th>
-                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ _('Subscription') }}</th>
-                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ _('Admin') }}</th>
-                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ _('Actions') }}</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    {% for owner in owners %}
-                    <tr>
-                        <td class="px-6 py-4 whitespace-nowrap">{{ owner.id }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">{{ owner.name if owner.name else '-' }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">{{ owner.email }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">{{ owner.subscription_status }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">{% if owner.is_admin %}{{ _('Yes') }}{% else %}{{ _('No') }}{% endif %}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <!-- Placeholder for actions like Edit, Delete -->
-                            <a href="#" class="text-indigo-600 hover:text-indigo-900 mx-1">{{ _('Edit') }}</a>
-                            <a href="#" class="text-red-600 hover:text-red-900 mx-1">{{ _('Delete') }}</a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+    <nav class="bg-white p-4 shadow-md">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-blue-600">{{ _("BookSlot Admin") }}</h1>
+            <div class="flex items-center space-x-4">
+                <span class="text-gray-700">{{ _("Welcome,") }} {{ admin.name if admin.name else admin.email }}!</span>
+                <a href="/admin/logout" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+                    {{ _("Logout") }}
+                </a>
+            </div>
         </div>
-    </main>
+    </nav>
+
+    <div class="container mx-auto mt-8 p-4">
+        <h2 class="text-3xl font-bold mb-6 text-gray-800">{{ _("Manage Owners") }}</h2>
+
+        <div id="app" class="bg-white shadow-md rounded-lg p-6">
+            <div class="mb-4">
+                <input type="text" v-model="searchQuery" @input="filterOwners" placeholder="{{ _('Search by email or name...') }}"
+                       class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full bg-white">
+                    <thead>
+                        <tr>
+                            <th class="py-2 px-4 border-b border-gray-200 text-left text-sm font-semibold text-gray-600">{{ _("ID") }}</th>
+                            <th class="py-2 px-4 border-b border-gray-200 text-left text-sm font-semibold text-gray-600">{{ _("Name") }}</th>
+                            <th class="py-2 px-4 border-b border-gray-200 text-left text-sm font-semibold text-gray-600">{{ _("Email") }}</th>
+                            <th class="py-2 px-4 border-b border-gray-200 text-left text-sm font-semibold text-gray-600">{{ _("Phone") }}</th>
+                            <th class="py-2 px-4 border-b border-gray-200 text-left text-sm font-semibold text-gray-600">{{ _("Subscription") }}</th>
+                            <th class="py-2 px-4 border-b border-gray-200 text-left text-sm font-semibold text-gray-600">{{ _("Created At") }}</th>
+                            <th class="py-2 px-4 border-b border-gray-200 text-left text-sm font-semibold text-gray-600">{{ _("Actions") }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="owner in filteredOwners" :key="owner.id">
+                            <td class="py-2 px-4 border-b border-gray-200">{{ owner.id }}</td>
+                            <td class="py-2 px-4 border-b border-gray-200">{{ owner.name }}</td>
+                            <td class="py-2 px-4 border-b border-gray-200">{{ owner.email }}</td>
+                            <td class="py-2 px-4 border-b border-gray-200">{{ owner.phone || 'N/A' }}</td>
+                            <td class="py-2 px-4 border-b border-gray-200">
+                                <span :class="{'bg-green-200 text-green-800': owner.subscription_status === 'premium', 'bg-yellow-200 text-yellow-800': owner.subscription_status === 'free'}"
+                                      class="px-2 py-1 rounded-full text-xs font-semibold">
+                                    {{ owner.subscription_status }}
+                                </span>
+                            </td>
+                            <td class="py-2 px-4 border-b border-gray-200">{{ formatDate(owner.created_at) }}</td>
+                            <td class="py-2 px-4 border-b border-gray-200">
+                                <button @click="editOwner(owner)" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-sm mr-2">
+                                    {{ _("Edit") }}
+                                </button>
+                                <button @click="deleteOwner(owner.id)" class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-3 rounded text-sm">
+                                    {{ _("Delete") }}
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Edit Owner Modal -->
+            <div v-if="editingOwner" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+                <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-lg">
+                    <h3 class="text-2xl font-bold mb-6 text-gray-800">{{ _("Edit Owner") }}</h3>
+                    <form @submit.prevent="saveOwner">
+                        <div class="mb-4">
+                            <label class="block text-gray-700 text-sm font-bold mb-2">{{ _("Name") }}:</label>
+                            <input type="text" v-model="editingOwner.name" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-gray-700 text-sm font-bold mb-2">{{ _("Email") }}:</label>
+                            <input type="email" v-model="editingOwner.email" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-gray-700 text-sm font-bold mb-2">{{ _("Phone") }}:</label>
+                            <input type="text" v-model="editingOwner.phone" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-gray-700 text-sm font-bold mb-2">{{ _("Subscription Status") }}:</label>
+                            <select v-model="editingOwner.subscription_status" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                                <option value="free">{{ _("Free") }}</option>
+                                <option value="premium">{{ _("Premium") }}</option>
+                            </select>
+                        </div>
+                        <div class="flex justify-end space-x-4">
+                            <button type="button" @click="cancelEdit" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">
+                                {{ _("Cancel") }}
+                            </button>
+                            <button type="submit" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                                {{ _("Save Changes") }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% include "language_toggle.html" %}
+
+    <script>
+        const _ = (key) => { return "{{ _('KEY_PLACEHOLDER') }}".replace('KEY_PLACEHOLDER', key); }; // Placeholder for Jinja2 _ function
+
+        new Vue({
+            el: '#app',
+            data: {
+                owners: [],
+                filteredOwners: [],
+                searchQuery: '',
+                editingOwner: null,
+                token: null
+            },
+            mounted() {
+                this.token = this.getCookie('admin_access_token');
+                if (!this.token) {
+                    window.location.href = '/admin/login?error=' + _('Authentication required');
+                    return;
+                }
+                this.fetchOwners();
+            },
+            methods: {
+                getCookie(name) {
+                    const value = `; ${document.cookie}`;
+                    const parts = value.split(`; ${name}=`);
+                    if (parts.length === 2) return parts.pop().split(';').shift();
+                },
+                async fetchOwners() {
+                    try {
+                        const response = await axios.get('/admin/api/owners', {
+                            headers: {
+                                Authorization: `Bearer ${this.token}`
+                            }
+                        });
+                        this.owners = response.data;
+                        this.filterOwners();
+                    } catch (error) {
+                        console.error('Error fetching owners:', error);
+                        if (error.response && error.response.status === 401) {
+                            window.location.href = '/admin/login?error=' + _('Session expired. Please log in again.');
+                        }
+                    }
+                },
+                filterOwners() {
+                    if (!this.searchQuery) {
+                        this.filteredOwners = this.owners;
+                    } else {
+                        const query = this.searchQuery.toLowerCase();
+                        this.filteredOwners = this.owners.filter(owner =>
+                            owner.name.toLowerCase().includes(query) ||
+                            owner.email.toLowerCase().includes(query) ||
+                            (owner.phone && owner.phone.toLowerCase().includes(query))
+                        );
+                    }
+                },
+                formatDate(dateString) {
+                    const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+                    return new Date(dateString).toLocaleDateString(this.getLocale(), options);
+                },
+                getLocale() {
+                    // This should ideally come from the server-side context or a global JS var
+                    // For now, hardcode or try to infer from HTML lang attribute
+                    return document.documentElement.lang || 'en';
+                },
+                editOwner(owner) {
+                    this.editingOwner = { ...owner }; // Create a copy to edit
+                },
+                cancelEdit() {
+                    this.editingOwner = null;
+                },
+                async saveOwner() {
+                    if (!this.editingOwner) return;
+                    try {
+                        const response = await axios.put(`/admin/api/owners/${this.editingOwner.id}`, this.editingOwner, {
+                            headers: {
+                                Authorization: `Bearer ${this.token}`
+                            }
+                        });
+                        const index = this.owners.findIndex(o => o.id === response.data.id);
+                        if (index !== -1) {
+                            this.$set(this.owners, index, response.data);
+                        }
+                        this.filterOwners(); // Re-filter to update the list
+                        this.editingOwner = null;
+                        alert(_('Owner updated successfully!'));
+                    } catch (error) {
+                        console.error('Error updating owner:', error);
+                        alert(_('Error updating owner: ') + (error.response ? error.response.data.detail : error.message));
+                    }
+                },
+                async deleteOwner(ownerId) {
+                    if (!confirm(_('Are you sure you want to delete this owner? This action cannot be undone.'))) {
+                        return;
+                    }
+                    try {
+                        await axios.delete(`/admin/api/owners/${ownerId}`, {
+                            headers: {
+                                Authorization: `Bearer ${this.token}`
+                            }
+                        });
+                        this.owners = this.owners.filter(owner => owner.id !== ownerId);
+                        this.filterOwners(); // Re-filter to update the list
+                        alert(_('Owner deleted successfully!'));
+                    } catch (error) {
+                        console.error('Error deleting owner:', error);
+                        alert(_('Error deleting owner: ') + (error.response ? error.response.data.detail : error.message));
+                    }
+                }
+            }
+        });
+    </script>
 </body>
 </html>

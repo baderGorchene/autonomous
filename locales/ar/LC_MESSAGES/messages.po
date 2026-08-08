@@ -1,215 +1,216 @@
+# Arabic translations for BookSlot.
+# Copyright (C) 2024 BookSlot
+# This file is distributed under the same license as the BookSlot project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2024.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: BookSlot\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-05-20 10:00+0000\n"
+"PO-Revision-Date: 2024-05-20 10:00+0000\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: Arabic <LL@li.org>\n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5;\n"
+
 msgid "Dashboard"
 msgstr "لوحة التحكم"
 
-msgid "BookSlot Dashboard"
-msgstr "لوحة تحكم بوك سلوت"
-
-msgid "Logout"
-msgstr "تسجيل الخروج"
-
-msgid "Settings"
-msgstr "الإعدادات"
-
-msgid "Your Booking Page:"
-msgstr "صفحة الحجز الخاصة بك:"
-
-msgid "Welcome, {owner_name}!"
-msgstr "مرحباً، {owner_name}!"
-
-msgid "Success!"
-msgstr "نجاح!"
-
-msgid "Error!"
-msgstr "خطأ!"
-
-msgid "Email already registered"
-msgstr "البريد الإلكتروني مسجل بالفعل"
-
-msgid "Incorrect email or password"
-msgstr "البريد الإلكتروني أو كلمة المرور غير صحيحة"
-
-msgid "Profile updated successfully!"
-msgstr "تم تحديث الملف الشخصي بنجاح!"
-
-msgid "Failed to update profile: {error_detail}"
-msgstr "فشل تحديث الملف الشخصي: {error_detail}"
-
-msgid "Add Service"
-msgstr "إضافة خدمة"
-
-msgid "Service Name"
-msgstr "اسم الخدمة"
-
-msgid "Description"
-msgstr "الوصف"
-
-msgid "Duration (minutes)"
-msgstr "المدة (بالدقائق)"
-
-msgid "Price"
-msgstr "السعر"
-
-msgid "e.g., 25.00"
-msgstr "على سبيل المثال، 25.00"
-
-msgid "No description provided."
-msgstr "لم يتم تقديم وصف."
-
-msgid "Duration:"
-msgstr "المدة:"
-
-msgid "minutes"
-msgstr "دقيقة"
-
-msgid "Price:"
-msgstr "السعر:"
-
-msgid "No services added yet. Add one below!"
-msgstr "لم تتم إضافة أي خدمات بعد. أضف واحدة أدناه!"
-
-msgid "Existing Services"
-msgstr "الخدمات الحالية"
-
-msgid "Add New Service"
-msgstr "إضافة خدمة جديدة"
-
-msgid "Update Profile"
-msgstr "تحديث الملف الشخصي"
-
-msgid "Your Name"
-msgstr "اسمك"
-
-msgid "Email Address"
-msgstr "عنوان البريد الإلكتروني"
-
-msgid "Phone Number (e.g., +1234567890)"
-msgstr "رقم الهاتف (مثال: +1234567890)"
-
-msgid "Update Profile"
-msgstr "تحديث الملف الشخصي"
-
-msgid "Owner not found"
-msgstr "المالك غير موجود"
-
-msgid "Invalid service selected."
-msgstr "الخدمة المختارة غير صالحة."
-
-msgid "Booking time cannot be in the past."
-msgstr "وقت الحجز لا يمكن أن يكون في الماضي."
-
-msgid "An error occurred during booking. Please try again."
-msgstr "حدث خطأ أثناء الحجز. الرجاء المحاولة مرة أخرى."
-
-msgid "Customer:"
-msgstr "العميل:"
-
-msgid "Email:"
-msgstr "البريد الإلكتروني:"
-
-msgid "Phone:"
-msgstr "الهاتف:"
-
-msgid "N/A"
-msgstr "غير متوفر"
-
-msgid "Time:"
-msgstr "الوقت:"
-
-msgid "No upcoming bookings found."
-msgstr "لم يتم العثور على حجوزات قادمة."
-
-msgid "Upcoming Bookings"
-msgstr "الحجوزات القادمة"
-
-msgid "Your Services"
-msgstr "خدماتك"
-
-msgid "Total Bookings"
-msgstr "إجمالي الحجوزات"
-
-msgid "Monthly Bookings"
-msgstr "الحجوزات الشهرية"
-
-msgid "bookings"
-msgstr "حجوزات"
-
-msgid "No monthly booking data yet."
-msgstr "لا توجد بيانات حجز شهرية بعد."
-
-msgid "Popular Services"
-msgstr "الخدمات الشائعة"
-
-msgid "No popular services data yet."
-msgstr "لا توجد بيانات للخدمات الشائعة بعد."
-
-msgid "English"
-msgstr "الإنجليزية"
-
-msgid "Arabic"
-msgstr "العربية"
-
-msgid "French"
-msgstr "الفرنسية"
+msgid "Profile"
+msgstr "الملف الشخصي"
 
 msgid "Subscription"
 msgstr "الاشتراك"
 
-msgid "Subscription Management"
-msgstr "إدارة الاشتراك"
+msgid "Logout"
+msgstr "تسجيل الخروج"
 
-msgid "Your Subscription Plan"
-msgstr "خطة اشتراكك"
+msgid "Welcome"
+msgstr "أهلاً بك"
 
-msgid "Current Plan:"
-msgstr "الخطة الحالية:"
+msgid "Total Bookings"
+msgstr "إجمالي الحجوزات"
 
-msgid "You are on the Free plan. Upgrade to Premium for unlimited bookings!"
-msgstr "أنت على الخطة المجانية. قم بالترقية إلى Premium للحصول على حجوزات غير محدودة!"
-
-msgid "Upgrade to Premium"
-msgstr "الترقية إلى Premium"
-
-msgid "You are on the Premium plan with unlimited bookings."
-msgstr "أنت على الخطة المميزة مع حجوزات غير محدودة."
+msgid "Subscription Status"
+msgstr "حالة الاشتراك"
 
 msgid "Manage Subscription"
 msgstr "إدارة الاشتراك"
 
-msgid "Your Current Plan"
-msgstr "خطتك الحالية"
+msgid "Your Public Booking Page"
+msgstr "صفحة الحجز العامة الخاصة بك"
 
-msgid "Plan:"
-msgstr "الخطة:"
+msgid "Share this link with your customers!"
+msgstr "شارك هذا الرابط مع عملائك!"
 
-msgid "You are currently on the Free plan. Enjoy up to 20 bookings per month."
-msgstr "أنت حاليًا على الخطة المجانية. استمتع بما يصل إلى 20 حجزًا شهريًا."
+msgid "Upcoming Bookings"
+msgstr "الحجوزات القادمة"
+
+msgid "Customer"
+msgstr "العميل"
+
+msgid "Time"
+msgstr "الوقت"
+
+msgid "Contact"
+msgstr "جهة الاتصال"
+
+msgid "No upcoming bookings."
+msgstr "لا توجد حجوزات قادمة."
+
+msgid "Monthly Bookings"
+msgstr "الحجوزات الشهرية"
+
+msgid "No monthly booking data available."
+msgstr "لا تتوفر بيانات حجز شهرية."
+
+msgid "Popular Services"
+msgstr "الخدمات الشائعة"
+
+msgid "No popular services data available."
+msgstr "لا تتوفر بيانات للخدمات الشائعة."
+
+msgid "Book with"
+msgstr "احجز مع"
+
+msgid "Book an Appointment with"
+msgstr "احجز موعدًا مع"
+
+msgid "Select Service"
+msgstr "اختر الخدمة"
+
+msgid "minutes"
+msgstr "دقيقة"
+
+msgid "Your Name"
+msgstr "اسمك"
+
+msgid "Your Email"
+msgstr "بريدك الإلكتروني"
+
+msgid "Your Phone (Optional)"
+msgstr "رقم هاتفك (اختياري)"
+
+msgid "Select Date"
+msgstr "اختر التاريخ"
+
+msgid "Select Time"
+msgstr "اختر الوقت"
+
+msgid "Confirm Booking"
+msgstr "تأكيد الحجز"
+
+msgid "Booking Confirmed!"
+msgstr "تم تأكيد الحجز!"
+
+msgid "Thank you for your booking."
+msgstr "شكرًا لك على حجزك."
+
+msgid "A confirmation email has been sent to you."
+msgstr "تم إرسال بريد إلكتروني للتأكيد إليك."
+
+msgid "Book Another Service"
+msgstr "احجز خدمة أخرى"
+
+msgid "Login"
+msgstr "تسجيل الدخول"
+
+msgid "Login to BookSlot"
+msgstr "تسجيل الدخول إلى BookSlot"
+
+msgid "Email address"
+msgstr "عنوان البريد الإلكتروني"
+
+msgid "Password"
+msgstr "كلمة المرور"
+
+msgid "Sign in"
+msgstr "تسجيل الدخول"
+
+msgid "Don’t have an account?"
+msgstr "ليس لديك حساب؟"
+
+msgid "Sign up"
+msgstr "إنشاء حساب"
+
+msgid "Register"
+msgstr "تسجيل"
+
+msgid "Create your BookSlot Account"
+msgstr "أنشئ حسابك في BookSlot"
+
+msgid "Your Name"
+msgstr "اسمك"
+
+msgid "Phone Number (Optional)"
+msgstr "رقم الهاتف (اختياري)"
+
+msgid "Update Profile"
+msgstr "تحديث الملف الشخصي"
+
+msgid "Your Profile"
+msgstr "ملفك الشخصي"
+
+msgid "Name"
+msgstr "الاسم"
+
+msgid "Email address"
+msgstr "عنوان البريد الإلكتروني"
+
+msgid "Phone Number (Optional)"
+msgstr "رقم الهاتف (اختياري)"
+
+msgid "Profile updated successfully!"
+msgstr "تم تحديث الملف الشخصي بنجاح!"
+
+msgid "Manage Your Subscription"
+msgstr "إدارة اشتراكك"
+
+msgid "Current Status"
+msgstr "الحالة الحالية"
+
+msgid "Upgrade to premium for unlimited bookings!"
+msgstr "قم بالترقية إلى Premium للحصول على حجوزات غير محدودة!"
+
+msgid "You have unlimited bookings."
+msgstr "لديك حجوزات غير محدودة."
 
 msgid "Upgrade to Premium ($19/month)"
-msgstr "الترقية إلى Premium (19 دولارًا شهريًا)"
+msgstr "الترقية إلى Premium (19 دولارًا/شهر)"
 
-msgid "You are on the Premium plan. Enjoy unlimited bookings!"
-msgstr "أنت على الخطة المميزة. استمتع بحجوزات غير محدودة!"
+msgid "You are already a premium subscriber."
+msgstr "أنت بالفعل مشترك مميز."
 
-msgid "To manage or cancel your subscription, please visit your Stripe customer portal (link coming soon)."
-msgstr "لإدارة أو إلغاء اشتراكك، يرجى زيارة بوابة عملاء Stripe الخاصة بك (الرابط قادم قريبًا)."
+msgid "Admin Dashboard"
+msgstr "لوحة تحكم المسؤول"
 
-msgid "Billing History"
-msgstr "سجل الفواتير"
+msgid "Manage Owners"
+msgstr "إدارة أصحاب الحسابات"
 
-msgid "No billing history available yet."
-msgstr "لا يوجد سجل فواتير متاح بعد."
+msgid "Here you can view, update, and delete owner accounts."
+msgstr "هنا يمكنك عرض وتحديث وحذف حسابات أصحاب الحسابات."
 
-msgid "Cancelled!"
-msgstr "ألغيت!"
+msgid "View All Owners"
+msgstr "عرض جميع أصحاب الحسابات"
 
-msgid "Your subscription process was cancelled."
-msgstr "تم إلغاء عملية اشتراكك."
+msgid "Owner Operations (API Endpoints)"
+msgstr "عمليات أصحاب الحسابات (نقاط نهاية API)"
 
-msgid "Stripe Price ID is not configured."
-msgstr "لم يتم تكوين معرف سعر Stripe."
+msgid "List all owners."
+msgstr "عرض جميع أصحاب الحسابات."
 
-msgid "Failed to create checkout session."
-msgstr "فشل إنشاء جلسة الدفع."
+msgid "Get details of a specific owner."
+msgstr "الحصول على تفاصيل صاحب حساب محدد."
 
-msgid "An error occurred. Please try again later."
-msgstr "حدث خطأ. الرجاء المحاولة مرة أخرى لاحقًا."
+msgid "Update an owner (e.g., subscription status, admin flag)."
+msgstr "تحديث صاحب حساب (مثل حالة الاشتراك، علامة المسؤول)."
+
+msgid "Delete an owner."
+msgstr "حذف صاحب حساب."
+
+msgid "These operations require an authenticated admin token."
+msgstr "تتطلب هذه العمليات رمز مسؤول مصادق عليه."

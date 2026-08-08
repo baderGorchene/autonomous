@@ -1,215 +1,216 @@
+# French translations for BookSlot.
+# Copyright (C) 2024 BookSlot
+# This file is distributed under the same license as the BookSlot project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2024.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: BookSlot\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-05-20 10:00+0000\n"
+"PO-Revision-Date: 2024-05-20 10:00+0000\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: French <LL@li.org>\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
 msgid "Dashboard"
 msgstr "Tableau de bord"
 
-msgid "BookSlot Dashboard"
-msgstr "Tableau de bord BookSlot"
-
-msgid "Logout"
-msgstr "Déconnexion"
-
-msgid "Settings"
-msgstr "Paramètres"
-
-msgid "Your Booking Page:"
-msgstr "Votre page de réservation :"
-
-msgid "Welcome, {owner_name}!"
-msgstr "Bienvenue, {owner_name} !"
-
-msgid "Success!"
-msgstr "Succès !"
-
-msgid "Error!"
-msgstr "Erreur !"
-
-msgid "Email already registered"
-msgstr "Email déjà enregistré"
-
-msgid "Incorrect email or password"
-msgstr "Email ou mot de passe incorrect"
-
-msgid "Profile updated successfully!"
-msgstr "Profil mis à jour avec succès !"
-
-msgid "Failed to update profile: {error_detail}"
-msgstr "Échec de la mise à jour du profil : {error_detail}"
-
-msgid "Add Service"
-msgstr "Ajouter un service"
-
-msgid "Service Name"
-msgstr "Nom du service"
-
-msgid "Description"
-msgstr "Description"
-
-msgid "Duration (minutes)"
-msgstr "Durée (minutes)"
-
-msgid "Price"
-msgstr "Prix"
-
-msgid "e.g., 25.00"
-msgstr "ex: 25.00"
-
-msgid "No description provided."
-msgstr "Aucune description fournie."
-
-msgid "Duration:"
-msgstr "Durée :"
-
-msgid "minutes"
-msgstr "minutes"
-
-msgid "Price:"
-msgstr "Prix :"
-
-msgid "No services added yet. Add one below!"
-msgstr "Aucun service ajouté pour le moment. Ajoutez-en un ci-dessous !"
-
-msgid "Existing Services"
-msgstr "Services existants"
-
-msgid "Add New Service"
-msgstr "Ajouter un nouveau service"
-
-msgid "Update Profile"
-msgstr "Mettre à jour le profil"
-
-msgid "Your Name"
-msgstr "Votre nom"
-
-msgid "Email Address"
-msgstr "Adresse e-mail"
-
-msgid "Phone Number (e.g., +1234567890)"
-msgstr "Numéro de téléphone (ex: +1234567890)"
-
-msgid "Update Profile"
-msgstr "Mettre à jour le profil"
-
-msgid "Owner not found"
-msgstr "Propriétaire introuvable"
-
-msgid "Invalid service selected."
-msgstr "Service sélectionné invalide."
-
-msgid "Booking time cannot be in the past."
-msgstr "L'heure de réservation ne peut pas être dans le passé."
-
-msgid "An error occurred during booking. Please try again."
-msgstr "Une erreur est survenue lors de la réservation. Veuillez réessayer."
-
-msgid "Customer:"
-msgstr "Client :"
-
-msgid "Email:"
-msgstr "Email :"
-
-msgid "Phone:"
-msgstr "Téléphone :"
-
-msgid "N/A"
-msgstr "N/A"
-
-msgid "Time:"
-msgstr "Heure :"
-
-msgid "No upcoming bookings found."
-msgstr "Aucune réservation à venir trouvée."
-
-msgid "Upcoming Bookings"
-msgstr "Prochaines réservations"
-
-msgid "Your Services"
-msgstr "Vos services"
-
-msgid "Total Bookings"
-msgstr "Total des réservations"
-
-msgid "Monthly Bookings"
-msgstr "Réservations mensuelles"
-
-msgid "bookings"
-msgstr "réservations"
-
-msgid "No monthly booking data yet."
-msgstr "Aucune donnée de réservation mensuelle pour le moment."
-
-msgid "Popular Services"
-msgstr "Services populaires"
-
-msgid "No popular services data yet."
-msgstr "Aucune donnée sur les services populaires pour le moment."
-
-msgid "English"
-msgstr "Anglais"
-
-msgid "Arabic"
-msgstr "Arabe"
-
-msgid "French"
-msgstr "Français"
+msgid "Profile"
+msgstr "Profil"
 
 msgid "Subscription"
 msgstr "Abonnement"
 
-msgid "Subscription Management"
-msgstr "Gestion de l'abonnement"
+msgid "Logout"
+msgstr "Déconnexion"
 
-msgid "Your Subscription Plan"
-msgstr "Votre plan d'abonnement"
+msgid "Welcome"
+msgstr "Bienvenue"
 
-msgid "Current Plan:"
-msgstr "Plan actuel :"
+msgid "Total Bookings"
+msgstr "Total des réservations"
 
-msgid "You are on the Free plan. Upgrade to Premium for unlimited bookings!"
-msgstr "Vous êtes sur le plan gratuit. Passez au plan Premium pour des réservations illimitées !"
-
-msgid "Upgrade to Premium"
-msgstr "Passer au Premium"
-
-msgid "You are on the Premium plan with unlimited bookings."
-msgstr "Vous êtes sur le plan Premium avec des réservations illimitées."
+msgid "Subscription Status"
+msgstr "Statut de l'abonnement"
 
 msgid "Manage Subscription"
 msgstr "Gérer l'abonnement"
 
-msgid "Your Current Plan"
-msgstr "Votre plan actuel"
+msgid "Your Public Booking Page"
+msgstr "Votre page de réservation publique"
 
-msgid "Plan:"
-msgstr "Plan :"
+msgid "Share this link with your customers!"
+msgstr "Partagez ce lien avec vos clients !"
 
-msgid "You are currently on the Free plan. Enjoy up to 20 bookings per month."
-msgstr "Vous êtes actuellement sur le plan gratuit. Profitez de jusqu'à 20 réservations par mois."
+msgid "Upcoming Bookings"
+msgstr "Réservations à venir"
+
+msgid "Customer"
+msgstr "Client"
+
+msgid "Time"
+msgstr "Heure"
+
+msgid "Contact"
+msgstr "Contact"
+
+msgid "No upcoming bookings."
+msgstr "Aucune réservation à venir."
+
+msgid "Monthly Bookings"
+msgstr "Réservations mensuelles"
+
+msgid "No monthly booking data available."
+msgstr "Aucune donnée de réservation mensuelle disponible."
+
+msgid "Popular Services"
+msgstr "Services populaires"
+
+msgid "No popular services data available."
+msgstr "Aucune donnée de services populaires disponible."
+
+msgid "Book with"
+msgstr "Réserver avec"
+
+msgid "Book an Appointment with"
+msgstr "Prendre rendez-vous avec"
+
+msgid "Select Service"
+msgstr "Sélectionner un service"
+
+msgid "minutes"
+msgstr "minutes"
+
+msgid "Your Name"
+msgstr "Votre nom"
+
+msgid "Your Email"
+msgstr "Votre e-mail"
+
+msgid "Your Phone (Optional)"
+msgstr "Votre téléphone (facultatif)"
+
+msgid "Select Date"
+msgstr "Sélectionner la date"
+
+msgid "Select Time"
+msgstr "Sélectionner l'heure"
+
+msgid "Confirm Booking"
+msgstr "Confirmer la réservation"
+
+msgid "Booking Confirmed!"
+msgstr "Réservation confirmée !"
+
+msgid "Thank you for your booking."
+msgstr "Merci pour votre réservation."
+
+msgid "A confirmation email has been sent to you."
+msgstr "Un e-mail de confirmation vous a été envoyé."
+
+msgid "Book Another Service"
+msgstr "Réserver un autre service"
+
+msgid "Login"
+msgstr "Connexion"
+
+msgid "Login to BookSlot"
+msgstr "Se connecter à BookSlot"
+
+msgid "Email address"
+msgstr "Adresse e-mail"
+
+msgid "Password"
+msgstr "Mot de passe"
+
+msgid "Sign in"
+msgstr "Se connecter"
+
+msgid "Don’t have an account?"
+msgstr "Vous n'avez pas de compte ?"
+
+msgid "Sign up"
+msgstr "S'inscrire"
+
+msgid "Register"
+msgstr "S'inscrire"
+
+msgid "Create your BookSlot Account"
+msgstr "Créez votre compte BookSlot"
+
+msgid "Your Name"
+msgstr "Votre nom"
+
+msgid "Phone Number (Optional)"
+msgstr "Numéro de téléphone (facultatif)"
+
+msgid "Update Profile"
+msgstr "Mettre à jour le profil"
+
+msgid "Your Profile"
+msgstr "Votre profil"
+
+msgid "Name"
+msgstr "Nom"
+
+msgid "Email address"
+msgstr "Adresse e-mail"
+
+msgid "Phone Number (Optional)"
+msgstr "Numéro de téléphone (facultatif)"
+
+msgid "Profile updated successfully!"
+msgstr "Profil mis à jour avec succès !"
+
+msgid "Manage Your Subscription"
+msgstr "Gérer votre abonnement"
+
+msgid "Current Status"
+msgstr "Statut actuel"
+
+msgid "Upgrade to premium for unlimited bookings!"
+msgstr "Passez au premium pour des réservations illimitées !"
+
+msgid "You have unlimited bookings."
+msgstr "Vous avez des réservations illimitées."
 
 msgid "Upgrade to Premium ($19/month)"
-msgstr "Passer au plan Premium (19 $/mois)"
+msgstr "Passer au Premium (19 $/mois)"
 
-msgid "You are on the Premium plan. Enjoy unlimited bookings!"
-msgstr "Vous êtes sur le plan Premium. Profitez de réservations illimitées !"
+msgid "You are already a premium subscriber."
+msgstr "Vous êtes déjà un abonné premium."
 
-msgid "To manage or cancel your subscription, please visit your Stripe customer portal (link coming soon)."
-msgstr "Pour gérer ou annuler votre abonnement, veuillez visiter votre portail client Stripe (lien à venir)."
+msgid "Admin Dashboard"
+msgstr "Tableau de bord administrateur"
 
-msgid "Billing History"
-msgstr "Historique de facturation"
+msgid "Manage Owners"
+msgstr "Gérer les propriétaires"
 
-msgid "No billing history available yet."
-msgstr "Aucun historique de facturation disponible pour le moment."
+msgid "Here you can view, update, and delete owner accounts."
+msgstr "Ici, vous pouvez visualiser, mettre à jour et supprimer les comptes des propriétaires."
 
-msgid "Cancelled!"
-msgstr "Annulé !"
+msgid "View All Owners"
+msgstr "Voir tous les propriétaires"
 
-msgid "Your subscription process was cancelled."
-msgstr "Votre processus d'abonnement a été annulé."
+msgid "Owner Operations (API Endpoints)"
+msgstr "Opérations des propriétaires (points de terminaison API)"
 
-msgid "Stripe Price ID is not configured."
-msgstr "L'ID de prix Stripe n'est pas configuré."
+msgid "List all owners."
+msgstr "Lister tous les propriétaires."
 
-msgid "Failed to create checkout session."
-msgstr "Échec de la création de la session de paiement."
+msgid "Get details of a specific owner."
+msgstr "Obtenir les détails d'un propriétaire spécifique."
 
-msgid "An error occurred. Please try again later."
-msgstr "Une erreur est survenue. Veuillez réessayer plus tard."
+msgid "Update an owner (e.g., subscription status, admin flag)."
+msgstr "Mettre à jour un propriétaire (par exemple, statut d'abonnement, drapeau administrateur)."
+
+msgid "Delete an owner."
+msgstr "Supprimer un propriétaire."
+
+msgid "These operations require an authenticated admin token."
+msgstr "Ces opérations nécessitent un jeton administrateur authentifié."
