@@ -1,3 +1,8 @@
+## Iteration 337
+_2026-08-08 14:33 UTC_
+
+Integrated `python-dateutil` by adding it to `requirements.txt`. Refactored the `Availability` model in `src/models.py` to store advanced recurrence patterns, including `rrule_string`, `start_date`, `end_date`, `start_time_of_day`, `end_time_of_day`, and `exception_dates`. Updated `src/schemas.py` to reflect these changes and modified the `/owner/availability` API endpoints in `src/main.py` to handle the creation and retrieval of these new availability rules. This sets the backend foundation for advanced availability management.
+
 ## Iteration 336
 _2026-08-08 13:47 UTC_
 

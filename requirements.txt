@@ -1,18 +1,17 @@
-fastapi==0.111.0
-uvicorn[standard]==0.29.0
-sqlalchemy==2.0.30
-pydantic==2.7.1
-pydantic-settings==2.2.1
-python-jose[cryptography]==3.3.0
-passlib[bcrypt]==1.7.4
-python-multipart==0.0.9
-alembic==1.13.1
-python-gettext==5.0
-sendgrid==6.11.1
-twilio==9.3.0
-stripe==9.1.0
-jinja2==3.1.4
-# Testing dependencies
-pytest==8.2.0
-httpx==0.27.0
-pytest-asyncio==0.23.6
+fastapi
+uvicorn
+sqlalchemy
+pydantic
+python-jose[cryptography]
+passlib[bcrypt]
+python-multipart
+python-dateutil
+python-dotenv
+sendgrid
+twilio
+stripe
+babel
+pytest
+httpx
+beautifulsoup4
+# Add any other dependencies that were implicitly added in previous steps

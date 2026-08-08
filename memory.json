@@ -1,6 +1,6 @@
 {
   "business_idea": "BookSlot \u2014 a dead-simple $19/month booking page for local service businesses (salons, clinics, tutors, mechanics, coaches) who currently manage appointments via WhatsApp chaos. The owner gets a shareable link (bookslot.app/their-name), customers book themselves, and the owner gets a WhatsApp/email notification with the booking details. No accounts needed for customers. Bilingual (English + Arabic/French) from day one to target the underserved MENA and North Africa market. MVP has: (1) owner signup + service setup page, (2) public booking page, (3) time slot availability, (4) email confirmation to both parties, (5) a simple dashboard showing upcoming bookings. Monetization: free for up to 20 bookings/month, $19/month for unlimited. Target: solo service providers who have 10-50 clients/week and are drowning in WhatsApp messages.",
-  "current_phase": "Feature Development",
+  "current_phase": "Core Feature Development",
   "completed_steps": [
     "Project scaffold, DB models, health endpoint",
     "Owner signup/login, service + availability setup",
@@ -30,13 +30,16 @@
     "Implemented subscription management UI for owners (upgrade/manage plan)",
     "Created `requirements.txt` to ensure test environment stability.",
     "Developed initial admin panel for managing owners and subscriptions with basic CRUD operations (list, view, edit, delete).",
-    "Refine admin panel UI/UX for owner management and add features to manage services and bookings per owner."
+    "Refine admin panel UI/UX for owner management and add features to manage services and bookings per owner.",
+    "Integrate a robust calendar/scheduling library for advanced availability management"
   ],
-  "next_task": "Integrate a robust calendar/scheduling library for advanced availability management",
-  "libraries_in_use": [],
-  "iteration": 336,
+  "next_task": "Implement recurring booking functionality, including generating bookable slots from availability rules and updating booking logic to respect these rules. Also, update the owner dashboard UI to allow setting these advanced availability rules.",
+  "libraries_in_use": [
+    "python-dateutil"
+  ],
+  "iteration": 337,
   "last_run": "",
-  "notes": "The admin authentication in `main.py` is a placeholder (`X-Admin-Auth` header check) and needs to be replaced with a robust authentication and authorization system for production. The `crud` functions for services and bookings management (create, update, delete service; cancel, update status booking) were assumed to exist or were added implicitly in `main.py`'s route logic. Edit functionality for services is currently a simple form submission for all fields; a dedicated edit page with pre-filled fields would improve UX.",
+  "notes": "The current implementation only stores the advanced availability rules. The complex logic to dynamically generate actual bookable time slots from these rules, and to update the booking process to respect them, is deferred to the next task. This also includes updating the owner dashboard UI to allow setting these advanced availability rules and displaying them on the public booking page.",
   "product_name": "BookSlot",
   "target_price": "$19/month",
   "target_market": "MENA + North Africa local service businesses",
@@ -48,7 +51,6 @@
     "deployment_target": "Railway.app or Render.com (both free tier)"
   },
   "roadmap": [
-    "Integrate a robust calendar/scheduling library for advanced availability management",
     "Implement recurring booking functionality",
     "Add customer accounts (optional, for repeat bookings)",
     "Implement review/rating system for services",

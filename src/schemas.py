@@ -1,111 +1,42 @@
 from pydantic import BaseModel, EmailStr, Field
-from datetime import datetime
+from datetime import datetime, date, time
 from typing import List, Optional
 
-# Admin Schemas
-class AdminBase(BaseModel):
-    email: EmailStr
-    name: Optional[str] = None
-
-class AdminCreate(AdminBase):
-    password: str
-
-class Admin(AdminBase):
-    id: int
-    created_at: datetime
-    updated_at: datetime
-
-    model_config = {"from_attributes": True}
-
-# Owner Schemas (relevant for admin updates)
+# --- Owner Schemas ---
 class OwnerBase(BaseModel):
-    name: str
     email: EmailStr
+    name: str
     phone: Optional[str] = None
+    profile_picture_url: Optional[str] = None
+    booking_page_slug: str
+    currency: Optional[str] = "USD"
+    locale: Optional[str] = "en"
 
 class OwnerCreate(OwnerBase):
     password: str
-    subscription_status: Optional[str] = None
 
-class OwnerProfileUpdate(BaseModel):
+class OwnerUpdate(BaseModel):
     name: Optional[str] = None
     phone: Optional[str] = None
-
-class OwnerAdminUpdate(BaseModel):
-    name: Optional[str] = None
-    email: Optional[EmailStr] = None
-    phone: Optional[str] = None
-    subscription_status: Optional[str] = None
-    stripe_customer_id: Optional[str] = None
-    stripe_subscription_id: Optional[str] = None
+    profile_picture_url: Optional[str] = None
+    booking_page_slug: Optional[str] = None
+    currency: Optional[str] = None
+    locale: Optional[str] = None
 
 class Owner(OwnerBase):
     id: int
-    created_at: datetime
-    updated_at: datetime
-    subscription_status: str = "free"
+    is_active: bool
     stripe_customer_id: Optional[str] = None
     stripe_subscription_id: Optional[str] = None
-    is_active: bool = True
+    subscription_status: str
 
-    model_config = {"from_attributes": True}
+    class Config:
+        from_attributes = True
 
-# Service Schemas
-class ServiceBase(BaseModel):
-    name: str
-    description: Optional[str] = None
-    duration_minutes: int = Field(..., gt=0, description="Duration in minutes, must be positive.")
-    price: int = Field(..., ge=0, description="Price in smallest currency unit (e.g., cents), must be non-negative.")
+class OwnerLogin(BaseModel):
+    email: EmailStr
+    password: str
 
-class ServiceCreate(ServiceBase):
-    pass
-
-class Service(ServiceBase):
-    id: int
-    owner_id: int
-    created_at: datetime
-    updated_at: datetime
-
-    model_config = {"from_attributes": True}
-
-# Availability Schemas
-class AvailabilityBase(BaseModel):
-    day_of_week: int = Field(..., ge=0, le=6, description="Day of the week (0=Monday, 6=Sunday).")
-    start_time: str = Field(..., pattern=r"^(?:2[0-3]|[01]?[0-9]):[0-5][0-9]$", description="Start time in HH:MM format.")
-    end_time: str = Field(..., pattern=r"^(?:2[0-3]|[01]?[0-9]):[0-5][0-9]$", description="End time in HH:MM format.")
-
-class AvailabilityCreate(AvailabilityBase):
-    pass
-
-class Availability(AvailabilityBase):
-    id: int
-    service_id: int
-    created_at: datetime
-    updated_at: datetime
-
-    model_config = {"from_attributes": True}
-
-# Booking Schemas
-class BookingBase(BaseModel):
-    customer_name: str
-    customer_email: EmailStr
-    customer_phone: Optional[str] = None
-    booking_time: datetime
-
-class BookingCreate(BookingBase):
-    service_id: int
-
-class Booking(BookingBase):
-    id: int
-    owner_id: int
-    service_id: int
-    created_at: datetime
-    updated_at: datetime
-    service: Service
-
-    model_config = {"from_attributes": True}
-
-# Token Schema
 class Token(BaseModel):
     access_token: str
     token_type: str
@@ -113,16 +44,82 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     email: Optional[str] = None
 
-# Analytics Schemas
-class MonthlyBookingData(BaseModel):
+# --- Service Schemas ---
+class ServiceBase(BaseModel):
+    name: str
+    description: Optional[str] = None
+    duration_minutes: int = Field(..., gt=0)
+    price: float = Field(..., ge=0) # Should be int for cents
+    is_active: Optional[bool] = True
+
+class ServiceCreate(ServiceBase):
+    pass
+
+class Service(ServiceBase):
+    id: int
+    owner_id: int
+
+    class Config:
+        from_attributes = True
+
+# --- Availability Schemas (Modified) ---
+class AvailabilityBase(BaseModel):
+    start_time_of_day: time
+    end_time_of_day: time
+    rrule_string: Optional[str] = None # iCalendar RRULE format string
+    start_date: date
+    end_date: Optional[date] = None
+    exception_dates: Optional[List[date]] = [] # List of YYYY-MM-DD dates to exclude
+
+class AvailabilityCreate(AvailabilityBase):
+    pass
+
+class Availability(AvailabilityBase):
+    id: int
+    owner_id: int
+
+    class Config:
+        from_attributes = True
+        json_encoders = {
+            date: lambda v: v.isoformat(),
+            time: lambda v: v.isoformat(),
+        }
+
+# --- Booking Schemas ---
+class BookingBase(BaseModel):
+    customer_name: str
+    customer_email: EmailStr
+    customer_phone: Optional[str] = None
+    start_time: datetime
+    service_id: int
+
+class BookingCreate(BookingBase):
+    pass
+
+class Booking(BookingBase):
+    id: int
+    owner_id: int
+    end_time: datetime
+    status: str
+    service: Service # Nested service schema
+
+    class Config:
+        from_attributes = True
+
+class BookingConfirmation(BaseModel):
+    message: str
+    booking_details: Booking
+
+# --- Analytics Schemas ---
+class BookingCount(BaseModel):
     month: str
     count: int
 
-class PopularServiceData(BaseModel):
+class PopularService(BaseModel):
     service_name: str
-    count: int
+    booking_count: int
 
-class OwnerAnalytics(BaseModel):
-    total_bookings: int
-    monthly_bookings: List[MonthlyBookingData]
-    popular_services: List[PopularServiceData]
+class DashboardAnalytics(BaseModel):
+    total_bookings_this_month: int
+    monthly_booking_counts: List[BookingCount]
+    popular_services: List[PopularService]

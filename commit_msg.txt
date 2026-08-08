@@ -1,1 +1,1 @@
-feat: Refine admin panel UI/UX and add owner service/booking management
+Integrate python-dateutil and refactor Availability model for advanced recurrence rules
