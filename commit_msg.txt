@@ -1,1 +1,1 @@
-feat: Implement initial admin panel for managing owners
+Fix: Ensure pytest is available by providing comprehensive requirements.txt

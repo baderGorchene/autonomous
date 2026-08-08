@@ -49,11 +49,38 @@ def delete_owner(db: Session, owner_id: int):
         return True
     return False
 
-def get_owner_services(db: Session, owner_id: int):
+def get_owner_services(db: Session, owner_id: int) -> List[models.Service]:
     return db.query(models.Service).filter(models.Service.owner_id == owner_id).all()
 
 def get_service_by_id(db: Session, service_id: int):
     return db.query(models.Service).filter(models.Service.id == service_id).first()
+
+def create_service(db: Session, service: schemas.ServiceCreate, owner_id: int):
+    db_service = models.Service(**service.model_dump(), owner_id=owner_id)
+    db.add(db_service)
+    db.commit()
+    db.refresh(db_service)
+    return db_service
+
+def update_service(db: Session, service_id: int, service_update: schemas.ServiceUpdate):
+    db_service = db.query(models.Service).filter(models.Service.id == service_id).first()
+    if db_service:
+        update_data = service_update.model_dump(exclude_unset=True)
+        for field, value in update_data.items():
+            setattr(db_service, field, value)
+        db.add(db_service)
+        db.commit()
+        db.refresh(db_service)
+        return db_service
+    return None
+
+def delete_service(db: Session, service_id: int):
+    db_service = db.query(models.Service).filter(models.Service.id == service_id).first()
+    if db_service:
+        db.delete(db_service)
+        db.commit()
+        return True
+    return False
 
 def create_booking(db: Session, booking: schemas.BookingCreate, owner_id: int):
     db_booking = models.Booking(**booking.model_dump(), owner_id=owner_id)
@@ -69,6 +96,32 @@ def get_owner_upcoming_bookings(db: Session, owner_id: int):
              .filter(models.Booking.owner_id == owner_id, models.Booking.booking_time >= now)
              .order_by(models.Booking.booking_time)
              .all()
+
+def get_all_bookings_for_owner(db: Session, owner_id: int, skip: int = 0, limit: int = 100) -> List[models.Booking]:
+    return db.query(models.Booking).filter(models.Booking.owner_id == owner_id).offset(skip).limit(limit).all()
+
+def get_booking_by_id(db: Session, booking_id: int):
+    return db.query(models.Booking).filter(models.Booking.id == booking_id).first()
+
+def update_booking(db: Session, booking_id: int, booking_update: schemas.BookingUpdate):
+    db_booking = db.query(models.Booking).filter(models.Booking.id == booking_id).first()
+    if db_booking:
+        update_data = booking_update.model_dump(exclude_unset=True)
+        for field, value in update_data.items():
+            setattr(db_booking, field, value)
+        db.add(db_booking)
+        db.commit()
+        db.refresh(db_booking)
+        return db_booking
+    return None
+
+def delete_booking(db: Session, booking_id: int):
+    db_booking = db.query(models.Booking).filter(models.Booking.id == booking_id).first()
+    if db_booking:
+        db.delete(db_booking)
+        db.commit()
+        return True
+    return False
 
 def update_owner_profile(db: Session, owner: models.Owner, owner_update: schemas.OwnerProfileUpdate):
     for field, value in owner_update.model_dump(exclude_unset=True).items():
