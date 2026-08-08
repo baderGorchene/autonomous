@@ -1,91 +1,59 @@
 <!DOCTYPE html>
-<html lang="{{ current_locale }}">
+<html lang="{{ request.cookies.get('lang', 'en') }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _("BookSlot - Simple Booking Page for Your Business") }}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-    </style>
+    <title>{{ gettext('BookSlot - Simple Booking Page') }}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
 </head>
-<body class="bg-gray-50 text-gray-900">
-    <header class="bg-white shadow-sm">
-        <nav class="container mx-auto px-4 py-4 flex justify-between items-center">
-            <a href="/" class="text-2xl font-bold text-indigo-600">BookSlot</a>
-            <div class="flex items-center space-x-4">
-                <a href="/dashboard" class="text-gray-600 hover:text-indigo-600">{{ _("Dashboard") }}</a>
-                <a href="/register" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">{{ _("Sign Up") }}</a>
-                <div class="relative group">
-                    <button class="text-gray-600 hover:text-indigo-600 focus:outline-none">
-                        <i class="fas fa-globe"></i> {{ current_locale.upper() }}
-                    </button>
-                    <div class="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded-md shadow-lg hidden group-hover:block z-10">
-                        <a href="/set_locale/en" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">English</a>
-                        <a href="/set_locale/ar" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">العربية</a>
-                        <a href="/set_locale/fr" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Français</a>
-                    </div>
-                </div>
+<body>
+    <header>
+        <h1>{{ gettext('Welcome to BookSlot') }}</h1>
+        <nav>
+            <div class="lang-toggle">
+                <a href="#" onclick="changeLanguage('en'); return false;">EN</a> |
+                <a href="#" onclick="changeLanguage('ar'); return false;">AR</a> |
+                <a href="#" onclick="changeLanguage('fr'); return false;">FR</a>
             </div>
         </nav>
     </header>
-
     <main>
-        <section class="hero bg-indigo-50 py-20">
-            <div class="container mx-auto px-4 text-center">
-                <h1 class="text-5xl font-extrabold text-indigo-800 mb-4">{{ _("Simplify Your Bookings. Grow Your Business.") }}</h1>
-                <p class="text-xl text-indigo-700 mb-8">{{ _("A dead-simple booking page for local service businesses.") }}</p>
-                <a href="/register" class="px-8 py-4 bg-indigo-600 text-white text-xl font-semibold rounded-lg shadow-lg hover:bg-indigo-700 transition duration-300">{{ _("Get Started for Free") }}</a>
-            </div>
+        <section>
+            <h2>{{ gettext('Sign Up') }}</h2>
+            <form action="/signup" method="post">
+                <label for="name">{{ gettext('Name') }}:</label>
+                <input type="text" id="name" name="name" required><br>
+                <label for="email_signup">{{ gettext('Email') }}:</label>
+                <input type="email" id="email_signup" name="email" required><br>
+                <label for="phone_signup">{{ gettext('Phone (Optional)') }}:</label>
+                <input type="text" id="phone_signup" name="phone"><br>
+                <label for="password_signup">{{ gettext('Password') }}:</label>
+                <input type="password" id="password_signup" name="password" required><br>
+                <button type="submit">{{ gettext('Sign Up') }}</button>
+            </form>
         </section>
-
-        <section class="features py-16 bg-white">
-            <div class="container mx-auto px-4">
-                <h2 class="text-4xl font-bold text-center text-gray-800 mb-12">{{ _("Features Built for You") }}</h2>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <div class="feature-card text-center p-6 bg-gray-50 rounded-lg shadow-md">
-                        <i class="fas fa-link text-5xl text-indigo-600 mb-4"></i>
-                        <h3 class="text-2xl font-semibold text-gray-800 mb-2">{{ _("Shareable Booking Link") }}</h3>
-                        <p class="text-gray-600">{{ _("Your unique link (bookslot.app/your-name) for easy customer access.") }}</p>
-                    </div>
-                    <div class="feature-card text-center p-6 bg-gray-50 rounded-lg shadow-md">
-                        <i class="fas fa-bell text-5xl text-indigo-600 mb-4"></i>
-                        <h3 class="text-2xl font-semibold text-gray-800 mb-2">{{ _("Instant Notifications") }}</h3>
-                        <p class="text-gray-600">{{ _("Get WhatsApp/email alerts for every new booking.") }}</p>
-                    </div>
-                    <div class="feature-card text-center p-6 bg-gray-50 rounded-lg shadow-md">
-                        <i class="fas fa-calendar-check text-5xl text-indigo-600 mb-4"></i>
-                        <h3 class="text-2xl font-semibold text-gray-800 mb-2">{{ _("Self-Service Booking") }}</h3>
-                        <p class="text-gray-600">{{ _("Customers book themselves, no accounts needed.") }}</p>
-                    </div>
-                </div>
-            </div>
+        <section>
+            <h2>{{ gettext('Login') }}</h2>
+            <form action="/login" method="post">
+                <label for="username">{{ gettext('Email') }}:</label>
+                <input type="email" id="username" name="username" required><br>
+                <label for="password_login">{{ gettext('Password') }}:</label>
+                <input type="password" id="password_login" name="password" required><br>
+                <button type="submit">{{ gettext('Login') }}</button>
+            </form>
         </section>
-
-        <section class="pricing py-16 bg-gray-50">
-            <div class="container mx-auto px-4 text-center">
-                <h2 class="text-4xl font-bold text-gray-800 mb-12">{{ _("Pricing that Makes Sense") }}</h2>
-                <div class="max-w-md mx-auto bg-white rounded-lg shadow-lg p-8">
-                    <h3 class="text-3xl font-bold text-indigo-600 mb-4">{{ _("Premium Plan") }}</h3>
-                    <p class="text-5xl font-extrabold text-gray-900 mb-4">$19<span class="text-xl font-medium text-gray-600">/{{ _("month") }}</span></p>
-                    <ul class="text-lg text-gray-700 space-y-3 mb-8">
-                        <li><i class="fas fa-check-circle text-green-500 mr-2"></i> {{ _("Unlimited Bookings") }}</li>
-                        <li><i class="fas fa-check-circle text-green-500 mr-2"></i> {{ _("Email & WhatsApp Notifications") }}</li>
-                        <li><i class="fas fa-check-circle text-green-500 mr-2"></i> {{ _("Customer Management") }}</li>
-                        <li><i class="fas fa-check-circle text-green-500 mr-2"></i> {{ _("Advanced Analytics") }}</li>
-                    </ul>
-                    <a href="/register" class="px-8 py-3 bg-indigo-600 text-white text-lg font-semibold rounded-lg shadow-lg hover:bg-indigo-700 transition duration-300">{{ _("Start Your Free Trial") }}</a>
-                    <p class="text-sm text-gray-500 mt-4">{{ _("Free for up to 20 bookings/month.") }}</p>
-                </div>
-            </div>
-        </section>
+        {% if error %}
+            <p style="color: red;">{{ error }}</p>
+        {% endif %}
     </main>
-
-    <footer class="bg-gray-800 text-white py-8 mt-auto">
-        <div class="container mx-auto px-4 text-center">
-            <p>&copy; 2023 BookSlot. {{ _("All rights reserved.") }}</p>
-        </div>
+    <footer>
+        <p>&copy; 2023 BookSlot. {{ gettext('All rights reserved.') }}</p>
     </footer>
+    <script>
+        function changeLanguage(lang) {
+            document.cookie = "lang=" + lang + "; path=/; max-age=31536000";
+            location.reload();
+        }
+    </script>
 </body>
 </html>

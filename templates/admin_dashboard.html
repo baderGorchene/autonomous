@@ -3,121 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ gettext("Admin Dashboard") }}</title>
-    <link rel="stylesheet" href="/static/css/style.css">
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <script src="https://unpkg.com/htmx.org@1.9.10" integrity="sha384-D1Kt99CQxQhEo2jJyrLFk59WxJ4nghBHmwA1OFjTDWC1UFiRPFJ4BdxtCEIDzJkW" crossorigin="anonymous"></script>
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-        .container { max-width: 1200px; margin: auto; padding: 1rem; }
-    </style>
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
 </head>
-<body class="bg-gray-100 min-h-screen">
-    <header class="bg-white shadow-sm py-4">
-        <div class="container flex justify-between items-center">
-            <h1 class="text-2xl font-bold text-gray-800">{{ gettext("BookSlot Admin") }}</h1>
-            <nav>
-                <a href="/dashboard" class="text-blue-600 hover:underline mr-4">{{ gettext("Go to Owner Dashboard") }}</a>
-                <a href="/logout" class="text-red-600 hover:underline">{{ gettext("Logout") }}</a>
-                <div class="inline-block relative ml-4">
-                    <select onchange="window.location.href = this.value" class="block appearance-none bg-white border border-gray-300 hover:border-gray-400 px-4 py-2 pr-8 rounded shadow leading-tight focus:outline-none focus:shadow-outline">
-                        <option value="?lang=en" {% if locale == 'en' %}selected{% endif %}>English</option>
-                        <option value="?lang=ar" {% if locale == 'ar' %}selected{% endif %}>العربية</option>
-                        <option value="?lang=fr" {% if locale == 'fr' %}selected{% endif %}>Français</option>
-                    </select>
-                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                        <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-                    </div>
-                </div>
-            </nav>
+<body>
+    <div class="container">
+        <div class="language-toggle">
+            <a href="?lang=en" class="{{ 'active' if locale == 'en' }}">English</a> |
+            <a href="?lang=ar" class="{{ 'active' if locale == 'ar' }}">العربية</a> |
+            <a href="?lang=fr" class="{{ 'active' if locale == 'fr' }}">Français</a>
         </div>
-    </header>
+        <h1>{{ gettext("Admin Dashboard") }}</h1>
 
-    <main class="container mt-8">
-        <h2 class="text-3xl font-semibold text-gray-800 mb-6">{{ gettext("Manage Owners") }}</h2>
-
-        <div class="bg-white shadow overflow-hidden sm:rounded-lg">
-            <div class="px-4 py-5 sm:px-6">
-                <h3 class="text-lg leading-6 font-medium text-gray-900">{{ gettext("Owner List") }}</h3>
-            </div>
-            <div class="border-t border-gray-200">
-                <dl>
-                    {% if owners %}
-                        <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-5 sm:gap-4 sm:px-6">
-                            <dt class="text-sm font-medium text-gray-500">{{ gettext("ID") }}</dt>
-                            <dt class="text-sm font-medium text-gray-500">{{ gettext("Name") }}</dt>
-                            <dt class="text-sm font-medium text-gray-500">{{ gettext("Email") }}</dt>
-                            <dt class="text-sm font-medium text-gray-500">{{ gettext("Subscription") }}</dt>
-                            <dt class="text-sm font-medium text-gray-500">{{ gettext("Actions") }}</dt>
-                        </div>
-                        {% for owner in owners %}
-                            <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-5 sm:gap-4 sm:px-6 {% if loop.index % 2 == 0 %}bg-gray-50{% endif %}">
-                                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-1">{{ owner.id }}</dd>
-                                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-1">{{ owner.name if owner.name else 'N/A' }}</dd>
-                                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-1">{{ owner.email }}</dd>
-                                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-1 capitalize">{{ gettext(owner.subscription_status) }}</dd>
-                                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-1">
-                                    <a href="#" class="text-blue-600 hover:underline mr-2"
-                                       hx-get="/admin/owners/{{ owner.id }}/edit_form"
-                                       hx-target="#owner-details-modal-content"
-                                       hx-trigger="click"
-                                       onclick="document.getElementById('owner-details-modal').classList.remove('hidden')">
-                                        {{ gettext("View/Edit") }}
-                                    </a>
-                                    <button class="text-red-600 hover:underline"
-                                            hx-delete="/admin/owners/{{ owner.id }}"
-                                            hx-confirm="{{ gettext('Are you sure you want to delete this owner?') }}"
-                                            hx-target="closest .bg-white.px-4.py-5"
-                                            hx-swap="outerHTML swap:.5s"
-                                            hx-indicator="#delete-spinner-{{ owner.id }}">
-                                        {{ gettext("Delete") }}
-                                    </button>
-                                    <span id="delete-spinner-{{ owner.id }}" class="htmx-indicator ml-2">
-                                        <svg class="animate-spin h-5 w-5 text-red-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                        </svg>
-                                    </span>
-                                </dd>
-                            </div>
-                        {% endfor %}
-                    {% else %}
-                        <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-1 sm:gap-4 sm:px-6">
-                            <dd class="mt-1 text-sm text-gray-900 sm:mt-0">{{ gettext("No owners found.") }}</dd>
-                        </div>
-                    {% endif %}
-                </dl>
-            </div>
-        </div>
-
-        <!-- Owner Details/Edit Modal -->
-        <div id="owner-details-modal" class="fixed z-10 inset-0 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-            <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
-
-                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-
-                <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                        <div class="sm:flex sm:items-start">
-                            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                                <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">{{ gettext("Owner Details") }}</h3>
-                                <div class="mt-2" id="owner-details-modal-content">
-                                    <!-- Content loaded by HTMX -->
-                                    <p>{{ gettext("Loading owner details...") }}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                        <button type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" onclick="document.getElementById('owner-details-modal').classList.add('hidden')">
-                            {{ gettext("Close") }}
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-    </main>
+        <h2>{{ gettext("Managed Owners") }}</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>{{ gettext("ID") }}</th>
+                    <th>{{ gettext("Name") }}</th>
+                    <th>{{ gettext("Email") }}</th>
+                    <th>{{ gettext("Phone") }}</th>
+                    <th>{{ gettext("Subscription Status") }}</th>
+                    <th>{{ gettext("Is Admin") }}</th>
+                    <th>{{ gettext("Actions") }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for owner in owners %}
+                <tr>
+                    <td>{{ owner.id }}</td>
+                    <td>{{ owner.name }}</td>
+                    <td>{{ owner.email }}</td>
+                    <td>{{ owner.phone if owner.phone else gettext("N/A") }}</td>
+                    <td>{{ owner.subscription_status }}</td>
+                    <td>{{ gettext("Yes") if owner.is_admin else gettext("No") }}</td>
+                    <td class="action-links">
+                        <a href="{{ url_for('admin_owner_detail', owner_id=owner.id) }}">{{ gettext("Manage") }}</a>
+                        <form action="{{ url_for('admin_delete_owner', owner_id=owner.id) }}" method="post" style="display:inline;" onsubmit="return confirm('{{ gettext('Are you sure you want to delete this owner?') }}');">
+                            <button type="submit" style="background:none; border:none; padding:0; color:#dc3545; cursor:pointer;">{{ gettext("Delete") }}</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </body>
 </html>

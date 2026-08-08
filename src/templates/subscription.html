@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="{{ locale }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ gettext('Manage Subscription') }}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://js.stripe.com/v3/"></script>
+</head>
+<body>
+    <header>
+        <h1>{{ gettext('Manage Your Subscription') }}</h1>
+        <nav>
+            <a href="/dashboard">{{ gettext('Dashboard') }}</a>
+            <a href="/logout">{{ gettext('Logout') }}</a>
+            <div class="lang-toggle">
+                <a href="#" onclick="changeLanguage('en'); return false;">EN</a> |
+                <a href="#" onclick="changeLanguage('ar'); return false;">AR</a> |
+                <a href="#" onclick="changeLanguage('fr'); return false;">FR</a>
+            </div>
+        </nav>
+    </header>
+    <main>
+        <h2>{{ gettext('Current Plan') }}: {{ current_owner.subscription_status | capitalize }}</h2>
+
+        {% if current_owner.subscription_status == 'free' %}
+            <p>{{ gettext('Upgrade to Premium for unlimited bookings and more features for just $19/month!') }}</p>
+            <button id="checkout-button">{{ gettext('Upgrade to Premium') }}</button>
+        {% else %}
+            <p>{{ gettext('You are currently on the Premium plan. Enjoy unlimited bookings!') }}</p>
+        {% endif %}
+    </main>
+    <footer>
+        <p>&copy; 2023 BookSlot. {{ gettext('All rights reserved.') }}</p>
+    </footer>
+    <script>
+        var stripe = Stripe("{{ stripe_public_key }}");
+        var checkoutButton = document.getElementById("checkout-button");
+
+        if (checkoutButton) {
+            checkoutButton.addEventListener("click", function () {
+                fetch("/create-checkout-session", {
+                    method: "POST",
+                })
+                .then(function (response) {
+                    return response.json();
+                })
+                .then(function (session) {
+                    return stripe.redirectToCheckout({ sessionId: session.id });
+                })
+                .then(function (result) {
+                    if (result.error) {
+                        alert(result.error.message);
+                    }
+                })
+                .catch(function (error) {
+                    console.error("Error:", error);
+                });
+            });
+        }
+
+        function changeLanguage(lang) {
+            document.cookie = "lang=" + lang + "; path=/; max-age=31536000";
+            location.reload();
+        }
+    </script>
+</body>
+</html>

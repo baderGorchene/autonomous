@@ -1,12 +1,12 @@
+from pydantic import BaseModel, EmailStr, Field
 from typing import List, Optional
 from datetime import datetime
-from pydantic import BaseModel, EmailStr, Field
 
 class ServiceBase(BaseModel):
-    name: str
-    description: Optional[str] = None
-    duration_minutes: int
-    price: float
+    name: str = Field(..., min_length=1, max_length=100)
+    description: Optional[str] = Field(None, max_length=500)
+    duration_minutes: int = Field(..., gt=0)
+    price: int = Field(..., ge=0) # Price in smallest currency unit (e.g., cents)
 
 class ServiceCreate(ServiceBase):
     pass
@@ -14,32 +14,50 @@ class ServiceCreate(ServiceBase):
 class Service(ServiceBase):
     id: int
     owner_id: int
+    created_at: datetime
+    updated_at: datetime
 
     class Config:
         from_attributes = True
 
-class AvailabilityBase(BaseModel):
-    day_of_week: int # 0-6 for Monday-Sunday
-    start_time: str # HH:MM
-    end_time: str   # HH:MM
+class OwnerBase(BaseModel):
+    name: str = Field(..., min_length=1, max_length=100)
+    email: EmailStr
+    phone: Optional[str] = Field(None, pattern=r"^\+?[1-9]\d{1,14}$", description="Phone number in E.164 format (e.g., +1234567890)") # E.164 format
+    is_admin: bool = False # Added for admin panel
 
-class AvailabilityCreate(AvailabilityBase):
-    pass
+class OwnerCreate(OwnerBase):
+    password: str = Field(..., min_length=8)
 
-class Availability(AvailabilityBase):
+class OwnerProfileUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=100)
+    phone: Optional[str] = Field(None, pattern=r"^\+?[1-9]\d{1,14}$", description="Phone number in E.164 format (e.g., +1234567890)") # E.164 format
+
+class OwnerAdminUpdate(BaseModel): # New schema for admin updates
+    name: Optional[str] = Field(None, min_length=1, max_length=100)
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = Field(None, pattern=r"^\+?[1-9]\d{1,14}$", description="Phone number in E.164 format (e.g., +1234567890)")
+    subscription_status: Optional[str] = None # free, premium, cancelled
+    is_admin: Optional[bool] = None
+
+class Owner(OwnerBase):
     id: int
-    owner_id: int
+    created_at: datetime
+    updated_at: datetime
+    subscription_status: str
+    stripe_customer_id: Optional[str] = None
+    stripe_subscription_id: Optional[str] = None
+    services: List[Service] = []
 
     class Config:
         from_attributes = True
 
 class BookingBase(BaseModel):
-    customer_name: str
+    customer_name: str = Field(..., min_length=1, max_length=100)
     customer_email: EmailStr
-    customer_phone: Optional[str] = None
+    customer_phone: Optional[str] = Field(None, pattern=r"^\+?[1-9]\d{1,14}$", description="Customer phone number in E.164 format (e.g., +1234567890)")
     booking_time: datetime
     service_id: int
-    locale: str = "en" # Added for i18n
 
 class BookingCreate(BookingBase):
     pass
@@ -47,45 +65,9 @@ class BookingCreate(BookingBase):
 class Booking(BookingBase):
     id: int
     owner_id: int
-    service: Service # Nested service schema
-
-    class Config:
-        from_attributes = True
-
-class OwnerBase(BaseModel):
-    email: EmailStr
-    name: Optional[str] = None
-    phone: Optional[str] = None
-
-class OwnerCreate(OwnerBase):
-    password: str
-    subscription_status: Optional[str] = None # 'free' or 'premium'
-
-class OwnerProfileUpdate(BaseModel):
-    name: Optional[str] = None
-    phone: Optional[str] = None
-    email: Optional[EmailStr] = None # Allow email update
-
-class OwnerAdminUpdate(BaseModel):
-    name: Optional[str] = None
-    email: Optional[EmailStr] = None
-    phone: Optional[str] = None
-    hashed_password: Optional[str] = None # Admin might need to reset password
-    subscription_status: Optional[str] = None # 'free', 'premium', 'cancelled'
-    stripe_customer_id: Optional[str] = None
-    stripe_subscription_id: Optional[str] = None
-    is_admin: Optional[bool] = None # Admin can grant admin status
-
-class Owner(OwnerBase):
-    id: int
-    is_active: bool
-    services: List[Service] = []
-    availabilities: List[Availability] = []
-    bookings: List[Booking] = []
-    subscription_status: str
-    stripe_customer_id: Optional[str] = None
-    stripe_subscription_id: Optional[str] = None
-    is_admin: bool = False # Make sure this is present and matches model
+    status: str
+    created_at: datetime
+    updated_at: datetime
 
     class Config:
         from_attributes = True
@@ -97,10 +79,7 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     email: Optional[str] = None
 
-class Message(BaseModel):
-    message: str
-
-class AnalyticsData(BaseModel):
+class OwnerAnalytics(BaseModel):
     total_bookings: int
     monthly_bookings: List[dict]
     popular_services: List[dict]

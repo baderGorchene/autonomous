@@ -1,37 +1,41 @@
-<!-- src/templates/booking_confirmation.html -->
 <!DOCTYPE html>
-<html lang="{{ current_locale }}">
+<html lang="{{ locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _("Booking Confirmed!") }} - BookSlot</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-    </style>
+    <title>{{ gettext('Booking Confirmed!') }}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
-    <div class="bg-white shadow-lg rounded-lg p-8 max-w-md w-full text-center">
-        <div class="text-green-500 text-6xl mb-6">
-            <i class="fas fa-check-circle"></i>
+<body>
+    <header>
+        <h1>{{ gettext('Booking Confirmed!') }}</h1>
+        <div class="lang-toggle">
+            <a href="#" onclick="changeLanguage('en'); return false;">EN</a> |
+            <a href="#" onclick="changeLanguage('ar'); return false;">AR</a> |
+            <a href="#" onclick="changeLanguage('fr'); return false;">FR</a>
         </div>
-        <h1 class="text-3xl font-bold text-gray-900 mb-4">{{ _("Booking Confirmed!") }}</h1>
-        <p class="text-lg text-gray-700 mb-6">
-            {{ _("Thank you for your booking with {owner_name}. A confirmation email has been sent to your inbox.").format(owner_name=owner.name) }}
-        </p>
-        <a href="/book/{{ owner.name }}" class="inline-block px-6 py-3 bg-indigo-600 text-white font-medium rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-            {{ _("Book Another Service") }}
-        </a>
-        <p class="mt-6 text-sm text-gray-500">
-            <a href="/" class="hover:underline">{{ _("Back to Homepage") }}</a>
-        </p>
-
-        <div class="mt-8 flex justify-center space-x-4">
-            <a href="/set_locale/en" class="text-sm font-medium text-gray-700 hover:text-indigo-600 {% if current_locale == 'en' %}font-bold{% endif %}">English</a>
-            <a href="/set_locale/ar" class="text-sm font-medium text-gray-700 hover:text-indigo-600 {% if current_locale == 'ar' %}font-bold{% endif %}">العربية</a>
-            <a href="/set_locale/fr" class="text-sm font-medium text-gray-700 hover:text-indigo-600 {% if current_locale == 'fr' %}font-bold{% endif %}">Français</a>
-        </div>
-    </div>
+    </header>
+    <main>
+        <h2>{{ gettext('Thank you,') }} {{ booking.customer_name }}!</h2>
+        <p>{{ gettext('Your booking for') }} <strong>{{ service.name }}</strong> {{ gettext('with') }} {{ owner.name }} {{ gettext('has been successfully confirmed.') }}</p>
+        <p>{{ gettext('Details') }}:</p>
+        <ul>
+            <li><strong>{{ gettext('Service') }}:</strong> {{ service.name }}</li>
+            <li><strong>{{ gettext('Date & Time') }}:</strong> {{ booking.booking_time.strftime('%Y-%m-%d %H:%M') }}</li>
+            <li><strong>{{ gettext('Owner') }}:</strong> {{ owner.name }}</li>
+            <li><strong>{{ gettext('Owner Contact') }}:</strong> {{ owner.email }}</li>
+        </ul>
+        <p>{{ gettext('A confirmation email has been sent to') }} {{ booking.customer_email }}.</p>
+        <p><a href="/">{{ gettext('Return to Home') }}</a></p>
+    </main>
+    <footer>
+        <p>&copy; 2023 BookSlot. {{ gettext('All rights reserved.') }}</p>
+    </footer>
+    <script>
+        function changeLanguage(lang) {
+            document.cookie = "lang=" + lang + "; path=/; max-age=31536000";
+            location.reload();
+        }
+    </script>
 </body>
 </html>

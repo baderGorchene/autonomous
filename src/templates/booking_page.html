@@ -1,80 +1,58 @@
-<!-- src/templates/booking_page.html -->
 <!DOCTYPE html>
-<html lang="{{ current_locale }}">
+<html lang="{{ locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _("Book with {owner_name}").format(owner_name=owner.name) }}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-        input[type="date"]::-webkit-calendar-picker-indicator,
-        input[type="time"]::-webkit-calendar-picker-indicator {
-            filter: invert(0.5) sepia(1) saturate(5) hue-rotate(175deg); /* Tailwind indigo-600 approx */
-        }
-    </style>
+    <title>{{ gettext('Book a Slot with') }} {{ owner.name }}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col items-center justify-center p-4">
-    <div class="bg-white shadow-lg rounded-lg p-6 sm:p-8 max-w-lg w-full">
-        <h1 class="text-3xl font-bold text-gray-900 text-center mb-2">{{ owner.name }}</h1>
-        <p class="text-gray-600 text-center mb-6">{{ _("Book your service below.") }}</p>
-
-        {% for message in error_message %}
-        <div class="mb-4 p-3 rounded-md {% if message.category == 'error' %}bg-red-100 text-red-700{% elif message.category == 'success' %}bg-green-100 text-green-700{% else %}bg-blue-100 text-blue-700{% endif %}">
-            {{ message.message }}
+<body>
+    <header>
+        <h1>{{ gettext('Book a Slot with') }} {{ owner.name }}</h1>
+        <div class="lang-toggle">
+            <a href="#" onclick="changeLanguage('en'); return false;">EN</a> |
+            <a href="#" onclick="changeLanguage('ar'); return false;">AR</a> |
+            <a href="#" onclick="changeLanguage('fr'); return false;">FR</a>
         </div>
-        {% endfor %}
+    </header>
+    <main>
+        {% if error %}
+            <p style="color: red;">{{ error }}</p>
+        {% endif %}
+        <form action="/booking/{{ owner.name }}/submit" method="post">
+            <label for="customer_name">{{ gettext('Your Name') }}:</label>
+            <input type="text" id="customer_name" name="customer_name" required><br>
 
-        <form action="/book/{{ owner.name }}/submit" method="POST" class="space-y-6">
-            <div>
-                <label for="service_id" class="block text-sm font-medium text-gray-700">{{ _("Select Service") }}</label>
-                <select id="service_id" name="service_id" required class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-                    <option value="">{{ _("Choose a service") }}</option>
-                    {% for service in services %}
-                    <option value="{{ service.id }}">{{ service.name }} - ${{ "%.2f"|format(service.price) }} ({{ service.duration_minutes }} {{ _("min") }})</option>
-                    {% endfor %}
-                </select>
-            </div>
+            <label for="customer_email">{{ gettext('Your Email') }}:</label>
+            <input type="email" id="customer_email" name="customer_email" required><br>
 
-            <div>
-                <label for="customer_name" class="block text-sm font-medium text-gray-700">{{ _("Your Name") }}</label>
-                <input type="text" name="customer_name" id="customer_name" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="{{ _('John Doe') }}">
-            </div>
+            <label for="customer_phone">{{ gettext('Your Phone (Optional)') }}:</label>
+            <input type="text" id="customer_phone" name="customer_phone"><br>
 
-            <div>
-                <label for="customer_email" class="block text-sm font-medium text-gray-700">{{ _("Your Email") }}</label>
-                <input type="email" name="customer_email" id="customer_email" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="{{ _('john.doe@example.com') }}">
-            </div>
+            <label for="service_id">{{ gettext('Select Service') }}:</label>
+            <select id="service_id" name="service_id" required>
+                {% for service in services %}
+                    <option value="{{ service.id }}">{{ service.name }} ({{ service.price | currency_format(locale) }} - {{ service.duration_minutes }} {{ gettext('minutes') }})</option>
+                {% endfor %}
+            </select><br>
 
-            <div>
-                <label for="customer_phone" class="block text-sm font-medium text-gray-700">{{ _("Your Phone (WhatsApp preferred)") }}</label>
-                <input type="tel" name="customer_phone" id="customer_phone" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="{{ _('+1234567890') }}">
-            </div>
+            <label for="booking_date">{{ gettext('Date') }}:</label>
+            <input type="date" id="booking_date" name="booking_date" required min="{{ 'now' | strftime('%Y-%m-%d') }}"><br>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                    <label for="booking_date" class="block text-sm font-medium text-gray-700">{{ _("Date") }}</label>
-                    <input type="date" name="booking_date" id="booking_date" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                </div>
-                <div>
-                    <label for="booking_time" class="block text-sm font-medium text-gray-700">{{ _("Time") }}</label>
-                    <input type="time" name="booking_time" id="booking_time" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                </div>
-            </div>
+            <label for="booking_time">{{ gettext('Time') }}:</label>
+            <input type="time" id="booking_time" name="booking_time" required><br>
 
-            <div>
-                <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    {{ _("Book Now") }}
-                </button>
-            </div>
+            <button type="submit">{{ gettext('Book Now') }}</button>
         </form>
-
-        <div class="mt-8 flex justify-center space-x-4">
-            <a href="/set_locale/en" class="text-sm font-medium text-gray-700 hover:text-indigo-600 {% if current_locale == 'en' %}font-bold{% endif %}">English</a>
-            <a href="/set_locale/ar" class="text-sm font-medium text-gray-700 hover:text-indigo-600 {% if current_locale == 'ar' %}font-bold{% endif %}">العربية</a>
-            <a href="/set_locale/fr" class="text-sm font-medium text-gray-700 hover:text-indigo-600 {% if current_locale == 'fr' %}font-bold{% endif %}">Français</a>
-        </div>
-    </div>
+    </main>
+    <footer>
+        <p>&copy; 2023 BookSlot. {{ gettext('All rights reserved.') }}</p>
+    </footer>
+    <script>
+        function changeLanguage(lang) {
+            document.cookie = "lang=" + lang + "; path=/; max-age=31536000";
+            location.reload();
+        }
+    </script>
 </body>
 </html>
