@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr, Field
-from datetime import datetime, time, date
-from typing import Optional, List
+from typing import List, Optional
+import datetime
 
 class Token(BaseModel):
     access_token: str
@@ -11,125 +11,168 @@ class TokenData(BaseModel):
 
 class OwnerBase(BaseModel):
     email: EmailStr
-    name: Optional[str] = None
+    name: str
     phone: Optional[str] = None
-    whatsapp_number: Optional[str] = None
-    currency: Optional[str] = "USD"
-    locale: Optional[str] = "en"
+    locale: str = "en"
 
 class OwnerCreate(OwnerBase):
-    password: str
+    password: str = Field(..., min_length=8)
 
-class OwnerUpdate(OwnerBase):
-    email: Optional[EmailStr] = None
-    password: Optional[str] = None
+class OwnerUpdate(BaseModel):
     name: Optional[str] = None
     phone: Optional[str] = None
-    whatsapp_number: Optional[str] = None
-    currency: Optional[str] = None
     locale: Optional[str] = None
 
-class Owner(OwnerBase):
+class OwnerInDB(OwnerBase):
     id: int
     is_active: bool
-    created_at: datetime
-    updated_at: datetime
     stripe_customer_id: Optional[str] = None
     subscription_status: str
-    
-    services: List["Service"] = []
-    bookings: List["Booking"] = []
-    recurring_availability_rules: List["RecurringAvailabilityRule"] = []
+    current_period_end: Optional[datetime.datetime] = None
 
     class Config:
         from_attributes = True
 
 class ServiceBase(BaseModel):
     name: str
-    description: Optional[str] = None
+    description: str
     duration_minutes: int = Field(..., gt=0)
-    price: int = Field(..., ge=0) # Price in cents
-    is_active: bool = True
+    price: float = Field(..., ge=0.0)
 
 class ServiceCreate(ServiceBase):
     pass
 
-class ServiceUpdate(ServiceBase):
+class ServiceUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
     duration_minutes: Optional[int] = None
-    price: Optional[int] = None
-    is_active: Optional[bool] = None
+    price: Optional[float] = None
 
 class Service(ServiceBase):
     id: int
     owner_id: int
-    created_at: datetime
-    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class AvailabilityBase(BaseModel):
+    date: datetime.date
+    start_time: datetime.time
+    end_time: datetime.time
+    service_id: Optional[int] = None
+    is_available: bool = True
+
+class AvailabilityCreate(AvailabilityBase):
+    pass
+
+class Availability(AvailabilityBase):
+    id: int
+    owner_id: int
+
+    class Config:
+        from_attributes = True
+
+class RecurringAvailabilityBase(BaseModel):
+    service_id: Optional[int] = None
+    day_of_week: int = Field(..., ge=0, le=6, description="Day of week (0=Monday, 6=Sunday)")
+    start_time: datetime.time
+    end_time: datetime.time
+    start_date: Optional[datetime.date] = None
+    end_date: Optional[datetime.date] = None
+    is_active: bool = True
+
+class RecurringAvailabilityCreate(RecurringAvailabilityBase):
+    pass
+
+class RecurringAvailabilityUpdate(BaseModel):
+    service_id: Optional[int] = None
+    day_of_week: Optional[int] = Field(None, ge=0, le=6, description="Day of week (0=Monday, 6=Sunday)")
+    start_time: Optional[datetime.time] = None
+    end_time: Optional[datetime.time] = None
+    start_date: Optional[datetime.date] = None
+    end_date: Optional[datetime.date] = None
+    is_active: Optional[bool] = None
+
+class RecurringAvailability(RecurringAvailabilityBase):
+    id: int
+    owner_id: int
 
     class Config:
         from_attributes = True
 
 class BookingBase(BaseModel):
-    owner_id: int
     customer_name: str
     customer_email: EmailStr
     customer_phone: Optional[str] = None
-    booking_time: datetime
-    service_name: str # Denormalized for easier display
-    service_duration: int
-    service_price: int
+    booking_time: datetime.datetime
 
 class BookingCreate(BookingBase):
-    pass
-
-class BookingUpdate(BookingBase):
-    customer_name: Optional[str] = None
-    customer_email: Optional[EmailStr] = None
-    customer_phone: Optional[str] = None
-    booking_time: Optional[datetime] = None
-    status: Optional[str] = None
+    service_id: int
 
 class Booking(BookingBase):
     id: int
-    status: str
-    created_at: datetime
-    updated_at: datetime
-
-    class Config:
-        from_attributes = True
-
-class RecurringAvailabilityRuleBase(BaseModel):
-    rrule_string: str
-    rule_start_date: date
-    rule_end_date: Optional[date] = None
-    start_time: time
-    end_time: time
-    slot_duration: int = 30
-    is_active: bool = True
-
-class RecurringAvailabilityRuleCreate(RecurringAvailabilityRuleBase):
-    pass
-
-class RecurringAvailabilityRuleUpdate(RecurringAvailabilityRuleBase):
-    rrule_string: Optional[str] = None
-    rule_start_date: Optional[date] = None
-    rule_end_date: Optional[date] = None
-    start_time: Optional[time] = None
-    end_time: Optional[time] = None
-    slot_duration: Optional[int] = None
-    is_active: Optional[bool] = None
-
-class RecurringAvailabilityRule(RecurringAvailabilityRuleBase):
-    id: int
     owner_id: int
-    created_at: datetime
-    updated_at: datetime
+    service_id: int
+    created_at: datetime.datetime
 
     class Config:
         from_attributes = True
 
-# Forward references for type hints
-Owner.model_rebuild()
-Service.model_rebuild()
-Booking.model_rebuild()
+class BookingConfirmation(BaseModel):
+    owner_name: str
+    owner_email: EmailStr
+    customer_name: str
+    customer_email: EmailStr
+    service_name: str
+    booking_time: datetime.datetime
+    owner_phone: Optional[str] = None
+    customer_phone: Optional[str] = None
+    booking_link: Optional[str] = None
+
+class AdminUserBase(BaseModel):
+    email: EmailStr
+
+class AdminUserCreate(AdminUserBase):
+    password: str
+
+class AdminUser(AdminUserBase):
+    id: int
+    is_active: bool
+
+    class Config:
+        from_attributes = True
+
+class OwnerDashboardStats(BaseModel):
+    total_bookings_this_month: int
+    total_revenue_this_month: float
+    popular_services: List[dict]
+    upcoming_bookings: List[Booking]
+
+class StripeCheckoutSession(BaseModel):
+    session_url: str
+
+class SubscriptionStatus(BaseModel):
+    status: str
+    current_period_end: Optional[datetime.datetime] = None
+    is_premium: bool
+
+class BookingTimeSlot(BaseModel):
+    start_time: datetime.datetime
+    end_time: datetime.datetime
+    is_bookable: bool
+
+class DailyAvailability(BaseModel):
+    date: datetime.date
+    slots: List[BookingTimeSlot]
+
+class OwnerServiceWithAvailability(Service):
+    recurring_availabilities: List[RecurringAvailability] = []
+
+class OwnerDashboardData(BaseModel):
+    owner: OwnerInDB
+    services: List[OwnerServiceWithAvailability]
+    upcoming_bookings: List[Booking]
+    total_bookings_this_month: int
+    total_revenue_this_month: float
+    popular_services: List[dict]
+    subscription_status: SubscriptionStatus
