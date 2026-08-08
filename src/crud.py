@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from . import models, schemas
 from datetime import datetime, timedelta
-from sqlalchemy import func
+from sqlalchemy import func, extract
 
 def get_owner_by_email(db: Session, email: str):
     return db.query(models.Owner).filter(models.Owner.email == email).first()
@@ -44,6 +44,53 @@ def update_owner_profile(db: Session, owner: models.Owner, owner_update: schemas
     db.refresh(owner)
     return owner
 
-def get_owner_booking_counts(db: Session, owner_id: int):
+def get_owner_analytics(db: Session, owner_id: int):
+    # Total bookings
     total_bookings = db.query(func.count(models.Booking.id)).filter(models.Booking.owner_id == owner_id).scalar()
-    return {"total_bookings": total_bookings}
+
+    # Monthly bookings
+    dialect_name = db.bind.dialect.name
+
+    if 'postgresql' in dialect_name:
+        month_expression = func.to_char(models.Booking.booking_time, 'YYYY-MM')
+    elif 'sqlite' in dialect_name:
+        month_expression = func.strftime('%Y-%m', models.Booking.booking_time)
+    else:
+        raise NotImplementedError(f"Monthly bookings analytics not implemented for database dialect: {dialect_name}")
+
+    monthly_bookings_query = (
+        db.query(
+            month_expression.label('month'),
+            func.count(models.Booking.id).label('count')
+        )
+        .filter(models.Booking.owner_id == owner_id)
+        .group_by('month')
+        .order_by('month')
+        .all()
+    )
+    monthly_bookings = []
+    for r in monthly_bookings_query:
+        monthly_bookings.append({"month": r.month, "count": r.count})
+
+    # Popular services
+    popular_services_query = (
+        db.query(
+            models.Service.name.label('service_name'),
+            func.count(models.Booking.id).label('count')
+        )
+        .join(models.Service, models.Booking.service_id == models.Service.id)
+        .filter(models.Booking.owner_id == owner_id)
+        .group_by(models.Service.name)
+        .order_by(func.count(models.Booking.id).desc())
+        .limit(5) # Top 5 popular services
+        .all()
+    )
+    popular_services = []
+    for r in popular_services_query:
+        popular_services.append({"service_name": r.service_name, "count": r.count})
+
+    return {
+        "total_bookings": total_bookings,
+        "monthly_bookings": monthly_bookings,
+        "popular_services": popular_services,
+    }

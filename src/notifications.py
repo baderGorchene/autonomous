@@ -1,88 +1,107 @@
-from typing import Dict, Optional
-import os
-from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail
+from src.config import settings
+import smtplib
+from email.mime.text import MIMEText
 from twilio.rest import Client
-from .config import settings
+import gettext as gt
+from typing import Optional
 
-def send_email(to_email: str, subject: str, html_content: str):
+twilio_client: Optional[Client] = None
+if settings.TWILIO_ACCOUNT_SID and settings.TWILIO_AUTH_TOKEN:
+    try:
+        twilio_client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
+    except Exception as e:
+        print(f"Error initializing Twilio client: {e}")
+
+def get_translation_function(lang: str):
+    try:
+        locales_dir = settings.LOCALES_DIR
+        translation = gt.translation('messages', locales_dir, languages=[lang])
+        return translation.gettext
+    except Exception as e:
+        print(f"Error loading translation for {lang}: {e}")
+        return gt.gettext
+
+def send_email(to_email: str, subject: str, body: str):
     if not settings.SENDGRID_API_KEY:
-        print(f"SendGrid API Key not set. Skipping email to {to_email} with subject '{subject}'.")
+        print(f"Skipping email to {to_email}: SendGrid API key not set. Subject: '{subject}'")
         return
+    print(f"--- Sending Email ---")
+    print(f"To: {to_email}")
+    print(f"Subject: {subject}")
+    print(f"Body:\n{body}")
+    print(f"---------------------")
 
-    message = Mail(
-        from_email=('noreply@bookslot.app', 'BookSlot'),
-        to_emails=to_email,
-        subject=subject,
-        html_content=html_content
-    )
-    try:
-        sendgrid_client = SendGridAPIClient(settings.SENDGRID_API_KEY)
-        response = sendgrid_client.send(message)
-        print(f"Email sent to {to_email}. Status Code: {response.status_code}")
-    except Exception as e:
-        print(f"Error sending email to {to_email}: {e}")
-
-def send_whatsapp_notification(to_phone_number: Optional[str], booking_details: Dict):
-    if not to_phone_number or not settings.TWILIO_ACCOUNT_SID or not settings.TWILIO_AUTH_TOKEN or not settings.TWILIO_WHATSAPP_NUMBER:
-        print(f"Twilio credentials or recipient phone number not fully set. Skipping WhatsApp notification to {to_phone_number}.")
+def send_whatsapp_message(to_phone: str, body: str):
+    if not settings.TWILIO_WHATSAPP_NUMBER or not twilio_client:
+        print(f"Skipping WhatsApp to {to_phone}: Twilio credentials or sender number not set. Message: '{body}'")
         return
-
+    
     try:
-        client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
-        
-        message_body = (
-            f"New booking for {booking_details['service_name']}!\n"
-            f"Customer: {booking_details['customer_name']} ({booking_details['customer_email']})\n"
-            f"Time: {booking_details['start_time']}\n"
-            f"Price: {booking_details['price']}"
-        )
-
-        message = client.messages.create(
+        message = twilio_client.messages.create(
             from_=settings.TWILIO_WHATSAPP_NUMBER,
-            body=message_body,
-            to=f"whatsapp:{to_phone_number}"
+            body=body,
+            to=f"whatsapp:{to_phone}"
         )
-        print(f"WhatsApp message sent to {to_phone_number}. SID: {message.sid}")
+        print(f"WhatsApp message sent to {to_phone} with SID: {message.sid}")
     except Exception as e:
-        print(f"Error sending WhatsApp notification to {to_phone_number}: {e}")
+        print(f"Error sending WhatsApp message to {to_phone}: {e}")
 
-def send_booking_confirmation_email(owner_email: str, customer_email: str, booking_details: Dict):
-    owner_subject = f"New Booking: {booking_details['service_name']} on {booking_details['start_time']}"
-    owner_html = f"""
-    <p>Dear {booking_details['owner_name']},</p>
-    <p>You have a new booking!</p>
-    <ul>
-        <li>Service: {booking_details['service_name']}</li>
-        <li>Customer: {booking_details['customer_name']} ({booking_details['customer_email']}{f', {booking_details["customer_phone"]}' if booking_details['customer_phone'] else ''})</li>
-        <li>Time: {booking_details['start_time']} - {booking_details['end_time']}</li>
-        <li>Price: {booking_details['price']}</li>
-    </ul>
-    <p>Thank you!</p>
-    """
-    send_email(owner_email, owner_subject, owner_html)
+def send_booking_confirmation_email(owner_email: str, customer_email: str, booking_details: dict, service_name: str, owner_name: str, lang: str):
+    _ = get_translation_function(lang)
 
-    customer_subject = f"Your Booking for {booking_details['service_name']} is Confirmed!"
-    customer_html = f"""
-    <p>Dear {booking_details['customer_name']},</p>
-    <p>Your booking for <b>{booking_details['service_name']}</b> with {booking_details['owner_name']} has been confirmed.</p>
-    <ul>
-        <li>Time: {booking_details['start_time']} - {booking_details['end_time']}</li>
-        <li>Price: {booking_details['price']}</li>
-        <li>Location/Details: (provided by owner)</li>
-    </ul>
-    <p>We look forward to seeing you!</p>
-    """
-    send_email(customer_email, customer_subject, customer_html)
+    subject = _("Booking Confirmation for {service_name}").format(service_name=service_name)
+    body_customer = _("""
+        Dear {customer_name},
+        Your booking for {service_name} with {owner_name} on {booking_time} has been confirmed.
+        Thank you!
+    """).format(
+        customer_name=booking_details["customer_name"],
+        service_name=service_name,
+        owner_name=owner_name,
+        booking_time=booking_details["booking_time"].strftime('%Y-%m-%d %H:%M')
+    )
+    send_email(customer_email, subject, body_customer)
 
-def send_premium_confirmation_email(owner_email: str, owner_name: str):
-    subject = "Welcome to BookSlot Premium!"
-    html_content = f"""
-    <p>Dear {owner_name},</p>
-    <p>Congratulations! You have successfully upgraded to BookSlot Premium.</p>
-    <p>You now have access to unlimited bookings and all premium features.</p>
-    <p>Thank you for being a valued BookSlot customer!</p>
-    <p>Best regards,</p>
-    <p>The BookSlot Team</p>
-    """
-    send_email(owner_email, subject, html_content)
+    subject_owner = _("New Booking for {service_name}").format(service_name=service_name)
+    body_owner = _("""
+        Dear {owner_name},
+        You have a new booking:
+        Service: {service_name}
+        Customer: {customer_name} ({customer_email}, {customer_phone})
+        Time: {booking_time}
+    """).format(
+        owner_name=owner_name,
+        service_name=service_name,
+        customer_name=booking_details["customer_name"],
+        customer_email=booking_details["customer_email"],
+        customer_phone=booking_details["customer_phone"] or _("N/A"),
+        booking_time=booking_details["booking_time"].strftime('%Y-%m-%d %H:%M')
+    )
+    send_email(owner_email, subject_owner, body_owner)
+
+def send_booking_notification_whatsapp(owner_phone: Optional[str], customer_name: str, booking_details: dict, service_name: str, lang: str):
+    if not owner_phone:
+        print(f"Skipping WhatsApp notification: Owner phone not provided.")
+        return
+
+    _ = get_translation_function(lang)
+
+    message = _("New booking for {service_name} by {customer_name} on {booking_time}.").format(
+        service_name=service_name,
+        customer_name=customer_name,
+        booking_time=booking_details["booking_time"].strftime('%Y-%m-%d %H:%M')
+    )
+    send_whatsapp_message(owner_phone, message)
+
+def send_premium_welcome_email(owner_email: str, owner_name: str, lang: str):
+    _ = get_translation_function(lang)
+
+    subject = _("Welcome to BookSlot Premium, {owner_name}!").format(owner_name=owner_name)
+    body = _("""
+        Dear {owner_name},
+        Thank you for upgrading to BookSlot Premium! You now have unlimited bookings and access to advanced features.
+        We're excited to help your business grow.
+        Best regards,
+        The BookSlot Team
+    """).format(owner_name=owner_name)
+    send_email(owner_email, subject, body)

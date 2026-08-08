@@ -1,38 +1,37 @@
+<!-- templates/base.html -->
 <!DOCTYPE html>
-<html lang="{{ request.cookies.get('lang', 'en') }}" dir="{{ 'rtl' if request.cookies.get('lang') == 'ar' else 'ltr' }}">
+<html lang="{{ current_locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}{{ 'BookSlot' | i18n }}{% endblock %}</title>
+    <title>{% block title %}BookSlot{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/htmx.org@1.9.10" integrity="sha384-qcCgXst6PkmxagEML1LpLw6TqswP4zHLTgnPXzTHTzGa9Kj83dg3SPYR1hvrPxS7" crossorigin="anonymous"></script>
-    <style>
-        body { font-family: sans-serif; }
-        .error-message { color: red; margin-top: 10px; }
-        .success-message { color: green; margin-top: 10px; }
-    </style>
-    {% block head_extra %}{% endblock %}
+    <link rel="stylesheet" href="/static/css/style.css">
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col">
-    <header class="bg-white shadow-sm p-4 flex justify-between items-center">
-        <div class="text-xl font-bold text-indigo-600">{{ 'BookSlot' | i18n }}</div>
-        <div class="flex space-x-2">
-            <button hx-post="/set-language/en" hx-trigger="click" hx-swap="outerHTML" hx-target="body" class="px-3 py-1 bg-gray-200 rounded-md text-sm hover:bg-gray-300">EN</button>
-            <button hx-post="/set-language/ar" hx-trigger="click" hx-swap="outerHTML" hx-target="body" class="px-3 py-1 bg-gray-200 rounded-md text-sm hover:bg-gray-300">AR</button>
-            <button hx-post="/set-language/fr" hx-trigger="click" hx-swap="outerHTML" hx-target="body" class="px-3 py-1 bg-gray-200 rounded-md text-sm hover:bg-gray-300">FR</button>
+<body class="bg-gray-100 font-sans antialiased">
+    <header class="bg-white shadow-sm p-4">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="/" class="text-2xl font-bold text-blue-600">BookSlot</a>
+            <nav>
+                {% if owner %}
+                <a href="/dashboard" class="text-gray-700 hover:text-blue-600 mr-4">{{ _("Dashboard") }}</a>
+                <a href="/logout" class="text-gray-700 hover:text-blue-600">{{ _("Logout") }}</a>
+                {% else %}
+                <a href="/login" class="text-gray-700 hover:text-blue-600 mr-4">{{ _("Login") }}</a>
+                <a href="/signup" class="text-gray-700 hover:text-blue-600">{{ _("Sign Up") }}</a>
+                {% endif %}
+            </nav>
         </div>
     </header>
-    <main class="flex-grow container mx-auto p-4">
+
+    <main>
         {% block content %}{% endblock %}
     </main>
-    <footer class="p-4 text-center text-gray-500 text-sm">
-        &copy; {{ 'BookSlot' | i18n }} {{ now().year }}
-    </footer>
-    <script>
-        function now() {
-            return new Date();
+
+    <footer class="bg-gray-800 text-white p-4 mt-8">
+        <div class="container mx-auto text-center">
+            <p>&copy; 2023 BookSlot. {{ _("All rights reserved.") }}</p>
         }
-    </script>
-    {% block scripts %}{% endblock %}
+    </footer>
 </body>
 </html>

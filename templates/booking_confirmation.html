@@ -1,74 +1,25 @@
-<!DOCTYPE html>
-<html lang="{{ current_lang }}">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _("Booking Confirmation") }}</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <style>
-        body.ar {
-            direction: rtl;
-            text-align: right;
-            font-family: 'Cairo', sans-serif; /* Example for Arabic font */
-        }
-    </style>
-</head>
-<body class="bg-gray-100 text-gray-900 flex items-center justify-center min-h-screen p-4 {{ current_lang }}">
-    <div class="bg-white shadow-xl rounded-lg p-8 max-w-md w-full text-center">
-        <div class="text-green-500 mb-6">
-            <svg class="mx-auto h-16 w-16" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
-        </div>
-        <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight sm:text-4xl">
-            {{ _("Booking Confirmed!") if booking.payment_status.value == 'PAID' else _("Booking Pending Payment") }}
-        </h1>
-        <p class="mt-4 text-lg text-gray-500">
-            {{ _("Thank you for your booking.") }}
-            {% if booking.payment_status.value == 'PAID' %}
-                {{ _("Your booking is confirmed and payment has been successfully processed.") }}
-            {% else %}
-                {{ _("Your booking is pending payment. Please complete the payment to confirm your slot.") }}
-            {% endif %}
-        </p>
+<!-- templates/booking_confirmation.html -->
+{% extends "base.html" %}
+{% block title %}{{ _("Booking Confirmed!") }}{% endblock %}
 
-        <div class="mt-8 text-left">
-            <h2 class="text-2xl font-bold text-gray-900">{{ _("Booking Details") }}</h2>
-            <dl class="mt-4 space-y-4">
-                <div>
-                    <dt class="text-sm font-medium text-gray-500">{{ _("Service") }}:</dt>
-                    <dd class="mt-1 text-lg text-gray-900">{{ service.name }}</dd>
-                </div>
-                <div>
-                    <dt class="text-sm font-medium text-gray-500">{{ _("Date & Time") }}:</dt>
-                    <dd class="mt-1 text-lg text-gray-900">{{ booking.start_time.strftime('%Y-%m-%d %H:%M') }} (UTC)</dd>
-                </div>
-                <div>
-                    <dt class="text-sm font-medium text-gray-500">{{ _("Customer Name") }}:</dt>
-                    <dd class="mt-1 text-lg text-gray-900">{{ booking.customer_name }}</dd>
-                </div>
-                <div>
-                    <dt class="text-sm font-medium text-gray-500">{{ _("Customer Email") }}:</dt>
-                    <dd class="mt-1 text-lg text-gray-900">{{ booking.customer_email }}</dd>
-                </div>
-                {% if booking.customer_phone %}
-                <div>
-                    <dt class="text-sm font-medium text-gray-500">{{ _("Customer Phone") }}:</dt>
-                    <dd class="mt-1 text-lg text-gray-900">{{ booking.customer_phone }}</dd>
-                </div>
-                {% endif %}
-                <div>
-                    <dt class="text-sm font-medium text-gray-500">{{ _("Payment Status") }}:</dt>
-                    <dd class="mt-1 text-lg text-gray-900">{{ booking.payment_status.value | upper }}</dd>
-                </div>
-            </dl>
+{% block content %}
+<div class="container mx-auto p-4 flex justify-center items-center min-h-[calc(100vh-160px)]">
+    <div class="bg-white shadow-md rounded-lg p-8 w-full max-w-md text-center">
+        <h1 class="text-3xl font-bold mb-6 text-green-600">{{ _("Booking Confirmed!") }}</h1>
+        <p class="text-gray-700 mb-4">{{ _("Thank you, {customer_name}! Your booking has been successfully placed.").format(customer_name=booking.customer_name) }}</p>
+        <div class="text-left bg-gray-50 p-4 rounded-md mb-6">
+            <p><strong>{{ _("Service") }}:</strong> {{ service.name }}</p>
+            <p><strong>{{ _("With") }}:</strong> {{ owner.name }}</p>
+            <p><strong>{{ _("Date & Time") }}:</strong> {{ booking.booking_time.strftime('%Y-%m-%d %H:%M') }}</p>
+            <p><strong>{{ _("Your Email") }}:</strong> {{ booking.customer_email }}</p>
+            {% if booking.customer_phone %}<p><strong>{{ _("Your Phone") }}:</strong> {{ booking.customer_phone }}</p>{% endif %}
         </div>
-
-        <div class="mt-8">
-            <a href="/booking/{{ owner.business_name.lower().replace(' ', '-') }}" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                {{ _("Book another appointment") }}
-            </a>
+        <p class="text-gray-700">{{ _("A confirmation email has been sent to {customer_email} and {owner_email}.").format(customer_email=booking.customer_email, owner_email=owner.email) }}</p>
+        <div class="mt-6">
+            <a href="/book/{{ owner.name }}" class="text-blue-600 hover:underline">{{ _("Book another service") }}</a>
+            <span class="mx-2">|</span>
+            <a href="/dashboard" class="text-blue-600 hover:underline">{{ _("Go to Dashboard") }}</a>
         </div>
     </div>
-</body>
-</html>
+</div>
+{% endblock %}

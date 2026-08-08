@@ -1,44 +1,40 @@
+<!-- templates/signup.html -->
 {% extends "base.html" %}
-{% block title %}{{ 'Sign Up' | i18n }}{% endblock %}
+{% block title %}{{ _("Sign Up") }}{% endblock %}
+
 {% block content %}
-<div class="max-w-md mx-auto bg-white p-8 rounded-lg shadow-md mt-10">
-    <h2 class="text-2xl font-bold text-center mb-6">{{ 'Create Your BookSlot Account' | i18n }}</h2>
-    {% if error %}
-        <p class="error-message text-center">{{ error | i18n }}</p>
-    {% endif %}
-    <form hx-post="/signup" hx-swap="outerHTML" hx-target="#signup-form-container" id="signup-form-container">
-        <div class="mb-4">
-            <label for="name" class="block text-gray-700 text-sm font-bold mb-2">{{ 'Your Name' | i18n }}:</label>
-            <input type="text" id="name" name="name" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
-        </div>
-        <div class="mb-4">
-            <label for="email" class="block text-gray-700 text-sm font-bold mb-2">{{ 'Email' | i18n }}:</label>
-            <input type="email" id="email" name="email" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
-        </div>
-        <div class="mb-4">
-            <label for="password" class="block text-gray-700 text-sm font-bold mb-2">{{ 'Password' | i18n }}:</label>
-            <input type="password" id="password" name="password" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
-        </div>
-        <div class="mb-4">
-            <label for="business_name" class="block text-gray-700 text-sm font-bold mb-2">{{ 'Business Name' | i18n }}:</label>
-            <input type="text" id="business_name" name="business_name" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
-        </div>
-        <div class="mb-4">
-            <label for="phone" class="block text-gray-700 text-sm font-bold mb-2">{{ 'Phone Number (optional)' | i18n }}:</label>
-            <input type="tel" id="phone" name="phone" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-        </div>
-        <div class="mb-6">
-            <label for="slug" class="block text-gray-700 text-sm font-bold mb-2">{{ 'Your Booking Page URL' | i18n }} (bookslot.app/):</label>
-            <input type="text" id="slug" name="slug" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" pattern="^[a-z0-9-]+$" title="{{ 'Only lowercase letters, numbers, and hyphens allowed.' | i18n }}" required>
-        </div>
-        <div class="flex items-center justify-between">
-            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                {{ 'Sign Up' | i18n }}
+<div class="container mx-auto p-4 flex justify-center items-center min-h-[calc(100vh-160px)]">
+    <div class="bg-white shadow-md rounded-lg p-8 w-full max-w-md">
+        <h1 class="text-3xl font-bold mb-6 text-center">{{ _("Sign Up for BookSlot") }}</h1>
+        <form action="/signup" method="post" class="space-y-4">
+            <div>
+                <label for="name" class="block text-sm font-medium text-gray-700">{{ _("Your Name") }}:</label>
+                <input type="text" id="name" name="name" required
+                       class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+            </div>
+            <div>
+                <label for="email" class="block text-sm font-medium text-gray-700">{{ _("Email") }}:</label>
+                <input type="email" id="email" name="email" required
+                       class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+            </div>
+            <div>
+                <label for="phone" class="block text-sm font-medium text-gray-700">{{ _("Phone Number (WhatsApp)") }}:</label>
+                <input type="tel" id="phone" name="phone"
+                       class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" placeholder="+1234567890">
+            </div>
+            <div>
+                <label for="password" class="block text-sm font-medium text-gray-700">{{ _("Password") }}:</label>
+                <input type="password" id="password" name="password" required
+                       class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+            </div>
+            <button type="submit"
+                    class="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                {{ _("Sign Up") }}
             </button>
-            <a class="inline-block align-baseline font-bold text-sm text-indigo-600 hover:text-indigo-800" href="/login">
-                {{ 'Already have an account? Log In' | i18n }}
-            </a>
-        </div>
-    </form>
+        </form>
+        <p class="mt-6 text-center text-gray-600">
+            {{ _("Already have an account?") }} <a href="/login" class="text-blue-600 hover:underline">{{ _("Login here") }}</a>
+        </p>
+    </div>
 </div>
 {% endblock %}

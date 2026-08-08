@@ -1,40 +1,34 @@
-from pydantic import BaseModel, EmailStr, Field
-from datetime import datetime, time, date
-from typing import List, Optional
+from pydantic import BaseModel, EmailStr, Field, validator
+from datetime import datetime, date, time
+from typing import List, Optional, Dict
 
-# --- Auth & User Schemas ---
 class OwnerBase(BaseModel):
     email: EmailStr
-    name: Optional[str] = None
+    name: str
     phone: Optional[str] = None
 
 class OwnerCreate(OwnerBase):
     password: str
 
-class OwnerProfileUpdate(BaseModel):
+class OwnerProfileUpdate(OwnerBase):
+    email: Optional[EmailStr] = None
     name: Optional[str] = None
     phone: Optional[str] = None
 
 class Owner(OwnerBase):
     id: int
     is_active: bool
+    is_premium: bool
+    created_at: datetime
 
     class Config:
         from_attributes = True
 
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-
-class TokenData(BaseModel):
-    email: Optional[str] = None
-
-# --- Service Schemas ---
 class ServiceBase(BaseModel):
     name: str
     description: Optional[str] = None
-    duration_minutes: int
     price: float
+    duration_minutes: int
 
 class ServiceCreate(ServiceBase):
     pass
@@ -46,28 +40,11 @@ class Service(ServiceBase):
     class Config:
         from_attributes = True
 
-# --- Availability Schemas ---
-class AvailabilityBase(BaseModel):
-    day_of_week: int  # 0=Monday, 6=Sunday
-    start_time: time
-    end_time: time
-
-class AvailabilityCreate(AvailabilityBase):
-    pass
-
-class Availability(AvailabilityBase):
-    id: int
-    owner_id: int
-
-    class Config:
-        from_attributes = True
-
-# --- Booking Schemas ---
 class BookingBase(BaseModel):
-    service_id: int
     customer_name: str
     customer_email: EmailStr
     customer_phone: Optional[str] = None
+    service_id: int
     booking_time: datetime
 
 class BookingCreate(BookingBase):
@@ -76,30 +53,27 @@ class BookingCreate(BookingBase):
 class Booking(BookingBase):
     id: int
     owner_id: int
+    service: Service
 
     class Config:
         from_attributes = True
 
-# --- Stripe Schemas ---
-class CreateCheckoutSession(BaseModel):
-    price_id: str
-    success_url: str
-    cancel_url: str
+class Token(BaseModel):
+    access_token: str
+    token_type: str
 
-class StripeWebhookEvent(BaseModel):
-    id: str
-    object: str
-    api_version: str
-    created: int
-    data: dict
-    livemode: bool
-    pending_webhooks: int
-    request: Optional[dict]
-    type: str
+class TokenData(BaseModel):
+    email: Optional[str] = None
 
-# --- Analytics Schemas ---
-class BookingAnalytics(BaseModel):
+class MonthlyBookingCount(BaseModel):
+    month: str
+    count: int
+
+class PopularService(BaseModel):
+    service_name: str
+    count: int
+
+class OwnerAnalytics(BaseModel):
     total_bookings: int
-
-    class Config:
-        from_attributes = True
+    monthly_bookings: List[MonthlyBookingCount]
+    popular_services: List[PopularService]

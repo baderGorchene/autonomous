@@ -1,1 +1,1 @@
-feat: Implement basic booking analytics on owner dashboard
+Implemented backend logic for advanced analytics metrics
