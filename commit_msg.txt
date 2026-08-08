@@ -1,1 +1,1 @@
-Feat: Integrate refined analytics into dashboard UI
+feat: Implement subscription management UI for owners

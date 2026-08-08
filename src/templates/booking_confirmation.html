@@ -1,33 +1,37 @@
+<!-- src/templates/booking_confirmation.html -->
 <!DOCTYPE html>
-<html lang="{{ request.cookies.get('lang', 'en') }}">
+<html lang="{{ current_locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _("Booking Confirmed!", request) }}</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css">
+    <title>{{ _("Booking Confirmed!") }} - BookSlot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f4f7f6; color: #333; }
-        .container { max-width: 600px; }
-        .btn-primary { background-color: #4c51bf; color: white; padding: 0.75rem 1.5rem; border-radius: 0.375rem; transition: background-color 0.2s; }
-        .btn-primary:hover { background-color: #5a62d8; }
+        body { font-family: 'Inter', sans-serif; }
     </style>
 </head>
-<body class="flex flex-col items-center justify-center min-h-screen p-4">
-    <div class="container bg-white p-8 rounded-lg shadow-md w-full text-center">
-        <h1 class="text-3xl font-bold text-green-600 mb-4">{{ _("Booking Confirmed!", request) }}</h1>
-        <p class="text-lg text-gray-700 mb-6">{{ _("Thank you, {{ booking.customer_name }}! Your appointment has been successfully booked.", request) }}</p>
-        
-        <div class="text-left mb-8 space-y-2">
-            <p><strong>{{ _("Service:", request) }}</strong> {{ service.name }}</p>
-            <p><strong>{{ _("With:", request) }}</strong> {{ owner.name }}</p>
-            <p><strong>{{ _("Date & Time:", request) }}</strong> {{ format_datetime(booking.booking_time, request, "%Y-%m-%d %H:%M") }}</p>
-            <p><strong>{{ _("Your Email:", request) }}</strong> {{ booking.customer_email }}</p>
-            <p><strong>{{ _("Your Phone:", request) }}</strong> {{ booking.customer_phone }}</p>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="bg-white shadow-lg rounded-lg p-8 max-w-md w-full text-center">
+        <div class="text-green-500 text-6xl mb-6">
+            <i class="fas fa-check-circle"></i>
         </div>
+        <h1 class="text-3xl font-bold text-gray-900 mb-4">{{ _("Booking Confirmed!") }}</h1>
+        <p class="text-lg text-gray-700 mb-6">
+            {{ _("Thank you for your booking with {owner_name}. A confirmation email has been sent to your inbox.").format(owner_name=owner.name) }}
+        </p>
+        <a href="/book/{{ owner.name }}" class="inline-block px-6 py-3 bg-indigo-600 text-white font-medium rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+            {{ _("Book Another Service") }}
+        </a>
+        <p class="mt-6 text-sm text-gray-500">
+            <a href="/" class="hover:underline">{{ _("Back to Homepage") }}</a>
+        </p>
 
-        <p class="text-gray-600 mb-8">{{ _("A confirmation email has been sent to your inbox.", request) }}</p>
-
-        <a href="/bookslot.app/{{ owner.name }}" class="btn-primary inline-block">{{ _("Book Another Appointment", request) }}</a>
+        <div class="mt-8 flex justify-center space-x-4">
+            <a href="/set_locale/en" class="text-sm font-medium text-gray-700 hover:text-indigo-600 {% if current_locale == 'en' %}font-bold{% endif %}">English</a>
+            <a href="/set_locale/ar" class="text-sm font-medium text-gray-700 hover:text-indigo-600 {% if current_locale == 'ar' %}font-bold{% endif %}">العربية</a>
+            <a href="/set_locale/fr" class="text-sm font-medium text-gray-700 hover:text-indigo-600 {% if current_locale == 'fr' %}font-bold{% endif %}">Français</a>
+        </div>
     </div>
 </body>
 </html>

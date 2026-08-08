@@ -1,30 +1,26 @@
-msgid ""
-msgstr ""
-"Project-Id-Version: BookSlot\n"
-"POT-Creation-Date: 2023-10-27 10:00+0000\n"
-"PO-Revision-Date: 2023-10-27 10:00+0000\n"
-"Last-Translator: \n"
-"Language-Team: French\n"
-"MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=utf-8\n"
-"Content-Transfer-Encoding: 8bit\n"
-"Language: fr\n"
-"X-Generator: Pybabel\n"
-
 msgid "Dashboard"
 msgstr "Tableau de bord"
 
-msgid "Hello"
-msgstr "Bonjour"
-
-msgid "Services"
-msgstr "Services"
-
-msgid "Profile"
-msgstr "Profil"
+msgid "BookSlot Dashboard"
+msgstr "Tableau de bord BookSlot"
 
 msgid "Logout"
 msgstr "Déconnexion"
+
+msgid "Settings"
+msgstr "Paramètres"
+
+msgid "Your Booking Page:"
+msgstr "Votre page de réservation :"
+
+msgid "Welcome, {owner_name}!"
+msgstr "Bienvenue, {owner_name} !"
+
+msgid "Success!"
+msgstr "Succès !"
+
+msgid "Error!"
+msgstr "Erreur !"
 
 msgid "Email already registered"
 msgstr "Email déjà enregistré"
@@ -35,119 +31,98 @@ msgstr "Email ou mot de passe incorrect"
 msgid "Profile updated successfully!"
 msgstr "Profil mis à jour avec succès !"
 
-msgid "Error updating profile: {e}"
-msgstr "Erreur lors de la mise à jour du profil : {e}"
+msgid "Failed to update profile: {error_detail}"
+msgstr "Échec de la mise à jour du profil : {error_detail}"
 
-msgid "Customer Name"
-msgstr "Nom du client"
+msgid "Add Service"
+msgstr "Ajouter un service"
 
-msgid "Service"
-msgstr "Service"
+msgid "Service Name"
+msgstr "Nom du service"
 
-msgid "Time"
-msgstr "Heure"
+msgid "Description"
+msgstr "Description"
 
-msgid "Email"
-msgstr "Email"
+msgid "Duration (minutes)"
+msgstr "Durée (minutes)"
 
-msgid "Phone"
-msgstr "Téléphone"
+msgid "Price"
+msgstr "Prix"
 
-msgid "No upcoming bookings."
-msgstr "Aucune réservation à venir."
+msgid "e.g., 25.00"
+msgstr "ex: 25.00"
+
+msgid "No description provided."
+msgstr "Aucune description fournie."
+
+msgid "Duration:"
+msgstr "Durée :"
+
+msgid "minutes"
+msgstr "minutes"
+
+msgid "Price:"
+msgstr "Prix :"
+
+msgid "No services added yet. Add one below!"
+msgstr "Aucun service ajouté pour le moment. Ajoutez-en un ci-dessous !"
+
+msgid "Existing Services"
+msgstr "Services existants"
+
+msgid "Add New Service"
+msgstr "Ajouter un nouveau service"
 
 msgid "Update Profile"
 msgstr "Mettre à jour le profil"
 
-msgid "Name"
-msgstr "Nom"
+msgid "Your Name"
+msgstr "Votre nom"
 
-msgid "Phone Number"
-msgstr "Numéro de téléphone"
+msgid "Email Address"
+msgstr "Adresse e-mail"
 
-msgid "Book with"
-msgstr "Réserver avec"
+msgid "Phone Number (e.g., +1234567890)"
+msgstr "Numéro de téléphone (ex: +1234567890)"
 
-msgid "Book an Appointment with"
-msgstr "Prendre rendez-vous avec"
+msgid "Update Profile"
+msgstr "Mettre à jour le profil"
 
-msgid "Choose a service and a time slot that works for you."
-msgstr "Choisissez un service et un créneau horaire qui vous convient."
-
-msgid "Error!"
-msgstr "Erreur !"
+msgid "Owner not found"
+msgstr "Propriétaire introuvable"
 
 msgid "Invalid service selected."
 msgstr "Service sélectionné invalide."
 
-msgid "Invalid date or time format."
-msgstr "Format de date ou d'heure invalide."
-
 msgid "Booking time cannot be in the past."
 msgstr "L'heure de réservation ne peut pas être dans le passé."
 
-msgid "Failed to create booking. Please try again. Error: {e}"
-msgstr "Échec de la création de la réservation. Veuillez réessayer. Erreur : {e}"
+msgid "An error occurred during booking. Please try again."
+msgstr "Une erreur est survenue lors de la réservation. Veuillez réessayer."
 
-msgid "Select Service"
-msgstr "Sélectionner un service"
+msgid "Customer:"
+msgstr "Client :"
 
-msgid "Choose a service"
-msgstr "Choisir un service"
+msgid "Email:"
+msgstr "Email :"
 
-msgid "min"
-msgstr "min"
+msgid "Phone:"
+msgstr "Téléphone :"
 
-msgid "Select Date"
-msgstr "Sélectionner la date"
+msgid "N/A"
+msgstr "N/A"
 
-msgid "Select Time"
-msgstr "Sélectionner l'heure"
+msgid "Time:"
+msgstr "Heure :"
 
-msgid "Your Name"
-msgstr "Votre nom"
+msgid "No upcoming bookings found."
+msgstr "Aucune réservation à venir trouvée."
 
-msgid "e.g., John Doe"
-msgstr "ex: Jean Dupont"
+msgid "Upcoming Bookings"
+msgstr "Prochaines réservations"
 
-msgid "Your Email"
-msgstr "Votre email"
-
-msgid "e.g., john.doe@example.com"
-msgstr "ex: jean.dupont@exemple.com"
-
-msgid "Your Phone Number"
-msgstr "Votre numéro de téléphone"
-
-msgid "e.g., +15551234567"
-msgstr "ex: +33612345678"
-
-msgid "Book Now"
-msgstr "Réserver maintenant"
-
-msgid "Booking Confirmed!"
-msgstr "Réservation confirmée !"
-
-msgid "Thank you, {booking.customer_name}! Your appointment has been successfully booked."
-msgstr "Merci, {booking.customer_name} ! Votre rendez-vous a été réservé avec succès."
-
-msgid "With:"
-msgstr "Avec :"
-
-msgid "Date & Time:"
-msgstr "Date et heure :"
-
-msgid "Your Email:"
-msgstr "Votre email :"
-
-msgid "Your Phone:"
-msgstr "Votre téléphone :"
-
-msgid "A confirmation email has been sent to your inbox."
-msgstr "Un email de confirmation a été envoyé à votre boîte de réception."
-
-msgid "Book Another Appointment"
-msgstr "Réserver un autre rendez-vous"
+msgid "Your Services"
+msgstr "Vos services"
 
 msgid "Total Bookings"
 msgstr "Total des réservations"
@@ -155,44 +130,86 @@ msgstr "Total des réservations"
 msgid "Monthly Bookings"
 msgstr "Réservations mensuelles"
 
-msgid "This month"
-msgstr "Ce mois-ci"
+msgid "bookings"
+msgstr "réservations"
+
+msgid "No monthly booking data yet."
+msgstr "Aucune donnée de réservation mensuelle pour le moment."
 
 msgid "Popular Services"
 msgstr "Services populaires"
 
-msgid "Most booked service"
-msgstr "Service le plus réservé"
+msgid "No popular services data yet."
+msgstr "Aucune donnée sur les services populaires pour le moment."
 
-msgid "Monthly Booking Trends"
-msgstr "Tendances des réservations mensuelles"
+msgid "English"
+msgstr "Anglais"
 
-msgid "Top 5 Services"
-msgstr "Top 5 des services"
+msgid "Arabic"
+msgstr "Arabe"
 
-msgid "Number of Bookings"
-msgstr "Nombre de réservations"
+msgid "French"
+msgstr "Français"
 
-msgid "Bookings"
-msgstr "Réservations"
+msgid "Subscription"
+msgstr "Abonnement"
 
-msgid "Month"
-msgstr "Mois"
+msgid "Subscription Management"
+msgstr "Gestion de l'abonnement"
 
-msgid "No services booked yet."
-msgstr "Aucun service réservé pour l'instant."
+msgid "Your Subscription Plan"
+msgstr "Votre plan d'abonnement"
 
-msgid "Error"
-msgstr "Erreur"
+msgid "Current Plan:"
+msgstr "Plan actuel :"
 
-msgid "Failed to load monthly booking data."
-msgstr "Échec du chargement des données de réservation mensuelles."
+msgid "You are on the Free plan. Upgrade to Premium for unlimited bookings!"
+msgstr "Vous êtes sur le plan gratuit. Passez au plan Premium pour des réservations illimitées !"
 
-msgid "Failed to load popular services data."
-msgstr "Échec du chargement des données des services populaires."
+msgid "Upgrade to Premium"
+msgstr "Passer au Premium"
 
-msgid "N/A"
-msgstr "N/A"
+msgid "You are on the Premium plan with unlimited bookings."
+msgstr "Vous êtes sur le plan Premium avec des réservations illimitées."
 
-msgid "bookings"
-msgstr "réservations"
+msgid "Manage Subscription"
+msgstr "Gérer l'abonnement"
+
+msgid "Your Current Plan"
+msgstr "Votre plan actuel"
+
+msgid "Plan:"
+msgstr "Plan :"
+
+msgid "You are currently on the Free plan. Enjoy up to 20 bookings per month."
+msgstr "Vous êtes actuellement sur le plan gratuit. Profitez de jusqu'à 20 réservations par mois."
+
+msgid "Upgrade to Premium ($19/month)"
+msgstr "Passer au plan Premium (19 $/mois)"
+
+msgid "You are on the Premium plan. Enjoy unlimited bookings!"
+msgstr "Vous êtes sur le plan Premium. Profitez de réservations illimitées !"
+
+msgid "To manage or cancel your subscription, please visit your Stripe customer portal (link coming soon)."
+msgstr "Pour gérer ou annuler votre abonnement, veuillez visiter votre portail client Stripe (lien à venir)."
+
+msgid "Billing History"
+msgstr "Historique de facturation"
+
+msgid "No billing history available yet."
+msgstr "Aucun historique de facturation disponible pour le moment."
+
+msgid "Cancelled!"
+msgstr "Annulé !"
+
+msgid "Your subscription process was cancelled."
+msgstr "Votre processus d'abonnement a été annulé."
+
+msgid "Stripe Price ID is not configured."
+msgstr "L'ID de prix Stripe n'est pas configuré."
+
+msgid "Failed to create checkout session."
+msgstr "Échec de la création de la session de paiement."
+
+msgid "An error occurred. Please try again later."
+msgstr "Une erreur est survenue. Veuillez réessayer plus tard."

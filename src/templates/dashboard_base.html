@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="{{ current_locale }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ _("Dashboard") }}{% endblock %} - BookSlot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Custom scrollbar for better UX */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .sidebar {
+            transition: transform 0.3s ease-in-out;
+        }
+        .sidebar.hidden {
+            transform: translateX(-100%);
+        }
+        @media (min-width: 768px) {
+            .sidebar.hidden {
+                transform: translateX(0); /* Always visible on desktop */
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+    <div class="flex flex-1">
+        <!-- Sidebar for mobile -->
+        <div id="sidebar" class="fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-gray-200 pt-5 pb-4 flex flex-col transition-transform duration-300 ease-in-out md:static md:inset-auto md:translate-x-0 {% if not request.session.get('sidebar_open', True) %}hidden{% endif %}">
+            <div class="flex items-center flex-shrink-0 px-4">
+                <h1 class="text-2xl font-bold text-indigo-600">BookSlot</h1>
+            </div>
+            <div class="mt-5 flex-1 flex flex-col h-0 overflow-y-auto">
+                {% block sidebar_nav %}
+                <nav class="flex-1 px-2 space-y-1">
+                    <a href="/dashboard" class="group flex items-center px-2 py-2 text-base font-medium rounded-md text-gray-900 hover:text-white hover:bg-indigo-600">
+                        <svg class="mr-4 h-6 w-6 text-gray-500 group-hover:text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                        </svg>
+                        {{ _("Dashboard") }}
+                    </a>
+
+                    <a href="/dashboard/services" class="group flex items-center px-2 py-2 text-base font-medium rounded-md text-gray-900 hover:text-white hover:bg-indigo-600">
+                        <svg class="mr-4 h-6 w-6 text-gray-500 group-hover:text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m7 0V5a2 2 0 012-2h2a2 2 0 012 2v6m-6 0h-2"/>
+                        </svg>
+                        {{ _("My Services") }}
+                    </a>
+
+                    <a href="/dashboard/subscription" class="group flex items-center px-2 py-2 text-base font-medium rounded-md text-gray-900 hover:text-white hover:bg-indigo-600">
+                        <svg class="mr-4 h-6 w-6 text-gray-500 group-hover:text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                        </svg>
+                        {{ _("Subscription") }}
+                    </a>
+
+                    <a href="/dashboard/profile" class="group flex items-center px-2 py-2 text-base font-medium rounded-md text-gray-900 hover:text-white hover:bg-indigo-600">
+                        <svg class="mr-4 h-6 w-6 text-gray-500 group-hover:text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0h4m-4 0H5v3m0 0h14v3"/>
+                        </svg>
+                        {{ _("Profile") }}
+                    </a>
+                </nav>
+                {% endblock %}
+            </div>
+            <div class="mt-auto px-2 py-4 border-t border-gray-200">
+                <a href="/logout" class="group flex items-center px-2 py-2 text-base font-medium rounded-md text-gray-900 hover:text-white hover:bg-red-600">
+                    <svg class="mr-4 h-6 w-6 text-gray-500 group-hover:text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1m-6-1V7a2 2 0 012-2h6m4 0h2a2 2 0 012 2v4m-2 2v4a2 2 0 01-2 2H7a2 2 0 01-2-2v-4"/>
+                    </svg>
+                    {{ _("Logout") }}
+                </a>
+                <div class="mt-4 flex justify-around">
+                    <a href="/set_locale/en" class="text-sm font-medium text-gray-700 hover:text-indigo-600 {% if current_locale == 'en' %}font-bold{% endif %}">English</a>
+                    <a href="/set_locale/ar" class="text-sm font-medium text-gray-700 hover:text-indigo-600 {% if current_locale == 'ar' %}font-bold{% endif %}">العربية</a>
+                    <a href="/set_locale/fr" class="text-sm font-medium text-gray-700 hover:text-indigo-600 {% if current_locale == 'fr' %}font-bold{% endif %}">Français</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex-1 flex flex-col md:ml-64">
+            <!-- Top bar for mobile -->
+            <div class="md:hidden sticky top-0 z-10 flex-shrink-0 flex h-16 bg-white shadow">
+                <button type="button" id="sidebar-toggle" class="px-4 border-r border-gray-200 text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500 md:hidden">
+                    <span class="sr-only">Open sidebar</span>
+                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </button>
+                <div class="flex-1 px-4 flex justify-between">
+                    <div class="flex-1 flex">
+                        <h1 class="text-xl font-bold text-gray-900 my-auto">{% block header_title %}{{ _("Dashboard") }}{% endblock %}</h1>
+                    </div>
+                    <div class="ml-4 flex items-center md:ml-6">
+                        <!-- Language toggle for mobile if needed, or rely on sidebar -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main content -->
+            <main class="flex-1">
+                {% block content %}
+                <!-- Content will be injected here by child templates -->
+                {% endblock %}
+            </main>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('sidebar-toggle').addEventListener('click', function() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('hidden');
+            // You might want to persist this state in a cookie or localStorage
+        });
+
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('sidebar');
+            const toggleButton = document.getElementById('sidebar-toggle');
+            const isClickInsideSidebar = sidebar.contains(event.target);
+            const isClickOnToggleButton = toggleButton.contains(event.target);
+
+            if (!sidebar.classList.contains('hidden') && !isClickInsideSidebar && !isClickOnToggleButton && window.innerWidth < 768) {
+                sidebar.classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>

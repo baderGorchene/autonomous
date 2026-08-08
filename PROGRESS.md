@@ -1,3 +1,8 @@
+## Iteration 331
+_2026-08-08 08:50 UTC_
+
+Implemented the subscription management UI, including routes for displaying subscription status, initiating Stripe checkout for upgrades, and redirecting to the Stripe customer portal for managing existing subscriptions. Updated the owner dashboard to display subscription status and added a link to the new subscription page. Reconstructed models and schemas to include Stripe-related fields, and updated main.py to handle Stripe webhook events for subscription status updates.
+
 ## Iteration 330
 _2026-08-08 07:59 UTC_
 

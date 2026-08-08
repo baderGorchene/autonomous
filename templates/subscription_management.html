@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Subscription Management') }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-100 dark:bg-gray-900">
+    {% include "dashboard_sidebar.html" %}
+
+    <div class="lg:pl-64 flex flex-col flex-1">
+        <div class="sticky top-0 z-10 lg:hidden bg-gray-100 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+            <div class="flex items-center justify-between px-4 py-2">
+                <a href="{{ url_for('dashboard') }}" class="text-xl font-semibold text-gray-900 dark:text-white">{{ _('BookSlot') }}</a>
+                <button type="button" class="-mr-2 inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500" onclick="toggleSidebar()">
+                    <span class="sr-only">{{ _('Open sidebar') }}</span>
+                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <main class="flex-1">
+            <div class="py-6">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <h1 class="text-3xl font-bold leading-tight text-gray-900 dark:text-white">{{ _('Subscription Management') }}</h1>
+                </div>
+
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+                    <div class="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg">
+                        <div class="px-4 py-5 sm:px-6">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white">
+                                {{ _('Your Current Plan') }}
+                            </h3>
+                            <p class="mt-1 max-w-2xl text-sm text-gray-500 dark:text-gray-400">
+                                {{ _('Details about your BookSlot subscription.') }}
+                            </p>
+                        </div>
+                        <div class="border-t border-gray-200 dark:border-gray-700 px-4 py-5 sm:p-0">
+                            <dl class="sm:divide-y sm:divide-gray-200 dark:sm:divide-gray-700">
+                                <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                                        {{ _('Subscription Status') }}
+                                    </dt>
+                                    <dd class="mt-1 text-sm text-gray-900 dark:text-white sm:mt-0 sm:col-span-2">
+                                        {% if owner.subscription_status == 'free' %}
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100">
+                                                {{ _('Free Tier') }}
+                                            </span>
+                                            <p class="text-gray-600 dark:text-gray-300 mt-1">{{ _('Up to 20 bookings per month.') }}</p>
+                                        {% elif owner.subscription_status == 'premium' %}
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100">
+                                                {{ _('Premium') }}
+                                            </span>
+                                            <p class="text-gray-600 dark:text-gray-300 mt-1">{{ _('Unlimited bookings.') }}</p>
+                                        {% elif owner.subscription_status == 'cancelled' %}
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100">
+                                                {{ _('Cancelled') }}
+                                            </span>
+                                            <p class="text-gray-600 dark:text-gray-300 mt-1">{{ _('Your premium subscription is cancelled. You will revert to the free tier at the end of your billing period.') }}</p>
+                                        {% else %}
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100">
+                                                {{ owner.subscription_status | capitalize }}
+                                            </span>
+                                        {% endif %}
+                                    </dd>
+                                </div>
+                                {% if owner.stripe_customer_id %}
+                                <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                                        {{ _('Stripe Customer ID') }}
+                                    </dt>
+                                    <dd class="mt-1 text-sm text-gray-900 dark:text-white sm:mt-0 sm:col-span-2">
+                                        {{ owner.stripe_customer_id }}
+                                    </dd>
+                                </div>
+                                {% endif %}
+                                {% if owner.stripe_subscription_id %}
+                                <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                                        {{ _('Stripe Subscription ID') }}
+                                    </dt>
+                                    <dd class="mt-1 text-sm text-gray-900 dark:text-white sm:mt-0 sm:col-span-2">
+                                        {{ owner.stripe_subscription_id }}
+                                    </dd>
+                                </div>
+                                {% endif %}
+                            </dl>
+                        </div>
+                    </div>
+
+                    <div class="mt-8 bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg p-6">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">
+                            {{ _('Manage Your Subscription') }}
+                        </h3>
+
+                        {% if owner.subscription_status == 'free' or owner.subscription_status == 'cancelled' %}
+                            <form action="/create-checkout-session" method="POST">
+                                <button type="submit" class="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                    {{ _('Upgrade to Premium') }} ($19/month)
+                                </button>
+                            </form>
+                        {% elif owner.subscription_status == 'premium' %}
+                            <form action="/create-customer-portal-session" method="POST">
+                                <button type="submit" class="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                    {{ _('Manage Your Plan') }}
+                                </button>
+                            </form>
+                        {% endif %}
+
+                        <p class="mt-4 text-sm text-gray-500 dark:text-gray-400">
+                            {{ _('Powered by Stripe for secure payments and subscription management.') }}
+                        </p>
+                        <div id="payment-messages" class="mt-4 text-sm font-medium"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const paymentMessages = document.getElementById('payment-messages');
+        let message = '';
+        let messageClass = '';
+
+        if (urlParams.get('success')) {
+            message = "{{ _('Subscription successful! You are now on the premium plan.') }}";
+            messageClass = 'text-green-600 dark:text-green-400';
+            history.replaceState({}, document.title, window.location.pathname);
+        } else if (urlParams.get('canceled')) {
+            message = "{{ _('Subscription process canceled. No changes were made to your plan.') }}";
+            messageClass = 'text-yellow-600 dark:text-yellow-400';
+            history.replaceState({}, document.title, window.location.pathname);
+        }
+
+        if (message) {
+            paymentMessages.innerHTML = `<p class="${messageClass}">${message}</p>`;
+        }
+    });
+
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        sidebar.classList.toggle('-translate-x-full');
+    }
+</script>
+{% endblock %}

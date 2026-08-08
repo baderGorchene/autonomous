@@ -1,30 +1,26 @@
-msgid ""
-msgstr ""
-"Project-Id-Version: BookSlot\n"
-"POT-Creation-Date: 2023-10-27 10:00+0000\n"
-"PO-Revision-Date: 2023-10-27 10:00+0000\n"
-"Last-Translator: \n"
-"Language-Team: Arabic\n"
-"MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=utf-8\n"
-"Content-Transfer-Encoding: 8bit\n"
-"Language: ar\n"
-"X-Generator: Pybabel\n"
-
 msgid "Dashboard"
 msgstr "لوحة التحكم"
 
-msgid "Hello"
-msgstr "أهلاً"
-
-msgid "Services"
-msgstr "الخدمات"
-
-msgid "Profile"
-msgstr "الملف الشخصي"
+msgid "BookSlot Dashboard"
+msgstr "لوحة تحكم بوك سلوت"
 
 msgid "Logout"
 msgstr "تسجيل الخروج"
+
+msgid "Settings"
+msgstr "الإعدادات"
+
+msgid "Your Booking Page:"
+msgstr "صفحة الحجز الخاصة بك:"
+
+msgid "Welcome, {owner_name}!"
+msgstr "مرحباً، {owner_name}!"
+
+msgid "Success!"
+msgstr "نجاح!"
+
+msgid "Error!"
+msgstr "خطأ!"
 
 msgid "Email already registered"
 msgstr "البريد الإلكتروني مسجل بالفعل"
@@ -35,119 +31,98 @@ msgstr "البريد الإلكتروني أو كلمة المرور غير صح
 msgid "Profile updated successfully!"
 msgstr "تم تحديث الملف الشخصي بنجاح!"
 
-msgid "Error updating profile: {e}"
-msgstr "خطأ في تحديث الملف الشخصي: {e}"
+msgid "Failed to update profile: {error_detail}"
+msgstr "فشل تحديث الملف الشخصي: {error_detail}"
 
-msgid "Customer Name"
-msgstr "اسم العميل"
+msgid "Add Service"
+msgstr "إضافة خدمة"
 
-msgid "Service"
-msgstr "الخدمة"
+msgid "Service Name"
+msgstr "اسم الخدمة"
 
-msgid "Time"
-msgstr "الوقت"
+msgid "Description"
+msgstr "الوصف"
 
-msgid "Email"
-msgstr "البريد الإلكتروني"
+msgid "Duration (minutes)"
+msgstr "المدة (بالدقائق)"
 
-msgid "Phone"
-msgstr "الهاتف"
+msgid "Price"
+msgstr "السعر"
 
-msgid "No upcoming bookings."
-msgstr "لا توجد حجوزات قادمة."
+msgid "e.g., 25.00"
+msgstr "على سبيل المثال، 25.00"
+
+msgid "No description provided."
+msgstr "لم يتم تقديم وصف."
+
+msgid "Duration:"
+msgstr "المدة:"
+
+msgid "minutes"
+msgstr "دقيقة"
+
+msgid "Price:"
+msgstr "السعر:"
+
+msgid "No services added yet. Add one below!"
+msgstr "لم تتم إضافة أي خدمات بعد. أضف واحدة أدناه!"
+
+msgid "Existing Services"
+msgstr "الخدمات الحالية"
+
+msgid "Add New Service"
+msgstr "إضافة خدمة جديدة"
 
 msgid "Update Profile"
 msgstr "تحديث الملف الشخصي"
 
-msgid "Name"
-msgstr "الاسم"
+msgid "Your Name"
+msgstr "اسمك"
 
-msgid "Phone Number"
-msgstr "رقم الهاتف"
+msgid "Email Address"
+msgstr "عنوان البريد الإلكتروني"
 
-msgid "Book with"
-msgstr "احجز مع"
+msgid "Phone Number (e.g., +1234567890)"
+msgstr "رقم الهاتف (مثال: +1234567890)"
 
-msgid "Book an Appointment with"
-msgstr "احجز موعداً مع"
+msgid "Update Profile"
+msgstr "تحديث الملف الشخصي"
 
-msgid "Choose a service and a time slot that works for you."
-msgstr "اختر خدمة ووقتاً يناسبك."
-
-msgid "Error!"
-msgstr "خطأ!"
+msgid "Owner not found"
+msgstr "المالك غير موجود"
 
 msgid "Invalid service selected."
-msgstr "تم اختيار خدمة غير صالحة."
-
-msgid "Invalid date or time format."
-msgstr "صيغة التاريخ أو الوقت غير صالحة."
+msgstr "الخدمة المختارة غير صالحة."
 
 msgid "Booking time cannot be in the past."
 msgstr "وقت الحجز لا يمكن أن يكون في الماضي."
 
-msgid "Failed to create booking. Please try again. Error: {e}"
-msgstr "فشل في إنشاء الحجز. يرجى المحاولة مرة أخرى. خطأ: {e}"
+msgid "An error occurred during booking. Please try again."
+msgstr "حدث خطأ أثناء الحجز. الرجاء المحاولة مرة أخرى."
 
-msgid "Select Service"
-msgstr "اختر الخدمة"
+msgid "Customer:"
+msgstr "العميل:"
 
-msgid "Choose a service"
-msgstr "اختر خدمة"
+msgid "Email:"
+msgstr "البريد الإلكتروني:"
 
-msgid "min"
-msgstr "دقيقة"
+msgid "Phone:"
+msgstr "الهاتف:"
 
-msgid "Select Date"
-msgstr "اختر التاريخ"
+msgid "N/A"
+msgstr "غير متوفر"
 
-msgid "Select Time"
-msgstr "اختر الوقت"
+msgid "Time:"
+msgstr "الوقت:"
 
-msgid "Your Name"
-msgstr "اسمك"
+msgid "No upcoming bookings found."
+msgstr "لم يتم العثور على حجوزات قادمة."
 
-msgid "e.g., John Doe"
-msgstr "مثال: جون دو"
+msgid "Upcoming Bookings"
+msgstr "الحجوزات القادمة"
 
-msgid "Your Email"
-msgstr "بريدك الإلكتروني"
-
-msgid "e.g., john.doe@example.com"
-msgstr "مثال: john.doe@example.com"
-
-msgid "Your Phone Number"
-msgstr "رقم هاتفك"
-
-msgid "e.g., +15551234567"
-msgstr "مثال: +15551234567"
-
-msgid "Book Now"
-msgstr "احجز الآن"
-
-msgid "Booking Confirmed!"
-msgstr "تم تأكيد الحجز!"
-
-msgid "Thank you, {booking.customer_name}! Your appointment has been successfully booked."
-msgstr "شكراً لك، {booking.customer_name}! تم حجز موعدك بنجاح."
-
-msgid "With:"
-msgstr "مع:"
-
-msgid "Date & Time:"
-msgstr "التاريخ والوقت:"
-
-msgid "Your Email:"
-msgstr "بريدك الإلكتروني:"
-
-msgid "Your Phone:"
-msgstr "رقم هاتفك:"
-
-msgid "A confirmation email has been sent to your inbox."
-msgstr "تم إرسال رسالة تأكيد إلى بريدك الوارد."
-
-msgid "Book Another Appointment"
-msgstr "احجز موعداً آخر"
+msgid "Your Services"
+msgstr "خدماتك"
 
 msgid "Total Bookings"
 msgstr "إجمالي الحجوزات"
@@ -155,44 +130,86 @@ msgstr "إجمالي الحجوزات"
 msgid "Monthly Bookings"
 msgstr "الحجوزات الشهرية"
 
-msgid "This month"
-msgstr "هذا الشهر"
+msgid "bookings"
+msgstr "حجوزات"
+
+msgid "No monthly booking data yet."
+msgstr "لا توجد بيانات حجز شهرية بعد."
 
 msgid "Popular Services"
 msgstr "الخدمات الشائعة"
 
-msgid "Most booked service"
-msgstr "الخدمة الأكثر حجزاً"
+msgid "No popular services data yet."
+msgstr "لا توجد بيانات للخدمات الشائعة بعد."
 
-msgid "Monthly Booking Trends"
-msgstr "اتجاهات الحجوزات الشهرية"
+msgid "English"
+msgstr "الإنجليزية"
 
-msgid "Top 5 Services"
-msgstr "أفضل 5 خدمات"
+msgid "Arabic"
+msgstr "العربية"
 
-msgid "Number of Bookings"
-msgstr "عدد الحجوزات"
+msgid "French"
+msgstr "الفرنسية"
 
-msgid "Bookings"
-msgstr "الحجوزات"
+msgid "Subscription"
+msgstr "الاشتراك"
 
-msgid "Month"
-msgstr "الشهر"
+msgid "Subscription Management"
+msgstr "إدارة الاشتراك"
 
-msgid "No services booked yet."
-msgstr "لم يتم حجز أي خدمات بعد."
+msgid "Your Subscription Plan"
+msgstr "خطة اشتراكك"
 
-msgid "Error"
-msgstr "خطأ"
+msgid "Current Plan:"
+msgstr "الخطة الحالية:"
 
-msgid "Failed to load monthly booking data."
-msgstr "فشل في تحميل بيانات الحجوزات الشهرية."
+msgid "You are on the Free plan. Upgrade to Premium for unlimited bookings!"
+msgstr "أنت على الخطة المجانية. قم بالترقية إلى Premium للحصول على حجوزات غير محدودة!"
 
-msgid "Failed to load popular services data."
-msgstr "فشل في تحميل بيانات الخدمات الشائعة."
+msgid "Upgrade to Premium"
+msgstr "الترقية إلى Premium"
 
-msgid "N/A"
-msgstr "غير متوفر"
+msgid "You are on the Premium plan with unlimited bookings."
+msgstr "أنت على الخطة المميزة مع حجوزات غير محدودة."
 
-msgid "bookings"
-msgstr "حجوزات"
+msgid "Manage Subscription"
+msgstr "إدارة الاشتراك"
+
+msgid "Your Current Plan"
+msgstr "خطتك الحالية"
+
+msgid "Plan:"
+msgstr "الخطة:"
+
+msgid "You are currently on the Free plan. Enjoy up to 20 bookings per month."
+msgstr "أنت حاليًا على الخطة المجانية. استمتع بما يصل إلى 20 حجزًا شهريًا."
+
+msgid "Upgrade to Premium ($19/month)"
+msgstr "الترقية إلى Premium (19 دولارًا شهريًا)"
+
+msgid "You are on the Premium plan. Enjoy unlimited bookings!"
+msgstr "أنت على الخطة المميزة. استمتع بحجوزات غير محدودة!"
+
+msgid "To manage or cancel your subscription, please visit your Stripe customer portal (link coming soon)."
+msgstr "لإدارة أو إلغاء اشتراكك، يرجى زيارة بوابة عملاء Stripe الخاصة بك (الرابط قادم قريبًا)."
+
+msgid "Billing History"
+msgstr "سجل الفواتير"
+
+msgid "No billing history available yet."
+msgstr "لا يوجد سجل فواتير متاح بعد."
+
+msgid "Cancelled!"
+msgstr "ألغيت!"
+
+msgid "Your subscription process was cancelled."
+msgstr "تم إلغاء عملية اشتراكك."
+
+msgid "Stripe Price ID is not configured."
+msgstr "لم يتم تكوين معرف سعر Stripe."
+
+msgid "Failed to create checkout session."
+msgstr "فشل إنشاء جلسة الدفع."
+
+msgid "An error occurred. Please try again later."
+msgstr "حدث خطأ. الرجاء المحاولة مرة أخرى لاحقًا."

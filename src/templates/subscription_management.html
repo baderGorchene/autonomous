@@ -1,0 +1,55 @@
+{% extends "dashboard_base.html" %}
+
+{% block title %}{{ _("Manage Subscription") }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto p-4 sm:p-6 lg:p-8">
+    <h1 class="text-3xl font-bold text-gray-900 mb-6">{{ _("Subscription Management") }}</h1>
+
+    {% for message in flash_messages %}
+    <div class="mb-4 p-3 rounded-md {% if message.category == 'error' %}bg-red-100 text-red-700{% elif message.category == 'success' %}bg-green-100 text-green-700{% else %}bg-blue-100 text-blue-700{% endif %}">
+        {{ message.message }}
+    </div>
+    {% endfor %}
+
+    <div class="bg-white shadow overflow-hidden rounded-lg p-6 mb-8">
+        <h2 class="text-2xl font-semibold text-gray-800 mb-4">{{ _("Your Current Plan") }}</h2>
+        <div class="flex items-center justify-between mb-4">
+            <p class="text-lg text-gray-700">
+                {% if owner.subscription_status == "premium" %}
+                <span class="font-bold text-green-600">{{ _("Premium Plan") }}</span>
+                <span class="text-sm text-gray-500">($19/month)</span>
+                {% else %}
+                <span class="font-bold text-blue-600">{{ _("Free Plan") }}</span>
+                <span class="text-sm text-gray-500">({{ _("Up to 20 bookings/month") }})</span>
+                {% endif %}
+            </p>
+        </div>
+
+        {% if owner.subscription_status == "free" %}
+        <p class="text-gray-600 mb-6">{{ _("Upgrade to the Premium Plan for unlimited bookings and advanced features.") }}</p>
+        <form action="/create-checkout-session" method="POST">
+            <button type="submit" class="w-full sm:w-auto px-6 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                {{ _("Upgrade to Premium - $19/month") }}
+            </button>
+        </form>
+        {% elif owner.subscription_status == "premium" %}
+        <p class="text-gray-600 mb-6">{{ _("Thank you for being a Premium subscriber! Enjoy unlimited bookings and all features.") }}</p>
+        {% if owner.stripe_customer_id %}
+        <!-- Optionally add a link to Stripe customer portal for managing subscription details -->
+        <!-- <a href="https://billing.stripe.com/p/login/test_XXX" target="_blank" class="w-full sm:w-auto px-6 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-indigo-600 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+            {{ _("Manage Billing on Stripe") }}
+        </a> -->
+        {% endif %}
+        {% endif %}
+    </div>
+
+    <div class="bg-white shadow overflow-hidden rounded-lg p-6">
+        <h2 class="text-2xl font-semibold text-gray-800 mb-4">{{ _("Plan Details") }}</h2>
+        <ul class="list-disc list-inside text-gray-700 space-y-2">
+            <li><span class="font-semibold">{{ _("Free Plan:") }}</span> {{ _("Up to 20 bookings per month.") }}</li>
+            <li><span class="font-semibold">{{ _("Premium Plan:") }}</span> {{ _("Unlimited bookings, advanced analytics, priority support.") }}</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}

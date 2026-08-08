@@ -1,0 +1,90 @@
+<!-- src/templates/dashboard_services.html -->
+{% extends "dashboard_base.html" %}
+
+{% block title %}{{ _("My Services") }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto p-4 sm:p-6 lg:p-8">
+    <h1 class="text-3xl font-bold text-gray-900 mb-6">{{ _("My Services") }}</h1>
+
+    {% for message in flash_messages %}
+    <div class="mb-4 p-3 rounded-md {% if message.category == 'error' %}bg-red-100 text-red-700{% elif message.category == 'success' %}bg-green-100 text-green-700{% else %}bg-blue-100 text-blue-700{% endif %}">
+        {{ message.message }}
+    </div>
+    {% endfor %}
+
+    <!-- Add New Service Form -->
+    <div class="bg-white shadow overflow-hidden rounded-lg p-6 mb-8">
+        <h2 class="text-2xl font-semibold text-gray-800 mb-4">{{ _("Add New Service") }}</h2>
+        <form action="/dashboard/services" method="POST" class="space-y-4">
+            <div>
+                <label for="name" class="block text-sm font-medium text-gray-700">{{ _("Service Name") }}</label>
+                <input type="text" name="name" id="name" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+            </div>
+            <div>
+                <label for="description" class="block text-sm font-medium text-gray-700">{{ _("Description") }}</label>
+                <textarea name="description" id="description" rows="3" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></textarea>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label for="price" class="block text-sm font-medium text-gray-700">{{ _("Price") }} ($)</label>
+                    <input type="number" name="price" id="price" step="0.01" min="0" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                </div>
+                <div>
+                    <label for="duration_minutes" class="block text-sm font-medium text-gray-700">{{ _("Duration (minutes)") }}</label>
+                    <input type="number" name="duration_minutes" id="duration_minutes" min="1" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                </div>
+            </div>
+            <div>
+                <button type="submit" class="w-full sm:w-auto px-6 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    {{ _("Add Service") }}
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Existing Services List -->
+    <div class="bg-white shadow overflow-hidden rounded-lg">
+        <div class="px-4 py-5 sm:px-6">
+            <h2 class="text-2xl font-semibold text-gray-800">{{ _("Your Services") }}</h2>
+        </div>
+        <div class="border-t border-gray-200">
+            {% if services %}
+            <ul role="list" class="divide-y divide-gray-200">
+                {% for service in services %}
+                <li class="px-4 py-4 sm:px-6 hover:bg-gray-50">
+                    <div class="flex items-center justify-between">
+                        <p class="text-lg font-medium text-indigo-600">{{ service.name }}</p>
+                        <div class="ml-2 flex-shrink-0 flex">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                ${{ "%.2f"|format(service.price) }}
+                            </span>
+                            <span class="ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                {{ service.duration_minutes }} {{ _("min") }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="mt-2 sm:flex sm:justify-between">
+                        <div class="sm:flex">
+                            <p class="flex items-center text-sm text-gray-500">
+                                {{ service.description }}
+                            </p>
+                        </div>
+                        <div class="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
+                            <!-- Action buttons for edit/delete if needed -->
+                            <!-- <button class="ml-4 text-indigo-600 hover:text-indigo-900">{{ _("Edit") }}</button>
+                            <button class="ml-4 text-red-600 hover:text-red-900">{{ _("Delete") }}</button> -->
+                        </div>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <div class="px-4 py-5 sm:px-6">
+                <p class="text-sm text-gray-500">{{ _("You haven't added any services yet.") }}</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -2,12 +2,13 @@ from sqlalchemy.orm import Session
 from . import models, schemas
 from datetime import datetime, timedelta
 from sqlalchemy import func, extract
+from typing import Optional
 
 def get_owner_by_email(db: Session, email: str):
     return db.query(models.Owner).filter(models.Owner.email == email).first()
 
 def create_owner(db: Session, owner: schemas.OwnerCreate, hashed_password: str):
-    db_owner = models.Owner(email=owner.email, hashed_password=hashed_password, name=owner.name, phone=owner.phone)
+    db_owner = models.Owner(email=owner.email, hashed_password=hashed_password, name=owner.name, phone=owner.phone, subscription_status=owner.subscription_status)
     db.add(db_owner)
     db.commit()
     db.refresh(db_owner)
@@ -40,6 +41,16 @@ def get_owner_upcoming_bookings(db: Session, owner_id: int):
 def update_owner_profile(db: Session, owner: models.Owner, owner_update: schemas.OwnerProfileUpdate):
     for field, value in owner_update.model_dump(exclude_unset=True).items():
         setattr(owner, field, value)
+    db.commit()
+    db.refresh(owner)
+    return owner
+
+def update_owner_subscription_status(db: Session, owner: models.Owner, status: str, stripe_customer_id: Optional[str] = None, stripe_subscription_id: Optional[str] = None):
+    owner.subscription_status = status
+    if stripe_customer_id:
+        owner.stripe_customer_id = stripe_customer_id
+    if stripe_subscription_id:
+        owner.stripe_subscription_id = stripe_subscription_id
     db.commit()
     db.refresh(owner)
     return owner
@@ -82,7 +93,7 @@ def get_owner_analytics(db: Session, owner_id: int):
         .filter(models.Booking.owner_id == owner_id)
         .group_by(models.Service.name)
         .order_by(func.count(models.Booking.id).desc())
-        .limit(5) # Top 5 popular services
+        .limit(5)
         .all()
     )
     popular_services = []
