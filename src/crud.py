@@ -2,13 +2,13 @@ from sqlalchemy.orm import Session
 from . import models, schemas
 from datetime import datetime, timedelta
 from sqlalchemy import func, extract
-from typing import Optional
+from typing import Optional, List
 
 def get_owner_by_email(db: Session, email: str):
     return db.query(models.Owner).filter(models.Owner.email == email).first()
 
 def create_owner(db: Session, owner: schemas.OwnerCreate, hashed_password: str):
-    db_owner = models.Owner(email=owner.email, hashed_password=hashed_password, name=owner.name, phone=owner.phone, subscription_status=owner.subscription_status)
+    db_owner = models.Owner(email=owner.email, hashed_password=hashed_password, name=owner.name, phone=owner.phone, subscription_status=owner.subscription_status if owner.subscription_status else "free")
     db.add(db_owner)
     db.commit()
     db.refresh(db_owner)
@@ -16,6 +16,24 @@ def create_owner(db: Session, owner: schemas.OwnerCreate, hashed_password: str):
 
 def get_owner(db: Session, owner_id: int):
     return db.query(models.Owner).filter(models.Owner.id == owner_id).first()
+
+def get_owners(db: Session, skip: int = 0, limit: int = 100) -> List[models.Owner]:
+    return db.query(models.Owner).offset(skip).limit(limit).all()
+
+def update_owner_by_admin(db: Session, owner: models.Owner, owner_update: schemas.OwnerAdminUpdate):
+    for field, value in owner_update.model_dump(exclude_unset=True).items():
+        setattr(owner, field, value)
+    db.commit()
+    db.refresh(owner)
+    return owner
+
+def delete_owner(db: Session, owner_id: int):
+    owner = db.query(models.Owner).filter(models.Owner.id == owner_id).first()
+    if owner:
+        db.delete(owner)
+        db.commit()
+        return True
+    return False
 
 def get_owner_services(db: Session, owner_id: int):
     return db.query(models.Service).filter(models.Service.owner_id == owner_id).all()

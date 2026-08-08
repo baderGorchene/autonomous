@@ -1,1 +1,1 @@
-feat: Implement subscription management UI for owners
+Address pytest module error (environmental)

@@ -1,37 +1,12 @@
-from pydantic import BaseModel, EmailStr, Field
 from typing import List, Optional
-from datetime import datetime, date
+from datetime import datetime
+from pydantic import BaseModel, EmailStr, Field
 
-# Owner Schemas
-class OwnerBase(BaseModel):
-    email: EmailStr
-    name: str
-    phone: Optional[str] = None
-
-class OwnerCreate(OwnerBase):
-    password: str
-    subscription_status: str = "free"
-
-class OwnerProfileUpdate(BaseModel):
-    name: Optional[str] = None
-    email: Optional[EmailStr] = None
-    phone: Optional[str] = None
-
-class Owner(OwnerBase):
-    id: int
-    subscription_status: str
-    stripe_customer_id: Optional[str] = None
-    stripe_subscription_id: Optional[str] = None
-
-    class Config:
-        from_attributes = True
-
-# Service Schemas
 class ServiceBase(BaseModel):
     name: str
     description: Optional[str] = None
-    duration: int # in minutes
-    price: float = Field(..., ge=0) # price for the service
+    duration_minutes: int
+    price: float
 
 class ServiceCreate(ServiceBase):
     pass
@@ -43,13 +18,28 @@ class Service(ServiceBase):
     class Config:
         from_attributes = True
 
-# Booking Schemas
+class AvailabilityBase(BaseModel):
+    day_of_week: int # 0-6 for Monday-Sunday
+    start_time: str # HH:MM
+    end_time: str   # HH:MM
+
+class AvailabilityCreate(AvailabilityBase):
+    pass
+
+class Availability(AvailabilityBase):
+    id: int
+    owner_id: int
+
+    class Config:
+        from_attributes = True
+
 class BookingBase(BaseModel):
     customer_name: str
     customer_email: EmailStr
     customer_phone: Optional[str] = None
     booking_time: datetime
     service_id: int
+    locale: str = "en" # Added for i18n
 
 class BookingCreate(BookingBase):
     pass
@@ -57,12 +47,49 @@ class BookingCreate(BookingBase):
 class Booking(BookingBase):
     id: int
     owner_id: int
-    created_at: datetime
+    service: Service # Nested service schema
 
     class Config:
         from_attributes = True
 
-# Security Schemas
+class OwnerBase(BaseModel):
+    email: EmailStr
+    name: Optional[str] = None
+    phone: Optional[str] = None
+
+class OwnerCreate(OwnerBase):
+    password: str
+    subscription_status: Optional[str] = None # 'free' or 'premium'
+
+class OwnerProfileUpdate(BaseModel):
+    name: Optional[str] = None
+    phone: Optional[str] = None
+    email: Optional[EmailStr] = None # Allow email update
+
+class OwnerAdminUpdate(BaseModel):
+    name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = None
+    hashed_password: Optional[str] = None # Admin might need to reset password
+    subscription_status: Optional[str] = None # 'free', 'premium', 'cancelled'
+    stripe_customer_id: Optional[str] = None
+    stripe_subscription_id: Optional[str] = None
+    is_admin: Optional[bool] = None # Admin can grant admin status
+
+class Owner(OwnerBase):
+    id: int
+    is_active: bool
+    services: List[Service] = []
+    availabilities: List[Availability] = []
+    bookings: List[Booking] = []
+    subscription_status: str
+    stripe_customer_id: Optional[str] = None
+    stripe_subscription_id: Optional[str] = None
+    is_admin: bool = False # Make sure this is present and matches model
+
+    class Config:
+        from_attributes = True
+
 class Token(BaseModel):
     access_token: str
     token_type: str
@@ -70,16 +97,10 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     email: Optional[str] = None
 
-# Analytics Schemas
-class MonthlyBooking(BaseModel):
-    month: str
-    count: int
+class Message(BaseModel):
+    message: str
 
-class PopularService(BaseModel):
-    service_name: str
-    count: int
-
-class OwnerAnalytics(BaseModel):
+class AnalyticsData(BaseModel):
     total_bookings: int
-    monthly_bookings: List[MonthlyBooking]
-    popular_services: List[PopularService]
+    monthly_bookings: List[dict]
+    popular_services: List[dict]
