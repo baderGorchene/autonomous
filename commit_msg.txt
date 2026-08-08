@@ -1,1 +1,1 @@
-Feat: Update booking page UI with recurrence options
+Fix: Add pytest and core dependencies to requirements.txt

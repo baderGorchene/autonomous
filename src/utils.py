@@ -1,77 +1,55 @@
-from datetime import datetime, date, timedelta
+from datetime import datetime, timedelta
 from typing import List, Optional
-import uuid
-from fastapi import HTTPException
-from sqlalchemy.orm import Session
+import calendar
 
-from . import models, schemas
-
-def generate_recurring_bookings(
-    booking_data: schemas.BookingCreate,
-    owner_id: int,
-    db: Session,
-    service: models.Service
-) -> List[models.Booking]:
+def generate_recurring_dates(
+    start_time: datetime,
+    duration_minutes: int,
+    recurrence_pattern: str,
+    recurrence_end_date: Optional[datetime] = None,
+    recurrence_end_count: Optional[int] = None,
+    max_bookings: int = 52
+) -> List[tuple[datetime, datetime]]:
     """
-    Generates a list of individual booking instances based on recurrence pattern.
-    Performs availability checks for each instance.
+    Generates a list of (start_time, end_time) tuples for recurring bookings.
     """
-    bookings_to_create = []
-    current_start_time = booking_data.start_time
-    current_end_time = booking_data.end_time
-    recurrence_group_id = str(uuid.uuid4())
+    bookings = []
+    current_start_time = start_time
+    count = 0
 
-    if not booking_data.recurrence_pattern or not booking_data.recurrence_end_date:
-        raise ValueError("Recurrence pattern and end date must be provided for recurring bookings.")
+    while True:
+        if recurrence_end_count is not None and count >= recurrence_end_count:
+            break
+        if recurrence_end_date is not None and current_start_time.date() > recurrence_end_date.date():
+            break
+        if count >= max_bookings:
+            break
 
-    # Ensure current_start_time is timezone-aware if needed, or consistent as naive.
-    # For simplicity, assuming naive datetimes are handled consistently.
+        current_end_time = current_start_time + timedelta(minutes=duration_minutes)
+        bookings.append((current_start_time, current_end_time))
+        count += 1
 
-    while current_start_time.date() <= booking_data.recurrence_end_date:
-        # Check for conflicts for the current recurring slot
-        existing_bookings = db.query(models.Booking).filter(
-            models.Booking.owner_id == owner_id,
-            models.Booking.start_time < current_end_time,
-            models.Booking.end_time > current_start_time,
-            models.Booking.status != "cancelled" # Ignore cancelled bookings for conflict check
-        ).first()
-
-        if existing_bookings:
-            # For simplicity, if any recurring slot conflicts, fail the entire series.
-            # A more advanced implementation might skip conflicting slots or offer alternatives.
-            raise HTTPException(status_code=409, detail=f"A recurring slot conflicts with an existing booking at {current_start_time.isoformat()}")
-
-        booking_instance = models.Booking(
-            customer_name=booking_data.customer_name,
-            customer_email=booking_data.customer_email,
-            customer_phone=booking_data.customer_phone,
-            start_time=current_start_time,
-            end_time=current_end_time,
-            service_id=booking_data.service_id,
-            owner_id=owner_id,
-            is_recurring=True,
-            recurrence_pattern=booking_data.recurrence_pattern,
-            recurrence_end_date=booking_data.recurrence_end_date,
-            recurrence_group_id=recurrence_group_id
-        )
-        bookings_to_create.append(booking_instance)
-
-        # Move to the next recurrence
-        if booking_data.recurrence_pattern == "daily":
+        if recurrence_pattern == "DAILY":
             current_start_time += timedelta(days=1)
-            current_end_time += timedelta(days=1)
-        elif booking_data.recurrence_pattern == "weekly":
+        elif recurrence_pattern == "WEEKLY":
             current_start_time += timedelta(weeks=1)
-            current_end_time += timedelta(weeks=1)
-        elif booking_data.recurrence_pattern == "bi-weekly":
-            current_start_time += timedelta(weeks=2)
-            current_end_time += timedelta(weeks=2)
-        elif booking_data.recurrence_pattern == "monthly":
-            # This is a bit more complex. Simple approach: add 30 days.
-            # A more robust approach would handle month-end correctly.
-            current_start_time += timedelta(days=30)
-            current_end_time += timedelta(days=30)
+        elif recurrence_pattern == "MONTHLY":
+            current_month = current_start_time.month
+            current_year = current_start_time.year
+            current_day = current_start_time.day
+            
+            new_month = current_month + 1
+            new_year = current_year
+            if new_month > 12:
+                new_month = 1
+                new_year += 1
+            
+            try:
+                current_start_time = current_start_time.replace(year=new_year, month=new_month)
+            except ValueError:
+                last_day_of_month = calendar.monthrange(new_year, new_month)[1]
+                current_start_time = current_start_time.replace(year=new_year, month=new_month, day=last_day_of_month)
         else:
-            raise ValueError(f"Unsupported recurrence pattern: {booking_data.recurrence_pattern}")
-
-    return bookings_to_create
+            break 
+            
+    return bookings

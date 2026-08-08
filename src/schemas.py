@@ -1,27 +1,27 @@
-import uuid
-from datetime import datetime, date
-from typing import Optional, List
 from pydantic import BaseModel, EmailStr, Field
-from enum import Enum
+from datetime import datetime, timedelta
+from typing import Optional, List
 
-class RecurrencePattern(str, Enum):
-    DAILY = "DAILY"
-    WEEKLY = "WEEKLY"
-    MONTHLY = "MONTHLY"
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class TokenData(BaseModel):
+    email: Optional[str] = None
 
 class OwnerBase(BaseModel):
     email: EmailStr
     name: str
     phone: Optional[str] = None
+    language: Optional[str] = "en"
 
 class OwnerCreate(OwnerBase):
     password: str
 
-class Owner(OwnerBase):
-    id: uuid.UUID
+class OwnerInDB(OwnerBase):
+    id: int
     is_active: bool
-    created_at: datetime
-
+    
     class Config:
         from_attributes = True
 
@@ -29,52 +29,81 @@ class ServiceBase(BaseModel):
     name: str
     description: Optional[str] = None
     duration_minutes: int = Field(..., gt=0)
-    price: int = Field(..., ge=0) # Price in smallest currency unit
+    price: float = Field(..., ge=0)
 
 class ServiceCreate(ServiceBase):
     pass
 
 class Service(ServiceBase):
-    id: uuid.UUID
-    owner_id: uuid.UUID
-    is_active: bool
-    created_at: datetime
+    id: int
+    owner_id: int
 
     class Config:
         from_attributes = True
 
 class BookingBase(BaseModel):
-    service_id: uuid.UUID
+    service_id: int
     customer_name: str
     customer_email: EmailStr
     customer_phone: Optional[str] = None
-    booking_date: date
-    booking_time: str # e.g., "10:00"
+    start_time: datetime
 
 class BookingCreate(BookingBase):
     is_recurring: bool = False
-    recurrence_pattern: Optional[RecurrencePattern] = None
-    recurrence_interval: Optional[int] = Field(None, ge=1)
-    recurrence_end_date: Optional[date] = None
+    recurrence_pattern: Optional[str] = None
+    recurrence_end_date: Optional[datetime] = None
+    recurrence_end_count: Optional[int] = None
 
 class Booking(BookingBase):
-    id: uuid.UUID
-    owner_id: uuid.UUID
+    id: int
+    owner_id: int
+    end_time: datetime
     status: str
-    created_at: datetime
+    
     is_recurring: bool
-    recurrence_pattern: Optional[RecurrencePattern] = None
-    recurrence_interval: Optional[int] = None
-    recurrence_end_date: Optional[date] = None
-    recurring_original_id: Optional[uuid.UUID] = None # UUID type for consistency
+    recurrence_pattern: Optional[str] = None
+    recurrence_end_date: Optional[datetime] = None
+    recurrence_end_count: Optional[int] = None
+    parent_booking_id: Optional[int] = None
 
     class Config:
         from_attributes = True
 
-# JWT related schemas (assuming these exist)
-class Token(BaseModel):
-    access_token: str
-    token_type: str
+class SubscriptionBase(BaseModel):
+    stripe_customer_id: str
+    stripe_subscription_id: str
+    status: str
+    current_period_end: datetime
 
-class TokenData(BaseModel):
-    email: Optional[str] = None
+class SubscriptionCreate(SubscriptionBase):
+    owner_id: int
+
+class Subscription(SubscriptionBase):
+    id: int
+    owner_id: int
+
+    class Config:
+        from_attributes = True
+
+class AdminUser(BaseModel):
+    email: EmailStr
+    is_admin: bool = True
+
+class AdminUserCreate(AdminUser):
+    password: str
+
+class AdminUserInDB(AdminUser):
+    id: int
+    hashed_password: str
+
+    class Config:
+        from_attributes = True
+
+class AnalyticsData(BaseModel):
+    total_bookings_this_month: int
+    popular_services: List[dict]
+
+class UpcomingBooking(Booking):
+    service_name: str
+    service_duration: int
+    service_price: float
