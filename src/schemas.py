@@ -1,126 +1,80 @@
-from pydantic import BaseModel, EmailStr
-from typing import List, Optional
-from datetime import datetime, date
 import uuid
+from datetime import datetime, date
+from typing import Optional, List
+from pydantic import BaseModel, EmailStr, Field
+from enum import Enum
 
+class RecurrencePattern(str, Enum):
+    DAILY = "DAILY"
+    WEEKLY = "WEEKLY"
+    MONTHLY = "MONTHLY"
+
+class OwnerBase(BaseModel):
+    email: EmailStr
+    name: str
+    phone: Optional[str] = None
+
+class OwnerCreate(OwnerBase):
+    password: str
+
+class Owner(OwnerBase):
+    id: uuid.UUID
+    is_active: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class ServiceBase(BaseModel):
+    name: str
+    description: Optional[str] = None
+    duration_minutes: int = Field(..., gt=0)
+    price: int = Field(..., ge=0) # Price in smallest currency unit
+
+class ServiceCreate(ServiceBase):
+    pass
+
+class Service(ServiceBase):
+    id: uuid.UUID
+    owner_id: uuid.UUID
+    is_active: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class BookingBase(BaseModel):
+    service_id: uuid.UUID
+    customer_name: str
+    customer_email: EmailStr
+    customer_phone: Optional[str] = None
+    booking_date: date
+    booking_time: str # e.g., "10:00"
+
+class BookingCreate(BookingBase):
+    is_recurring: bool = False
+    recurrence_pattern: Optional[RecurrencePattern] = None
+    recurrence_interval: Optional[int] = Field(None, ge=1)
+    recurrence_end_date: Optional[date] = None
+
+class Booking(BookingBase):
+    id: uuid.UUID
+    owner_id: uuid.UUID
+    status: str
+    created_at: datetime
+    is_recurring: bool
+    recurrence_pattern: Optional[RecurrencePattern] = None
+    recurrence_interval: Optional[int] = None
+    recurrence_end_date: Optional[date] = None
+    recurring_original_id: Optional[uuid.UUID] = None # UUID type for consistency
+
+    class Config:
+        from_attributes = True
+
+# JWT related schemas (assuming these exist)
 class Token(BaseModel):
     access_token: str
     token_type: str
 
 class TokenData(BaseModel):
     email: Optional[str] = None
-
-class OwnerBase(BaseModel):
-    email: EmailStr
-    name: str
-    phone: Optional[str] = None
-    locale: str = "en"
-
-class OwnerCreate(OwnerBase):
-    password: str
-
-class OwnerLogin(BaseModel):
-    email: EmailStr
-    password: str
-
-class OwnerUpdate(BaseModel):
-    name: Optional[str] = None
-    email: Optional[EmailStr] = None
-    phone: Optional[str] = None
-    locale: Optional[str] = None
-
-class OwnerInDBBase(OwnerBase):
-    id: int
-    is_active: bool
-    stripe_customer_id: Optional[str] = None
-
-    class Config:
-        from_attributes = True
-
-class Owner(OwnerInDBBase):
-    pass
-
-class ServiceBase(BaseModel):
-    name: str
-    description: Optional[str] = None
-    duration_minutes: int
-    price: float
-
-class ServiceCreate(ServiceBase):
-    pass
-
-class Service(ServiceBase):
-    id: int
-    owner_id: int
-
-    class Config:
-        from_attributes = True
-
-class BookingBase(BaseModel):
-    customer_name: str
-    customer_email: EmailStr
-    customer_phone: Optional[str] = None
-    start_time: datetime
-    end_time: datetime
-    service_id: int
-
-    is_recurring: bool = False
-    recurrence_pattern: Optional[str] = None
-    recurrence_end_date: Optional[date] = None
-
-class BookingCreate(BookingBase):
-    pass
-
-class Booking(BookingBase):
-    id: int
-    owner_id: int
-    status: str
-    recurrence_group_id: Optional[str] = None
-
-    class Config:
-        from_attributes = True
-
-class SubscriptionBase(BaseModel):
-    stripe_customer_id: str
-    stripe_subscription_id: str
-    status: str
-    current_period_end: datetime
-
-class SubscriptionCreate(SubscriptionBase):
-    owner_id: int
-
-class Subscription(SubscriptionBase):
-    id: int
-    owner_id: int
-
-    class Config:
-        from_attributes = True
-
-class BookingCount(BaseModel):
-    month: str
-    count: int
-
-class PopularService(BaseModel):
-    service_name: str
-    booking_count: int
-
-class AdminOwnerUpdate(BaseModel):
-    name: Optional[str] = None
-    email: Optional[EmailStr] = None
-    phone: Optional[str] = None
-    locale: Optional[str] = None
-    is_active: Optional[bool] = None
-    stripe_customer_id: Optional[str] = None
-
-class AdminServiceUpdate(ServiceBase):
-    pass
-
-class AdminBookingUpdate(BaseModel):
-    customer_name: Optional[str] = None
-    customer_email: Optional[EmailStr] = None
-    customer_phone: Optional[str] = None
-    start_time: Optional[datetime] = None
-    end_time: Optional[datetime] = None
-    status: Optional[str] = None
-    service_id: Optional[int] = None
-    owner_id: Optional[int] = None

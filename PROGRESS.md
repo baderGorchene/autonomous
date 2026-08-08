@@ -1,3 +1,8 @@
+## Iteration 342
+_2026-08-08 19:30 UTC_
+
+Defined new fields (`is_recurring`, `recurrence_pattern`, `recurrence_interval`, `recurrence_end_date`, `recurring_original_id`) in `src/models.py` for the `Booking` model and created corresponding `RecurrencePattern` Enum and fields in `src/schemas.py` for `BookingCreate` and `Booking` schemas. This lays the groundwork for recurring booking functionality.
+
 ## Iteration 341
 _2026-08-08 18:40 UTC_
 
