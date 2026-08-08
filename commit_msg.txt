@@ -1,1 +1,1 @@
-Fix: Add pytest and core dependencies to requirements.txt
+Fix: Ensure pytest dependency is available
