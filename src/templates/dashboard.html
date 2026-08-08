@@ -1,101 +1,247 @@
+{# src/templates/dashboard.html #}
 <!DOCTYPE html>
-<html lang="{{ request.state.lang }}">
+<html lang="{{ current_locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _("BookSlot Dashboard") }}</title>
-    <link rel="stylesheet" href="/static/css/style.css">
+    <title>{{ gettext('Dashboard') }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <style>
-        body { font-family: sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4; color: #333; }
-        .container { max-width: 900px; margin: 20px auto; background-color: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        h1, h2 { text-align: center; color: #0056b3; }
-        .language-toggle { text-align: right; margin-bottom: 20px; }
-        .language-toggle a { margin-left: 10px; text-decoration: none; color: #0056b3; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        .header h1 { margin: 0; }
-        .header .logout-btn { background-color: #dc3545; color: white; padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer; text-decoration: none; }
-        .header .logout-btn:hover { background-color: #c82333; }
-        .profile-section, .bookings-section { margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px; }
-        form div { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input[type="text"], input[type="email"], input[type="password"] {
-            width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;
+        body { font-family: 'Inter', sans-serif; }
+        .booking-card {
+            background-color: #ffffff;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            margin-bottom: 1rem;
+            padding: 1.5rem;
         }
-        button { background-color: #007bff; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
-        button:hover { background-color: #0056b3; }
-        .form-actions { text-align: right; }
-        .booking-list { list-style: none; padding: 0; }
-        .booking-list li { background-color: #f9f9f9; border: 1px solid #eee; padding: 15px; margin-bottom: 10px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; }
-        .booking-info { flex-grow: 1; }
-        .booking-info strong { color: #0056b3; }
-        .no-bookings { text-align: center; color: #666; }
-        .error { color: red; text-align: center; margin-bottom: 15px; }
-        .message { color: green; text-align: center; margin-bottom: 15px; }
+        .text-primary { color: #2563eb; } /* Blue for primary actions */
+        .bg-primary { background-color: #2563eb; }
+        .hover-bg-primary:hover { background-color: #1d4ed8; }
+        .border-primary { border-color: #2563eb; }
+        .lang-toggle button {
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            background-color: #e2e8f0;
+            color: #4a5568;
+            font-weight: 500;
+            transition: background-color 0.2s ease-in-out;
+        }
+        .lang-toggle button.active {
+            background-color: #2563eb;
+            color: #ffffff;
+        }
+        .lang-toggle button:hover:not(.active) {
+            background-color: #cbd5e0;
+        }
     </style>
 </head>
-<body>
-    <div class="container">
-        <div class="language-toggle">
-            <a href="{{ request.url|urlencode('lang', 'en') }}">English</a>
-            <a href="{{ request.url|urlencode('lang', 'ar') }}">العربية</a>
-            <a href="{{ request.url|urlencode('lang', 'fr') }}">Français</a>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+    <header class="bg-white shadow-sm py-4 px-6 flex justify-between items-center">
+        <h1 class="text-2xl font-bold text-gray-900">{{ gettext('BookSlot Dashboard') }}</h1>
+        <div class="flex items-center space-x-4">
+            <div class="lang-toggle flex space-x-2">
+                <button onclick="changeLanguage('en')" class="{{ 'active' if current_locale == 'en' }}">EN</button>
+                <button onclick="changeLanguage('ar')" class="{{ 'active' if current_locale == 'ar' }}">AR</button>
+                <button onclick="changeLanguage('fr')" class="{{ 'active' if current_locale == 'fr' }}">FR</button>
+            </div>
+            <a href="/logout" class="text-red-600 hover:text-red-800 font-medium">{{ gettext('Logout') }}</a>
         </div>
-        <div class="header">
-            <h1>{{ _("Welcome,") }} {{ owner.name }}!</h1>
-            <a href="/logout" class="logout-btn">{{ _("Logout") }}</a>
+    </header>
+
+    <main class="flex-grow container mx-auto p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-white p-6 rounded-lg shadow col-span-1 md:col-span-1">
+            <h2 class="text-xl font-semibold mb-4 text-gray-800">{{ gettext('Your Profile') }}</h2>
+            <p class="text-gray-700 mb-2"><strong>{{ gettext('Name') }}:</strong> <span id="owner-name-display">{{ owner.full_name }}</span></p>
+            <p class="text-gray-700 mb-2"><strong>{{ gettext('Email') }}:</strong> {{ owner.email }}</p>
+            <p class="text-gray-700 mb-4"><strong>{{ gettext('Phone') }}:</strong> <span id="owner-phone-display">{{ owner.phone_number if owner.phone_number else gettext('N/A') }}</span></p>
+
+            <button id="editProfileBtn" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition duration-200">{{ gettext('Edit Profile') }}</button>
+
+            <div id="editProfileModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden flex items-center justify-center">
+                <div class="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
+                    <h3 class="text-lg font-semibold mb-4">{{ gettext('Edit Profile') }}</h3>
+                    <form id="editProfileForm">
+                        <div class="mb-4">
+                            <label for="editFullName" class="block text-gray-700 text-sm font-bold mb-2">{{ gettext('Full Name') }}:</label>
+                            <input type="text" id="editFullName" name="full_name" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" value="{{ owner.full_name }}">
+                        </div>
+                        <div class="mb-4">
+                            <label for="editPhoneNumber" class="block text-gray-700 text-sm font-bold mb-2">{{ gettext('Phone Number') }}:</label>
+                            <input type="text" id="editPhoneNumber" name="phone_number" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" value="{{ owner.phone_number if owner.phone_number else '' }}">
+                        </div>
+                        <div class="flex justify-end space-x-2">
+                            <button type="button" id="cancelEditBtn" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-400">{{ gettext('Cancel') }}</button>
+                            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">{{ gettext('Save Changes') }}</button>
+                        </div>
+                    </form>
+                    <div id="profileError" class="text-red-500 mt-2 text-sm hidden"></div>
+                </div>
+            </div>
+
+            <div class="mt-6 p-4 border rounded-md bg-gray-50">
+                <h3 class="text-lg font-semibold mb-2">{{ gettext('Subscription Status') }}:</h3>
+                {% if owner.is_premium %}
+                    <p class="text-green-600 font-medium">{{ gettext('Premium User') }}</p>
+                    <p class="text-gray-600 text-sm">{{ gettext('Enjoy unlimited bookings and advanced features!') }}</p>
+                {% else %}
+                    <p class="text-yellow-600 font-medium">{{ gettext('Free Tier') }}</p>
+                    <p class="text-gray-600 text-sm">{{ gettext('Up to 20 bookings per month.') }}</p>
+                    <button id="upgradeToPremiumBtn" class="mt-4 bg-primary text-white px-4 py-2 rounded-md hover-bg-primary transition duration-200">{{ gettext('Upgrade to Premium ($19/month)') }}</button>
+                    <div id="paymentError" class="text-red-500 mt-2 text-sm hidden"></div>
+                {% endif %}
+            </div>
         </div>
 
-        {% if error %}
-            <p class="error">{{ error }}</p>
-        {% endif %}
-        {% if message %}
-            <p class="message">{{ message }}</p>
-        {% endif %}
-
-        <div class="profile-section">
-            <h2>{{ _("Your Profile") }}</h2>
-            <p>{{ _("Your Public Booking Page Link:") }} <a href="/bookslot.app/{{ owner.slug }}" target="_blank">bookslot.app/{{ owner.slug }}</a></p>
-            <form action="/dashboard/profile" method="POST">
-                <div>
-                    <label for="name">{{ _("Your Name:") }}</label>
-                    <input type="text" id="name" name="name" value="{{ owner.name }}" required>
-                </div>
-                <div>
-                    <label for="email">{{ _("Email:") }}</label>
-                    <input type="email" id="email" name="email" value="{{ owner.email }}" disabled>
-                </div>
-                <div>
-                    <label for="business_name">{{ _("Business Name:") }}</label>
-                    <input type="text" id="business_name" name="business_name" value="{{ owner.business_name }}" required>
-                </div>
-                <div>
-                    <label for="phone">{{ _("Phone Number:") }}</label>
-                    <input type="text" id="phone" name="phone" value="{{ owner.phone }}" placeholder="+12345678900" required>
-                </div>
-                <div class="form-actions">
-                    <button type="submit">{{ _("Update Profile") }}</button>
-                </div>
-            </form>
-        </div>
-
-        <div class="bookings-section">
-            <h2>{{ _("Upcoming Bookings") }}</h2>
-            {% if bookings %}
-                <ul class="booking-list">
-                    {% for booking in bookings %}
-                        <li>
-                            <div class="booking-info">
-                                <strong>{{ booking.service_name }}</strong> {{ _("for") }} {{ booking.customer_name }}<br>
-                                {{ _("Date:") }} {{ booking.booking_date }} | {{ _("Time:") }} {{ booking.booking_time }}<br>
-                                {{ _("Customer Email:") }} {{ booking.customer_email }} | {{ _("Customer Phone:") }} {{ booking.customer_phone }}
-                            </div>
-                        </li>
+        <div class="col-span-1 md:col-span-2">
+            <h2 class="text-xl font-semibold mb-4 text-gray-800">{{ gettext('Upcoming Bookings') }}</h2>
+            {% if upcoming_bookings %}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {% for booking in upcoming_bookings %}
+                        <div class="booking-card">
+                            <h3 class="text-lg font-semibold text-primary">{{ booking.service_name }}</h3>
+                            <p class="text-gray-700">{{ gettext('Customer') }}: {{ booking.customer_name }}</p>
+                            <p class="text-gray-600">{{ gettext('Email') }}: {{ booking.customer_email }}</p>
+                            <p class="text-gray-600">{{ gettext('Phone') }}: {{ booking.customer_phone if booking.customer_phone else gettext('N/A') }}</p>
+                            <p class="text-gray-600">{{ gettext('Date') }}: {{ booking.booking_date }}</p>
+                            <p class="text-gray-600">{{ gettext('Time') }}: {{ booking.start_time }} - {{ booking.end_time }}</p>
+                            <p class="text-gray-600">{{ gettext('Price') }}: {{ booking.service_price | format_currency(current_locale) }}</p>
+                            <p class="text-gray-600">{{ gettext('Status') }}: <span class="font-medium text-green-600">{{ booking.status }}</span></p>
+                        </div>
                     {% endfor %}
-                </ul>
+                </div>
             {% else %}
-                <p class="no-bookings">{{ _("No upcoming bookings.") }}</p>
+                <p class="text-gray-600">{{ gettext('No upcoming bookings.') }}</p>
             {% endif %}
         </div>
-    </div>
+
+        <div class="col-span-full grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h2 class="text-xl font-semibold mb-4 text-gray-800">{{ gettext('Your Services') }}</h2>
+                {% if services %}
+                    <ul>
+                        {% for service in services %}
+                            <li class="mb-2 p-3 border-b border-gray-200 last:border-b-0">
+                                <p class="font-medium text-gray-800">{{ service.name }} ({{ service.duration_minutes }} {{ gettext('min') }})</p>
+                                <p class="text-gray-600 text-sm">{{ service.description if service.description else gettext('No description') }}</p>
+                                <p class="text-gray-600 text-sm">{{ gettext('Price') }}: {{ (service.price / 100.0) | format_currency(current_locale) }}</p>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-gray-600">{{ gettext('No services set up yet.') }}</p>
+                    <button class="mt-4 bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600">{{ gettext('Add Service') }}</button>
+                {% endif %}
+            </div>
+
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h2 class="text-xl font-semibold mb-4 text-gray-800">{{ gettext('Your Availability') }}</h2>
+                {% if availabilities %}
+                    <ul>
+                        {% for av in availabilities %}
+                            <li class="mb-2 p-3 border-b border-gray-200 last:border-b-0">
+                                <p class="font-medium text-gray-800">
+                                    {{ gettext(av.day_of_week | day_name) }} ({{ av.start_time }} - {{ av.end_time }})
+                                </p>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-gray-600">{{ gettext('No availability set up yet.') }}</p>
+                    <button class="mt-4 bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600">{{ gettext('Add Availability') }}</button>
+                {% endif %}
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function gettext(key) {
+            return key;
+        }
+
+        function changeLanguage(lang) {
+            const url = new URL(window.location);
+            url.searchParams.set('lang', lang);
+            window.location.href = url.toString();
+        }
+
+        const editProfileBtn = document.getElementById('editProfileBtn');
+        const editProfileModal = document.getElementById('editProfileModal');
+        const cancelEditBtn = document.getElementById('cancelEditBtn');
+        const editProfileForm = document.getElementById('editProfileForm');
+        const profileError = document.getElementById('profileError');
+
+        editProfileBtn.addEventListener('click', () => {
+            editProfileModal.classList.remove('hidden');
+        });
+
+        cancelEditBtn.addEventListener('click', () => {
+            editProfileModal.classList.add('hidden');
+            profileError.classList.add('hidden');
+        });
+
+        editProfileForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            profileError.classList.add('hidden');
+
+            const fullName = document.getElementById('editFullName').value;
+            const phoneNumber = document.getElementById('editPhoneNumber').value;
+
+            try {
+                const token = localStorage.getItem('access_token');
+                const response = await fetch('/owner/profile', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ full_name: fullName, phone_number: phoneNumber })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || 'Failed to update profile');
+                }
+
+                const updatedOwner = await response.json();
+                document.getElementById('owner-name-display').innerText = updatedOwner.full_name;
+                document.getElementById('owner-phone-display').innerText = updatedOwner.phone_number || 'N/A';
+                editProfileModal.classList.add('hidden');
+            } catch (error) {
+                profileError.innerText = error.message;
+                profileError.classList.remove('hidden');
+            }
+        });
+
+        const upgradeToPremiumBtn = document.getElementById('upgradeToPremiumBtn');
+        const paymentError = document.getElementById('paymentError');
+
+        if (upgradeToPremiumBtn) {
+            upgradeToPremiumBtn.addEventListener('click', async () => {
+                paymentError.classList.add('hidden');
+                try {
+                    const token = localStorage.getItem('access_token');
+                    const response = await fetch('/create-checkout-session', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.detail || 'Failed to initiate payment.');
+                    }
+
+                    const session = await response.json();
+                    window.location.href = session.url;
+                } catch (error) {
+                    paymentError.innerText = error.message;
+                    paymentError.classList.remove('hidden');
+                }
+            });
+        }
+    </script>
 </body>
 </html>

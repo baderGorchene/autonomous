@@ -1,1 +1,1 @@
-Fix: Resolve persistent 'No module named pytest' error with comprehensive requirements.txt
+Feat: Implement Stripe payment gateway for premium subscription

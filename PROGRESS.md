@@ -1,3 +1,8 @@
+## Iteration 326
+_2026-08-08 03:32 UTC_
+
+Implemented Stripe payment gateway functionality. This involved adding `stripe_customer_id` and `is_premium` fields to the `Owner` model, updating `schemas.py` with corresponding fields and a `CreateCheckoutSessionRequest` schema, creating a new `stripe_utils.py` module to encapsulate Stripe API interactions (checkout session creation and webhook handling), adding new endpoints in `main.py` for `/create-checkout-session` and `/stripe-webhook`, and updating `dashboard.html` to include an 'Upgrade to Premium' button with client-side logic to interact with the new payment endpoints. Also provided `src/database.py` which is a critical dependency for `main.py`.
+
 ## Iteration 325
 _2026-08-08 01:43 UTC_
 

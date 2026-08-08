@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     STRIPE_SECRET_KEY: str = Field("", description="Stripe Secret Key. Required for production. Set via environment variable.")
     STRIPE_PUBLIC_KEY: str = Field("", description="Stripe Publishable Key. Required for production. Set via environment variable.")
     STRIPE_WEBHOOK_SECRET: str = Field("", description="Stripe Webhook Secret. Required for production. Set via environment variable.")
+    STRIPE_PRODUCT_ID: str = Field("", description="Stripe Product ID for premium subscription. Set via environment variable.")
+    STRIPE_PRICE_ID: str = Field("", description="Stripe Price ID for premium subscription. Set via environment variable.")
+
 
     DATABASE_URL: str = Field("sqlite:///./sql_app.db", description="Database URL. Use a production-grade DB like PostgreSQL in production. Set via environment variable.")
     TESTING: bool = False
