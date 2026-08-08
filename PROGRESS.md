@@ -1,3 +1,8 @@
+## Iteration 325
+_2026-08-08 01:43 UTC_
+
+The persistent 'No module named pytest' error was identified as an environment setup issue, not a code bug. A comprehensive `requirements.txt` file has been provided to explicitly list `pytest` and all other project and testing dependencies, ensuring a stable and reproducible test environment. `src/config.py` was reviewed and correctly includes Stripe configuration fields, preparing for the next task.
+
 ## Iteration 324
 _2026-08-07 22:41 UTC_
 
