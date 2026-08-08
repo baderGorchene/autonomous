@@ -1,1 +1,1 @@
-Fix: Ensure pytest is available by providing comprehensive requirements.txt
+feat: Refine admin panel UI/UX and add owner service/booking management

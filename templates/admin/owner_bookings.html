@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="{{ locale }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ _('Admin Dashboard - Bookings for') }} {{ owner.name }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 font-sans">
+    <div class="container mx-auto p-4">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6">{{ _('Bookings for') }} {{ owner.name }}</h1>
+        <a href="/admin/owners" class="text-blue-500 hover:underline mb-4 inline-block">&larr; {{ _('Back to Owners') }}</a>
+
+        <div class="bg-white shadow-md rounded-lg overflow-hidden mt-6">
+            {% if bookings %}
+            <table class="min-w-full leading-normal">
+                <thead>
+                    <tr>
+                        <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">{{ _('ID') }}</th>
+                        <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">{{ _('Service') }}</th>
+                        <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">{{ _('Customer Name') }}</th>
+                        <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">{{ _('Customer Email') }}</th>
+                        <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">{{ _('Customer Phone') }}</th>
+                        <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">{{ _('Booking Time') }}</th>
+                        <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">{{ _('Status') }}</th>
+                        <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">{{ _('Actions') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for booking in bookings %}
+                    <tr>
+                        <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">{{ booking.id }}</td>
+                        <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">{{ booking.service.name if booking.service else _('N/A') }}</td>
+                        <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">{{ booking.customer_name }}</td>
+                        <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">{{ booking.customer_email }}</td>
+                        <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">{{ booking.customer_phone if booking.customer_phone else _('N/A') }}</td>
+                        <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">{{ booking.booking_time.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">{{ booking.status }}</td>
+                        <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm flex items-center space-x-2">
+                            <form action="/admin/owners/{{ owner.id }}/bookings/{{ booking.id }}/cancel" method="post" class="inline-block">
+                                <button type="submit" class="text-red-600 hover:text-red-900 text-sm" onclick="return confirm('{{ _('Are you sure you want to cancel this booking?') }}');">{{ _('Cancel') }}</button>
+                            </form>
+                            <form action="/admin/owners/{{ owner.id }}/bookings/{{ booking.id }}/update_status" method="post" class="inline-block ml-2">
+                                <select name="status" onchange="this.form.submit()" class="border border-gray-300 rounded-md shadow-sm p-1 text-sm">
+                                    <option value="pending" {% if booking.status == 'pending' %}selected{% endif %}>{{ _('Pending') }}</option>
+                                    <option value="confirmed" {% if booking.status == 'confirmed' %}selected{% endif %}>{{ _('Confirmed') }}</option>
+                                    <option value="completed" {% if booking.status == 'completed' %}selected{% endif %}>{{ _('Completed') }}</option>
+                                    <option value="cancelled" {% if booking.status == 'cancelled' %}selected{% endif %}>{{ _('Cancelled') }}</option>
+                                </select>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="p-5">{{ _('No bookings found for this owner.') }}</p>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

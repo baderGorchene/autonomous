@@ -1,3 +1,8 @@
+## Iteration 336
+_2026-08-08 13:47 UTC_
+
+Refined the admin panel UI/UX for owner management by adding dedicated pages for managing an owner's services and bookings. Implemented new FastAPI routes for listing, creating, updating, and deleting services, and for listing, canceling, and updating the status of bookings for a specific owner. Updated the main owners list page to include links to these new management sections. Created new Jinja2 templates (`owner_services.html` and `owner_bookings.html`) with basic Tailwind CSS styling and internationalization support.
+
 ## Iteration 335
 _2026-08-08 12:50 UTC_
 
