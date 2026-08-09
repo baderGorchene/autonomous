@@ -1,3 +1,8 @@
+## Iteration 356
+_2026-08-09 12:56 UTC_
+
+Implemented the display of recurring booking definitions on the owner dashboard. This involved updating `src/models.py` and `src/schemas.py` to define the `RecurringBooking` model and its Pydantic schema, modifying `src/crud.py` to include CRUD operations for recurring bookings, and updating `src/main.py` to fetch these bookings and pass them to the `dashboard.html` template. The `dashboard.html` was then updated to include a new section for displaying recurring bookings with their details and recurrence patterns. Individual occurrences of recurring bookings are now filtered out from the 'Upcoming Bookings' section to avoid duplication.
+
 ## Iteration 355
 _2026-08-09 11:31 UTC_
 

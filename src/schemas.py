@@ -1,24 +1,12 @@
 from pydantic import BaseModel, EmailStr
 from typing import List, Optional
 from datetime import date, time, datetime
-from enum import Enum
-
-class RecurrenceTypeEnum(str, Enum):
-    DAILY = "DAILY"
-    WEEKLY = "WEEKLY"
-    MONTHLY = "MONTHLY"
-
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-
-class TokenData(BaseModel):
-    email: Optional[str] = None
+from .models import RecurrenceType
 
 class OwnerBase(BaseModel):
     email: EmailStr
-    name: str
-    phone: Optional[str] = None
+    full_name: str
+    phone_number: Optional[str] = None
 
 class OwnerCreate(OwnerBase):
     password: str
@@ -26,26 +14,18 @@ class OwnerCreate(OwnerBase):
 class Owner(OwnerBase):
     id: int
     is_active: bool
-    is_admin: bool
-    created_at: datetime
-    updated_at: datetime
+    stripe_customer_id: Optional[str] = None
+    subscription_status: str
 
     class Config:
         orm_mode = True
-
-class UserLogin(BaseModel):
-    email: EmailStr
-    password: str
-
-class UserProfileUpdate(BaseModel):
-    name: Optional[str] = None
-    phone: Optional[str] = None
 
 class ServiceBase(BaseModel):
     name: str
     description: Optional[str] = None
     duration_minutes: int
-    price: int # Store in cents/smallest unit
+    price: int
+    currency: str
 
 class ServiceCreate(ServiceBase):
     pass
@@ -53,7 +33,6 @@ class ServiceCreate(ServiceBase):
 class Service(ServiceBase):
     id: int
     owner_id: int
-    is_active: bool
 
     class Config:
         orm_mode = True
@@ -63,8 +42,8 @@ class AvailabilityBase(BaseModel):
     date: Optional[date] = None
     start_time: time
     end_time: time
-    is_active: bool = True
-    recurrence_type: Optional[RecurrenceTypeEnum] = None
+    
+    recurrence_type: Optional[RecurrenceType] = None
     recurrence_value: Optional[str] = None
     recurrence_start_date: Optional[date] = None
     recurrence_end_date: Optional[date] = None
@@ -86,41 +65,45 @@ class BookingBase(BaseModel):
     customer_phone: Optional[str] = None
     date: date
     time: time
-    is_recurring: bool = False
-    recurrence_type: Optional[RecurrenceTypeEnum] = None
-    recurrence_value: Optional[str] = None
-    recurrence_end_date: Optional[date] = None
+    recurring_booking_id: Optional[int] = None
 
 class BookingCreate(BookingBase):
     pass
 
-class Booking(BookingBase):
+class BookingResponse(BookingBase):
     id: int
     owner_id: int
-    status: str
     created_at: datetime
-    service: Service # Nested service object
-    parent_booking_id: Optional[int] = None
 
     class Config:
         orm_mode = True
 
-class SubscriptionBase(BaseModel):
-    stripe_customer_id: str
-    stripe_subscription_id: str
-    current_plan_id: str
-    status: str
-    start_date: datetime
-    end_date: Optional[datetime] = None
+class RecurringBookingBase(BaseModel):
+    service_id: int
+    customer_name: str
+    customer_email: EmailStr
+    customer_phone: Optional[str] = None
+    start_time: time
+    duration_minutes: int
+    recurrence_type: RecurrenceType
+    recurrence_value: Optional[str] = None
+    start_date: date
+    end_date: Optional[date] = None
 
-class SubscriptionCreate(SubscriptionBase):
-    owner_id: int
+class RecurringBookingCreate(RecurringBookingBase):
+    pass
 
-class Subscription(SubscriptionBase):
+class RecurringBookingDisplay(RecurringBookingBase):
     id: int
     owner_id: int
     created_at: datetime
-    updated_at: datetime
-
+    
     class Config:
         orm_mode = True
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class TokenData(BaseModel):
+    username: Optional[str] = None
