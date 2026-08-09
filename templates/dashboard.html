@@ -1,168 +1,176 @@
-{% extends "base.html" %}
-{% block title %}{{ _('Dashboard') }}{% endblock %}
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ _('Owner Dashboard') }} - BookSlot</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .recurrence-indicator {
+            cursor: help;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans leading-normal tracking-normal">
+    <nav class="bg-white p-4 shadow-md">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="/dashboard" class="text-2xl font-bold text-blue-600">BookSlot</a>
+            <div class="flex items-center space-x-4">
+                <a href="/services" class="text-gray-700 hover:text-blue-600">{{ _('Services') }}</a>
+                <a href="/availability" class="text-gray-700 hover:text-blue-600">{{ _('Availability') }}</a>
+                <a href="/profile" class="text-gray-700 hover:text-blue-600">{{ _('Profile') }}</a>
+                <a href="/subscription/manage" class="text-gray-700 hover:text-blue-600">{{ _('Subscription') }}</a>
+                <a href="/logout" class="text-red-600 hover:text-red-800">{{ _('Logout') }}</a>
+                <div class="relative inline-block text-left">
+                    <select onchange="changeLanguage(this.value)" class="block appearance-none bg-white border border-gray-300 hover:border-gray-500 px-4 py-2 pr-8 rounded shadow leading-tight focus:outline-none focus:shadow-outline">
+                        <option value="en" {% if lang == 'en' %}selected{% endif %}>English</option>
+                        <option value="ar" {% if lang == 'ar' %}selected{% endif %}>العربية</option>
+                        <option value="fr" {% if lang == 'fr' %}selected{% endif %}>Français</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </nav>
 
-{% block content %}
-<div class="min-h-screen bg-gray-100 dark:bg-gray-900">
-    {% include "dashboard_sidebar.html" %}
+    <div class="container mx-auto mt-8 p-4">
+        <h1 class="text-3xl font-bold mb-6">{{ _('Welcome,') }} {{ owner.username }}!</h1>
 
-    <div class="lg:pl-64 flex flex-col flex-1">
-        <div class="sticky top-0 z-10 lg:hidden bg-gray-100 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
-            <div class="flex items-center justify-between px-4 py-2">
-                <a href="{{ url_for('dashboard') }}" class="text-xl font-semibold text-gray-900 dark:text-white">{{ _('BookSlot') }}</a>
-                <button type="button" class="-mr-2 inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500" onclick="toggleSidebar()">
-                    <span class="sr-only">{{ _('Open sidebar') }}</span>
-                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                    </svg>
-                </button>
+        {% if subscription_status.is_premium %}
+            <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6" role="alert">
+                <p class="font-bold">{{ _('Premium Plan Active!') }}</p>
+                <p>{{ _('Your subscription is active until') }} {{ subscription_status.current_period_end.strftime('%Y-%m-%d') if subscription_status.current_period_end else 'N/A' }}.</p>
+            </div>
+        {% else %}
+            <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-6" role="alert">
+                <p class="font-bold">{{ _('Free Plan') }}</p>
+                <p>{{ _('You are currently on the free plan. Upgrade to unlock unlimited bookings!') }} <a href="/subscription/manage" class="font-semibold text-blue-600 hover:underline">{{ _('Upgrade Now') }}</a></p>
+            </div>
+        {% endif %}
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-semibold mb-4">{{ _('Monthly Bookings') }}</h2>
+                <canvas id="monthlyBookingsChart"></canvas>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-semibold mb-4">{{ _('Popular Services') }}</h2>
+                <canvas id="popularServicesChart"></canvas>
             </div>
         </div>
 
-        <main class="flex-1">
-            <div class="py-6">
-                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <h1 class="text-3xl font-bold leading-tight text-gray-900 dark:text-white">{{ _('Dashboard') }}</h1>
-                </div>
-
-                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
-                    <div class="lg:grid lg:grid-cols-3 lg:gap-8">
-                        <!-- Profile Card -->
-                        <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-8 lg:mb-0">
-                            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">{{ _('Welcome, %s!') | format(owner.name) }}</h2>
-                            <p class="text-gray-600 dark:text-gray-300">{{ _('Your public booking page:') }} <a href="{{ server_name }}/bookslot/{{ owner.name }}" target="_blank" class="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300">{{ server_name }}/bookslot/{{ owner.name }}</a></p>
-                            <p class="text-gray-600 dark:text-gray-300 mt-2">{{ _('Subscription Status:') }} 
-                                {% if subscription_status == 'free' %}
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100">{{ _('Free Tier') }}</span>
-                                {% elif subscription_status == 'premium' %}
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100">{{ _('Premium') }}</span>
-                                {% elif subscription_status == 'cancelled' %}
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100">{{ _('Cancelled') }}</span>
-                                {% else %}
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100">{{ subscription_status | capitalize }}</span>
-                                {% endif %}
-                            </p>
-                            <a href="{{ url_for('owner_profile') }}" class="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">{{ _('Edit Profile') }}</a>
-                        </div>
-
-                        <!-- Analytics Card -->
-                        <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-8 lg:mb-0">
-                            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">{{ _('Analytics') }}</h2>
-                            <p class="text-gray-600 dark:text-gray-300">{{ _('Total Bookings:') }} <span class="font-bold text-gray-900 dark:text-white">{{ analytics.total_bookings }}</span></p>
-                            
-                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mt-4 mb-2">{{ _('Monthly Bookings') }}</h3>
-                            {% if analytics.monthly_bookings %}
-                                <ul class="list-disc list-inside text-gray-600 dark:text-gray-300">
-                                    {% for booking_month in analytics.monthly_bookings %}
-                                        <li>{{ booking_month.month }}: {{ booking_month.count }}</li>
-                                    {% endfor %}
-                                </ul>
-                            {% else %}
-                                <p class="text-gray-600 dark:text-gray-300">{{ _('No monthly booking data available yet.') }}</p>
-                            {% endif %}
-
-                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mt-4 mb-2">{{ _('Popular Services') }}</h3>
-                            {% if analytics.popular_services %}
-                                <ul class="list-disc list-inside text-gray-600 dark:text-gray-300">
-                                    {% for service in analytics.popular_services %}
-                                        <li>{{ service.service_name }}: {{ service.count }} {{ _('bookings') }}</li>
-                                    {% endfor %}
-                                </ul>
-                            {% else %}
-                                <p class="text-gray-600 dark:text-gray-300">{{ _('No popular services data available yet.') }}</p>
-                            {% endif %}
-                        </div>
-
-                        <!-- Services Card -->
-                        <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-                            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">{{ _('Your Services') }}</h2>
-                            {% if services %}
-                                <ul class="space-y-3">
-                                    {% for service in services %}
-                                        <li class="flex items-center justify-between">
-                                            <span class="text-gray-900 dark:text-white">{{ service.name }} ({{ service.duration }} min)</span>
-                                            <span class="text-gray-600 dark:text-gray-300">{{ service.formatted_price | i18n_currency(request.state.locale) }}</span>
-                                        </li>
-                                    {% endfor %}
-                                </ul>
-                            {% else %}
-                                <p class="text-gray-600 dark:text-gray-300">{{ _('You haven\'t added any services yet.') }}</p>
-                            {% endif %}
-                            <a href="{{ url_for('setup_service_page') }}" class="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">{{ _('Manage Services') }}</a>
-                        </div>
-                    </div>
-
-                    <!-- Upcoming Bookings Table -->
-                    <div class="mt-8 bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg">
-                        <div class="px-4 py-5 sm:px-6">
-                            <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white">
-                                {{ _('Upcoming Bookings') }}
-                            </h3>
-                            <p class="mt-1 max-w-2xl text-sm text-gray-500 dark:text-gray-400">
-                                {{ _('Details of your upcoming appointments.') }}
-                            </p>
-                        </div>
-                        <div class="border-t border-gray-200 dark:border-gray-700">
-                            <div class="overflow-x-auto">
-                                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                                    <thead class="bg-gray-50 dark:bg-gray-700">
-                                        <tr>
-                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-200 uppercase tracking-wider">
-                                                {{ _('Service') }}
-                                            </th>
-                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-200 uppercase tracking-wider">
-                                                {{ _('Customer') }}
-                                            </th>
-                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-200 uppercase tracking-wider">
-                                                {{ _('Time') }}
-                                            </th>
-                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-200 uppercase tracking-wider">
-                                                {{ _('Contact') }}
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                                        {% if upcoming_bookings %}
-                                            {% for booking in upcoming_bookings %}
-                                                <tr>
-                                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                                                        {{ booking.service.name }}
-                                                    </td>
-                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                                                        {{ booking.customer_name }}
-                                                    </td>
-                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                                                        {{ booking.booking_time.strftime('%Y-%m-%d %H:%M') }}
-                                                    </td>
-                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                                                        <a href="mailto:{{ booking.customer_email }}" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300">{{ booking.customer_email }}</a><br>
-                                                        {% if booking.customer_phone %}
-                                                            <a href="tel:{{ booking.customer_phone }}" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300">{{ booking.customer_phone }}</a>
-                                                        {% endif %}
-                                                    </td>
-                                                </tr>
-                                            {% endfor %}
+        <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+            <h2 class="text-xl font-semibold mb-4">{{ _('Upcoming Bookings') }}</h2>
+            {% if bookings %}
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white">
+                        <thead>
+                            <tr>
+                                <th class="py-2 px-4 border-b text-left">{{ _('Date') }}</th>
+                                <th class="py-2 px-4 border-b text-left">{{ _('Time') }}</th>
+                                <th class="py-2 px-4 border-b text-left">{{ _('Service') }}</th>
+                                <th class="py-2 px-4 border-b text-left">{{ _('Customer') }}</th>
+                                <th class="py-2 px-4 border-b text-left">{{ _('Phone') }}</th>
+                                <th class="py-2 px-4 border-b text-left">{{ _('Email') }}</th>
+                                <th class="py-2 px-4 border-b text-center">{{ _('Recurring') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for booking in bookings %}
+                                <tr>
+                                    <td class="py-2 px-4 border-b">{{ booking.date.strftime('%Y-%m-%d') }}</td>
+                                    <td class="py-2 px-4 border-b">{{ booking.time.strftime('%H:%M') }}</td>
+                                    <td class="py-2 px-4 border-b">{{ booking.service_name }}</td>
+                                    <td class="py-2 px-4 border-b">{{ booking.customer_name }}</td>
+                                    <td class="py-2 px-4 border-b">{{ booking.customer_phone if booking.customer_phone else '-' }}</td>
+                                    <td class="py-2 px-4 border-b">{{ booking.customer_email }}</td>
+                                    <td class="py-2 px-4 border-b text-center">
+                                        {% if booking.is_recurring_instance %}
+                                            <span class="recurrence-indicator text-blue-500" title="{{ _('This is a recurring booking instance.') }}">🔄</span>
                                         {% else %}
-                                            <tr>
-                                                <td colspan="4" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300 text-center">
-                                                    {{ _('No upcoming bookings.') }}
-                                                </td>
-                                            </tr>
+                                            -
                                         {% endif %}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
-            </div>
-        </main>
+            {% else %}
+                <p class="text-gray-600">{{ _('No upcoming bookings.') }}</p>
+            {% endif %}
+        </div>
     </div>
-</div>
 
-<script>
-    function toggleSidebar() {
-        const sidebar = document.getElementById('sidebar');
-        sidebar.classList.toggle('-translate-x-full');
-    }
-</script>
-{% endblock %}
+    <script>
+        function changeLanguage(lang) {
+            document.cookie = "lang=" + lang + "; path=/; max-age=" + (365 * 24 * 60 * 60);
+            location.reload();
+        }
+
+        const monthlyBookingsCtx = document.getElementById('monthlyBookingsChart').getContext('2d');
+        const monthlyBookingsData = {{ monthly_bookings_data | safe }};
+        new Chart(monthlyBookingsCtx, {
+            type: 'bar',
+            data: {
+                labels: monthlyBookingsData.map(item => item.month),
+                datasets: [{
+                    label: '{{ _("Number of Bookings") }}',
+                    data: monthlyBookingsData.map(item => item.count),
+                    backgroundColor: 'rgba(59, 130, 246, 0.6)',
+                    borderColor: 'rgba(59, 130, 246, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: '{{ _("Bookings") }}'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: '{{ _("Month") }}'
+                        }
+                    }
+                }
+            }
+        });
+
+        const popularServicesCtx = document.getElementById('popularServicesChart').getContext('2d');
+        const popularServicesData = {{ popular_services_data | safe }};
+        new Chart(popularServicesCtx, {
+            type: 'doughnut',
+            data: {
+                labels: popularServicesData.map(item => item.service_name),
+                datasets: [{
+                    label: '{{ _("Booking Count") }}',
+                    data: popularServicesData.map(item => item.booking_count),
+                    backgroundColor: [
+                        '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#6366F1',
+                        '#EC4899', '#A855F7', '#06B6D4', '#F97316', '#84CC16'
+                    ],
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                    },
+                    title: {
+                        display: true,
+                        text: '{{ _("Popular Services") }}'
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

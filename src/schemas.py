@@ -1,6 +1,8 @@
 from pydantic import BaseModel, EmailStr, Field
-from typing import Optional, List
 from datetime import date, time, datetime
+from typing import List, Optional
+import uuid
+
 from .models import RecurrenceType
 
 class Token(BaseModel):
@@ -8,90 +10,67 @@ class Token(BaseModel):
     token_type: str
 
 class TokenData(BaseModel):
-    owner_id: Optional[int] = None
+    username: Optional[str] = None
 
 class OwnerBase(BaseModel):
     email: EmailStr
-    name: str
-    phone: Optional[str] = None
-    locale: str = "en"
+    username: str
+    phone_number: Optional[str] = None
+    language: Optional[str] = "en"
 
 class OwnerCreate(OwnerBase):
     password: str
 
-class OwnerUpdate(BaseModel):
-    name: Optional[str] = None
-    email: Optional[EmailStr] = None
-    phone: Optional[str] = None
-    locale: Optional[str] = None
-
-class OwnerInDB(OwnerBase):
+class Owner(OwnerBase):
     id: int
-    hashed_password: str
-    is_premium: bool
-    stripe_customer_id: Optional[str]
-    stripe_subscription_id: Optional[str]
+    is_active: bool
+    subscription_status: str
+    stripe_customer_id: Optional[str] = None
+    stripe_subscription_id: Optional[str] = None
 
     class Config:
-        from_attributes = True
+        orm_mode = True
 
 class ServiceBase(BaseModel):
     name: str
     description: Optional[str] = None
     duration_minutes: int = Field(..., gt=0)
-    price: int = Field(..., ge=0) # Price in smallest currency unit (e.g., cents)
+    price: int = Field(..., ge=0)
 
 class ServiceCreate(ServiceBase):
     pass
-
-class ServiceUpdate(ServiceBase):
-    name: Optional[str] = None
-    description: Optional[str] = None
-    duration_minutes: Optional[int] = None
-    price: Optional[int] = None
 
 class Service(ServiceBase):
     id: int
     owner_id: int
 
     class Config:
-        from_attributes = True
+        orm_mode = True
 
-class AvailabilityBase(BaseModel):
-    start_time: time
-    end_time: time
-    service_id: Optional[int] = None # If None, applies to all services
+class CustomerBase(BaseModel):
+    name: str
+    email: EmailStr
+    phone_number: Optional[str] = None
 
-class AvailabilityCreate(AvailabilityBase):
-    date: Optional[date] = None # Specific date for one-off
-    recurrence_type: RecurrenceType = RecurrenceType.NONE
-    recurrence_value: Optional[str] = None # e.g., "MON,TUE,WED" or "15"
-    recurrence_end_date: Optional[date] = None
+class CustomerCreate(CustomerBase):
+    pass
 
-class AvailabilityUpdate(AvailabilityBase):
-    date: Optional[date] = None
-    recurrence_type: Optional[RecurrenceType] = None
-    recurrence_value: Optional[str] = None
-    recurrence_end_date: Optional[date] = None
-
-class Availability(AvailabilityBase):
+class Customer(CustomerBase):
     id: int
-    owner_id: int
-    date: Optional[date]
-    recurrence_type: RecurrenceType
-    recurrence_value: Optional[str]
-    recurrence_end_date: Optional[date]
 
     class Config:
-        from_attributes = True
+        orm_mode = True
 
 class BookingBase(BaseModel):
     service_id: int
-    customer_name: str
-    customer_email: EmailStr
-    customer_phone: Optional[str] = None
     date: date
     time: time
+    customer_name: str
+    customer_email: EmailStr
+    customer_phone_number: Optional[str] = None
+    recurrence_type: Optional[RecurrenceType] = RecurrenceType.NONE
+    recurrence_value: Optional[str] = None
+    recurrence_end_date: Optional[date] = None
 
 class BookingCreate(BookingBase):
     pass
@@ -99,35 +78,46 @@ class BookingCreate(BookingBase):
 class Booking(BookingBase):
     id: int
     owner_id: int
+    customer_id: int
     status: str
     created_at: datetime
+    recurrence_id: Optional[uuid.UUID] = None
 
     class Config:
-        from_attributes = True
+        orm_mode = True
 
-class MonthlyBookingData(BaseModel):
-    month: str
-    count: int
+class AvailabilityBase(BaseModel):
+    service_id: Optional[int] = None
+    date: Optional[date] = None
+    start_time: time
+    end_time: time
+    recurrence_type: RecurrenceType = RecurrenceType.NONE
+    recurrence_value: Optional[str] = None
+    recurrence_start_date: Optional[date] = None
+    recurrence_end_date: Optional[date] = None
 
-class PopularServiceData(BaseModel):
-    service_name: str
-    booking_count: int
+class AvailabilityCreate(AvailabilityBase):
+    pass
+
+class Availability(AvailabilityBase):
+    id: int
+    owner_id: int
+
+    class Config:
+        orm_mode = True
+
+class OwnerUpdate(BaseModel):
+    username: Optional[str] = None
+    email: Optional[EmailStr] = None
+    phone_number: Optional[str] = None
+    language: Optional[str] = None
+
+class SubscriptionStatus(BaseModel):
+    status: str
+    current_period_end: Optional[datetime]
+    plan_id: str
+    is_premium: bool
 
 class AnalyticsData(BaseModel):
-    monthly_bookings: List[MonthlyBookingData]
-    popular_services: List[PopularServiceData]
-
-class StripeCheckoutSession(BaseModel):
-    session_id: str
-    checkout_url: str
-
-class WebhookEvent(BaseModel):
-    id: str
-    object: str
-    api_version: str
-    created: int
-    data: dict
-    livemode: bool
-    pending_webhooks: int
-    request: Optional[dict] = None
-    type: str
+    monthly_bookings: List[dict]
+    popular_services: List[dict]
