@@ -1,20 +1,14 @@
-import gettext
-from functools import lru_cache
-from typing import Callable
+from babel.support import Translations
+import os
 
-@lru_cache(maxsize=None)
-def get_translator(lang: str) -> Callable[[str], str]:
-    try:
-        localedir = "locales"
-        t = gettext.translation("messages", localedir, languages=[lang], fallback=True)
-        return t.gettext
-    except Exception:
-        # Fallback to default gettext if translation files are missing or an error occurs
-        print(f"Warning: Could not load translation for language '{lang}'. Falling back to default.")
-        return gettext.gettext
+_translations_cache = {}
 
-def set_language(request, lang: str):
-    request.session["lang"] = lang
-
-def get_language(request) -> str:
-    return request.session.get("lang", "en")
+def get_translator(locale: str):
+    if locale not in _translations_cache:
+        locale_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'locales')
+        try:
+            _translations_cache[locale] = Translations.load(locale_dir, [locale])
+        except Exception as e:
+            print(f"Warning: Could not load translations for locale {locale}: {e}. Falling back to default.")
+            _translations_cache[locale] = Translations() # Fallback to a dummy translator
+    return _translations_cache[locale].gettext

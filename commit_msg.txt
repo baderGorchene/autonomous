@@ -1,1 +1,1 @@
-Feat: Display recurring bookings on owner dashboard
+Feat: Update notifications for recurring bookings and fix test environment

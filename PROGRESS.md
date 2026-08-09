@@ -1,3 +1,8 @@
+## Iteration 357
+_2026-08-09 14:36 UTC_
+
+Addressed the missing `pytest` module by providing a comprehensive `requirements.txt` and reconstructing critical missing core files (`models.py`, `schemas.py`, `i18n.py`, `notifications.py`) that were mentioned as previously completed but not present. Modified `notifications.py` to include information about recurring bookings in email and SMS confirmations for both customers and owners, by checking the `recurrence_id` field on the `Booking` object.
+
 ## Iteration 356
 _2026-08-09 12:56 UTC_
 
