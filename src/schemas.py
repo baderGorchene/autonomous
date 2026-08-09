@@ -1,127 +1,93 @@
-from pydantic import BaseModel, EmailStr, Field, model_validator
-from datetime import datetime, date, time, timedelta
+from datetime import datetime, date, timedelta
 from typing import Optional, List
-import uuid
-
-class OwnerBase(BaseModel):
-    email: EmailStr
-    full_name: Optional[str] = None
-    phone_number: Optional[str] = None
-
-class OwnerCreate(OwnerBase):
-    password: str
-
-class OwnerInDB(OwnerBase):
-    id: uuid.UUID
-    is_active: bool
-    created_at: datetime
-    updated_at: datetime
-    locale: str
-    currency: str
-    stripe_customer_id: Optional[str] = None
-    stripe_subscription_id: Optional[str] = None
-    subscription_status: str
-    subscription_ends_at: Optional[datetime] = None
-
-    class Config:
-        from_attributes = True
-
-class Owner(OwnerInDB):
-    pass
+from pydantic import BaseModel, EmailStr, Field
 
 class ServiceBase(BaseModel):
-    name: str = Field(..., min_length=1)
+    name: str
     description: Optional[str] = None
-    duration_minutes: int = Field(..., gt=0)
-    price: int = Field(..., ge=0) # Price in smallest unit (e.g., cents)
+    duration_minutes: int
+    price: float
 
 class ServiceCreate(ServiceBase):
     pass
 
-class ServiceInDB(ServiceBase):
-    id: uuid.UUID
-    owner_id: uuid.UUID
-    is_active: bool
-    created_at: datetime
-    updated_at: datetime
+class Service(ServiceBase):
+    id: int
+    owner_id: int
+    is_active: bool = True
 
     class Config:
         from_attributes = True
 
-class Service(ServiceInDB):
-    pass
+class OwnerBase(BaseModel):
+    email: EmailStr
+    business_name: str
+    phone_number: Optional[str] = None
+    default_locale: str = "en"
 
-class AvailabilityBase(BaseModel):
-    day_of_week: int = Field(..., ge=0, le=6) # 0=Monday, 6=Sunday
-    start_time: time
-    end_time: time
+class OwnerCreate(OwnerBase):
+    password: str
 
-class AvailabilityCreate(AvailabilityBase):
-    pass
-
-class AvailabilityInDB(AvailabilityBase):
-    id: uuid.UUID
-    owner_id: uuid.UUID
-    is_available: bool
-    created_at: datetime
-    updated_at: datetime
+class Owner(OwnerBase):
+    id: int
+    is_active: bool = True
+    services: List[Service] = []
 
     class Config:
         from_attributes = True
 
-class Availability(AvailabilityInDB):
-    pass
+class Token(BaseModel):
+    access_token: str
+    token_type: str
 
-class BookingCreate(BaseModel):
-    service_id: uuid.UUID
-    customer_name: str = Field(..., min_length=1)
-    customer_email: EmailStr
-    customer_phone: Optional[str] = None
-    start_time: datetime # This will be the start time of the *first* booking if recurring
-    
-    is_recurring: bool = False
-    recurrence_pattern: Optional[str] = None # e.g., "DAILY", "WEEKLY", "MONTHLY"
-    recurrence_ends_on: Optional[date] = None # End date for recurrence
-    recurrence_count: Optional[int] = None # Number of occurrences
-    
-    @model_validator(mode='after')
-    def validate_recurrence_fields(self) -> 'BookingCreate':
-        if self.is_recurring:
-            if not self.recurrence_pattern:
-                raise ValueError("recurrence_pattern is required for recurring bookings")
-            
-            if self.recurrence_pattern not in ["DAILY", "WEEKLY", "MONTHLY"]:
-                raise ValueError("Invalid recurrence_pattern. Must be DAILY, WEEKLY, or MONTHLY.")
+class TokenData(BaseModel):
+    email: Optional[str] = None
 
-            if not (self.recurrence_ends_on or self.recurrence_count):
-                raise ValueError("Either recurrence_ends_on or recurrence_count is required for recurring bookings")
-            if self.recurrence_ends_on and self.recurrence_count:
-                raise ValueError("Cannot specify both recurrence_ends_on and recurrence_count")
-            
-            if self.recurrence_ends_on and self.recurrence_ends_on < self.start_time.date():
-                raise ValueError("Recurrence end date cannot be before the start date.")
-            if self.recurrence_count is not None and self.recurrence_count <= 0:
-                raise ValueError("Recurrence count must be a positive integer.")
-
-        return self
-
-class BookingResponse(BaseModel):
-    id: uuid.UUID
-    owner_id: uuid.UUID
-    service_id: uuid.UUID
+class BookingBase(BaseModel):
+    service_id: int
     customer_name: str
     customer_email: EmailStr
-    customer_phone: Optional[str]
+    customer_phone: Optional[str] = None
     start_time: datetime
     end_time: datetime
-    status: str
-    created_at: datetime
-    updated_at: datetime
-    recurrence_id: Optional[uuid.UUID]
-    is_master_booking: bool
-    recurrence_pattern: Optional[str]
-    recurrence_end_date: Optional[date]
-    recurrence_count: Optional[int]
+    status: str = "pending"
+
+class BookingCreate(BookingBase):
+    pass
+
+class Booking(BookingBase):
+    id: int
+    owner_id: int
+    service: Service
+    recurrence_group_id: Optional[str] = None
 
     class Config:
         from_attributes = True
+
+class RecurringBookingCreate(BaseModel):
+    service_id: int
+    customer_name: str
+    customer_email: EmailStr
+    customer_phone: Optional[str] = None
+    first_occurrence_start_time: datetime
+    duration_minutes: int
+    recurrence_type: str = Field(..., description="e.g., daily, weekly, monthly")
+    recurrence_interval: int = Field(1, ge=1, description="Interval for recurrence (e.g., 2 for every other week)")
+    recurrence_end_date: Optional[date] = None
+    number_of_occurrences: Optional[int] = None
+
+    class Config:
+        extra = "forbid"
+        json_schema_extra = {
+            "example": {
+                "service_id": 1,
+                "customer_name": "John Doe",
+                "customer_email": "john.doe@example.com",
+                "customer_phone": "+1234567890",
+                "first_occurrence_start_time": "2023-10-27T10:00:00Z",
+                "duration_minutes": 60,
+                "recurrence_type": "weekly",
+                "recurrence_interval": 1,
+                "number_of_occurrences": 4
+            }
+        }

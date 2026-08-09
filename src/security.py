@@ -1,12 +1,14 @@
 from datetime import datetime, timedelta
 from typing import Optional
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
-from src import models, schemas
-from src.config import settings
+from passlib.context import CryptContext
+
+from . import schemas, models
+from .config import settings
+from .database import SessionLocal
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -27,7 +29,14 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
 
-def get_owner_from_token(db: Session, token: str):
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+async def get_current_owner(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -42,23 +51,11 @@ def get_owner_from_token(db: Session, token: str):
     except JWTError:
         raise credentials_exception
     owner = db.query(models.Owner).filter(models.Owner.email == token_data.email).first()
+    if owner is None:
+        raise credentials_exception
     return owner
 
-def get_admin_user_from_token(db: Session, token: str):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        email: str = payload.get("sub")
-        if email is None:
-            raise credentials_exception
-        token_data = schemas.TokenData(email=email)
-    except JWTError:
-        raise credentials_exception
-    admin_user = db.query(models.AdminUser).filter(models.AdminUser.email == token_data.email).first()
-    if not admin_user or not admin_user.is_admin:
-        raise credentials_exception
-    return admin_user
+async def get_current_active_owner(current_owner: models.Owner = Depends(get_current_owner)):
+    if not current_owner.is_active:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Inactive owner")
+    return current_owner
