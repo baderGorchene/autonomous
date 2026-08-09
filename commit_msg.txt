@@ -1,1 +1,1 @@
-Fix: Ensure pytest and core dependencies are installed for test execution
+Fix: Ensure pytest is installed, complete recurring availability logic
