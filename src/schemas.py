@@ -1,12 +1,12 @@
-from pydantic import BaseModel, EmailStr, Field
-from datetime import datetime, timedelta
+from pydantic import BaseModel, EmailStr, Field, model_validator
+from datetime import datetime, date, time, timedelta
 from typing import Optional, List
 import uuid
 
 class OwnerBase(BaseModel):
     email: EmailStr
-    name: str
-    phone: Optional[str] = None
+    full_name: Optional[str] = None
+    phone_number: Optional[str] = None
 
 class OwnerCreate(OwnerBase):
     password: str
@@ -15,17 +15,25 @@ class OwnerInDB(OwnerBase):
     id: uuid.UUID
     is_active: bool
     created_at: datetime
+    updated_at: datetime
+    locale: str
+    currency: str
     stripe_customer_id: Optional[str] = None
+    stripe_subscription_id: Optional[str] = None
     subscription_status: str
+    subscription_ends_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
 
+class Owner(OwnerInDB):
+    pass
+
 class ServiceBase(BaseModel):
-    name: str
+    name: str = Field(..., min_length=1)
     description: Optional[str] = None
     duration_minutes: int = Field(..., gt=0)
-    price: int = Field(..., ge=0)
+    price: int = Field(..., ge=0) # Price in smallest unit (e.g., cents)
 
 class ServiceCreate(ServiceBase):
     pass
@@ -34,14 +42,19 @@ class ServiceInDB(ServiceBase):
     id: uuid.UUID
     owner_id: uuid.UUID
     is_active: bool
+    created_at: datetime
+    updated_at: datetime
 
     class Config:
         from_attributes = True
 
+class Service(ServiceInDB):
+    pass
+
 class AvailabilityBase(BaseModel):
-    day_of_week: int = Field(..., ge=0, le=6, description="0=Monday, 6=Sunday")
-    start_time: str = Field(..., pattern=r"^\\d{2}:\\d{2}$", description="HH:MM format")
-    end_time: str = Field(..., pattern=r"^\\d{2}:\\d{2}$", description="HH:MM format")
+    day_of_week: int = Field(..., ge=0, le=6) # 0=Monday, 6=Sunday
+    start_time: time
+    end_time: time
 
 class AvailabilityCreate(AvailabilityBase):
     pass
@@ -49,70 +62,66 @@ class AvailabilityCreate(AvailabilityBase):
 class AvailabilityInDB(AvailabilityBase):
     id: uuid.UUID
     owner_id: uuid.UUID
+    is_available: bool
+    created_at: datetime
+    updated_at: datetime
 
     class Config:
         from_attributes = True
 
-class BookingBase(BaseModel):
+class Availability(AvailabilityInDB):
+    pass
+
+class BookingCreate(BaseModel):
+    service_id: uuid.UUID
+    customer_name: str = Field(..., min_length=1)
+    customer_email: EmailStr
+    customer_phone: Optional[str] = None
+    start_time: datetime # This will be the start time of the *first* booking if recurring
+    
+    is_recurring: bool = False
+    recurrence_pattern: Optional[str] = None # e.g., "DAILY", "WEEKLY", "MONTHLY"
+    recurrence_ends_on: Optional[date] = None # End date for recurrence
+    recurrence_count: Optional[int] = None # Number of occurrences
+    
+    @model_validator(mode='after')
+    def validate_recurrence_fields(self) -> 'BookingCreate':
+        if self.is_recurring:
+            if not self.recurrence_pattern:
+                raise ValueError("recurrence_pattern is required for recurring bookings")
+            
+            if self.recurrence_pattern not in ["DAILY", "WEEKLY", "MONTHLY"]:
+                raise ValueError("Invalid recurrence_pattern. Must be DAILY, WEEKLY, or MONTHLY.")
+
+            if not (self.recurrence_ends_on or self.recurrence_count):
+                raise ValueError("Either recurrence_ends_on or recurrence_count is required for recurring bookings")
+            if self.recurrence_ends_on and self.recurrence_count:
+                raise ValueError("Cannot specify both recurrence_ends_on and recurrence_count")
+            
+            if self.recurrence_ends_on and self.recurrence_ends_on < self.start_time.date():
+                raise ValueError("Recurrence end date cannot be before the start date.")
+            if self.recurrence_count is not None and self.recurrence_count <= 0:
+                raise ValueError("Recurrence count must be a positive integer.")
+
+        return self
+
+class BookingResponse(BaseModel):
+    id: uuid.UUID
+    owner_id: uuid.UUID
     service_id: uuid.UUID
     customer_name: str
     customer_email: EmailStr
-    customer_phone: Optional[str] = None
+    customer_phone: Optional[str]
     start_time: datetime
     end_time: datetime
-
-class BookingCreate(BookingBase):
-    is_recurring: bool = False
-    recurrence_pattern: Optional[str] = None
-    recurrence_end_date: Optional[datetime] = None
-    recurrence_count: Optional[int] = None
-
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "service_id": "123e4567-e89b-12d3-a456-426614174000",
-                "customer_name": "John Doe",
-                "customer_email": "john.doe@example.com",
-                "customer_phone": "+1234567890",
-                "start_time": "2023-10-27T10:00:00Z",
-                "end_time": "2023-10-27T11:00:00Z",
-                "is_recurring": True,
-                "recurrence_pattern": "WEEKLY",
-                "recurrence_end_date": "2023-11-27T11:00:00Z",
-                "recurrence_count": None
-            }
-        }
-
-
-class BookingInDB(BookingBase):
-    id: uuid.UUID
-    owner_id: uuid.UUID
     status: str
     created_at: datetime
-    is_recurring: bool
-    recurrence_pattern: Optional[str] = None
-    recurrence_end_date: Optional[datetime] = None
-    recurrence_count: Optional[int] = None
-    recurrence_group_id: Optional[uuid.UUID] = None
+    updated_at: datetime
+    recurrence_id: Optional[uuid.UUID]
+    is_master_booking: bool
+    recurrence_pattern: Optional[str]
+    recurrence_end_date: Optional[date]
+    recurrence_count: Optional[int]
 
     class Config:
         from_attributes = True
-
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-
-class TokenData(BaseModel):
-    email: Optional[str] = None
-
-class BookingCount(BaseModel):
-    date: str
-    count: int
-
-class PopularService(BaseModel):
-    service_name: str
-    booking_count: int
-
-class AnalyticsData(BaseModel):
-    monthly_bookings: List[BookingCount]
-    popular_services: List[PopularService]

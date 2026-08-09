@@ -1,192 +1,139 @@
 from sqlalchemy.orm import Session
 from . import models, schemas
-from datetime import datetime, timedelta
-from sqlalchemy import func, extract
-from typing import Optional, List
+import uuid
+from datetime import datetime, date, time, timedelta
+from typing import List, Optional
 
-# Admin CRUD operations
-def get_admin_by_email(db: Session, email: str):
-    return db.query(models.Admin).filter(models.Admin.email == email).first()
 
-def create_admin(db: Session, admin: schemas.AdminCreate, hashed_password: str):
-    db_admin = models.Admin(email=admin.email, hashed_password=hashed_password, name=admin.name)
-    db.add(db_admin)
-    db.commit()
-    db.refresh(db_admin)
-    return db_admin
+def get_owner(db: Session, owner_id: uuid.UUID):
+    return db.query(models.Owner).filter(models.Owner.id == owner_id).first()
 
-# Owner CRUD operations
 def get_owner_by_email(db: Session, email: str):
     return db.query(models.Owner).filter(models.Owner.email == email).first()
 
-def create_owner(db: Session, owner: schemas.OwnerCreate, hashed_password: str):
-    db_owner = models.Owner(email=owner.email, hashed_password=hashed_password, name=owner.name, phone=owner.phone, subscription_status=owner.subscription_status if owner.subscription_status else "free")
-    db.add(db_owner)
-    db.commit()
-    db.refresh(db_owner)
-    return db_owner
-
-def get_owner(db: Session, owner_id: int):
-    return db.query(models.Owner).filter(models.Owner.id == owner_id).first()
-
-def get_owners(db: Session, skip: int = 0, limit: int = 100) -> List[models.Owner]:
-    return db.query(models.Owner).offset(skip).limit(limit).all()
-
-def update_owner_by_admin(db: Session, owner: models.Owner, owner_update: schemas.OwnerAdminUpdate):
-    update_data = owner_update.model_dump(exclude_unset=True)
-    for field, value in update_data.items():
-        setattr(owner, field, value)
-    db.add(owner)
-    db.commit()
-    db.refresh(owner)
-    return owner
-
-def delete_owner(db: Session, owner_id: int):
-    owner = db.query(models.Owner).filter(models.Owner.id == owner_id).first()
-    if owner:
-        db.delete(owner)
-        db.commit()
-        return True
-    return False
-
-def get_owner_services(db: Session, owner_id: int) -> List[models.Service]:
-    return db.query(models.Service).filter(models.Service.owner_id == owner_id).all()
-
-def get_service_by_id(db: Session, service_id: int):
+def get_service(db: Session, service_id: uuid.UUID):
     return db.query(models.Service).filter(models.Service.id == service_id).first()
 
-def create_service(db: Session, service: schemas.ServiceCreate, owner_id: int):
-    db_service = models.Service(**service.model_dump(), owner_id=owner_id)
-    db.add(db_service)
+def get_availabilities_by_owner_and_day(db: Session, owner_id: uuid.UUID, day_of_week: int) -> List[models.Availability]:
+    return db.query(models.Availability).filter(
+        models.Availability.owner_id == owner_id,
+        models.Availability.day_of_week == day_of_week,
+        models.Availability.is_available == True
+    ).order_by(models.Availability.start_time).all()
+
+def create_booking(db: Session, booking: models.Booking):
+    db.add(booking)
     db.commit()
-    db.refresh(db_service)
-    return db_service
+    db.refresh(booking)
+    return booking
 
-def update_service(db: Session, service_id: int, service_update: schemas.ServiceUpdate):
-    db_service = db.query(models.Service).filter(models.Service.id == service_id).first()
-    if db_service:
-        update_data = service_update.model_dump(exclude_unset=True)
-        for field, value in update_data.items():
-            setattr(db_service, field, value)
-        db.add(db_service)
-        db.commit()
-        db.refresh(db_service)
-        return db_service
-    return None
-
-def delete_service(db: Session, service_id: int):
-    db_service = db.query(models.Service).filter(models.Service.id == service_id).first()
-    if db_service:
-        db.delete(db_service)
-        db.commit()
-        return True
-    return False
-
-def create_booking(db: Session, booking: schemas.BookingCreate, owner_id: int):
-    db_booking = models.Booking(**booking.model_dump(), owner_id=owner_id)
-    db.add(db_booking)
-    db.commit()
-    db.refresh(db_booking)
-    return db_booking
-
-def get_owner_upcoming_bookings(db: Session, owner_id: int):
-    now = datetime.now()
-    return db.query(models.Booking)
-             .join(models.Service)
-             .filter(models.Booking.owner_id == owner_id, models.Booking.booking_time >= now)
-             .order_by(models.Booking.booking_time)
-             .all()
-
-def get_all_bookings_for_owner(db: Session, owner_id: int, skip: int = 0, limit: int = 100) -> List[models.Booking]:
-    return db.query(models.Booking).filter(models.Booking.owner_id == owner_id).offset(skip).limit(limit).all()
-
-def get_booking_by_id(db: Session, booking_id: int):
+def get_booking(db: Session, booking_id: uuid.UUID):
     return db.query(models.Booking).filter(models.Booking.id == booking_id).first()
 
-def update_booking(db: Session, booking_id: int, booking_update: schemas.BookingUpdate):
-    db_booking = db.query(models.Booking).filter(models.Booking.id == booking_id).first()
-    if db_booking:
-        update_data = booking_update.model_dump(exclude_unset=True)
-        for field, value in update_data.items():
-            setattr(db_booking, field, value)
-        db.add(db_booking)
-        db.commit()
-        db.refresh(db_booking)
-        return db_booking
-    return None
+def get_overlapping_bookings(db: Session, owner_id: uuid.UUID, service_id: uuid.UUID, start_time: datetime, end_time: datetime) -> List[models.Booking]:
+    return db.query(models.Booking).filter(
+        models.Booking.owner_id == owner_id,
+        models.Booking.service_id == service_id,
+        models.Booking.status == "confirmed",
+        models.Booking.start_time < end_time,
+        models.Booking.end_time > start_time
+    ).all()
 
-def delete_booking(db: Session, booking_id: int):
-    db_booking = db.query(models.Booking).filter(models.Booking.id == booking_id).first()
-    if db_booking:
-        db.delete(db_booking)
-        db.commit()
-        return True
-    return False
-
-def update_owner_profile(db: Session, owner: models.Owner, owner_update: schemas.OwnerProfileUpdate):
-    for field, value in owner_update.model_dump(exclude_unset=True).items():
-        setattr(owner, field, value)
-    db.commit()
-    db.refresh(owner)
-    return owner
-
-def update_owner_subscription_status(db: Session, owner: models.Owner, status: str, stripe_customer_id: Optional[str] = None, stripe_subscription_id: Optional[str] = None):
-    owner.subscription_status = status
-    if stripe_customer_id:
-        owner.stripe_customer_id = stripe_customer_id
-    if stripe_subscription_id:
-        owner.stripe_subscription_id = stripe_subscription_id
-    db.commit()
-    db.refresh(owner)
-    return owner
-
-def get_owner_analytics(db: Session, owner_id: int):
-    # Total bookings
-    total_bookings = db.query(func.count(models.Booking.id)).filter(models.Booking.owner_id == owner_id).scalar()
-
-    # Monthly bookings
-    dialect_name = db.bind.dialect.name
-
-    if 'postgresql' in dialect_name:
-        month_expression = func.to_char(models.Booking.booking_time, 'YYYY-MM')
-    elif 'sqlite' in dialect_name:
-        month_expression = func.strftime('%Y-%m', models.Booking.booking_time)
-    else:
-        raise NotImplementedError(f"Monthly bookings analytics not implemented for database dialect: {dialect_name}")
-
-    monthly_bookings_query = (
-        db.query(
-            month_expression.label('month'),
-            func.count(models.Booking.id).label('count')
-        )
-        .filter(models.Booking.owner_id == owner_id)
-        .group_by('month')
-        .order_by('month')
-        .all()
+def create_recurring_bookings(db: Session, booking_data: schemas.RecurringBookingCreate, owner_id: uuid.UUID) -> List[models.Booking]:
+    """
+    Creates a series of bookings based on a recurring pattern.
+    Assumes schemas.RecurringBookingCreate includes all fields of schemas.BookingCreate
+    plus 'recurrence_pattern' and 'recurrence_end_date'.
+    """
+    
+    # Create the initial booking (the "parent" booking for recurrence)
+    initial_booking = models.Booking(
+        id=uuid.uuid4(),
+        owner_id=owner_id,
+        service_id=booking_data.service_id,
+        customer_name=booking_data.customer_name,
+        customer_email=booking_data.customer_email,
+        customer_phone=booking_data.customer_phone,
+        start_time=booking_data.start_time,
+        end_time=booking_data.end_time,
+        status="pending", # Default status, can be refined based on business logic (e.g., payment)
+        is_recurring=True,
+        recurrence_pattern=booking_data.recurrence_pattern,
+        recurrence_end_date=booking_data.recurrence_end_date,
+        created_at=datetime.utcnow(),
+        updated_at=datetime.utcnow()
     )
-    monthly_bookings = []
-    for r in monthly_bookings_query:
-        monthly_bookings.append({"month": r.month, "count": r.count})
-
-    # Popular services
-    popular_services_query = (
-        db.query(
-            models.Service.name.label('service_name'),
-            func.count(models.Booking.id).label('count')
-        )
-        .join(models.Service, models.Booking.service_id == models.Service.id)
-        .filter(models.Booking.owner_id == owner_id)
-        .group_by(models.Service.name)
-        .order_by(func.count(models.Booking.id).desc())
-        .limit(5)
-        .all()
-    )
-    popular_services = []
-    for r in popular_services_query:
-        popular_services.append({"service_name": r.service_name, "count": r.count})
-
-    return {
-        "total_bookings": total_bookings,
-        "monthly_bookings": monthly_bookings,
-        "popular_services": popular_services,
-    }
+    db.add(initial_booking)
+    db.flush() # Flush to get the ID for initial_booking before committing, needed for original_booking_id
+    
+    created_bookings = [initial_booking]
+    
+    current_start_time = booking_data.start_time
+    current_end_time = booking_data.end_time
+    
+    # Simple recurrence logic: currently supports 'weekly' and 'daily'
+    if booking_data.recurrence_pattern == "weekly":
+        while True:
+            next_start_time = current_start_time + timedelta(weeks=1)
+            next_end_time = current_end_time + timedelta(weeks=1)
+            
+            # Stop if the next occurrence goes beyond the recurrence end date
+            # Compare dates only, ignore time part for recurrence_end_date
+            if next_start_time.date() > booking_data.recurrence_end_date:
+                break
+            
+            # Create a new booking occurrence linked to the parent
+            recurring_occurrence = models.Booking(
+                id=uuid.uuid4(),
+                owner_id=owner_id,
+                service_id=booking_data.service_id,
+                customer_name=booking_data.customer_name,
+                customer_email=booking_data.customer_email,
+                customer_phone=booking_data.customer_phone,
+                start_time=next_start_time,
+                end_time=next_end_time,
+                status="pending",
+                is_recurring=True,
+                original_booking_id=initial_booking.id, # Link to the parent booking
+                created_at=datetime.utcnow(),
+                updated_at=datetime.utcnow()
+            )
+            db.add(recurring_occurrence)
+            created_bookings.append(recurring_occurrence)
+            
+            current_start_time = next_start_time
+            current_end_time = next_end_time
+    elif booking_data.recurrence_pattern == "daily":
+        while True:
+            next_start_time = current_start_time + timedelta(days=1)
+            next_end_time = current_end_time + timedelta(days=1)
+            
+            if next_start_time.date() > booking_data.recurrence_end_date:
+                break
+            
+            recurring_occurrence = models.Booking(
+                id=uuid.uuid4(),
+                owner_id=owner_id,
+                service_id=booking_data.service_id,
+                customer_name=booking_data.customer_name,
+                customer_email=booking_data.customer_email,
+                customer_phone=booking_data.customer_phone,
+                start_time=next_start_time,
+                end_time=next_end_time,
+                status="pending",
+                is_recurring=True,
+                original_booking_id=initial_booking.id,
+                created_at=datetime.utcnow(),
+                updated_at=datetime.utcnow()
+            )
+            db.add(recurring_occurrence)
+            created_bookings.append(recurring_occurrence)
+            
+            current_start_time = next_start_time
+            current_end_time = next_end_time
+    # Future expansion could include 'monthly', 'yearly', or RRule parsing
+    
+    db.commit()
+    for booking in created_bookings:
+        db.refresh(booking)
+    return created_bookings
