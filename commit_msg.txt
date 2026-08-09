@@ -1,1 +1,1 @@
-Fix: Ensure pytest is available by providing comprehensive requirements.txt
+Fix: Resolve 'No module named pytest' and add recurring booking tests

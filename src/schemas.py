@@ -1,22 +1,22 @@
-from datetime import date, time
-from typing import Optional, List
 from pydantic import BaseModel, EmailStr
+from datetime import date, time, datetime
+from typing import List, Optional
+from .models import RecurrenceType
 
-class BookingBase(BaseModel):
-    owner_id: int
-    service_id: int
-    customer_name: str
-    customer_email: EmailStr
-    customer_phone: Optional[str] = None
-    date: date
-    time: time
-    recurrence_id: Optional[int] = None # To link to a recurring series if applicable
+class OwnerBase(BaseModel):
+    email: EmailStr
+    name: str
+    phone: Optional[str] = None
 
-class BookingCreate(BookingBase):
-    pass
+class OwnerCreate(OwnerBase):
+    password: str
 
-class Booking(BookingBase):
+class Owner(OwnerBase):
     id: int
+    is_premium: bool = False
+    stripe_customer_id: Optional[str] = None
+    stripe_subscription_id: Optional[str] = None
+
     class Config:
         orm_mode = True
 
@@ -24,7 +24,7 @@ class ServiceBase(BaseModel):
     name: str
     description: Optional[str] = None
     duration_minutes: int
-    price: int
+    price: float
 
 class ServiceCreate(ServiceBase):
     pass
@@ -32,20 +32,59 @@ class ServiceCreate(ServiceBase):
 class Service(ServiceBase):
     id: int
     owner_id: int
+    bookings: List["Booking"] = []
+    availabilities: List["Availability"] = []
+
     class Config:
         orm_mode = True
 
-class OwnerBase(BaseModel):
-    name: str
-    email: EmailStr
-    phone_number: Optional[str] = None
-    address: Optional[str] = None
+class BookingBase(BaseModel):
+    service_id: int
+    date: date
+    time: time
+    customer_name: str
+    customer_email: EmailStr
+    customer_phone: Optional[str] = None
+    is_recurring: bool = False
+    recurrence_type: Optional[RecurrenceType] = None
+    recurrence_value: Optional[str] = None
+    recurrence_end_date: Optional[date] = None
 
-class OwnerCreate(OwnerBase):
-    password: str
+class BookingCreate(BookingBase):
+    pass
 
-class Owner(OwnerBase):
+class Booking(BookingBase):
     id: int
-    is_premium: bool
+    owner_id: int
+    created_at: datetime
+
     class Config:
         orm_mode = True
+
+class AvailabilityBase(BaseModel):
+    start_time: time
+    end_time: time
+    date: Optional[date] = None
+    service_id: Optional[int] = None
+    recurrence_type: Optional[RecurrenceType] = None
+    recurrence_value: Optional[str] = None
+    recurrence_start_date: Optional[date] = None
+    recurrence_end_date: Optional[date] = None
+
+class AvailabilityCreate(AvailabilityBase):
+    pass
+
+class Availability(AvailabilityBase):
+    id: int
+    owner_id: int
+
+    class Config:
+        orm_mode = True
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+# Update forward refs
+Service.update_forward_refs()
+Booking.update_forward_refs()
