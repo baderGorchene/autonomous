@@ -1,456 +1,415 @@
-{% extends "base.html" %}
-{% block title %}{{ _('Dashboard') }}{% endblock %}
+<!-- src/templates/dashboard.html -->
+<!DOCTYPE html>
+<html lang="{{ request.state.locale }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BookSlot - {{ gettext("Dashboard") }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css"> <!-- Assuming custom CSS -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-100 font-sans antialiased">
 
-{% block content %}
-<div class="container mx-auto px-4 py-8">
-    <h1 class="text-4xl font-bold text-gray-900 mb-8">{{ _('Welcome,') }} {{ dashboard_data.owner.name }}!</h1>
+    <nav class="bg-white shadow-md p-4 mb-6">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="/dashboard" class="text-2xl font-bold text-indigo-600">BookSlot</a>
+            <div class="flex items-center space-x-4">
+                <a href="/profile" class="text-gray-700 hover:text-indigo-600">{{ gettext("Profile") }}</a>
+                <a href="/manage-subscription" class="text-gray-700 hover:text-indigo-600">{{ gettext("Subscription") }}</a>
+                <a href="/logout" class="text-red-600 hover:text-red-800">{{ gettext("Logout") }}</a>
+                <div class="language-toggle">
+                    <select onchange="window.location.href = this.value" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 p-1">
+                        <option value="?lang=en" {% if request.state.locale == 'en' %}selected{% endif %}>English</option>
+                        <option value="?lang=ar" {% if request.state.locale == 'ar' %}selected{% endif %}>العربية</option>
+                        <option value="?lang=fr" {% if request.state.locale == 'fr' %}selected{% endif %}>Français</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </nav>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        <!-- Subscription Status Card -->
-        <div class="bg-white rounded-lg shadow-md p-6">
-            <h2 class="text-xl font-semibold text-gray-800 mb-4">{{ _('Subscription Status') }}</h2>
-            <p class="text-lg text-gray-700 mb-2">
-                {{ _('Plan:') }} <span class="font-medium {{ 'text-green-600' if dashboard_data.subscription_status.is_premium else 'text-yellow-600' }}">{{ _(dashboard_data.subscription_status.status) }}</span>
-            </p>
-            {% if dashboard_data.subscription_status.is_premium %}
-                <p class="text-sm text-gray-600 mb-4">
-                    {{ _('Renews on:') }} {{ dashboard_data.subscription_status.current_period_end.strftime('%Y-%m-%d') if dashboard_data.subscription_status.current_period_end else _('N/A') }}
-                </p>
-                <button id="manageSubscriptionBtn" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition duration-200">
-                    {{ _('Manage Subscription') }}
-                </button>
+    <main class="container mx-auto p-4">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6">{{ gettext("Welcome,") }} {{ owner.name }}!</h1>
+
+        {% if message %}
+            <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
+                <span class="block sm:inline">{{ message }}</span>
+            </div>
+        {% endif %}
+
+        <section id="profile-info" class="bg-white p-6 rounded-lg shadow-md mb-8">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">{{ gettext("Your Profile") }}</h2>
+            <p><strong>{{ gettext("Name:") }}</strong> {{ owner.name }}</p>
+            <p><strong>{{ gettext("Email:") }}</strong> {{ owner.email }}</p>
+            <p><strong>{{ gettext("Phone:") }}</strong> {{ owner.phone if owner.phone else gettext("Not set") }}</p>
+            <a href="/profile" class="mt-4 inline-block bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded">{{ gettext("Edit Profile") }}</a>
+        </section>
+
+        <section id="subscription-status" class="bg-white p-6 rounded-lg shadow-md mb-8">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">{{ gettext("Subscription Status") }}</h2>
+            {% if is_premium %}
+                <p class="text-green-600 font-semibold">{{ gettext("You are on the Premium Plan!") }}</p>
+                <p>{{ gettext("Enjoy unlimited bookings and advanced features.") }}</p>
             {% else %}
-                <p class="text-sm text-gray-600 mb-4">
-                    {{ _('Upgrade for unlimited bookings and advanced features.') }}
-                </p>
-                <button id="upgradeSubscriptionBtn" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition duration-200">
-                    {{ _('Upgrade to Premium') }}
-                </button>
+                <p class="text-orange-600 font-semibold">{{ gettext("You are on the Free Plan.") }}</p>
+                <p>{{ gettext("Upgrade to Premium for unlimited bookings and more!") }}</p>
+                <a href="/manage-subscription" class="mt-4 inline-block bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded">{{ gettext("Upgrade to Premium") }}</a>
             {% endif %}
-        </div>
+            <a href="/manage-subscription" class="mt-4 ml-2 inline-block bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded">{{ gettext("Manage Subscription") }}</a>
+        </section>
 
-        <!-- Analytics Cards -->
-        <div class="bg-white rounded-lg shadow-md p-6">
-            <h2 class="text-xl font-semibold text-gray-800 mb-4">{{ _('Bookings This Month') }}</h2>
-            <p class="text-5xl font-bold text-indigo-600">{{ dashboard_data.total_bookings_this_month }}</p>
-        </div>
-        <div class="bg-white rounded-lg shadow-md p-6">
-            <h2 class="text-xl font-semibold text-gray-800 mb-4">{{ _('Revenue This Month') }}</h2>
-            <p class="text-5xl font-bold text-green-600">{{ dashboard_data.total_revenue_this_month | format_currency(locale) }}</p>
-        </div>
-    </div>
-
-    <!-- Upcoming Bookings Section -->
-    <div class="bg-white rounded-lg shadow-md p-6 mb-8">
-        <h2 class="text-2xl font-semibold text-gray-800 mb-4">{{ _('Upcoming Bookings') }}</h2>
-        {% if dashboard_data.upcoming_bookings %}
+        <section id="your-services" class="bg-white p-6 rounded-lg shadow-md mb-8">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">{{ gettext("Your Services") }}</h2>
             <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
+                <table class="min-w-full bg-white">
+                    <thead>
                         <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ _('Service') }}</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ _('Customer Name') }}</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ _('Customer Contact') }}</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ _('Time') }}</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ _('Actions') }}</th>
+                            <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-600">{{ gettext("Name") }}</th>
+                            <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-600">{{ gettext("Description") }}</th>
+                            <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-600">{{ gettext("Duration") }}</th>
+                            <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-600">{{ gettext("Price") }}</th>
+                            <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-600">{{ gettext("Booking Link") }}</th>
+                            <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-600">{{ gettext("Actions") }}</th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        {% for booking in dashboard_data.upcoming_bookings %}
-                        <tr>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ booking.service.name }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ booking.customer_name }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {% if booking.customer_email %}<a href="mailto:{{ booking.customer_email }}" class="text-indigo-600 hover:text-indigo-900">{{ booking.customer_email }}</a><br>{% endif %}
-                                {% if booking.customer_phone %}<a href="tel:{{ booking.customer_phone }}" class="text-indigo-600 hover:text-indigo-900">{{ booking.customer_phone }}</a>{% endif %}
+                    <tbody>
+                        {% for service in services %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="py-2 px-4 border-b text-sm text-gray-700">{{ service.name }}</td>
+                            <td class="py-2 px-4 border-b text-sm text-gray-700">{{ service.description }}</td>
+                            <td class="py-2 px-4 border-b text-sm text-gray-700">{{ service.duration_minutes }} {{ gettext("min") }}</td>
+                            <td class="py-2 px-4 border-b text-sm text-gray-700">{{ service.price | format_currency(request.state.locale) }}</td>
+                            <td class="py-2 px-4 border-b text-sm text-gray-700">
+                                <a href="/{{ owner.username }}/{{ service.id }}" target="_blank" class="text-indigo-600 hover:underline">{{ gettext("View Page") }}</a>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ booking.booking_time.strftime('%Y-%m-%d %H:%M') }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <a href="#" class="text-indigo-600 hover:text-indigo-900">{{ _('View') }}</a>
-                                <a href="#" class="ml-2 text-red-600 hover:text-red-900">{{ _('Cancel') }}</a>
+                            <td class="py-2 px-4 border-b text-sm text-gray-700">
+                                <form action="/delete_service/{{ service.id }}" method="post" onsubmit="return confirm('{{ gettext("Are you sure you want to delete this service?") }}');">
+                                    <button type="submit" class="text-red-600 hover:text-red-800">{{ gettext("Delete") }}</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="py-2 px-4 text-center text-gray-600">{{ gettext("No services added yet.") }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <form action="/create_service" method="post" class="mt-6 bg-gray-50 p-4 rounded-lg shadow-inner">
+                <h3 class="text-xl font-semibold text-gray-700 mb-3">{{ gettext("Add New Service") }}</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="service_name" class="block text-sm font-medium text-gray-700">{{ gettext("Service Name") }}</label>
+                        <input type="text" id="service_name" name="name" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                    </div>
+                    <div>
+                        <label for="service_description" class="block text-sm font-medium text-gray-700">{{ gettext("Description") }}</label>
+                        <input type="text" id="service_description" name="description" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                    </div>
+                    <div>
+                        <label for="service_duration" class="block text-sm font-medium text-gray-700">{{ gettext("Duration (minutes)") }}</label>
+                        <input type="number" id="service_duration" name="duration_minutes" required min="1" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                    </div>
+                    <div>
+                        <label for="service_price" class="block text-sm font-medium text-gray-700">{{ gettext("Price") }}</label>
+                        <input type="number" id="service_price" name="price" required min="0" step="0.01" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                    </div>
+                </div>
+                <button type="submit" class="mt-4 bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded">{{ gettext("Add Service") }}</button>
+            </form>
+        </section>
+
+        <section id="your-availability" class="bg-white p-6 rounded-lg shadow-md mb-8">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">{{ gettext("Your Availability") }}</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full bg-white">
+                    <thead>
+                        <tr>
+                            <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-600">{{ gettext("Service") }}</th>
+                            <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-600">{{ gettext("Date") }}</th>
+                            <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-600">{{ gettext("Time") }}</th>
+                            <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-600">{{ gettext("Recurrence") }}</th>
+                            <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-600">{{ gettext("Actions") }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for availability in availabilities %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="py-2 px-4 border-b text-sm text-gray-700">{{ availability.service.name if availability.service else gettext("All Services") }}</td>
+                            <td class="py-2 px-4 border-b text-sm text-gray-700">{{ availability.date.strftime('%Y-%m-%d') if availability.date else gettext("N/A") }}</td>
+                            <td class="py-2 px-4 border-b text-sm text-gray-700">{{ availability.start_time.strftime('%H:%M') }} - {{ availability.end_time.strftime('%H:%M') }}</td>
+                            <td class="py-2 px-4 border-b text-sm text-gray-700">
+                                {% if availability.recurrence_type %}
+                                    {{ gettext(availability.recurrence_type.name) }}
+                                    {% if availability.recurrence_value %}
+                                        ({{ availability.recurrence_value }})
+                                    {% endif %}
+                                    {% if availability.recurrence_start_date %}
+                                        <br>({{ gettext("From") }} {{ availability.recurrence_start_date.strftime('%Y-%m-%d') }})
+                                    {% endif %}
+                                    {% if availability.recurrence_end_date %}
+                                        <br>({{ gettext("To") }} {{ availability.recurrence_end_date.strftime('%Y-%m-%d') }})
+                                    {% endif %}
+                                {% else %}
+                                    {{ gettext("One-time") }}
+                                {% endif %}
+                            </td>
+                            <td class="py-2 px-4 border-b text-sm text-gray-700">
+                                <form action="/delete_availability/{{ availability.id }}" method="post" onsubmit="return confirm('{{ gettext("Are you sure you want to delete this availability?") }}');">
+                                    <button type="submit" class="text-red-600 hover:text-red-800">{{ gettext("Delete") }}</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" class="py-2 px-4 text-center text-gray-600">{{ gettext("No availability set yet.") }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <form action="/set_availability" method="post" class="mt-6 bg-gray-50 p-4 rounded-lg shadow-inner">
+                <h3 class="text-xl font-semibold text-gray-700 mb-3">{{ gettext("Set New Availability") }}</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="avail_service_id" class="block text-sm font-medium text-gray-700">{{ gettext("Apply to Service (optional)") }}</label>
+                        <select id="avail_service_id" name="service_id" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                            <option value="">{{ gettext("All Services") }}</option>
+                            {% for service in services %}
+                            <option value="{{ service.id }}">{{ service.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label for="avail_date" class="block text-sm font-medium text-gray-700">{{ gettext("Specific Date (for one-time availability)") }}</label>
+                        <input type="date" id="avail_date" name="date_str" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                    </div>
+                    <div>
+                        <label for="avail_start_time" class="block text-sm font-medium text-gray-700">{{ gettext("Start Time") }}</label>
+                        <input type="time" id="avail_start_time" name="start_time_str" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                    </div>
+                    <div>
+                        <label for="avail_end_time" class="block text-sm font-medium text-gray-700">{{ gettext("End Time") }}</label>
+                        <input type="time" id="avail_end_time" name="end_time_str" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                    </div>
+                    <div>
+                        <label for="recurrence_type" class="block text-sm font-medium text-gray-700">{{ gettext("Recurrence Type") }}</label>
+                        <select id="recurrence_type" name="recurrence_type" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                            <option value="NONE">{{ gettext("None (One-time)") }}</option>
+                            <option value="DAILY">{{ gettext("Daily") }}</option>
+                            <option value="WEEKLY">{{ gettext("Weekly") }}</option>
+                            <option value="MONTHLY">{{ gettext("Monthly") }}</option>
+                        </select>
+                    </div>
+                    <div id="recurrence_value_div" style="display:none;">
+                        <label for="recurrence_value" class="block text-sm font-medium text-gray-700">{{ gettext("Recurrence Value") }}</label>
+                        <input type="text" id="recurrence_value" name="recurrence_value" placeholder="{{ gettext('e.g., MON,TUE,WED or 15') }}" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                    </div>
+                    <div id="recurrence_start_date_div" style="display:none;">
+                        <label for="recurrence_start_date" class="block text-sm font-medium text-gray-700">{{ gettext("Recurrence Start Date") }}</label>
+                        <input type="date" id="recurrence_start_date" name="recurrence_start_date_str" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                    </div>
+                    <div id="recurrence_end_date_div" style="display:none;">
+                        <label for="recurrence_end_date" class="block text-sm font-medium text-gray-700">{{ gettext("Recurrence End Date (optional)") }}</label>
+                        <input type="date" id="recurrence_end_date" name="recurrence_end_date_str" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                    </div>
+                </div>
+                <button type="submit" class="mt-4 bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded">{{ gettext("Set Availability") }}</button>
+            </form>
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    const recurrenceType = document.getElementById('recurrence_type');
+                    const recurrenceValueDiv = document.getElementById('recurrence_value_div');
+                    const recurrenceStartDateDiv = document.getElementById('recurrence_start_date_div');
+                    const recurrenceEndDateDiv = document.getElementById('recurrence_end_date_div');
+                    const availDateInput = document.getElementById('avail_date');
+
+                    function toggleRecurrenceFields() {
+                        if (recurrenceType.value === 'NONE') {
+                            recurrenceValueDiv.style.display = 'none';
+                            recurrenceStartDateDiv.style.display = 'none';
+                            recurrenceEndDateDiv.style.display = 'none';
+                            availDateInput.required = true;
+                        } else {
+                            recurrenceValueDiv.style.display = 'block';
+                            recurrenceStartDateDiv.style.display = 'block';
+                            recurrenceEndDateDiv.style.display = 'block';
+                            availDateInput.required = false;
+                            if (recurrenceType.value === 'DAILY') {
+                                recurrenceValueDiv.style.display = 'none';
+                            } else {
+                                recurrenceValueDiv.style.display = 'block';
+                            }
+                        }
+                    }
+
+                    recurrenceType.addEventListener('change', toggleRecurrenceFields);
+                    toggleRecurrenceFields(); // Initial call to set visibility based on default value
+                });
+            </script>
+        </section>
+
+        <section id="upcoming-bookings" class="bg-white p-6 rounded-lg shadow-md mb-8">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">{{ gettext("Upcoming Bookings") }}</h2>
+            {% if upcoming_bookings %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full bg-white">
+                    <thead>
+                        <tr>
+                            <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-600">{{ gettext("Service") }}</th>
+                            <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-600">{{ gettext("Customer") }}</th>
+                            <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-600">{{ gettext("Date") }}</th>
+                            <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-600">{{ gettext("Time") }}</th>
+                            <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-600">{{ gettext("Type") }}</th>
+                            <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-600">{{ gettext("Contact") }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for booking in upcoming_bookings %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="py-2 px-4 border-b text-sm text-gray-700">{{ booking.service_name }}</td>
+                            <td class="py-2 px-4 border-b text-sm text-gray-700">{{ booking.customer_name }}</td>
+                            <td class="py-2 px-4 border-b text-sm text-gray-700">{{ booking.date.strftime('%Y-%m-%d') }}</td>
+                            <td class="py-2 px-4 border-b text-sm text-gray-700">{{ booking.time.strftime('%H:%M') }}</td>
+                            <td class="py-2 px-4 border-b text-sm text-gray-700">
+                                {% if booking.is_recurring %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                        {{ gettext("Recurring") }}
+                                        {% if booking.recurrence_pattern %}
+                                            ({{ booking.recurrence_pattern }})
+                                        {% endif %}
+                                    </span>
+                                {% else %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        {{ gettext("One-time") }}
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="py-2 px-4 border-b text-sm text-gray-700">
+                                {{ booking.customer_email }}<br>
+                                {{ booking.customer_phone }}
                             </td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
-        {% else %}
-            <p class="text-gray-600">{{ _('No upcoming bookings.') }}</p>
-        {% endif %}
-    </div>
+            {% else %}
+            <p class="text-gray-600">{{ gettext("No upcoming bookings found.") }}</p>
+            {% endif %}
+        </section>
 
-    <!-- Popular Services Section -->
-    <div class="bg-white rounded-lg shadow-md p-6 mb-8">
-        <h2 class="text-2xl font-semibold text-gray-800 mb-4">{{ _('Popular Services This Month') }}</h2>
-        {% if dashboard_data.popular_services %}
-            <ul class="list-disc list-inside space-y-2">
-                {% for service in dashboard_data.popular_services %}
-                    <li class="text-gray-700">
-                        <span class="font-medium">{{ service.name }}</span> - {{ service.booking_count }} {{ _('bookings') }} ({{ service.price | format_currency(locale) }})
-                    </li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p class="text-gray-600">{{ _('No services booked yet this month.') }}</p>
-        {% endif %}
-    </div>
-
-    <!-- Profile Management Section -->
-    <div class="bg-white rounded-lg shadow-md p-6 mb-8">
-        <h2 class="text-2xl font-semibold text-gray-800 mb-4">{{ _('Profile Management') }}</h2>
-        <form id="profileUpdateForm" class="space-y-4">
-            <div>
-                <label for="ownerName" class="block text-sm font-medium text-gray-700">{{ _('Your Name') }}</label>
-                <input type="text" id="ownerName" name="name" value="{{ dashboard_data.owner.name }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-            </div>
-            <div>
-                <label for="ownerEmail" class="block text-sm font-medium text-gray-700">{{ _('Email') }}</label>
-                <input type="email" id="ownerEmail" name="email" value="{{ dashboard_data.owner.email }}" disabled class="mt-1 block w-full bg-gray-100 border-gray-300 rounded-md shadow-sm sm:text-sm">
-            </div>
-            <div>
-                <label for="ownerPhone" class="block text-sm font-medium text-gray-700">{{ _('Phone Number') }}</label>
-                <input type="tel" id="ownerPhone" name="phone" value="{{ dashboard_data.owner.phone if dashboard_data.owner.phone else '' }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-            </div>
-             <div>
-                <label for="ownerLocale" class="block text-sm font-medium text-gray-700">{{ _('Preferred Language') }}</label>
-                <select id="ownerLocale" name="locale" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-                    <option value="en" {% if dashboard_data.owner.locale == 'en' %}selected{% endif %}>English</option>
-                    <option value="ar" {% if dashboard_data.owner.locale == 'ar' %}selected{% endif %}>العربية</option>
-                    <option value="fr" {% if dashboard_data.owner.locale == 'fr' %}selected{% endif %}>Français</option>
-                </select>
-            </div>
-            <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition duration-200">{{ _('Update Profile') }}</button>
-            <p id="profileUpdateMessage" class="mt-2 text-sm"></p>
-        </form>
-    </div>
-
-    <!-- Services Management Section -->
-    <div class="bg-white rounded-lg shadow-md p-6 mb-8">
-        <h2 class="text-2xl font-semibold text-gray-800 mb-4">{{ _('Your Services') }}</h2>
-        <button id="addServiceBtn" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition duration-200 mb-4">{{ _('Add New Service') }}</button>
-
-        <div id="servicesList" class="space-y-4">
-            {% if dashboard_data.services %}
-                {% for service in dashboard_data.services %}
-                <div class="border border-gray-200 rounded-md p-4 flex justify-between items-center">
-                    <div>
-                        <h3 class="text-lg font-medium text-gray-900">{{ service.name }} ({{ service.duration_minutes }} {{ _('min') }})</h3>
-                        <p class="text-gray-600">{{ service.description }}</p>
-                        <p class="text-gray-800 font-semibold">{{ service.price | format_currency(locale) }}</p>
-                    </div>
-                    <div class="flex space-x-2">
-                        <button class="editServiceBtn bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600" data-service-id="{{ service.id }}">{{ _('Edit') }}</button>
-                        <button class="deleteServiceBtn bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600" data-service-id="{{ service.id }}">{{ _('Delete') }}</button>
-                    </div>
+        <section id="analytics" class="bg-white p-6 rounded-lg shadow-md mb-8">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">{{ gettext("Analytics") }}</h2>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div>
+                    <h3 class="text-xl font-semibold text-gray-700 mb-3">{{ gettext("Monthly Bookings") }}</h3>
+                    <canvas id="monthlyBookingsChart"></canvas>
                 </div>
-                {% endfor %}
-            {% else %}
-                <p class="text-gray-600">{{ _('You have not added any services yet.') }}</p>
-            {% endif %}
-        </div>
-    </div>
+                <div>
+                    <h3 class="text-xl font-semibold text-gray-700 mb-3">{{ gettext("Popular Services") }}</h3>
+                    <canvas id="popularServicesChart"></canvas>
+                </div>
+            </div>
+        </section>
+    </main>
 
-    <!-- Recurring Availability Management Section -->
-    <div class="bg-white rounded-lg shadow-md p-6 mb-8">
-        <h2 class="text-2xl font-semibold text-gray-800 mb-4">{{ _('Recurring Availability Rules') }}</h2>
-        <p class="text-gray-600 mb-4">{{ _('Set up repeating time slots when you are available for bookings.') }}</p>
+    <footer class="bg-gray-800 text-white p-4 text-center mt-8">
+        <p>&copy; 2023 BookSlot. {{ gettext("All rights reserved.") }}</p>
+    </footer>
 
-        <button id="addRecurringAvailabilityBtn" class="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition duration-200 mb-4">{{ _('Add Recurring Availability') }}</button>
+    <script>
+        // Monthly Bookings Chart
+        const monthlyBookingsData = {{ monthly_bookings_data_json | tojson }};
+        const monthlyLabels = monthlyBookingsData.map(d => d.month);
+        const monthlyCounts = monthlyBookingsData.map(d => d.count);
 
-        <div id="recurringAvailabilitiesList" class="space-y-4">
-            {% if dashboard_data.services %}
-                {% for service in dashboard_data.services %}
-                    <div class="border border-gray-200 rounded-md p-4">
-                        <h3 class="text-lg font-medium text-gray-900 mb-2">{{ _('Availability for') }}: {{ service.name }}</h3>
-                        {% if service.recurring_availabilities %}
-                            <ul class="list-disc list-inside space-y-1 ml-4">
-                                {% for ra in service.recurring_availabilities %}
-                                    <li class="text-gray-700">
-                                        {{ _('Every') }} {{ ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'][ra.day_of_week] }} {{ _('from') }} {{ ra.start_time.strftime('%H:%M') }} {{ _('to') }} {{ ra.end_time.strftime('%H:%M') }}
-                                        {% if ra.start_date %}({{ _('Starts') }}: {{ ra.start_date.strftime('%Y-%m-%d') }}){% endif %}
-                                        {% if ra.end_date %}({{ _('Ends') }}: {{ ra.end_date.strftime('%Y-%m-%d') }}){% endif %}
-                                        {% if not ra.is_active %}<span class="text-red-500"> ({{ _('Inactive') }})</span>{% endif %}
-                                        <button class="editRecurringAvailabilityBtn bg-blue-500 text-white px-2 py-0.5 rounded-md hover:bg-blue-600 text-xs ml-2" data-recurring-id="{{ ra.id }}">{{ _('Edit') }}</button>
-                                        <button class="deleteRecurringAvailabilityBtn bg-red-500 text-white px-2 py-0.5 rounded-md hover:bg-red-600 text-xs ml-1" data-recurring-id="{{ ra.id }}">{{ _('Delete') }}</button>
-                                    </li>
-                                {% endfor %}
-                            </ul>
-                        {% else %}
-                            <p class="text-gray-600 text-sm">{{ _('No recurring availability set for this service.') }}</p>
-                        {% endif %}
-                    </div>
-                {% endfor %}
-            {% else %}
-                <p class="text-gray-600">{{ _('Please add services before setting recurring availability.') }}</p>
-            {% endif %}
-        </div>
-    </div>
-
-
-</div>
-
-{% include 'modals/service_modal.html' %}
-{% include 'modals/recurring_availability_modal.html' %}
-
-<script type="text/javascript">
-    document.addEventListener('DOMContentLoaded', function() {
-        const ownerLocaleSelect = document.getElementById('ownerLocale');
-        if (ownerLocaleSelect) {
-            ownerLocaleSelect.addEventListener('change', function() {
-                const newLocale = this.value;
-                // Update cookie and reload page to apply new locale
-                document.cookie = `lang=${newLocale}; path=/; max-age=${30 * 24 * 60 * 60};`;
-                window.location.reload();
-            });
-        }
-
-        // Profile Update Logic
-        const profileUpdateForm = document.getElementById('profileUpdateForm');
-        const profileUpdateMessage = document.getElementById('profileUpdateMessage');
-
-        profileUpdateForm.addEventListener('submit', async function(event) {
-            event.preventDefault();
-            const formData = new FormData(profileUpdateForm);
-            const data = Object.fromEntries(formData.entries());
-
-            try {
-                const response = await fetch('/owner/me', {
-                    method: 'PATCH',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+        const monthlyBookingsCtx = document.getElementById('monthlyBookingsChart').getContext('2d');
+        new Chart(monthlyBookingsCtx, {
+            type: 'line',
+            data: {
+                labels: monthlyLabels,
+                datasets: [{
+                    label: '{{ gettext("Bookings") }}',
+                    data: monthlyCounts,
+                    borderColor: '#4A90E2',
+                    backgroundColor: 'rgba(74, 144, 226, 0.2)',
+                    fill: true,
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: '{{ gettext("Number of Bookings") }}'
+                        }
                     },
-                    body: JSON.stringify(data)
-                });
-
-                if (response.ok) {
-                    const updatedOwner = await response.json();
-                    profileUpdateMessage.textContent = '{{ _("Profile updated successfully!") }}';
-                    profileUpdateMessage.className = 'mt-2 text-sm text-green-600';
-                    // Optionally update UI elements directly if not reloading
-                    // ownerLocaleSelect.value = updatedOwner.locale; // This is already handled by page reload for full i18n
-                } else {
-                    const errorData = await response.json();
-                    profileUpdateMessage.textContent = `{{ _("Error updating profile:") }} ${errorData.detail || response.statusText}`;
-                    profileUpdateMessage.className = 'mt-2 text-sm text-red-600';
+                    x: {
+                        title: {
+                            display: true,
+                            text: '{{ gettext("Month") }}'
+                        }
+                    }
                 }
-            } catch (error) {
-                profileUpdateMessage.textContent = `{{ _("Network error:") }} ${error}`;
-                profileUpdateMessage.className = 'mt-2 text-sm text-red-600';
             }
         });
 
-        // Service Management Logic (modals/service_modal.html handles details)
-        const addServiceBtn = document.getElementById('addServiceBtn');
-        const serviceModal = document.getElementById('serviceModal');
-        const serviceForm = document.getElementById('serviceForm');
-        const serviceModalTitle = document.getElementById('serviceModalTitle');
-        const serviceIdInput = document.getElementById('serviceId');
-        const serviceNameInput = document.getElementById('serviceName');
-        const serviceDescriptionInput = document.getElementById('serviceDescription');
-        const serviceDurationInput = document.getElementById('serviceDuration');
-        const servicePriceInput = document.getElementById('servicePrice');
-        const serviceMessage = document.getElementById('serviceMessage');
+        // Popular Services Chart
+        const popularServicesData = {{ popular_services_data_json | tojson }};
+        const serviceNames = popularServicesData.map(d => d.service_name);
+        const serviceCounts = popularServicesData.map(d => d.booking_count);
 
-        addServiceBtn.addEventListener('click', function() {
-            serviceModalTitle.textContent = '{{ _("Add New Service") }}';
-            serviceForm.reset();
-            serviceIdInput.value = '';
-            serviceMessage.textContent = '';
-            serviceModal.classList.remove('hidden');
-        });
-
-        document.querySelectorAll('.editServiceBtn').forEach(button => {
-            button.addEventListener('click', async function() {
-                const serviceId = this.dataset.serviceId;
-                serviceModalTitle.textContent = '{{ _("Edit Service") }}';
-                serviceForm.reset();
-                serviceIdInput.value = serviceId;
-                serviceMessage.textContent = '';
-
-                try {
-                    const response = await fetch(`/owner/services/${serviceId}`, {
-                        headers: {
-                            'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+        const popularServicesCtx = document.getElementById('popularServicesChart').getContext('2d');
+        new Chart(popularServicesCtx, {
+            type: 'bar',
+            data: {
+                labels: serviceNames,
+                datasets: [{
+                    label: '{{ gettext("Bookings") }}',
+                    data: serviceCounts,
+                    backgroundColor: ['#6366F1', '#8B5CF6', '#EC4899', '#F97316', '#FACC15'],
+                    borderColor: ['#4F46E5', '#7C3AED', '#E93B8B', '#EA580C', '#EAB308'],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: '{{ gettext("Number of Bookings") }}'
                         }
-                    });
-                    if (response.ok) {
-                        const service = await response.json();
-                        serviceNameInput.value = service.name;
-                        serviceDescriptionInput.value = service.description;
-                        serviceDurationInput.value = service.duration_minutes;
-                        servicePriceInput.value = service.price;
-                        serviceModal.classList.remove('hidden');
-                    } else {
-                        const errorData = await response.json();
-                        alert(`{{ _("Error fetching service:") }} ${errorData.detail || response.statusText}`);
-                    }
-                } catch (error) {
-                    alert(`{{ _("Network error:") }} ${error}`);
-                }
-            });
-        });
-
-        document.querySelectorAll('.deleteServiceBtn').forEach(button => {
-            button.addEventListener('click', async function() {
-                const serviceId = this.dataset.serviceId;
-                if (confirm('{{ _("Are you sure you want to delete this service?") }}')) {
-                    try {
-                        const response = await fetch(`/owner/services/${serviceId}`, {
-                            method: 'DELETE',
-                            headers: {
-                                'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-                            }
-                        });
-                        if (response.ok) {
-                            alert('{{ _("Service deleted successfully!") }}');
-                            window.location.reload();
-                        } else {
-                            const errorData = await response.json();
-                            alert(`{{ _("Error deleting service:") }} ${errorData.detail || response.statusText}`);
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: '{{ gettext("Service") }}'
                         }
-                    } catch (error) {
-                        alert(`{{ _("Network error:") }} ${error}`);
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
                     }
                 }
-            });
-        });
-
-        // Recurring Availability Management Logic (modals/recurring_availability_modal.html handles details)
-        const addRecurringAvailabilityBtn = document.getElementById('addRecurringAvailabilityBtn');
-        const recurringAvailabilityModal = document.getElementById('recurringAvailabilityModal');
-        const recurringAvailabilityForm = document.getElementById('recurringAvailabilityForm');
-        const recurringAvailabilityModalTitle = document.getElementById('recurringAvailabilityModalTitle');
-        const recurringAvailabilityIdInput = document.getElementById('recurringAvailabilityId');
-        const recurringServiceIdInput = document.getElementById('recurringServiceId');
-        const recurringDayOfWeekInput = document.getElementById('recurringDayOfWeek');
-        const recurringStartTimeInput = document.getElementById('recurringStartTime');
-        const recurringEndTimeInput = document.getElementById('recurringEndTime');
-        const recurringStartDateInput = document.getElementById('recurringStartDate');
-        const recurringEndDateInput = document.getElementById('recurringEndDate');
-        const recurringIsActiveInput = document.getElementById('recurringIsActive');
-        const recurringAvailabilityMessage = document.getElementById('recurringAvailabilityMessage');
-
-        // Populate service dropdown in recurring availability modal
-        const services = {{ dashboard_data.services | tojson }};
-        recurringServiceIdInput.innerHTML = '<option value="">{{ _("General Availability (all services)") }}</option>';
-        services.forEach(service => {
-            const option = document.createElement('option');
-            option.value = service.id;
-            option.textContent = service.name;
-            recurringServiceIdInput.appendChild(option);
-        });
-
-        addRecurringAvailabilityBtn.addEventListener('click', function() {
-            recurringAvailabilityModalTitle.textContent = '{{ _("Add Recurring Availability") }}';
-            recurringAvailabilityForm.reset();
-            recurringAvailabilityIdInput.value = '';
-            recurringIsActiveInput.checked = true; // Default to active
-            recurringAvailabilityMessage.textContent = '';
-            recurringAvailabilityModal.classList.remove('hidden');
-        });
-
-        document.querySelectorAll('.editRecurringAvailabilityBtn').forEach(button => {
-            button.addEventListener('click', async function() {
-                const recurringId = this.dataset.recurringId;
-                recurringAvailabilityModalTitle.textContent = '{{ _("Edit Recurring Availability") }}';
-                recurringAvailabilityForm.reset();
-                recurringAvailabilityIdInput.value = recurringId;
-                recurringAvailabilityMessage.textContent = '';
-
-                try {
-                    const response = await fetch(`/owner/recurring-availabilities/${recurringId}`, {
-                        headers: {
-                            'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-                        }
-                    });
-                    if (response.ok) {
-                        const ra = await response.json();
-                        recurringServiceIdInput.value = ra.service_id || '';
-                        recurringDayOfWeekInput.value = ra.day_of_week;
-                        recurringStartTimeInput.value = ra.start_time.substring(0, 5); // HH:MM
-                        recurringEndTimeInput.value = ra.end_time.substring(0, 5);     // HH:MM
-                        recurringStartDateInput.value = ra.start_date || '';
-                        recurringEndDateInput.value = ra.end_date || '';
-                        recurringIsActiveInput.checked = ra.is_active;
-                        recurringAvailabilityModal.classList.remove('hidden');
-                    } else {
-                        const errorData = await response.json();
-                        alert(`{{ _("Error fetching recurring availability:") }} ${errorData.detail || response.statusText}`);
-                    }
-                } catch (error) {
-                    alert(`{{ _("Network error:") }} ${error}`);
-                }
-            });
-        });
-
-        document.querySelectorAll('.deleteRecurringAvailabilityBtn').forEach(button => {
-            button.addEventListener('click', async function() {
-                const recurringId = this.dataset.recurringId;
-                if (confirm('{{ _("Are you sure you want to delete this recurring availability rule?") }}')) {
-                    try {
-                        const response = await fetch(`/owner/recurring-availabilities/${recurringId}`, {
-                            method: 'DELETE',
-                            headers: {
-                                'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-                            }
-                        });
-                        if (response.ok) {
-                            alert('{{ _("Recurring availability deleted successfully!") }}');
-                            window.location.reload();
-                        } else {
-                            const errorData = await response.json();
-                            alert(`{{ _("Error deleting recurring availability:") }} ${errorData.detail || response.statusText}`);
-                        }
-                    } catch (error) {
-                        alert(`{{ _("Network error:") }} ${error}`);
-                    }
-                }
-            });
-        });
-
-
-        // Stripe Subscription Logic
-        document.getElementById('upgradeSubscriptionBtn')?.addEventListener('click', async () => {
-            try {
-                const response = await fetch('/owner/create-checkout-session', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-                    }
-                });
-                if (response.ok) {
-                    const session = await response.json();
-                    window.location.href = session.session_url;
-                } else {
-                    const errorData = await response.json();
-                    alert(`{{ _("Error initiating checkout:") }} ${errorData.detail || response.statusText}`);
-                }
-            } catch (error) {
-                alert(`{{ _("Network error:") }} ${error}`);
             }
         });
 
-        document.getElementById('manageSubscriptionBtn')?.addEventListener('click', async () => {
-            try {
-                const response = await fetch('/owner/create-customer-portal-session', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-                    }
-                });
-                if (response.ok) {
-                    const session = await response.json();
-                    window.location.href = session.session_url;
-                } else {
-                    const errorData = await response.json();
-                    alert(`{{ _("Error opening customer portal:") }} ${errorData.detail || response.statusText}`);
-                }
-            } catch (error) {
-                alert(`{{ _("Network error:") }} ${error}`);
-            }
-        });
+        // Currency formatting filter (if not already defined globally by Jinja2 environment)
+        {% if not format_currency %}
+        // This is a placeholder for client-side display if server-side filter is not applied.
+        // For proper i18n, this should ideally be handled server-side or via a robust i18n library on client.
+        // Assuming format_currency is available from Jinja2 context for server-side rendering.
+        {% endif %}
 
-    });
-</script>
-{% endblock %}
+    </script>
+</body>
+</html>
