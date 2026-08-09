@@ -1,12 +1,83 @@
-{% extends "base.html" %}
-{% block title %}{{ _('Booking Confirmation') }}{% endblock %}
+<!DOCTYPE html>
+<html lang="{{ current_language }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ _('Booking Confirmed!') }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body { font-family: sans-serif; }
+        .container { max-width: 600px; margin: 0 auto; padding: 1rem; text-align: center; }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-900">
+    <nav class="bg-white shadow-md p-4 flex justify-end items-center">
+        <div class="language-switcher relative inline-block text-left">
+            <button type="button" class="inline-flex justify-center w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-indigo-500" id="menu-button" aria-expanded="true" aria-haspopup="true">
+                {{ current_language.upper() }}
+                <svg class="-mr-1 ml-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                </svg>
+            </button>
+            <div class="origin-top-right absolute right-0 mt-2 w-20 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none hidden" role="menu" aria-orientation="vertical" aria-labelledby="menu-button" tabindex="-1">
+                <div class="py-1" role="none">
+                    <a href="/set_language/en" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem" tabindex="-1" id="menu-item-0">EN</a>
+                    <a href="/set_language/ar" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem" tabindex="-1" id="menu-item-1">AR</a>
+                    <a href="/set_language/fr" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem" tabindex="-1" id="menu-item-2">FR</a>
+                </div>
+            </div>
+        </div>
+    </nav>
 
-{% block content %}
-<div class="max-w-md mx-auto bg-white p-8 border border-gray-200 rounded-lg shadow-md text-center">
-    <h2 class="text-3xl font-bold text-green-600 mb-4">{{ _('Booking Confirmed!') }}</h2>
-    <p class="text-gray-700 mb-6">{{ _('Thank you for your booking.') }} {{ _('A confirmation email has been sent to you.') }}</p>
-    <a href="/book/{{ owner.name }}" class="inline-block bg-indigo-600 text-white px-6 py-3 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-        {{ _('Book Another Service') }}
-    </a>
-</div>
-{% endblock %}
+    <div class="container mt-8 bg-white p-8 rounded-lg shadow-md">
+        <svg class="mx-auto h-16 w-16 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        <h1 class="text-3xl font-bold mt-4 mb-2">{{ _('Booking Confirmed!') }}</h1>
+        <p class="text-lg text-gray-700 mb-6">{{ _('Thank you,') }} {{ booking.customer_name }}!</p>
+
+        <div class="mb-6 text-left inline-block">
+            <p class="text-gray-800"><strong>{{ _('Service:') }}</strong> {{ service.name }}</p>
+            <p class="text-gray-800"><strong>{{ _('With:') }}</strong> {{ owner.name }}</p>
+            <p class="text-gray-800"><strong>{{ _('Date:') }}</strong> {{ booking.date.strftime('%Y-%m-%d') }}</p>
+            <p class="text-gray-800"><strong>{{ _('Time:') }}</strong> {{ booking.time.strftime('%H:%M') }}</p>
+            {% if booking.is_recurring %}
+                <p class="text-gray-800"><strong>{{ _('Recurrence:') }}</strong>
+                    {% if booking.recurrence_type == 'DAILY' %}
+                        {{ _('Daily') }}
+                    {% elif booking.recurrence_type == 'WEEKLY' %}
+                        {{ _('Weekly on') }} {{ booking.recurrence_value }}
+                    {% elif booking.recurrence_type == 'MONTHLY' %}
+                        {{ _('Monthly on day') }} {{ booking.recurrence_value }}
+                    {% endif %}
+                    {% if booking.recurrence_end_date %}
+                        {{ _('until') }} {{ booking.recurrence_end_date.strftime('%Y-%m-%d') }}
+                    {% else %}
+                        ({{ _('Ongoing') }})
+                    {% endif %}
+                </p>
+            {% endif %}
+        </div>
+
+        <p class="text-gray-600 mb-8">{{ _('A confirmation email has been sent to') }} {{ booking.customer_email }}.</p>
+
+        <a href="/" class="inline-block bg-blue-600 text-white px-6 py-3 rounded-md font-semibold hover:bg-blue-700">{{ _('Go to Homepage') }}</a>
+    </div>
+
+    <script>
+        // Language switcher dropdown logic
+        document.getElementById('menu-button').addEventListener('click', function() {
+            const dropdown = this.nextElementSibling;
+            dropdown.classList.toggle('hidden');
+        });
+        window.addEventListener('click', function(event) {
+            if (!event.target.matches('#menu-button')) {
+                const dropdowns = document.querySelectorAll('.language-switcher div[aria-labelledby="menu-button"]');
+                dropdowns.forEach(function(dropdown) {
+                    if (!dropdown.classList.contains('hidden')) {
+                        dropdown.classList.add('hidden');
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

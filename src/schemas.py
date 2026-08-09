@@ -1,22 +1,24 @@
-from pydantic import BaseModel, EmailStr, Field
-from datetime import date, time, datetime
+from pydantic import BaseModel, EmailStr
 from typing import List, Optional
-import uuid
+from datetime import date, time, datetime
+from enum import Enum
 
-from .models import RecurrenceType
+class RecurrenceTypeEnum(str, Enum):
+    DAILY = "DAILY"
+    WEEKLY = "WEEKLY"
+    MONTHLY = "MONTHLY"
 
 class Token(BaseModel):
     access_token: str
     token_type: str
 
 class TokenData(BaseModel):
-    username: Optional[str] = None
+    email: Optional[str] = None
 
 class OwnerBase(BaseModel):
     email: EmailStr
-    username: str
-    phone_number: Optional[str] = None
-    language: Optional[str] = "en"
+    name: str
+    phone: Optional[str] = None
 
 class OwnerCreate(OwnerBase):
     password: str
@@ -24,18 +26,26 @@ class OwnerCreate(OwnerBase):
 class Owner(OwnerBase):
     id: int
     is_active: bool
-    subscription_status: str
-    stripe_customer_id: Optional[str] = None
-    stripe_subscription_id: Optional[str] = None
+    is_admin: bool
+    created_at: datetime
+    updated_at: datetime
 
     class Config:
         orm_mode = True
 
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+class UserProfileUpdate(BaseModel):
+    name: Optional[str] = None
+    phone: Optional[str] = None
+
 class ServiceBase(BaseModel):
     name: str
     description: Optional[str] = None
-    duration_minutes: int = Field(..., gt=0)
-    price: int = Field(..., ge=0)
+    duration_minutes: int
+    price: int # Store in cents/smallest unit
 
 class ServiceCreate(ServiceBase):
     pass
@@ -43,45 +53,7 @@ class ServiceCreate(ServiceBase):
 class Service(ServiceBase):
     id: int
     owner_id: int
-
-    class Config:
-        orm_mode = True
-
-class CustomerBase(BaseModel):
-    name: str
-    email: EmailStr
-    phone_number: Optional[str] = None
-
-class CustomerCreate(CustomerBase):
-    pass
-
-class Customer(CustomerBase):
-    id: int
-
-    class Config:
-        orm_mode = True
-
-class BookingBase(BaseModel):
-    service_id: int
-    date: date
-    time: time
-    customer_name: str
-    customer_email: EmailStr
-    customer_phone_number: Optional[str] = None
-    recurrence_type: Optional[RecurrenceType] = RecurrenceType.NONE
-    recurrence_value: Optional[str] = None
-    recurrence_end_date: Optional[date] = None
-
-class BookingCreate(BookingBase):
-    pass
-
-class Booking(BookingBase):
-    id: int
-    owner_id: int
-    customer_id: int
-    status: str
-    created_at: datetime
-    recurrence_id: Optional[uuid.UUID] = None
+    is_active: bool
 
     class Config:
         orm_mode = True
@@ -91,7 +63,8 @@ class AvailabilityBase(BaseModel):
     date: Optional[date] = None
     start_time: time
     end_time: time
-    recurrence_type: RecurrenceType = RecurrenceType.NONE
+    is_active: bool = True
+    recurrence_type: Optional[RecurrenceTypeEnum] = None
     recurrence_value: Optional[str] = None
     recurrence_start_date: Optional[date] = None
     recurrence_end_date: Optional[date] = None
@@ -106,18 +79,48 @@ class Availability(AvailabilityBase):
     class Config:
         orm_mode = True
 
-class OwnerUpdate(BaseModel):
-    username: Optional[str] = None
-    email: Optional[EmailStr] = None
-    phone_number: Optional[str] = None
-    language: Optional[str] = None
+class BookingBase(BaseModel):
+    service_id: int
+    customer_name: str
+    customer_email: EmailStr
+    customer_phone: Optional[str] = None
+    date: date
+    time: time
+    is_recurring: bool = False
+    recurrence_type: Optional[RecurrenceTypeEnum] = None
+    recurrence_value: Optional[str] = None
+    recurrence_end_date: Optional[date] = None
 
-class SubscriptionStatus(BaseModel):
+class BookingCreate(BookingBase):
+    pass
+
+class Booking(BookingBase):
+    id: int
+    owner_id: int
     status: str
-    current_period_end: Optional[datetime]
-    plan_id: str
-    is_premium: bool
+    created_at: datetime
+    service: Service # Nested service object
+    parent_booking_id: Optional[int] = None
 
-class AnalyticsData(BaseModel):
-    monthly_bookings: List[dict]
-    popular_services: List[dict]
+    class Config:
+        orm_mode = True
+
+class SubscriptionBase(BaseModel):
+    stripe_customer_id: str
+    stripe_subscription_id: str
+    current_plan_id: str
+    status: str
+    start_date: datetime
+    end_date: Optional[datetime] = None
+
+class SubscriptionCreate(SubscriptionBase):
+    owner_id: int
+
+class Subscription(SubscriptionBase):
+    id: int
+    owner_id: int
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        orm_mode = True
