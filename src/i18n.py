@@ -1,71 +1,40 @@
+import os
 import gettext
-from functools import lru_cache
-from typing import Optional
+from fastapi import Request
+from .config import settings
 
-_translation = None
+# Setup gettext
+localedir = settings.LOCALES_DIR
+DEFAULT_LOCALE = settings.DEFAULT_LOCALE
 
-def init_i18n(locales_dir: str, default_locale: str):
-    """Initializes the gettext translation system."""
-    _set_translation_for_locale(default_locale, locales_dir)
-
-def _set_translation_for_locale(locale: str, locales_dir: str):
-    """Helper to set up gettext translation for a specific locale."""
-    global _translation
+def get_translator(locale: str):
     try:
-        _translation = gettext.translation('messages', locales_dir, languages=[locale], fallback=True)
-        _translation.install()
+        # Bind the domain 'messages' to the locale directory
+        t = gettext.translation('messages', localedir, languages=[locale], fallback=True)
+        t.install()
+        return t.gettext
     except FileNotFoundError:
-        print(f"Warning: Locale directory {locales_dir} not found or messages.mo missing for {locale}. Falling back to default strings.")
-        _translation = None
+        # Fallback to default if locale not found
+        t = gettext.translation('messages', localedir, languages=[DEFAULT_LOCALE], fallback=True)
+        t.install()
+        return t.gettext
 
-def gettext_lazy(message: str):
-    """A lazy gettext function."""
-    if _translation:
-        return _translation.gettext(message)
+# Global _ for convenience, will be set by middleware
+_ = gettext.gettext
+
+def get_locale(request: Request) -> str:
+    # Try to get locale from cookie, header, or query param
+    locale = request.cookies.get("locale") or request.headers.get("Accept-Language", "").split(',')[0].split('-')[0]
+    if not locale or locale not in ["en", "ar", "fr"]: # Add supported locales
+        locale = DEFAULT_LOCALE
+    return locale
+
+@DeprecationWarning("This function is deprecated. Use the `_` provided by the middleware after `get_translator(request.state.locale)` has been called.")
+def gettext_lazy(message: str) -> str:
+    """
+    A lazy gettext function that can be used for strings that are defined at module load time
+    but whose translation depends on the request's locale.
+    In a FastAPI context, this is often handled by middleware setting the global `_` or
+    passing the translator object. For simplicity, we'll rely on the middleware.
+    """
     return message
-
-def ngettext_lazy(singular: str, plural: str, n: int):
-    """A lazy ngettext function."""
-    if _translation:
-        return _translation.ngettext(singular, plural, n)
-    return singular if n == 1 else plural
-
-@lru_cache(maxsize=128)
-def _format_currency_en(price: float) -> str:
-    return f"${price:,.2f}"
-
-@lru_cache(maxsize=128)
-def _format_currency_ar(price: float) -> str:
-    # This is a simplified example. For real world, use locale-aware libraries.
-    return f"{price:,.2f} د.إ" # Assuming AED for MENA region
-
-@lru_cache(maxsize=128)
-def _format_currency_fr(price: float) -> str:
-    return f"{price:,.2f} €" # Assuming Euro for French
-
-def gettext_filter(text: str, **kwargs) -> str:
-    """Jinja2 filter for gettext, supporting currency formatting."""
-    locale = kwargs.get('locale', 'en') # Default to 'en' if not provided
-    
-    if text == "currency_format":
-        price = kwargs.get('price')
-        if price is None:
-            return ""
-        if locale == "ar":
-            return _format_currency_ar(price)
-        elif locale == "fr":
-            return _format_currency_fr(price)
-        else: # Default to English
-            return _format_currency_en(price)
-    
-    if _translation:
-        return _translation.gettext(text)
-    return text
-
-def get_locale() -> str:
-    """Returns the current active locale. This function would ideally be context-aware (e.g., request-scoped)."""
-    # In a real FastAPI app, this would be dynamically set per request via middleware.
-    # For this reconstruction, we'll assume the _translation object's language implies the locale.
-    if _translation and hasattr(_translation, '_info') and 'language' in _translation._info:
-        return _translation._info['language']
-    return "en" # Fallback to default

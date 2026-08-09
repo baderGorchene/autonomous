@@ -1,1 +1,1 @@
-Fix: Ensure pytest is in requirements.txt to resolve module not found error
+Fix: Ensure pytest is installed and implement backend logic for recurring booking creation
