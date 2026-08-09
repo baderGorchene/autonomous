@@ -1,242 +1,191 @@
-<!DOCTYPE html>
-<html lang="{{ current_language }}">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ service.name }} - {{ _('Book with') }} {{ owner.name }}</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <style>
-        body { font-family: sans-serif; }
-        .container { max-width: 600px; margin: 0 auto; padding: 1rem; }
-        .time-slot-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 0.5rem; }
-        .time-slot-button { padding: 0.5rem 1rem; border-radius: 0.375rem; border: 1px solid #D1D5DB; background-color: #F9FAFB; color: #374151; font-weight: 500; cursor: pointer; transition: all 0.2s; }
-        .time-slot-button:hover:not(.selected):not(:disabled) { background-color: #E5E7EB; }
-        .time-slot-button.selected { background-color: #3B82F6; color: white; border-color: #3B82F6; }
-        .time-slot-button:disabled { opacity: 0.6; cursor: not-allowed; }
-    </style>
-</head>
-<body class="bg-gray-100 text-gray-900">
-    <nav class="bg-white shadow-md p-4 flex justify-end items-center">
-        <div class="language-switcher relative inline-block text-left">
-            <button type="button" class="inline-flex justify-center w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-indigo-500" id="menu-button" aria-expanded="true" aria-haspopup="true">
-                {{ current_language.upper() }}
-                <svg class="-mr-1 ml-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                </svg>
-            </button>
-            <div class="origin-top-right absolute right-0 mt-2 w-20 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none hidden" role="menu" aria-orientation="vertical" aria-labelledby="menu-button" tabindex="-1">
-                <div class="py-1" role="none">
-                    <a href="/set_language/en" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem" tabindex="-1" id="menu-item-0">EN</a>
-                    <a href="/set_language/ar" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem" tabindex="-1" id="menu-item-1">AR</a>
-                    <a href="/set_language/fr" class="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100" role="menuitem" tabindex="-1" id="menu-item-2">FR</a>
-                </div>
-            </div>
-        </div>
-    </nav>
+{% extends "base.html" %}
+{% block title %}{{ _('Book an Appointment') }}{% endblock %}
 
-    <div class="container mt-8 bg-white p-6 rounded-lg shadow-md">
-        <h1 class="text-3xl font-bold text-center mb-4">{{ service.name }}</h1>
-        <p class="text-center text-gray-600 mb-6">{{ _('with') }} {{ owner.name }}</p>
-        <p class="text-center text-lg font-medium mb-6">{{ "%.2f"|format(service.price / 100) }} {{ _('currency') }} - {{ service.duration_minutes }} {{ _('minutes') }}</p>
+{% block content %}
+<div class="container mx-auto p-4 max-w-md">
+    <div class="bg-white shadow-lg rounded-lg p-6 mb-8">
+        <h1 class="text-3xl font-bold text-gray-800 mb-4 text-center">{{ _('Book with') }} {{ owner.name }}</h1>
 
         {% if error %}
-            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-                <strong class="font-bold">{{ _('Error!') }}</strong>
-                <span class="block sm:inline">{{ error }}</span>
-            </div>
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+            <strong class="font-bold">{{ _('Error!') }}</strong>
+            <span class="block sm:inline">{{ error }}</span>
+        </div>
         {% endif %}
 
-        <form action="/booking/{{ owner.id }}/{{ service.id }}" method="POST">
-            <div class="mb-4">
-                <label for="customer_name" class="block text-sm font-medium text-gray-700">{{ _('Your Name') }}</label>
-                <input type="text" id="customer_name" name="customer_name" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" required>
-            </div>
+        <form id="bookingForm" action="/{{ owner.name }}/book" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
             <div class="mb-4">
-                <label for="customer_email" class="block text-sm font-medium text-gray-700">{{ _('Your Email') }}</label>
-                <input type="email" id="customer_email" name="customer_email" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" required>
-            </div>
-
-            <div class="mb-4">
-                <label for="customer_phone" class="block text-sm font-medium text-gray-700">{{ _('Your Phone Number (Optional, for WhatsApp notifications)') }}</label>
-                <input type="tel" id="customer_phone" name="customer_phone" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
-            </div>
-
-            <div class="mb-4">
-                <label for="booking_date" class="block text-sm font-medium text-gray-700">{{ _('Select Date') }}</label>
-                <input type="date" id="booking_date" name="booking_date" value="{{ today }}" min="{{ today }}" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" required onchange="fetchAvailableSlots()">
-            </div>
-
-            <div class="mb-6">
-                <label for="booking_time" class="block text-sm font-medium text-gray-700">{{ _('Select Time Slot') }}</label>
-                <div id="time-slots" class="time-slot-grid mt-1">
-                    {% for slot in available_slots %}
-                        <button type="button" class="time-slot-button" data-time="{{ slot.strftime('%H:%M') }}">{{ slot.strftime('%H:%M') }}</button>
-                    {% else %}
-                        <p class="col-span-full text-gray-600">{{ _('No available slots for this date.') }}</p>
+                <label for="service_id" class="block text-gray-700 text-sm font-bold mb-2">{{ _('Select a Service') }}:</label>
+                <select id="service_id" name="service_id" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-white" required>
+                    <option value="">{{ _('Choose a service') }}</option>
+                    {% for service in services %}
+                    <option value="{{ service.id }}" data-duration="{{ service.duration_minutes }}" data-price="{{ service.price }}">{{ service.name }} ({{ service.duration_minutes }} {{ _('mins') }}, {{ service.price / 100 }} {{ _('currency') }})</option>
                     {% endfor %}
-                </div>
-                <input type="hidden" id="selected_booking_time" name="booking_time" required>
+                </select>
             </div>
 
-            <div class="mb-6">
-                <label class="flex items-center space-x-2">
-                    <input type="checkbox" id="is_recurring" name="is_recurring" class="form-checkbox h-5 w-5 text-blue-600" onchange="toggleRecurrenceOptions()">
-                    <span class="text-sm font-medium text-gray-700">{{ _('Make this a recurring booking') }}</span>
+            <div class="mb-4">
+                <label for="date" class="block text-gray-700 text-sm font-bold mb-2">{{ _('Select Date') }}:</label>
+                <input type="date" id="date" name="date" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-white" required>
+            </div>
+
+            <div class="mb-4" id="timeSlotsContainer">
+                <label for="time" class="block text-gray-700 text-sm font-bold mb-2">{{ _('Select Time') }}:</label>
+                <div id="timeSlots" class="grid grid-cols-3 gap-2">
+                    <p class="text-gray-500 col-span-3">{{ _('Please select a service and date to see available slots.') }}</p>
+                </div>
+                <input type="hidden" id="selectedTime" name="time" required>
+            </div>
+
+            <div class="mb-4">
+                <label for="customer_name" class="block text-gray-700 text-sm font-bold mb-2">{{ _('Your Name') }}:</label>
+                <input type="text" id="customer_name" name="customer_name" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+            </div>
+
+            <div class="mb-4">
+                <label for="customer_email" class="block text-gray-700 text-sm font-bold mb-2">{{ _('Your Email') }}:</label>
+                <input type="email" id="customer_email" name="customer_email" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+            </div>
+
+            <div class="mb-4">
+                <label for="customer_phone_number" class="block text-gray-700 text-sm font-bold mb-2">{{ _('Your Phone Number (Optional)') }}:</label>
+                <input type="tel" id="customer_phone_number" name="customer_phone_number" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                <p class="text-xs text-gray-500 mt-1">{{ _('Providing your phone number may help with future bookings.') }}</p>
+            </div>
+
+            <div class="mb-4">
+                <label for="is_recurring" class="inline-flex items-center">
+                    <input type="checkbox" id="is_recurring" name="is_recurring" class="form-checkbox h-5 w-5 text-indigo-600">
+                    <span class="ml-2 text-gray-700">{{ _('Make this a recurring booking?') }}</span>
                 </label>
             </div>
 
-            <div id="recurrence_options" class="border p-4 rounded-md bg-gray-50 mb-6 hidden">
+            <div id="recurrenceOptions" class="hidden mb-4 p-4 border border-gray-200 rounded-md bg-gray-50">
                 <div class="mb-4">
-                    <label for="recurrence_type" class="block text-sm font-medium text-gray-700">{{ _('Recurrence Type') }}</label>
-                    <select id="recurrence_type" name="recurrence_type" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" onchange="toggleRecurrenceValueInput()">
-                        <option value="">{{ _('Select type') }}</option>
-                        <option value="DAILY">{{ _('Daily') }}</option>
-                        <option value="WEEKLY">{{ _('Weekly') }}</option>
-                        <option value="MONTHLY">{{ _('Monthly') }}</option>
+                    <label for="recurrence_type" class="block text-gray-700 text-sm font-bold mb-2">{{ _('Recurrence Type') }}:</label>
+                    <select id="recurrence_type" name="recurrence_type" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-white">
+                        <option value="none">{{ _('None') }}</option>
+                        <option value="daily">{{ _('Daily') }}</option>
+                        <option value="weekly">{{ _('Weekly') }}</option>
+                        <option value="monthly">{{ _('Monthly') }}</option>
                     </select>
                 </div>
-                <div id="recurrence_value_input" class="mb-4 hidden">
-                    <label for="recurrence_value" class="block text-sm font-medium text-gray-700">{{ _('Recurrence Details') }}</label>
-                    <input type="text" id="recurrence_value" name="recurrence_value" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                           placeholder="{{ _('e.g., MON,TUE for weekly; 15 for monthly on 15th') }}">
+                <div id="recurrenceValueContainer" class="mb-4 hidden">
+                    <label for="recurrence_value" class="block text-gray-700 text-sm font-bold mb-2">{{ _('Recurrence Value') }}:</label>
+                    <input type="text" id="recurrence_value" name="recurrence_value" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                    <p class="text-xs text-gray-500 mt-1" id="recurrenceValueHint"></p>
                 </div>
                 <div class="mb-4">
-                    <label for="recurrence_end_date" class="block text-sm font-medium text-gray-700">{{ _('Recurrence End Date (Optional)') }}</label>
-                    <input type="date" id="recurrence_end_date" name="recurrence_end_date" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" min="{{ today }}">
+                    <label for="recurrence_end_date" class="block text-gray-700 text-sm font-bold mb-2">{{ _('Recurrence End Date (Optional)') }}:</label>
+                    <input type="date" id="recurrence_end_date" name="recurrence_end_date" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
                 </div>
             </div>
 
-            <button type="submit" class="w-full bg-blue-600 text-white p-3 rounded-md font-semibold hover:bg-blue-700">{{ _('Book Now') }}</button>
+            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full">
+                {{ _('Confirm Booking') }}
+            </button>
         </form>
     </div>
+</div>
 
-    <script>
-        // Language switcher dropdown logic
-        document.getElementById('menu-button').addEventListener('click', function() {
-            const dropdown = this.nextElementSibling;
-            dropdown.classList.toggle('hidden');
-        });
-        window.addEventListener('click', function(event) {
-            if (!event.target.matches('#menu-button')) {
-                const dropdowns = document.querySelectorAll('.language-switcher div[aria-labelledby="menu-button"]');
-                dropdowns.forEach(function(dropdown) {
-                    if (!dropdown.classList.contains('hidden')) {
-                        dropdown.classList.add('hidden');
-                    }
-                });
-            }
-        });
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const serviceSelect = document.getElementById('service_id');
+        const dateInput = document.getElementById('date');
+        const timeSlotsDiv = document.getElementById('timeSlots');
+        const selectedTimeInput = document.getElementById('selectedTime');
+        const ownerName = "{{ owner.name }}";
+        const today = new Date().toISOString().split('T')[0];
+        dateInput.setAttribute('min', today);
 
-        // Time slot selection
-        const timeSlotsContainer = document.getElementById('time-slots');
-        const selectedBookingTimeInput = document.getElementById('selected_booking_time');
+        const isRecurringCheckbox = document.getElementById('is_recurring');
+        const recurrenceOptionsDiv = document.getElementById('recurrenceOptions');
+        const recurrenceTypeSelect = document.getElementById('recurrence_type');
+        const recurrenceValueContainer = document.getElementById('recurrenceValueContainer');
+        const recurrenceValueInput = document.getElementById('recurrence_value');
+        const recurrenceValueHint = document.getElementById('recurrenceValueHint');
 
-        timeSlotsContainer.addEventListener('click', function(event) {
-            const clickedButton = event.target.closest('.time-slot-button');
-            if (clickedButton && !clickedButton.disabled) {
-                // Remove 'selected' from all buttons
-                document.querySelectorAll('.time-slot-button').forEach(btn => btn.classList.remove('selected'));
-                // Add 'selected' to the clicked button
-                clickedButton.classList.add('selected');
-                // Update hidden input value
-                selectedBookingTimeInput.value = clickedButton.dataset.time;
-            }
-        });
-
-        // Fetch available slots dynamically
-        async function fetchAvailableSlots() {
-            const bookingDate = document.getElementById('booking_date').value;
-            if (!bookingDate) return;
-
-            const ownerId = {{ owner.id }};
-            const serviceId = {{ service.id }};
-            const url = `/api/availability/${ownerId}/${serviceId}?date=${bookingDate}`;
-
-            try {
-                const response = await fetch(url);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                const slots = await response.json();
-                displayAvailableSlots(slots);
-            } catch (error) {
-                console.error('Error fetching available slots:', error);
-                displayAvailableSlots([]); // Show no slots on error
-            }
-        }
-
-        function displayAvailableSlots(slots) {
-            const timeSlotsDiv = document.getElementById('time-slots');
-            timeSlotsDiv.innerHTML = ''; // Clear existing slots
-            selectedBookingTimeInput.value = ''; // Clear selected time
-
-            if (slots.length === 0) {
-                timeSlotsDiv.innerHTML = `<p class="col-span-full text-gray-600">{{ _('No available slots for this date.') }}</p>`;
-                return;
-            }
-
-            slots.forEach(slot => {
-                const button = document.createElement('button');
-                button.type = 'button';
-                button.classList.add('time-slot-button');
-                button.dataset.time = slot;
-                button.textContent = slot;
-                timeSlotsDiv.appendChild(button);
-            });
-        }
-
-        // Recurrence options logic
-        function toggleRecurrenceOptions() {
-            const isRecurringCheckbox = document.getElementById('is_recurring');
-            const recurrenceOptionsDiv = document.getElementById('recurrence_options');
-            const recurrenceTypeSelect = document.getElementById('recurrence_type');
-            const recurrenceValueInputDiv = document.getElementById('recurrence_value_input');
-            const recurrenceValueInput = document.getElementById('recurrence_value');
-            const recurrenceEndDateInput = document.getElementById('recurrence_end_date');
-
-            if (isRecurringCheckbox.checked) {
+        isRecurringCheckbox.addEventListener('change', function() {
+            if (this.checked) {
                 recurrenceOptionsDiv.classList.remove('hidden');
-                recurrenceTypeSelect.setAttribute('required', 'true');
-                // Set min date for recurrence end date
-                recurrenceEndDateInput.min = document.getElementById('booking_date').value || new Date().toISOString().split('T')[0];
+                recurrenceTypeSelect.setAttribute('required', 'required');
             } else {
                 recurrenceOptionsDiv.classList.add('hidden');
                 recurrenceTypeSelect.removeAttribute('required');
-                recurrenceTypeSelect.value = ''; // Reset selection
-                recurrenceValueInputDiv.classList.add('hidden');
-                recurrenceValueInput.value = '';
-                recurrenceEndDateInput.value = '';
-            }
-        }
-
-        function toggleRecurrenceValueInput() {
-            const recurrenceType = document.getElementById('recurrence_type').value;
-            const recurrenceValueInputDiv = document.getElementById('recurrence_value_input');
-            const recurrenceValueInput = document.getElementById('recurrence_value');
-
-            if (recurrenceType === 'WEEKLY' || recurrenceType === 'MONTHLY') {
-                recurrenceValueInputDiv.classList.remove('hidden');
-                recurrenceValueInput.setAttribute('required', 'true');
-                if (recurrenceType === 'WEEKLY') {
-                    recurrenceValueInput.placeholder = '{{ _('e.g., MON,TUE,WED') }}';
-                } else if (recurrenceType === 'MONTHLY') {
-                    recurrenceValueInput.placeholder = '{{ _('e.g., 15 (for 15th of month)') }}';
-                }
-            } else {
-                recurrenceValueInputDiv.classList.add('hidden');
+                recurrenceValueContainer.classList.add('hidden');
                 recurrenceValueInput.removeAttribute('required');
-                recurrenceValueInput.value = '';
+            }
+        });
+
+        recurrenceTypeSelect.addEventListener('change', function() {
+            const type = this.value;
+            recurrenceValueContainer.classList.add('hidden');
+            recurrenceValueInput.removeAttribute('required');
+            recurrenceValueInput.value = '';
+            recurrenceValueHint.textContent = '';
+
+            if (type === 'weekly') {
+                recurrenceValueContainer.classList.remove('hidden');
+                recurrenceValueInput.setAttribute('required', 'required');
+                recurrenceValueHint.textContent = "{{ _('Enter comma-separated weekdays (e.g., MON,WED,FRI)') }}";
+            } else if (type === 'monthly') {
+                recurrenceValueContainer.classList.remove('hidden');
+                recurrenceValueInput.setAttribute('required', 'required');
+                recurrenceValueHint.textContent = "{{ _('Enter day of month (e.g., 15 for 15th of every month)') }}";
+            }
+        });
+
+        function fetchAvailableSlots() {
+            const serviceId = serviceSelect.value;
+            const selectedDate = dateInput.value;
+
+            timeSlotsDiv.innerHTML = '<p class="text-gray-500 col-span-3">{{ _("Loading slots...") }}</p>';
+            selectedTimeInput.value = '';
+
+            if (serviceId && selectedDate) {
+                fetch(`/${ownerName}/api/available_slots?service_id=${serviceId}&selected_date=${selectedDate}`)
+                    .then(response => response.json())
+                    .then(slots => {
+                        timeSlotsDiv.innerHTML = '';
+                        if (slots.length > 0) {
+                            slots.forEach(slot => {
+                                const button = document.createElement('button');
+                                button.type = 'button';
+                                button.textContent = slot;
+                                button.className = 'time-slot-btn bg-gray-200 hover:bg-indigo-200 text-gray-800 font-semibold py-2 px-3 rounded text-sm';
+                                button.addEventListener('click', () => {
+                                    document.querySelectorAll('.time-slot-btn').forEach(btn => {
+                                        btn.classList.remove('bg-indigo-600', 'text-white');
+                                        btn.classList.add('bg-gray-200', 'text-gray-800');
+                                    });
+                                    button.classList.remove('bg-gray-200', 'text-gray-800');
+                                    button.classList.add('bg-indigo-600', 'text-white');
+                                    selectedTimeInput.value = slot;
+                                });
+                                timeSlotsDiv.appendChild(button);
+                            });
+                        } else {
+                            timeSlotsDiv.innerHTML = '<p class="text-gray-500 col-span-3">{{ _("No slots available for this date and service.") }}</p>';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching slots:', error);
+                        timeSlotsDiv.innerHTML = '<p class="text-red-500 col-span-3">{{ _("Error loading slots. Please try again.") }}</p>';
+                    });
+            } else {
+                timeSlotsDiv.innerHTML = '<p class="text-gray-500 col-span-3">{{ _("Please select a service and date to see available slots.") }}</p>';
             }
         }
 
-        // Initial fetch on page load for the default date
-        document.addEventListener('DOMContentLoaded', () => {
+        serviceSelect.addEventListener('change', fetchAvailableSlots);
+        dateInput.addEventListener('change', fetchAvailableSlots);
+
+        // Initial call if a service and date are pre-selected (e.g., after an error)
+        if (serviceSelect.value && dateInput.value) {
             fetchAvailableSlots();
-            // Set min date for booking_date to today
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('booking_date').min = today;
-        });
-    </script>
-</body>
-</html>
+        }
+    });
+</script>
+{% endblock %}
