@@ -1,40 +1,33 @@
 from sqlalchemy.orm import Session
-from datetime import datetime, timedelta, date
+from sqlalchemy import and_ , func
+from datetime import date, datetime, time, timedelta
 from typing import List, Optional
-from fastapi import HTTPException, status
 
 from . import models, schemas
-from .security import get_password_hash # For owner creation
+from .security import get_password_hash
 
-# --- Owner CRUD --- 
 def get_owner(db: Session, owner_id: int):
     return db.query(models.Owner).filter(models.Owner.id == owner_id).first()
 
 def get_owner_by_email(db: Session, email: str):
     return db.query(models.Owner).filter(models.Owner.email == email).first()
 
-def get_owner_by_owner_name(db: Session, owner_name: str):
-    return db.query(models.Owner).filter(models.Owner.owner_name == owner_name).first()
+def get_owners(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.Owner).offset(skip).limit(limit).all()
 
 def create_owner(db: Session, owner: schemas.OwnerCreate):
     hashed_password = get_password_hash(owner.password)
-    db_owner = models.Owner(
-        email=owner.email,
-        hashed_password=hashed_password,
-        owner_name=owner.owner_name,
-        owner_phone=owner.owner_phone,
-        currency=owner.currency
-    )
+    db_owner = models.Owner(email=owner.email, hashed_password=hashed_password, company_name=owner.company_name, phone=owner.phone)
     db.add(db_owner)
     db.commit()
     db.refresh(db_owner)
     return db_owner
 
-def update_owner(db: Session, owner_id: int, owner_update: schemas.OwnerUpdate):
-    db_owner = get_owner(db, owner_id)
-    if not db_owner:
-        return None
-    update_data = owner_update.dict(exclude_unset=True)
+def update_owner(db: Session, db_owner: models.Owner, owner_update: schemas.OwnerUpdate):
+    update_data = owner_update.model_dump(exclude_unset=True)
+    if "password" in update_data:
+        update_data["hashed_password"] = get_password_hash(update_data["password"])
+        del update_data["password"]
     for key, value in update_data.items():
         setattr(db_owner, key, value)
     db.add(db_owner)
@@ -42,125 +35,209 @@ def update_owner(db: Session, owner_id: int, owner_update: schemas.OwnerUpdate):
     db.refresh(db_owner)
     return db_owner
 
-# --- Service CRUD ---
+def delete_owner(db: Session, owner_id: int):
+    db_owner = db.query(models.Owner).filter(models.Owner.id == owner_id).first()
+    if db_owner:
+        db.delete(db_owner)
+        db.commit()
+        return True
+    return False
+
 def get_service(db: Session, service_id: int):
     return db.query(models.Service).filter(models.Service.id == service_id).first()
 
-def get_services_by_owner(db: Session, owner_id: int):
-    return db.query(models.Service).filter(models.Service.owner_id == owner_id).all()
+def get_service_by_owner(db: Session, service_id: int, owner_id: int):
+    return db.query(models.Service).filter(models.Service.id == service_id, models.Service.owner_id == owner_id).first()
 
-def create_service(db: Session, service: schemas.ServiceCreate, owner_id: int):
-    db_service = models.Service(**service.dict(), owner_id=owner_id)
+def get_services(db: Session, owner_id: int, skip: int = 0, limit: int = 100):
+    return db.query(models.Service).filter(models.Service.owner_id == owner_id).offset(skip).limit(limit).all()
+
+def create_owner_service(db: Session, service: schemas.ServiceCreate, owner_id: int):
+    db_service = models.Service(**service.model_dump(), owner_id=owner_id)
     db.add(db_service)
     db.commit()
     db.refresh(db_service)
     return db_service
 
-# --- Booking CRUD ---
+def update_service(db: Session, db_service: models.Service, service_update: schemas.ServiceCreate):
+    update_data = service_update.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_service, key, value)
+    db.add(db_service)
+    db.commit()
+    db.refresh(db_service)
+    return db_service
+
+def delete_service(db: Session, service_id: int):
+    db_service = db.query(models.Service).filter(models.Service.id == service_id).first()
+    if db_service:
+        db.delete(db_service)
+        db.commit()
+        return True
+    return False
+
+def get_availability(db: Session, availability_id: int):
+    return db.query(models.Availability).filter(models.Availability.id == availability_id).first()
+
+def get_service_availabilities(db: Session, service_id: int) -> List[models.Availability]:
+    return db.query(models.Availability).filter(models.Availability.service_id == service_id).all()
+
+def create_service_availability(db: Session, availability: schemas.AvailabilityCreate, owner_id: int, service_id: int):
+    db_availability = models.Availability(**availability.model_dump(), owner_id=owner_id, service_id=service_id)
+    db.add(db_availability)
+    db.commit()
+    db.refresh(db_availability)
+    return db_availability
+
+def update_availability(db: Session, db_availability: models.Availability, availability_update: schemas.AvailabilityCreate):
+    update_data = availability_update.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_availability, key, value)
+    db.add(db_availability)
+    db.commit()
+    db.refresh(db_availability)
+    return db_availability
+
+def delete_availability(db: Session, availability_id: int):
+    db_availability = db.query(models.Availability).filter(models.Availability.id == availability_id).first()
+    if db_availability:
+        db.delete(db_availability)
+        db.commit()
+        return True
+    return False
+
 def get_booking(db: Session, booking_id: int):
     return db.query(models.Booking).filter(models.Booking.id == booking_id).first()
 
-def get_owner_bookings(db: Session, owner_id: int, skip: int = 0, limit: int = 100):
+def get_bookings(db: Session, owner_id: int, skip: int = 0, limit: int = 100):
     return db.query(models.Booking).filter(models.Booking.owner_id == owner_id).offset(skip).limit(limit).all()
 
-def get_upcoming_owner_bookings(db: Session, owner_id: int):
-    now = datetime.utcnow()
+def get_bookings_for_service_in_range(db: Session, service_id: int, start_date: date, end_date: date) -> List[models.Booking]:
+    # Ensure bookings are within the requested date range, considering booking start and end times
+    # A booking is considered 'in range' if it overlaps with any part of the requested period.
+    # The requested period is from start_date (inclusive, beginning of day) to end_date (inclusive, end of day).
+    # So, a booking starting before (end_date + 1 day) and ending after (start_date) is relevant.
     return db.query(models.Booking).filter(
-        models.Booking.owner_id == owner_id,
-        models.Booking.start_time >= now
-    ).order_by(models.Booking.start_time).all()
+        models.Booking.service_id == service_id,
+        and_(
+            models.Booking.start_time < datetime.combine(end_date + timedelta(days=1), time.min), 
+            models.Booking.end_time > datetime.combine(start_date, time.min)
+        )
+    ).all()
 
-def create_booking(db: Session, booking: schemas.BookingCreate, owner_id: int, is_recurring: bool = False, parent_recurring_booking_id: Optional[str] = None):
-    service = get_service(db, booking.service_id)
-    if not service:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Service not found")
-
-    booking_duration = service.duration_minutes # Use service's duration
-    end_time = booking.start_time + timedelta(minutes=booking_duration)
-
-    db_booking = models.Booking(
-        owner_id=owner_id,
-        service_id=booking.service_id,
-        customer_name=booking.customer_name,
-        customer_email=booking.customer_email,
-        customer_phone=booking.customer_phone,
-        start_time=booking.start_time,
-        end_time=end_time,
-        status="confirmed", # Default status
-        is_recurring=is_recurring,
-        parent_recurring_booking_id=parent_recurring_booking_id
-    )
+def create_booking(db: Session, booking: schemas.BookingCreate, owner_id: int, service_duration_minutes: int):
+    end_time = booking.start_time + timedelta(minutes=service_duration_minutes)
+    db_booking = models.Booking(**booking.model_dump(), owner_id=owner_id, end_time=end_time)
     db.add(db_booking)
     db.commit()
     db.refresh(db_booking)
     return db_booking
 
-def check_availability(db: Session, service_id: int, start_time: datetime, end_time: datetime) -> bool:
-    """
-    Checks if a service is available at the given time slot.
-    This includes checking for conflicting bookings.
-    (Future: Integrate with a robust Availability model for service working hours/days)
-    """
-    # For MVP, only check for conflicting bookings. 
-    # A more robust system would involve a dedicated `Availability` model to check working hours.
+def update_booking(db: Session, db_booking: models.Booking, booking_update: schemas.BookingCreate):
+    update_data = booking_update.model_dump(exclude_unset=True)
+    if "start_time" in update_data and "service_duration_minutes" in update_data: # Assuming duration is passed for recalculation
+        db_booking.end_time = update_data["start_time"] + timedelta(minutes=update_data["service_duration_minutes"])
+        del update_data["service_duration_minutes"]
 
-    conflicting_bookings = db.query(models.Booking).filter(
-        models.Booking.service_id == service_id,
-        models.Booking.status == "confirmed", # Only confirmed bookings block slots
-        models.Booking.start_time < end_time,
-        models.Booking.end_time > start_time
-    ).first()
+    for key, value in update_data.items():
+        setattr(db_booking, key, value)
+    db.add(db_booking)
+    db.commit()
+    db.refresh(db_booking)
+    return db_booking
 
-    return conflicting_bookings is None
+def delete_booking(db: Session, booking_id: int):
+    db_booking = db.query(models.Booking).filter(models.Booking.id == booking_id).first()
+    if db_booking:
+        db.delete(db_booking)
+        db.commit()
+        return True
+    return False
 
-# --- Analytics CRUD ---
-def get_total_bookings_count(db: Session, owner_id: int) -> int:
-    return db.query(models.Booking).filter(models.Booking.owner_id == owner_id).count()
-
-def get_upcoming_bookings_count(db: Session, owner_id: int) -> int:
-    now = datetime.utcnow()
+def get_total_bookings_month(db: Session, owner_id: int, start_of_month: datetime, end_of_month: datetime) -> int:
     return db.query(models.Booking).filter(
         models.Booking.owner_id == owner_id,
-        models.Booking.start_time >= now
+        models.Booking.start_time >= start_of_month,
+        models.Booking.start_time < end_of_month
     ).count()
 
-def get_monthly_bookings_data(db: Session, owner_id: int, num_months: int = 6) -> List[schemas.MonthlyBookingsData]:
-    # This is a simplified aggregation. For production, consider database-specific functions
-    # or a more efficient approach for large datasets.
-    monthly_data = []
-    current_date = datetime.utcnow()
-    for i in range(num_months):
-        month_start = (current_date.replace(day=1) - timedelta(days=1)).replace(day=1) if i > 0 else current_date.replace(day=1)
-        month_end = (month_start + timedelta(days=32)).replace(day=1) - timedelta(days=1)
-        
-        count = db.query(models.Booking).filter(
-            models.Booking.owner_id == owner_id,
-            models.Booking.start_time >= month_start,
-            models.Booking.start_time < month_end + timedelta(days=1)
-        ).count()
-        monthly_data.append(schemas.MonthlyBookingsData(month=month_start.strftime("%Y-%m"), count=count))
-        current_date = month_start - timedelta(days=1)
-    return list(reversed(monthly_data))
-
-def get_popular_services_data(db: Session, owner_id: int, limit: int = 5) -> List[schemas.PopularServiceData]:
-    # This is a simplified aggregation.
-    service_counts = db.query(models.Service.name, models.func.count(models.Booking.id)).\
-        join(models.Booking).\
-        filter(models.Service.owner_id == owner_id).\
-        group_by(models.Service.name).\
-        order_by(models.func.count(models.Booking.id).desc()).\
-        limit(limit).all()
+def get_popular_services(db: Session, owner_id: int, start_of_month: datetime, end_of_month: datetime, limit: int = 5) -> List[dict]:
+    popular_services = db.query(
+        models.Service.name,
+        func.count(models.Booking.id).label("booking_count")
+    ).join(models.Booking, models.Service.id == models.Booking.service_id).filter(
+        models.Service.owner_id == owner_id,
+        models.Booking.start_time >= start_of_month,
+        models.Booking.start_time < end_of_month
+    ).group_by(models.Service.name).order_by(func.count(models.Booking.id).desc()).limit(limit).all()
     
-    return [schemas.PopularServiceData(service_name=name, booking_count=count) for name, count in service_counts]
+    return [{"service_name": name, "booking_count": count} for name, count in popular_services]
 
-# --- Admin CRUD (minimal) ---
-def get_all_owners(db: Session, skip: int = 0, limit: int = 100):
+def admin_get_owner(db: Session, owner_id: int):
+    return db.query(models.Owner).filter(models.Owner.id == owner_id).first()
+
+def admin_get_owners(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.Owner).offset(skip).limit(limit).all()
 
-def delete_owner(db: Session, owner_id: int):
+def admin_update_owner(db: Session, db_owner: models.Owner, owner_update: schemas.AdminOwnerUpdate):
+    update_data = owner_update.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_owner, key, value)
+    db.add(db_owner)
+    db.commit()
+    db.refresh(db_owner)
+    return db_owner
+
+def admin_delete_owner(db: Session, owner_id: int):
     db_owner = db.query(models.Owner).filter(models.Owner.id == owner_id).first()
     if db_owner:
         db.delete(db_owner)
+        db.commit()
+        return True
+    return False
+
+def admin_get_service(db: Session, service_id: int):
+    return db.query(models.Service).filter(models.Service.id == service_id).first()
+
+def admin_get_services_by_owner(db: Session, owner_id: int, skip: int = 0, limit: int = 100):
+    return db.query(models.Service).filter(models.Service.owner_id == owner_id).offset(skip).limit(limit).all()
+
+def admin_update_service(db: Session, db_service: models.Service, service_update: schemas.AdminServiceUpdate):
+    update_data = service_update.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_service, key, value)
+    db.add(db_service)
+    db.commit()
+    db.refresh(db_service)
+    return db_service
+
+def admin_delete_service(db: Session, service_id: int):
+    db_service = db.query(models.Service).filter(models.Service.id == service_id).first()
+    if db_service:
+        db.delete(db_service)
+        db.commit()
+        return True
+    return False
+
+def admin_get_booking(db: Session, booking_id: int):
+    return db.query(models.Booking).filter(models.Booking.id == booking_id).first()
+
+def admin_get_bookings_by_owner(db: Session, owner_id: int, skip: int = 0, limit: int = 100):
+    return db.query(models.Booking).filter(models.Booking.owner_id == owner_id).offset(skip).limit(limit).all()
+
+def admin_update_booking(db: Session, db_booking: models.Booking, booking_update: schemas.AdminBookingUpdate):
+    update_data = booking_update.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_booking, key, value)
+    db.add(db_booking)
+    db.commit()
+    db.refresh(db_booking)
+    return db_booking
+
+def admin_delete_booking(db: Session, booking_id: int):
+    db_booking = db.query(models.Booking).filter(models.Booking.id == booking_id).first()
+    if db_booking:
+        db.delete(db_booking)
         db.commit()
         return True
     return False

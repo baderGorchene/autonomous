@@ -1,1 +1,1 @@
-Fix: Ensure pytest is installed and implement backend logic for recurring booking creation
+FIX: Ensure pytest is available for test execution

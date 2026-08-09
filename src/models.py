@@ -1,79 +1,67 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Text, Enum, Float
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Time, Date, DateTime, Float
+from sqlalchemy.orm import relationship, Mapped, mapped_column
 from sqlalchemy.ext.declarative import declarative_base
-from datetime import datetime
-import enum
+from datetime import datetime, date, time
+from typing import Optional, List
 
 Base = declarative_base()
 
 class Owner(Base):
     __tablename__ = "owners"
-    id = Column(Integer, primary_key=True, index=True)
-    email = Column(String, unique=True, index=True)
-    hashed_password = Column(String)
-    is_active = Column(Boolean, default=True)
-    name = Column(String)
-    phone = Column(String, nullable=True)
-    language = Column(String, default="en")
-    timezone = Column(String, default="UTC")
-    currency = Column(String, default="USD")
-    subscription_status = Column(String, default="free") # e.g., "free", "premium", "cancelled"
-    stripe_customer_id = Column(String, nullable=True, unique=True)
-    stripe_subscription_id = Column(String, nullable=True, unique=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    email: Mapped[str] = mapped_column(String, unique=True, index=True)
+    hashed_password: Mapped[str] = mapped_column(String)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    company_name: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    phone: Mapped[Optional[str]] = mapped_column(String, nullable=True)
 
-    services = relationship("Service", back_populates="owner")
-    availabilities = relationship("Availability", back_populates="owner")
-    bookings = relationship("Booking", back_populates="owner")
+    services: Mapped[List["Service"]] = relationship("Service", back_populates="owner", cascade="all, delete-orphan")
+    bookings: Mapped[List["Booking"]] = relationship("Booking", back_populates="owner", cascade="all, delete-orphan")
+    availabilities: Mapped[List["Availability"]] = relationship("Availability", back_populates="owner", cascade="all, delete-orphan")
 
 class Service(Base):
     __tablename__ = "services"
-    id = Column(Integer, primary_key=True, index=True)
-    owner_id = Column(Integer, ForeignKey("owners.id"))
-    name = Column(String)
-    description = Column(Text, nullable=True)
-    duration_minutes = Column(Integer)
-    price = Column(Float, default=0.0)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    owner_id: Mapped[int] = mapped_column(Integer, ForeignKey("owners.id"))
+    name: Mapped[str] = mapped_column(String, index=True)
+    description: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    duration_minutes: Mapped[int] = mapped_column(Integer, default=30) # Added duration
+    price: Mapped[float] = mapped_column(Float, default=0.0)
 
-    owner = relationship("Owner", back_populates="services")
+    owner: Mapped["Owner"] = relationship("Owner", back_populates="services")
+    availabilities: Mapped[List["Availability"]] = relationship("Availability", back_populates="service", cascade="all, delete-orphan")
+    bookings: Mapped[List["Booking"]] = relationship("Booking", back_populates="service", cascade="all, delete-orphan")
 
 class Availability(Base):
     __tablename__ = "availabilities"
-    id = Column(Integer, primary_key=True, index=True)
-    owner_id = Column(Integer, ForeignKey("owners.id"))
-    day_of_week = Column(Integer) # 0=Monday, 6=Sunday
-    start_time = Column(String) # "HH:MM"
-    end_time = Column(String) # "HH:MM"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    owner_id: Mapped[int] = mapped_column(Integer, ForeignKey("owners.id"))
+    service_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("services.id"), nullable=True)
+    
+    start_time: Mapped[time] = mapped_column(Time)
+    end_time: Mapped[time] = mapped_column(Time)
+    
+    start_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+    end_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+    
+    is_recurring: Mapped[bool] = mapped_column(Boolean, default=False)
+    recurrence_type: Mapped[Optional[str]] = mapped_column(String, nullable=True) # e.g., "daily", "weekly", "monthly"
+    recurrence_details: Mapped[Optional[str]] = mapped_column(String, nullable=True) # JSON string: {"days_of_week": [0,1,2]} for weekly, {"day_of_month": 15} for monthly
 
-    owner = relationship("Owner", back_populates="availabilities")
-
-class RecurrencePattern(enum.Enum):
-    DAILY = "daily"
-    WEEKLY = "weekly"
-    BI_WEEKLY = "bi-weekly"
-    MONTHLY = "monthly"
+    owner: Mapped["Owner"] = relationship("Owner", back_populates="availabilities")
+    service: Mapped[Optional["Service"]] = relationship("Service", back_populates="availabilities")
 
 class Booking(Base):
     __tablename__ = "bookings"
-    id = Column(Integer, primary_key=True, index=True)
-    owner_id = Column(Integer, ForeignKey("owners.id"))
-    service_id = Column(Integer, ForeignKey("services.id"))
-    customer_name = Column(String)
-    customer_email = Column(String)
-    customer_phone = Column(String, nullable=True)
-    booking_date = Column(DateTime)
-    start_time = Column(String) # "HH:MM"
-    end_time = Column(String) # "HH:MM"
-    status = Column(String, default="confirmed") # e.g., "confirmed", "cancelled", "pending"
-    created_at = Column(DateTime, default=datetime.utcnow)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    service_id: Mapped[int] = mapped_column(Integer, ForeignKey("services.id"))
+    owner_id: Mapped[int] = mapped_column(Integer, ForeignKey("owners.id"))
+    customer_name: Mapped[str] = mapped_column(String, index=True)
+    customer_email: Mapped[str] = mapped_column(String, index=True)
+    customer_phone: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    start_time: Mapped[datetime] = mapped_column(DateTime)
+    end_time: Mapped[datetime] = mapped_column(DateTime)
+    status: Mapped[str] = mapped_column(String, default="pending")
 
-    # New fields for recurring bookings
-    is_recurring = Column(Boolean, default=False)
-    recurrence_pattern = Column(Enum(RecurrencePattern), nullable=True)
-    recurrence_end_date = Column(DateTime, nullable=True)
-    parent_booking_id = Column(Integer, ForeignKey("bookings.id"), nullable=True) # For individual instances of a recurring series
-
-    owner = relationship("Owner", back_populates="bookings")
-    service = relationship("Service")
-    
-    # Self-referencing relationship for parent/child bookings
-    recurring_series = relationship("Booking", remote_side=[id], backref="recurring_instances")
+    service: Mapped["Service"] = relationship("Service", back_populates="bookings")
+    owner: Mapped["Owner"] = relationship("Owner", back_populates="bookings")
