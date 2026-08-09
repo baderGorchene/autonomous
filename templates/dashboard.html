@@ -1,235 +1,313 @@
-<!DOCTYPE html>
-<html lang="{{ request.state.locale if request.state.locale else 'en' }}">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _('Owner Dashboard') }} - BookSlot</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <style>
-        body {
-            background-color: #f8f9fa;
-        }
-        .navbar-brand {
-            font-weight: bold;
-        }
-        .sidebar {
-            background-color: #343a40;
-            color: white;
-            min-height: 100vh;
-        }
-        .sidebar .nav-link {
-            color: rgba(255, 255, 255, 0.75);
-        }
-        .sidebar .nav-link.active, .sidebar .nav-link:hover {
-            color: white;
-            background-color: #495057;
-        }
-        .content {
-            padding-top: 20px;
-        }
-        .card {
-            margin-bottom: 20px;
-        }
-        .chart-container {
-            position: relative;
-            height: 300px;
-            width: 100%;
-        }
-        .language-switcher {
-            min-width: 100px;
-        }
-    </style>
-</head>
-<body>
-    <div class="d-flex" id="wrapper">
-        <div class="sidebar d-flex flex-column p-3">
-            <a href="#" class="navbar-brand text-white mb-4">{{ _('BookSlot') }}</a>
-            <ul class="nav nav-pills flex-column mb-auto">
-                <li class="nav-item">
-                    <a href="/owner/dashboard" class="nav-link active text-white">
-                        <i class="bi bi-speedometer2 me-2"></i> {{ _('Dashboard') }}
-                    </a>
-                </li>
-                <li>
-                    <a href="/owner/services/" class="nav-link text-white">
-                        <i class="bi bi-calendar-check me-2"></i> {{ _('Services & Availability') }}
-                    </a>
-                </li>
-                <li>
-                    <a href="/owner/profile" class="nav-link text-white">
-                        <i class="bi bi-person me-2"></i> {{ _('Profile') }}
-                    </a>
-                </li>
-                <li>
-                    <a href="/owner/subscription" class="nav-link text-white">
-                        <i class="bi bi-credit-card me-2"></i> {{ _('Subscription') }}
-                    </a>
-                </li>
-                <li>
-                    <a href="/admin/dashboard" class="nav-link text-white">
-                        <i class="bi bi-person-gear me-2"></i> {{ _('Admin Panel') }}
-                    </a>
-                </li>
-            </ul>
-            <hr>
-            <div class="dropdown">
-                <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
-                    <img src="https://github.com/twbs.png" alt="" width="32" height="32" class="rounded-circle me-2">
-                    <strong>{{ owner_data.owner.name }}</strong>
-                </a>
-                <ul class="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="dropdownUser1">
-                    <li><a class="dropdown-item" href="/owner/profile">{{ _('Profile') }}</a></li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item" href="/logout">{{ _('Sign out') }}</a></li>
-                </ul>
+{% extends "base.html" %}
+{% block title %}{{ gettext('Dashboard') }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto p-4 md:p-8">
+    <h1 class="text-3xl font-bold mb-6 text-gray-800">{{ gettext('Welcome,') }} {{ owner.username }}!</h1>
+
+    {% if request.query_params.status == 'profile_updated' %}
+    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
+        <strong class="font-bold">{{ gettext('Success!') }}</strong>
+        <span class="block sm:inline">{{ gettext('Your profile has been updated.') }}</span>
+    </div>
+    {% elif request.query_params.status == 'service_added' %}
+    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
+        <strong class="font-bold">{{ gettext('Success!') }}</strong>
+        <span class="block sm:inline">{{ gettext('Service added successfully.') }}</span>
+    </div>
+    {% elif request.query_params.status == 'availability_added' %}
+    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
+        <strong class="font-bold">{{ gettext('Success!') }}</strong>
+        <span class="block sm:inline">{{ gettext('Availability added successfully.') }}</span>
+    </div>
+    {% endif %}
+
+    {% if request.query_params.error %}
+    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+        <strong class="font-bold">{{ gettext('Error!') }}</strong>
+        <span class="block sm:inline">{{ request.query_params.error }}</span>
+    </div>
+    {% endif %}
+
+    <!-- Language Toggle -->
+    <div class="mb-6 flex justify-end space-x-2">
+        <a href="?locale=en" class="px-3 py-1 border rounded {% if owner.locale == 'en' %}bg-blue-500 text-white{% else %}bg-gray-200 text-gray-700{% endif %}">English</a>
+        <a href="?locale=ar" class="px-3 py-1 border rounded {% if owner.locale == 'ar' %}bg-blue-500 text-white{% else %}bg-gray-200 text-gray-700{% endif %}">العربية</a>
+        <a href="?locale=fr" class="px-3 py-1 border rounded {% if owner.locale == 'fr' %}bg-blue-500 text-white{% else %}bg-gray-200 text-gray-700{% endif %}">Français</a>
+    </div>
+
+    <!-- Profile Settings Section -->
+    <div class="bg-white shadow rounded-lg p-6 mb-8">
+        <h2 class="text-2xl font-semibold mb-4 text-gray-700">{{ gettext('Profile Settings') }}</h2>
+        <form action="/dashboard/update_profile" method="POST" class="space-y-4">
+            <div>
+                <label for="email" class="block text-sm font-medium text-gray-700">{{ gettext('Email') }}</label>
+                <input type="email" id="email" name="email" value="{{ owner.email }}" required
+                       class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
             </div>
-        </div>
-        <div id="page-content-wrapper" class="flex-grow-1">
-            <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
-                <div class="container-fluid">
-                    <button class="btn btn-primary d-lg-none" id="sidebarToggle"><i class="bi bi-list"></i></button>
-                    <div class="d-flex align-items-center ms-auto">
-                        <form id="languageForm" class="me-3">
-                            <select name="locale" id="locale-select" class="form-select form-select-sm language-switcher" onchange="this.form.submit()">
-                                <option value="en" {% if request.state.locale == 'en' %}selected{% endif %}>English</option>
-                                <option value="ar" {% if request.state.locale == 'ar' %}selected{% endif %}>العربية</option>
-                                <option value="fr" {% if request.state.locale == 'fr' %}selected{% endif %}>Français</option>
-                            </select>
-                            <input type="hidden" name="redirect_url" value="{{ request.url }}">
-                        </form>
-                        <a href="/logout" class="btn btn-outline-secondary btn-sm">{{ _('Logout') }}</a>
-                    </div>
-                </div>
-            </nav>
+            <div>
+                <label for="phone_number" class="block text-sm font-medium text-gray-700">{{ gettext('Phone Number') }}</label>
+                <input type="text" id="phone_number" name="phone_number" value="{{ owner.phone_number if owner.phone_number else '' }}"
+                       class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+            </div>
+            <div>
+                <label for="currency" class="block text-sm font-medium text-gray-700">{{ gettext('Currency') }}</label>
+                <select id="currency" name="currency" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                    <option value="USD" {% if owner.currency == 'USD' %}selected{% endif %}>USD</option>
+                    <option value="EUR" {% if owner.currency == 'EUR' %}selected{% endif %}>EUR</option>
+                    <option value="SAR" {% if owner.currency == 'SAR' %}selected{% endif %}>SAR</option>
+                    <option value="AED" {% if owner.currency == 'AED' %}selected{% endif %}>AED</option>
+                    <option value="EGP" {% if owner.currency == 'EGP' %}selected{% endif %}>EGP</option>
+                    <option value="KWD" {% if owner.currency == 'KWD' %}selected{% endif %}>KWD</option>
+                    <option value="QAR" {% if owner.currency == 'QAR' %}selected{% endif %}>QAR</option>
+                    <option value="BHD" {% if owner.currency == 'BHD' %}selected{% endif %}>BHD</option>
+                    <option value="OMR" {% if owner.currency == 'OMR' %}selected{% endif %}>OMR</option>
+                    <option value="GBP" {% if owner.currency == 'GBP' %}selected{% endif %}>GBP</option>
+                </select>
+            </div>
+            <div>
+                <label for="locale" class="block text-sm font-medium text-gray-700">{{ gettext('Preferred Language') }}</label>
+                <select id="locale" name="locale" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                    <option value="en" {% if owner.locale == 'en' %}selected{% endif %}>English</option>
+                    <option value="ar" {% if owner.locale == 'ar' %}selected{% endif %}>العربية</option>
+                    <option value="fr" {% if owner.locale == 'fr' %}selected{% endif %}>Français</option>
+                </select>
+            </div>
+            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">{{ gettext('Update Profile') }}</button>
+        </form>
+    </div>
 
-            <div class="container-fluid content">
-                <h1 class="mt-4">{{ _('Welcome, %s!') % owner_data.owner.name }}</h1>
-                <p class="lead">{{ _('Here\'s an overview of your bookings and business performance.') }}</p>
+    <!-- Subscription Status -->
+    <div class="bg-white shadow rounded-lg p-6 mb-8">
+        <h2 class="text-2xl font-semibold mb-4 text-gray-700">{{ gettext('Subscription Status') }}</h2>
+        <p class="text-lg text-gray-800 mb-4">
+            {{ gettext('Current Plan:') }} <span class="font-bold capitalize">{{ owner.subscription_status }}</span>
+        </p>
+        {% if owner.subscription_status == 'free' %}
+        <a href="/subscription" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">{{ gettext('Upgrade to Premium') }}</a>
+        {% else %}
+        <a href="/subscription" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">{{ gettext('Manage Subscription') }}</a>
+        {% endif %}
+    </div>
 
-                <div class="card p-4 shadow-sm">
-                    <h3 class="h5 mb-4">{{ _('Upcoming Bookings') }}</h3>
-                    {% if owner_data.upcoming_bookings %}
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle">
-                            <thead>
-                                <tr>
-                                    <th scope="col">{{ _('Date') }}</th>
-                                    <th scope="col">{{ _('Time') }}</th>
-                                    <th scope="col">{{ _('Service') }}</th>
-                                    <th scope="col">{{ _('Customer') }}</th>
-                                    <th scope="col">{{ _('Contact') }}</th>
-                                    <th scope="col">{{ _('Status') }}</th>
-                                    <th scope="col">{{ _('Actions') }}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for booking in owner_data.upcoming_bookings %}
-                                <tr>
-                                    <td>
-                                        {{ booking.date.strftime('%Y-%m-%d') }}
-                                        {% if booking.is_recurring %}
-                                            <span class="badge bg-info text-dark ms-2" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ _('Part of a recurring series') }}">
-                                                <i class="bi bi-arrow-repeat"></i> {{ _('Recurring') }}
-                                            </span>
-                                        {% endif %}
-                                    </td>
-                                    <td>{{ booking.time.strftime('%H:%M') }}</td>
-                                    <td>{{ booking.service.name }}</td>
-                                    <td>{{ booking.customer_name }}</td>
-                                    <td>
-                                        <a href="mailto:{{ booking.customer_email }}" class="text-decoration-none me-2">{{ booking.customer_email }}</a>
-                                        {% if booking.customer_phone %}
-                                            <a href="tel:{{ booking.customer_phone }}" class="text-decoration-none">{{ booking.customer_phone }}</a>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if booking.is_cancelled %}
-                                            <span class="badge bg-danger">{{ _('Cancelled') }}</span>
-                                        {% else %}
-                                            <span class="badge bg-success">{{ _('Confirmed') }}</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        <button class="btn btn-sm btn-outline-danger" onclick="cancelBooking({{ booking.id }})">{{ _('Cancel') }}</button>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    {% else %}
-                    <p>{{ _('No upcoming bookings.') }}</p>
-                    {% endif %}
-                </div>
-
-                <div class="row">
-                    <div class="col-lg-6">
-                        <div class="card p-4 shadow-sm">
-                            <h3 class="h5 mb-4">{{ _('Monthly Bookings') }}</h3>
-                            <div class="chart-container">
-                                <canvas id="monthlyBookingsChart"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-6">
-                        <div class="card p-4 shadow-sm">
-                            <h3 class="h5 mb-4">{{ _('Popular Services') }}</h3>
-                            <div class="chart-container">
-                                <canvas id="popularServicesChart"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card p-4 shadow-sm">
-                    <h3 class="h5 mb-4">{{ _('Subscription Status') }}</h3>
-                    {% if owner_data.subscription %}
-                        <p>{{ _('Plan:') }} {% if owner_data.owner.is_premium %}{{ _('Premium') }}{% else %}{{ _('Free') }}{% endif %}</p>
-                        <p>{{ _('Status:') }} {{ owner_data.subscription.status | capitalize }}</p>
-                        {% if owner_data.subscription.current_period_end %}
-                            <p>{{ _('Next billing date:') }} {{ owner_data.subscription.current_period_end.strftime('%Y-%m-%d') }}</p>
-                        {% endif %}
-                        <a href="/owner/subscription" class="btn btn-primary">{{ _('Manage Subscription') }}</a>
-                    {% else %}
-                        <p>{{ _('You are currently on the Free plan.') }}</p>
-                        <a href="/owner/subscription" class="btn btn-primary">{{ _('Upgrade to Premium') }}</a>
-                    {% endif %}
-                </div>
+    <!-- Analytics Section -->
+    <div class="bg-white shadow rounded-lg p-6 mb-8">
+        <h2 class="text-2xl font-semibold mb-4 text-gray-700">{{ gettext('Analytics') }}</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <h3 class="text-xl font-medium mb-3 text-gray-600">{{ gettext('Monthly Bookings (Last 12 Months)') }}</h3>
+                <canvas id="monthlyBookingsChart"></canvas>
+            </div>
+            <div>
+                <h3 class="text-xl font-medium mb-3 text-gray-600">{{ gettext('Popular Services') }}</h3>
+                <canvas id="popularServicesChart"></canvas>
             </div>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        document.getElementById('sidebarToggle').addEventListener('click', function() {
-            document.getElementById('wrapper').classList.toggle('toggled');
-        });
+    <!-- Services Section -->
+    <div class="bg-white shadow rounded-lg p-6 mb-8">
+        <h2 class="text-2xl font-semibold mb-4 text-gray-700">{{ gettext('Your Services') }}</h2>
+        <div class="overflow-x-auto mb-6">
+            <table class="min-w-full bg-white">
+                <thead>
+                    <tr>
+                        <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-600">{{ gettext('Name') }}</th>
+                        <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-600">{{ gettext('Duration (min)') }}</th>
+                        <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-600">{{ gettext('Price') }}</th>
+                        <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-600">{{ gettext('Booking Link') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for service in services %}
+                    <tr>
+                        <td class="py-2 px-4 border-b text-gray-800">{{ service.name }}</td>
+                        <td class="py-2 px-4 border-b text-gray-800">{{ service.duration_minutes }}</td>
+                        <td class="py-2 px-4 border-b text-gray-800">{{ service.price / 100 | currency_format(owner.currency) }}</td>
+                        <td class="py-2 px-4 border-b text-gray-800">
+                            <a href="/book/{{ owner.username }}/{{ service.id }}" target="_blank" class="text-blue-500 hover:underline">
+                                {{ gettext('View Page') }}
+                            </a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" class="py-4 text-center text-gray-500">{{ gettext('No services added yet.') }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
 
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl)
-        })
+        <h3 class="text-xl font-semibold mb-3 text-gray-700">{{ gettext('Add New Service') }}</h3>
+        <form action="/dashboard/add_service" method="POST" class="space-y-4">
+            <div>
+                <label for="service_name" class="block text-sm font-medium text-gray-700">{{ gettext('Service Name') }}</label>
+                <input type="text" id="service_name" name="name" required
+                       class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+            </div>
+            <div>
+                <label for="service_description" class="block text-sm font-medium text-gray-700">{{ gettext('Description (optional)') }}</label>
+                <textarea id="service_description" name="description" rows="3"
+                          class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"></textarea>
+            </div>
+            <div>
+                <label for="service_duration" class="block text-sm font-medium text-gray-700">{{ gettext('Duration (minutes)') }}</label>
+                <input type="number" id="service_duration" name="duration_minutes" required min="5" step="5"
+                       class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+            </div>
+            <div>
+                <label for="service_price" class="block text-sm font-medium text-gray-700">{{ gettext('Price') }} ({{ owner.currency }})</label>
+                <input type="number" id="service_price" name="price" required min="0" step="100" placeholder="e.g., 1900 for 19.00"
+                       class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+            </div>
+            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">{{ gettext('Add Service') }}</button>
+        </form>
+    </div>
 
-        document.getElementById('languageForm').addEventListener('submit', function(event) {
-            event.preventDefault();
-            const selectedLocale = document.getElementById('locale-select').value;
-            const currentPath = window.location.pathname;
-            document.cookie = `locale=${selectedLocale}; path=/; httponly=true; samesite=Lax`;
-            window.location.href = currentPath;
-        });
+    <!-- Availability Section -->
+    <div class="bg-white shadow rounded-lg p-6 mb-8">
+        <h2 class="text-2xl font-semibold mb-4 text-gray-700">{{ gettext('Manage Availability') }}</h2>
+        <h3 class="text-xl font-semibold mb-3 text-gray-700">{{ gettext('Add New Availability Slot') }}</h3>
+        <form action="/dashboard/add_availability" method="POST" class="space-y-4">
+            <div>
+                <label for="availability_service_id" class="block text-sm font-medium text-gray-700">{{ gettext('Apply to Service (optional)') }}</label>
+                <select id="availability_service_id" name="service_id" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                    <option value="0">{{ gettext('All Services') }}</option>
+                    {% for service in services %}
+                    <option value="{{ service.id }}">{{ service.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="availability_date" class="block text-sm font-medium text-gray-700">{{ gettext('Date (for one-off)') }}</label>
+                <input type="date" id="availability_date" name="date_str"
+                       class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="availability_start_time" class="block text-sm font-medium text-gray-700">{{ gettext('Start Time') }}</label>
+                    <input type="time" id="availability_start_time" name="start_time_str" required
+                           class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                </div>
+                <div>
+                    <label for="availability_end_time" class="block text-sm font-medium text-gray-700">{{ gettext('End Time') }}</label>
+                    <input type="time" id="availability_end_time" name="end_time_str" required
+                           class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                </div>
+            </div>
+            <div class="border-t pt-4 mt-4">
+                <h4 class="text-lg font-medium mb-2 text-gray-700">{{ gettext('Recurrence (optional)') }}</h4>
+                <div>
+                    <label for="recurrence_type" class="block text-sm font-medium text-gray-700">{{ gettext('Recurrence Type') }}</label>
+                    <select id="recurrence_type" name="recurrence_type" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                        <option value="None">{{ gettext('None') }}</option>
+                        <option value="DAILY">{{ gettext('Daily') }}</option>
+                        <option value="WEEKLY">{{ gettext('Weekly') }}</option>
+                        <option value="MONTHLY">{{ gettext('Monthly') }}</option>
+                    </select>
+                </div>
+                <div id="recurrence_value_container" class="mt-4 hidden">
+                    <label for="recurrence_value" class="block text-sm font-medium text-gray-700">{{ gettext('Recurrence Value') }}</label>
+                    <input type="text" id="recurrence_value" name="recurrence_value" placeholder="e.g., MON,WED,FRI or 15" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                    <p class="text-sm text-gray-500 mt-1">{{ gettext('For Weekly: comma-separated 3-letter day codes (e.g., MON,WED,FRI). For Monthly: day of month (e.g., 15).') }}</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                    <div>
+                        <label for="recurrence_start_date" class="block text-sm font-medium text-gray-700">{{ gettext('Recurrence Start Date') }}</label>
+                        <input type="date" id="recurrence_start_date" name="recurrence_start_date_str"
+                               class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                    </div>
+                    <div>
+                        <label for="recurrence_end_date" class="block text-sm font-medium text-gray-700">{{ gettext('Recurrence End Date (optional)') }}</label>
+                        <input type="date" id="recurrence_end_date" name="recurrence_end_date_str"
+                               class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                    </div>
+                </div>
+            </div>
+            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">{{ gettext('Add Availability') }}</button>
+        </form>
+    </div>
 
-        const monthlyBookingsCtx = document.getElementById('monthlyBookingsChart').getContext('2d');
-        const monthlyBookingsData = {{ owner_data.monthly_bookings_chart_data | tojson }};
+    <!-- Upcoming Bookings Section -->
+    <div class="bg-white shadow rounded-lg p-6">
+        <h2 class="text-2xl font-semibold mb-4 text-gray-700">{{ gettext('Upcoming Bookings') }}</h2>
+        <div class="overflow-x-auto">
+            <table class="min-w-full bg-white">
+                <thead>
+                    <tr>
+                        <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-600">{{ gettext('Date') }}</th>
+                        <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-600">{{ gettext('Time') }}</th>
+                        <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-600">{{ gettext('Service') }}</th>
+                        <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-600">{{ gettext('Customer Name') }}</th>
+                        <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-600">{{ gettext('Customer Email') }}</th>
+                        <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-600">{{ gettext('Customer Phone') }}</th>
+                        <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-600">{{ gettext('Status') }}</th>
+                        <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-600">{{ gettext('Recurring') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for booking in upcoming_bookings %}
+                    <tr>
+                        <td class="py-2 px-4 border-b text-gray-800">{{ booking.date.strftime('%Y-%m-%d') }}</td>
+                        <td class="py-2 px-4 border-b text-gray-800">{{ booking.time.strftime('%H:%M') }}</td>
+                        <td class="py-2 px-4 border-b text-gray-800">{{ booking.service.name }}</td>
+                        <td class="py-2 px-4 border-b text-gray-800">
+                            {% if booking.customer %}
+                                {{ booking.customer.name }}
+                            {% else %}
+                                {{ booking.customer_name }}
+                            {% endif %}
+                        </td>
+                        <td class="py-2 px-4 border-b text-gray-800">
+                            {% if booking.customer %}
+                                {{ booking.customer.email }}
+                            {% else %}
+                                {{ booking.customer_email }}
+                            {% endif %}
+                        </td>
+                        <td class="py-2 px-4 border-b text-gray-800">
+                            {% if booking.customer %}
+                                {{ booking.customer.phone_number if booking.customer.phone_number else gettext('N/A') }}
+                            {% else %}
+                                {{ booking.customer_phone if booking.customer_phone else gettext('N/A') }}
+                            {% endif %}
+                        </td>
+                        <td class="py-2 px-4 border-b text-gray-800">{{ gettext('Confirmed') if booking.is_confirmed else gettext('Pending') }}</td>
+                        <td class="py-2 px-4 border-b text-gray-800">{{ gettext('Yes') if booking.is_recurring else gettext('No') }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="8" class="py-4 text-center text-gray-500">{{ gettext('No upcoming bookings.') }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Analytics Charts
+        const monthlyBookingsData = {{ monthly_bookings_json | tojson }};
+        const popularServicesData = {{ popular_services_json | tojson }};
+
         const monthlyLabels = monthlyBookingsData.map(data => data.month);
         const monthlyCounts = monthlyBookingsData.map(data => data.count);
+
+        const popularServiceNames = popularServicesData.map(data => data.service_name);
+        const popularServiceCounts = popularServicesData.map(data => data.booking_count);
+
+        // Monthly Bookings Chart
+        const monthlyBookingsCtx = document.getElementById('monthlyBookingsChart').getContext('2d');
         new Chart(monthlyBookingsCtx, {
             type: 'bar',
             data: {
                 labels: monthlyLabels,
                 datasets: [{
-                    label: '{{ _("Number of Bookings") }}',
+                    label: '{{ gettext("Bookings") }}',
                     data: monthlyCounts,
                     backgroundColor: 'rgba(75, 192, 192, 0.6)',
                     borderColor: 'rgba(75, 192, 192, 1)',
@@ -238,36 +316,42 @@
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false,
                 scales: {
                     y: {
                         beginAtZero: true,
                         title: {
                             display: true,
-                            text: '{{ _("Bookings") }}'
+                            text: '{{ gettext("Number of Bookings") }}'
                         }
                     },
                     x: {
                         title: {
                             display: true,
-                            text: '{{ _("Month") }}'
+                            text: '{{ gettext("Month") }}'
                         }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    title: {
+                        display: true,
+                        text: '{{ gettext("Monthly Booking Trends") }}'
                     }
                 }
             }
         });
 
+        // Popular Services Chart
         const popularServicesCtx = document.getElementById('popularServicesChart').getContext('2d');
-        const popularServicesData = {{ owner_data.popular_services_chart_data | tojson }};
-        const serviceNames = popularServicesData.map(data => data.service_name);
-        const serviceCounts = popularServicesData.map(data => data.booking_count);
         new Chart(popularServicesCtx, {
             type: 'pie',
             data: {
-                labels: serviceNames,
+                labels: popularServiceNames,
                 datasets: [{
-                    label: '{{ _("Booking Count") }}',
-                    data: serviceCounts,
+                    label: '{{ gettext("Bookings") }}',
+                    data: popularServiceCounts,
                     backgroundColor: [
                         'rgba(255, 99, 132, 0.6)',
                         'rgba(54, 162, 235, 0.6)',
@@ -287,25 +371,32 @@
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false,
                 plugins: {
                     legend: {
                         position: 'top',
                     },
                     title: {
                         display: true,
-                        text: '{{ _("Popular Services by Booking Count") }}'
+                        text: '{{ gettext("Popular Services by Booking Count") }}'
                     }
                 }
             }
         });
 
-        function cancelBooking(bookingId) {
-            if (confirm("{{ _('Are you sure you want to cancel this booking?') }}")) {
-                console.log("Cancelling booking with ID:", bookingId);
-                alert("{{ _('Booking cancellation functionality not fully implemented in UI.') }}");
+        // Recurrence form logic
+        const recurrenceTypeSelect = document.getElementById('recurrence_type');
+        const recurrenceValueContainer = document.getElementById('recurrence_value_container');
+
+        function toggleRecurrenceValueVisibility() {
+            if (recurrenceTypeSelect.value === 'WEEKLY' || recurrenceTypeSelect.value === 'MONTHLY') {
+                recurrenceValueContainer.classList.remove('hidden');
+            } else {
+                recurrenceValueContainer.classList.add('hidden');
             }
         }
-    </script>
-</body>
-</html>
+
+        recurrenceTypeSelect.addEventListener('change', toggleRecurrenceValueVisibility);
+        toggleRecurrenceValueVisibility(); // Set initial state
+    });
+</script>
+{% endblock %}

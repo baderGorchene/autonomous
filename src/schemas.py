@@ -1,30 +1,26 @@
 from pydantic import BaseModel, EmailStr
 from datetime import date, time, datetime
-from typing import List, Optional
-from .models import RecurrenceType
+from typing import List, Optional, Dict
 
-class OwnerBase(BaseModel):
-    email: EmailStr
-    name: str
-    phone: Optional[str] = None
+import enum
 
-class OwnerCreate(OwnerBase):
-    password: str
+class RecurrenceType(str, enum.Enum):
+    DAILY = "DAILY"
+    WEEKLY = "WEEKLY"
+    MONTHLY = "MONTHLY"
 
-class Owner(OwnerBase):
-    id: int
-    is_premium: bool = False
-    stripe_customer_id: Optional[str] = None
-    stripe_subscription_id: Optional[str] = None
+class Token(BaseModel):
+    access_token: str
+    token_type: str
 
-    class Config:
-        orm_mode = True
+class TokenData(BaseModel):
+    username: Optional[str] = None
 
 class ServiceBase(BaseModel):
     name: str
     description: Optional[str] = None
     duration_minutes: int
-    price: float
+    price: int
 
 class ServiceCreate(ServiceBase):
     pass
@@ -32,40 +28,17 @@ class ServiceCreate(ServiceBase):
 class Service(ServiceBase):
     id: int
     owner_id: int
-    bookings: List["Booking"] = []
     availabilities: List["Availability"] = []
-
-    class Config:
-        orm_mode = True
-
-class BookingBase(BaseModel):
-    service_id: int
-    date: date
-    time: time
-    customer_name: str
-    customer_email: EmailStr
-    customer_phone: Optional[str] = None
-    is_recurring: bool = False
-    recurrence_type: Optional[RecurrenceType] = None
-    recurrence_value: Optional[str] = None
-    recurrence_end_date: Optional[date] = None
-
-class BookingCreate(BookingBase):
-    pass
-
-class Booking(BookingBase):
-    id: int
-    owner_id: int
-    created_at: datetime
+    bookings: List["Booking"] = []
 
     class Config:
         orm_mode = True
 
 class AvailabilityBase(BaseModel):
+    service_id: Optional[int] = None
+    date: Optional[date] = None
     start_time: time
     end_time: time
-    date: Optional[date] = None
-    service_id: Optional[int] = None
     recurrence_type: Optional[RecurrenceType] = None
     recurrence_value: Optional[str] = None
     recurrence_start_date: Optional[date] = None
@@ -81,10 +54,91 @@ class Availability(AvailabilityBase):
     class Config:
         orm_mode = True
 
-class Token(BaseModel):
-    access_token: str
-    token_type: str
+class CustomerBase(BaseModel):
+    name: str
+    email: EmailStr
+    phone_number: Optional[str] = None
 
-# Update forward refs
+class CustomerCreate(CustomerBase):
+    owner_id: int
+
+class Customer(CustomerBase):
+    id: int
+    owner_id: int
+    bookings: List["Booking"] = []
+
+    class Config:
+        orm_mode = True
+
+class BookingBase(BaseModel):
+    service_id: int
+    date: date
+    time: time
+    customer_name: str
+    customer_email: EmailStr
+    customer_phone: Optional[str] = None
+    is_recurring: Optional[bool] = False
+    recurrence_id: Optional[str] = None
+    customer_id: Optional[int] = None
+
+class BookingCreate(BookingBase):
+    pass
+
+class Booking(BookingBase):
+    id: int
+    owner_id: int
+    is_confirmed: bool
+    created_at: datetime
+    service: "Service"
+    customer: Optional[Customer]
+
+    class Config:
+        orm_mode = True
+
+class OwnerBase(BaseModel):
+    username: str
+    email: EmailStr
+    phone_number: Optional[str] = None
+    currency: Optional[str] = "USD"
+    locale: Optional[str] = "en"
+
+class OwnerCreate(OwnerBase):
+    password: str
+
+class OwnerUpdate(BaseModel):
+    email: Optional[EmailStr] = None
+    phone_number: Optional[str] = None
+    currency: Optional[str] = None
+    locale: Optional[str] = None
+
+class Owner(OwnerBase):
+    id: int
+    is_active: bool
+    created_at: datetime
+    services: List[Service] = []
+    availabilities: List[Availability] = []
+    bookings: List[Booking] = []
+    customers: List[Customer] = []
+    stripe_customer_id: Optional[str]
+    stripe_subscription_id: Optional[str]
+    subscription_status: str
+
+    class Config:
+        orm_mode = True
+
+class OwnerLogin(BaseModel):
+    username: str
+    password: str
+
+class SubscriptionUpdate(BaseModel):
+    subscription_status: str
+
+class StripeCheckoutSessionResponse(BaseModel):
+    session_id: str
+
+# Update forward references
 Service.update_forward_refs()
+Availability.update_forward_refs()
+Customer.update_forward_refs()
 Booking.update_forward_refs()
+Owner.update_forward_refs()

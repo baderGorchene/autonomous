@@ -1,1 +1,1 @@
-Fix: Resolve 'No module named pytest' and add recurring booking tests
+Fix: Resolve 'No module named pytest' error by providing comprehensive requirements.txt

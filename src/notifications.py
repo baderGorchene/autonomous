@@ -1,110 +1,134 @@
-from datetime import date, time
+from datetime import datetime
 from typing import Optional
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 from twilio.rest import Client
-import logging
-
 from .config import settings
+from . import models, i18n
 
-logger = logging.getLogger(__name__)
+def send_booking_confirmation(booking: models.Booking, owner: models.Owner, service: models.Service):
+    _ = i18n.gettext # Initialize gettext for this context
 
-def send_email(to_email: str, subject: str, html_content: str):
-    """Sends an email using SendGrid."""
+    customer_name = booking.customer.name if booking.customer else booking.customer_name
+    customer_email = booking.customer.email if booking.customer else booking.customer_email
+
+    if not customer_email:
+        print(f"Skipping customer email confirmation for booking {booking.id}: No customer email provided.")
+        return
+
+    subject = _("Your Booking Confirmation for {service_name}").format(service_name=service.name)
+    body = _("""
+        Dear {customer_name},
+
+        Your booking for {service_name} on {date} at {time} has been confirmed.
+
+        Service Provider: {owner_name}
+        Service: {service_name}
+        Date: {date}
+        Time: {time}
+        Duration: {duration_minutes} minutes
+
+        We look forward to seeing you!
+
+        Best regards,
+        The {owner_name} Team
+    """).format(
+        customer_name=customer_name,
+        service_name=service.name,
+        date=booking.date.strftime("%Y-%m-%d"),
+        time=booking.time.strftime("%H:%M"),
+        duration_minutes=service.duration_minutes,
+        owner_name=owner.username
+    )
+
     try:
         message = Mail(
-            from_email='no-reply@bookslot.app', # Replace with your verified sender
-            to_emails=to_email,
+            from_email='no-reply@bookslot.app',
+            to_emails=customer_email,
             subject=subject,
-            html_content=html_content
+            html_content=f'<p>{body.replace("\n", "<br>")}</p>'
         )
-        sendgrid_client = SendGridAPIClient(settings.SENDGRID_API_KEY)
-        response = sendgrid_client.send(message)
-        logger.info(f"Email sent to {to_email}. Status Code: {response.status_code}")
-        return True
+        sg = SendGridAPIClient(settings.SENDGRID_API_KEY)
+        response = sg.send(message)
+        print(f"Customer email confirmation sent. Status Code: {response.status_code}")
     except Exception as e:
-        logger.error(f"Error sending email to {to_email}: {e}")
-        return False
+        print(f"Error sending customer email confirmation for booking {booking.id}: {e}")
 
-def send_whatsapp_message(to_phone_number: str, message_body: str):
-    """Sends a WhatsApp message using Twilio."""
-    try:
-        client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
-        message = client.messages.create(
-            from_=f"whatsapp:{settings.TWILIO_PHONE_NUMBER}", # Twilio WhatsApp number
-            to=f"whatsapp:{to_phone_number}",
-            body=message_body
+
+def send_booking_notification_to_owner(booking: models.Booking, owner: models.Owner, service: models.Service):
+    _ = i18n.gettext # Initialize gettext for this context
+
+    owner_email = owner.email
+    owner_phone = owner.phone_number
+
+    customer_name = booking.customer.name if booking.customer else booking.customer_name
+    customer_email = booking.customer.email if booking.customer else booking.customer_email
+    customer_phone = booking.customer.phone_number if booking.customer else booking.customer_phone
+
+    # Email notification to owner
+    if owner_email:
+        email_subject = _("New Booking for {service_name}").format(service_name=service.name)
+        email_body = _("""
+            Dear {owner_name},
+
+            You have a new booking!
+
+            Customer Name: {customer_name}
+            Customer Email: {customer_email}
+            Customer Phone: {customer_phone}
+            Service: {service_name}
+            Date: {date}
+            Time: {time}
+            Duration: {duration_minutes} minutes
+            
+            Booking ID: {booking_id}
+            {is_recurring_text}
+        """).format(
+            owner_name=owner.username,
+            customer_name=customer_name,
+            customer_email=customer_email,
+            customer_phone=customer_phone if customer_phone else _("Not provided"),
+            service_name=service.name,
+            date=booking.date.strftime("%Y-%m-%d"),
+            time=booking.time.strftime("%H:%M"),
+            duration_minutes=service.duration_minutes,
+            booking_id=booking.id,
+            is_recurring_text=_("This is a recurring booking.") if booking.is_recurring else ""
         )
-        logger.info(f"WhatsApp message sent to {to_phone_number}. SID: {message.sid}")
-        return True
-    except Exception as e:
-        logger.error(f"Error sending WhatsApp message to {to_phone_number}: {e}")
-        return False
+        try:
+            message = Mail(
+                from_email='no-reply@bookslot.app',
+                to_emails=owner_email,
+                subject=email_subject,
+                html_content=f'<p>{email_body.replace("\n", "<br>")}</p>'
+            )
+            sg = SendGridAPIClient(settings.SENDGRID_API_KEY)
+            response = sg.send(message)
+            print(f"Owner email notification sent. Status Code: {response.status_code}")
+        except Exception as e:
+            print(f"Error sending owner email notification for booking {booking.id}: {e}")
 
-def send_booking_confirmation_email(
-    customer_email: str,
-    owner_email: str,
-    owner_name: str,
-    service_name: str,
-    booking_date: date,
-    booking_time: time,
-    customer_name: str,
-    is_recurring: bool = False
-):
-    """Sends a booking confirmation email to the customer and owner."""
-    date_str = booking_date.strftime("%Y-%m-%d")
-    time_str = booking_time.strftime("%H:%M")
-    
-    recurrence_info = "(Recurring Booking)" if is_recurring else ""
-
-    # To Customer
-    customer_subject = f"Booking Confirmation: {service_name} on {date_str} at {time_str} {recurrence_info}"
-    customer_html = f"""
-    <p>Hi {customer_name},</p>
-    <p>Your booking for <strong>{service_name}</strong> with {owner_name} is confirmed!</p>
-    <p><strong>Date:</strong> {date_str}</p>
-    <p><strong>Time:</strong> {time_str}</p>
-    <p>We look forward to seeing you. {recurrence_info}</p>
-    <p>Best regards,<br>BookSlot Team</p>
-    """
-    send_email(customer_email, customer_subject, customer_html)
-
-    # To Owner
-    owner_subject = f"New Booking: {service_name} on {date_str} at {time_str} by {customer_name} {recurrence_info}"
-    owner_html = f"""
-    <p>Hi {owner_name},</p>
-    <p>A new booking has been made for your service <strong>{service_name}</strong>.</p>
-    <p><strong>Customer:</strong> {customer_name}</p>
-    <p><strong>Email:</strong> {customer_email}</p>
-    <p><strong>Date:</strong> {date_str}</p>
-    <p><strong>Time:</strong> {time_str}</p>
-    <p>This booking is {'' if is_recurring else 'not '}part of a recurring series.</p>
-    <p>Best regards,<br>BookSlot Team</p>
-    """
-    send_email(owner_email, owner_subject, owner_html)
-
-def send_booking_notification_whatsapp(
-    owner_phone: str,
-    owner_name: str,
-    service_name: str,
-    booking_date: date,
-    booking_time: time,
-    customer_name: str,
-    customer_phone: Optional[str] = None,
-    is_recurring: bool = False
-):
-    """Sends a WhatsApp notification to the owner about a new booking."""
-    date_str = booking_date.strftime("%Y-%m-%d")
-    time_str = booking_time.strftime("%H:%M")
-    
-    recurrence_info = "(Recurring)" if is_recurring else ""
-
-    message_body = (
-        f"Hi {owner_name},\n\n"
-        f"New booking for *{service_name}* {recurrence_info}!\n"
-        f"Customer: {customer_name}\n"
-        f"Date: {date_str}\n"
-        f"Time: {time_str}\n"
-        f"Customer Phone: {customer_phone if customer_phone else 'N/A'}"
-    )
-    send_whatsapp_message(owner_phone, message_body)
+    # SMS notification to owner
+    if owner_phone and settings.TWILIO_ACCOUNT_SID and settings.TWILIO_AUTH_TOKEN and settings.TWILIO_PHONE_NUMBER:
+        sms_body = _("""
+            New Booking!
+            Customer: {customer_name} ({customer_phone})
+            Service: {service_name}
+            Date: {date} @ {time}
+        """).format(
+            customer_name=customer_name,
+            customer_phone=customer_phone if customer_phone else _("N/A"),
+            service_name=service.name,
+            date=booking.date.strftime("%Y-%m-%d"),
+            time=booking.time.strftime("%H:%M")
+        )
+        try:
+            client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
+            message = client.messages.create(
+                to=owner_phone,
+                from_=settings.TWILIO_PHONE_NUMBER,
+                body=sms_body
+            )
+            print(f"Owner SMS notification sent. SID: {message.sid}")
+        except Exception as e:
+            print(f"Error sending owner SMS notification for booking {booking.id}: {e}")
