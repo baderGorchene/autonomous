@@ -1,1 +1,1 @@
-Fix: Provide comprehensive requirements.txt to resolve pytest import error
+Fix: Resolve 'No module named pytest' by providing comprehensive requirements.txt
