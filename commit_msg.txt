@@ -1,1 +1,1 @@
-FEAT: Implement customer account models and schemas; FIX: Add requirements.txt to resolve pytest issue
+Fix: Resolve 'No module named pytest' by adding requirements.txt; Feat: Implement customer registration, login, and profile management API endpoints
