@@ -1,3 +1,8 @@
+## Iteration 366
+_2026-08-10 07:43 UTC_
+
+Addressed the 'No module named pytest' error by creating a comprehensive `requirements.txt` file with pinned dependencies. Subsequently, implemented the database models and Pydantic schemas for customer accounts. This includes a new `Customer` model, relationships to `Owner` and `Booking` models, and corresponding Pydantic schemas for creation, update, and display. The `Booking` model and schemas were also updated to include an optional `customer_id` for linking bookings to registered customers.
+
 ## Iteration 365
 _2026-08-10 05:37 UTC_
 

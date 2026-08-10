@@ -1,53 +1,74 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from datetime import date, time, datetime
 from typing import Optional, List
-from .models import RecurrenceType # Import the Enum
+import enum
 
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-
-class TokenData(BaseModel):
-    email: Optional[str] = None
+class RecurrenceType(str, enum.Enum):
+    DAILY = "daily"
+    WEEKLY = "weekly"
+    MONTHLY = "monthly"
 
 class OwnerBase(BaseModel):
-    email: EmailStr
     name: str
-    phone_number: Optional[str] = None
-    locale: str = "en"
+    email: EmailStr
+    phone: Optional[str] = None
 
 class OwnerCreate(OwnerBase):
     password: str
 
-class Owner(OwnerBase):
+class OwnerUpdate(OwnerBase):
+    name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = None
+
+class OwnerInDBBase(OwnerBase):
     id: int
-    is_premium: bool
+    is_active: bool
+    created_at: datetime
+    subscription_status: str
+    stripe_customer_id: Optional[str] = None
+    stripe_subscription_id: Optional[str] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
+
+class OwnerDisplay(OwnerInDBBase):
+    pass
 
 class ServiceBase(BaseModel):
     name: str
     description: Optional[str] = None
-    duration_minutes: int
-    price: float
+    duration_minutes: int = Field(..., gt=0)
+    price: float = Field(..., ge=0)
+    is_active: Optional[bool] = True
 
 class ServiceCreate(ServiceBase):
     pass
 
-class Service(ServiceBase):
+class ServiceUpdate(ServiceBase):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    duration_minutes: Optional[int] = None
+    price: Optional[float] = None
+    is_active: Optional[bool] = None
+
+class ServiceInDBBase(ServiceBase):
     id: int
     owner_id: int
+    created_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
+
+class ServiceDisplay(ServiceInDBBase):
+    pass
 
 class AvailabilityBase(BaseModel):
     service_id: Optional[int] = None
     date: Optional[date] = None
     start_time: time
     end_time: time
-    recurrence_type: RecurrenceType = RecurrenceType.NONE
+    recurrence_type: Optional[RecurrenceType] = None
     recurrence_value: Optional[str] = None
     recurrence_start_date: Optional[date] = None
     recurrence_end_date: Optional[date] = None
@@ -55,70 +76,79 @@ class AvailabilityBase(BaseModel):
 class AvailabilityCreate(AvailabilityBase):
     pass
 
-class Availability(AvailabilityBase):
+class AvailabilityUpdate(AvailabilityBase):
+    service_id: Optional[int] = None
+    date: Optional[date] = None
+    start_time: Optional[time] = None
+    end_time: Optional[time] = None
+    recurrence_type: Optional[RecurrenceType] = None
+    recurrence_value: Optional[str] = None
+    recurrence_start_date: Optional[date] = None
+    recurrence_end_date: Optional[date] = None
+
+class AvailabilityInDBBase(AvailabilityBase):
     id: int
     owner_id: int
+    created_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
-# New Customer Schemas
-class CustomerBase(BaseModel):
-    name: str
-    email: Optional[EmailStr] = None
-    phone_number: Optional[str] = None
-
-class CustomerCreate(CustomerBase):
+class AvailabilityDisplay(AvailabilityInDBBase):
     pass
 
-class Customer(CustomerBase):
+# Customer Schemas
+class CustomerBase(BaseModel):
+    name: str = Field(..., min_length=1, max_length=100)
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = None
+
+class CustomerCreate(CustomerBase):
+    password: Optional[str] = None # Optional for registration, if customer chooses to create an account
+    owner_id: int # To link customer to an owner's booking page
+
+class CustomerUpdate(CustomerBase):
+    pass
+
+class CustomerInDBBase(CustomerBase):
     id: int
     owner_id: int
+    created_at: datetime
+    updated_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
+class CustomerDisplay(CustomerInDBBase):
+    pass
+
+# Update Booking Schemas
 class BookingBase(BaseModel):
     service_id: int
-    date: date
-    time: time
-
-class BookingCreate(BookingBase):
     customer_name: str
     customer_email: EmailStr
     customer_phone: Optional[str] = None
-    is_recurring: bool = False
-    recurrence_end_date: Optional[date] = None
+    date: date
+    time: time
+    is_recurring: Optional[bool] = False
+    recurrence_id: Optional[str] = None
+    customer_id: Optional[int] = None # New: Optional customer ID
 
-class Booking(BookingBase):
+class BookingCreate(BookingBase):
+    pass
+
+class BookingUpdate(BookingBase):
+    is_confirmed: Optional[bool] = None
+
+class BookingInDBBase(BookingBase):
     id: int
     owner_id: int
-    customer_id: Optional[int] = None
     is_confirmed: bool
-    recurrence_id: Optional[str] = None
-    
-    customer: Optional[Customer] = None
-    service: Optional[Service] = None
+    created_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
-# For analytics
-class MonthlyBookingsData(BaseModel):
-    month: str
-    count: int
-
-class PopularServicesData(BaseModel):
-    service_name: str
-    booking_count: int
-
-class AnalyticsData(BaseModel):
-    monthly_bookings: List[MonthlyBookingsData]
-    popular_services: List[PopularServicesData]
-
-# For subscription management
-class SubscriptionStatus(BaseModel):
-    is_premium: bool
-    current_plan: str = "Free"
-    next_billing_date: Optional[date] = None
-    subscription_active: bool = False
+class BookingDisplay(BookingInDBBase):
+    service: Optional[ServiceDisplay] = None
+    customer: Optional[CustomerDisplay] = None # New: Optional customer details

@@ -1,1 +1,1 @@
-Fix: Resolve 'No module named pytest' by providing comprehensive requirements.txt
+FEAT: Implement customer account models and schemas; FIX: Add requirements.txt to resolve pytest issue
