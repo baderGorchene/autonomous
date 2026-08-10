@@ -3,21 +3,17 @@ from typing import Optional
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 
-from src.config import settings
-from sqlalchemy.orm import Session
-from . import models
+from .config import settings
 
-# Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-def verify_password(plain_password, hashed_password):
+def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
-def get_password_hash(password):
+def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
-# JWT functions
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
@@ -27,13 +23,10 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
 
-def decode_access_token(token: str):
-    return jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+def create_owner_access_token(owner_id: int, expires_delta: Optional[timedelta] = None) -> str:
+    data = {"sub": str(owner_id), "type": "owner"}
+    return create_access_token(data, expires_delta)
 
-def authenticate_owner(db: Session, email: str, password: str):
-    owner = db.query(models.Owner).filter(models.Owner.email == email).first()
-    if not owner:
-        return None
-    if not verify_password(password, owner.hashed_password):
-        return None
-    return owner
+def create_customer_access_token(customer_id: int, owner_id: int, expires_delta: Optional[timedelta] = None) -> str:
+    data = {"sub": str(customer_id), "owner_id": owner_id, "type": "customer"}
+    return create_access_token(data, expires_delta)

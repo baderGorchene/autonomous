@@ -1,0 +1,48 @@
+{# src/templates/owner_customers_dashboard.html #}
+{% extends "base.html" %}
+{% block title %}{{ gettext('Customers Dashboard') }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">{{ gettext('Your Customers') }}</h2>
+
+    <div class="card p-3 mb-4 shadow-sm">
+        <h5 class="card-title">{{ gettext('Customer List') }}</h5>
+        {% if customers %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>{{ gettext('ID') }}</th>
+                        <th>{{ gettext('Name') }}</th>
+                        <th>{{ gettext('Email') }}</th>
+                        <th>{{ gettext('Phone') }}</th>
+                        <th>{{ gettext('Account') }}</th>
+                        <th>{{ gettext('Actions') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for customer in customers %}
+                    <tr>
+                        <td>{{ customer.id }}</td>
+                        <td>{{ customer.name if customer.name else gettext('N/A') }}</td>
+                        <td>{{ customer.email }}</td>
+                        <td>{{ customer.phone_number if customer.phone_number else gettext('N/A') }}</td>
+                        <td>{% if customer.hashed_password %}{{ gettext('Yes') }}{% else %}{{ gettext('No') }}{% endif %}</td>
+                        <td>
+                            {# Add actions like view bookings, edit customer, etc. #}
+                            <button class="btn btn-sm btn-info" disabled>{{ gettext('View Bookings') }}</button>
+                            <button class="btn btn-sm btn-warning" disabled>{{ gettext('Edit') }}</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p>{{ gettext('No customers registered yet.') }}</p>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

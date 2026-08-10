@@ -1,60 +1,255 @@
-<!DOCTYPE html>
-<html lang="{{ request.cookies.get('lang', 'en') }}">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ gettext('Owner Details') }} - {{ owner.name }}</title>
-    <link rel="stylesheet" href="/static/css/style.css">
-</head>
-<body>
-    <header>
-        <h1>{{ gettext('Owner Details') }}</h1>
-        <nav>
-            <a href="/admin/dashboard">{{ gettext('Admin Dashboard') }}</a>
-            <a href="/logout">{{ gettext('Logout') }}</a>
-            <div class="lang-toggle">
-                <a href="#" onclick="changeLanguage('en'); return false;">EN</a> |
-                <a href="#" onclick="changeLanguage('ar'); return false;">AR</a> |
-                <a href="#" onclick="changeLanguage('fr'); return false;">FR</a>
+{# src/templates/admin_owner_detail.html #}
+{% extends "base.html" %}
+{% block title %}{{ gettext('Admin: Edit Owner') }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">{{ gettext('Edit Owner') }}: {{ owner.name }} ({{ owner.email }})</h2>
+
+    {# Owner Details and Update Form #}
+    <div class="card p-4 mb-4 shadow-sm">
+        <h4 class="card-title">{{ gettext('Owner Information') }}</h4>
+        <form id="ownerUpdateForm" action="/admin/owner/{{ owner.id }}/update" method="post">
+            <div class="mb-3">
+                <label for="ownerName" class="form-label">{{ gettext('Name') }}</label>
+                <input type="text" class="form-control" id="ownerName" name="name" value="{{ owner.name if owner.name else '' }}">
             </div>
-        </nav>
-    </header>
-    <main>
-        <h2>{{ gettext('Details for') }} {{ owner.name }}</h2>
-        <form action="/admin/owners/{{ owner.id }}/update" method="POST">
-            <label for="name">{{ gettext('Name') }}:</label>
-            <input type="text" id="name" name="name" value="{{ owner.name }}" required><br>
-
-            <label for="email">{{ gettext('Email') }}:</label>
-            <input type="email" id="email" name="email" value="{{ owner.email }}" required><br>
-
-            <label for="phone">{{ gettext('Phone') }}:</label>
-            <input type="text" id="phone" name="phone" value="{{ owner.phone if owner.phone else '' }}"><br>
-
-            <label for="subscription_status">{{ gettext('Subscription Status') }}:</label>
-            <select id="subscription_status" name="subscription_status">
-                <option value="free" {% if owner.subscription_status == 'free' %}selected{% endif %}>{{ gettext('Free') }}</option>
-                <option value="premium" {% if owner.subscription_status == 'premium' %}selected{% endif %}>{{ gettext('Premium') }}</option>
-            </select><br>
-
-            <label for="is_admin">{{ gettext('Is Admin') }}:</label>
-            <input type="checkbox" id="is_admin" name="is_admin" value="True" {% if owner.is_admin %}checked{% endif %}><br>
-
-            <button type="submit">{{ gettext('Update Owner') }}</button>
+            <div class="mb-3">
+                <label for="ownerEmail" class="form-label">{{ gettext('Email') }}</label>
+                <input type="email" class="form-control" id="ownerEmail" name="email" value="{{ owner.email }}">
+            </div>
+            <div class="mb-3">
+                <label for="ownerPhone" class="form-label">{{ gettext('Phone Number') }}</label>
+                <input type="text" class="form-control" id="ownerPhone" name="phone_number" value="{{ owner.phone_number if owner.phone_number else '' }}">
+            </div>
+            <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" id="ownerIsActive" name="is_active" {% if owner.is_active %}checked{% endif %}>
+                <label class="form-check-label" for="ownerIsActive">{{ gettext('Is Active') }}</label>
+            </div>
+            <div class="mb-3">
+                <label for="subscriptionStatus" class="form-label">{{ gettext('Subscription Status') }}</label>
+                <select class="form-select" id="subscriptionStatus" name="subscription_status">
+                    <option value="free" {% if owner.subscription_status == 'free' %}selected{% endif %}>{{ gettext('Free') }}</option>
+                    <option value="premium" {% if owner.subscription_status == 'premium' %}selected{% endif %}>{{ gettext('Premium') }}</option>
+                    <option value="canceled" {% if owner.subscription_status == 'canceled' %}selected{% endif %}>{{ gettext('Canceled') }}</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">{{ gettext('Update Owner') }}</button>
         </form>
-
-        <form action="/admin/owners/{{ owner.id }}/delete" method="POST" onsubmit="return confirm('{{ gettext('Are you sure you want to delete this owner?') }}');" style="margin-top: 20px;">
-            <button type="submit" style="background-color: red; color: white;">{{ gettext('Delete Owner') }}</button>
+        <form action="/admin/owner/{{ owner.id }}/delete" method="post" onsubmit="return confirm('{{ gettext('Are you sure you want to delete this owner?') }}');" class="mt-3">
+            <button type="submit" class="btn btn-danger">{{ gettext('Delete Owner') }}</button>
         </form>
-    </main>
-    <footer>
-        <p>&copy; 2023 BookSlot. {{ gettext('All rights reserved.') }}</p>
-    </footer>
-    <script>
-        function changeLanguage(lang) {
-            document.cookie = "lang=" + lang + "; path=/; max-age=31536000";
-            location.reload();
-        }
-    </script>
-</body>
-</html>
+    </div>
+
+    {# Services List #}
+    <div class="card p-4 mb-4 shadow-sm">
+        <h4 class="card-title">{{ gettext('Services') }}</h4>
+        {% if services %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>{{ gettext('ID') }}</th>
+                        <th>{{ gettext('Name') }}</th>
+                        <th>{{ gettext('Duration') }}</th>
+                        <th>{{ gettext('Price') }}</th>
+                        <th>{{ gettext('Actions') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for service in services %}
+                    <tr>
+                        <td>{{ service.id }}</td>
+                        <td>{{ service.name }}</td>
+                        <td>{{ service.duration_minutes }} {{ gettext('min') }}</td>
+                        <td>{{ service.price / 100 | format_currency(language) }}</td>
+                        <td>
+                            <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editServiceModal" data-service-id="{{ service.id }}" data-service-name="{{ service.name }}" data-service-description="{{ service.description }}" data-service-duration="{{ service.duration_minutes }}" data-service-price="{{ service.price }}">{{ gettext('Edit') }}</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p>{{ gettext('No services found.') }}</p>
+        {% endif %}
+    </div>
+
+    {# Bookings List #}
+    <div class="card p-4 mb-4 shadow-sm">
+        <h4 class="card-title">{{ gettext('Bookings') }}</h4>
+        {% if bookings %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>{{ gettext('ID') }}</th>
+                        <th>{{ gettext('Service') }}</th>
+                        <th>{{ gettext('Date') }}</th>
+                        <th>{{ gettext('Time') }}</th>
+                        <th>{{ gettext('Customer Name') }}</th>
+                        <th>{{ gettext('Customer Email') }}</th>
+                        <th>{{ gettext('Status') }}</th>
+                        <th>{{ gettext('Recurring') }}</th>
+                        <th>{{ gettext('Actions') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for booking in bookings %}
+                    <tr>
+                        <td>{{ booking.id }}</td>
+                        <td>{{ booking.service.name if booking.service else gettext('N/A') }}</td>
+                        <td>{{ booking.date }}</td>
+                        <td>{{ booking.time }}</td>
+                        <td>{{ booking.customer_name }}</td>
+                        <td>{{ booking.customer_email }}</td>
+                        <td>{{ booking.status.value | capitalize }}</td>
+                        <td>{% if booking.is_recurring %}{{ gettext('Yes') }} ({{ booking.recurrence_id }}){% else %}{{ gettext('No') }}{% endif %}</td>
+                        <td>
+                            <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editBookingModal" data-booking-id="{{ booking.id }}" data-booking-status="{{ booking.status.value }}">{{ gettext('Edit') }}</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p>{{ gettext('No bookings found.') }}</p>
+        {% endif %}
+    </div>
+
+    {# Customers List - NEW SECTION #}
+    <div class="card p-4 mb-4 shadow-sm">
+        <h4 class="card-title">{{ gettext('Customers') }} ({{ gettext('for this owner') }})</h4>
+        {% if customers %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>{{ gettext('ID') }}</th>
+                        <th>{{ gettext('Name') }}</th>
+                        <th>{{ gettext('Email') }}</th>
+                        <th>{{ gettext('Phone') }}</th>
+                        <th>{{ gettext('Account') }}</th>
+                        <th>{{ gettext('Actions') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for customer in customers %}
+                    <tr>
+                        <td>{{ customer.id }}</td>
+                        <td>{{ customer.name if customer.name else gettext('N/A') }}</td>
+                        <td>{{ customer.email }}</td>
+                        <td>{{ customer.phone_number if customer.phone_number else gettext('N/A') }}</td>
+                        <td>{% if customer.hashed_password %}{{ gettext('Yes') }}{% else %}{{ gettext('No') }}{% endif %}</td>
+                        <td>
+                            {# Actions for customer, e.g., view bookings by this customer #}
+                            <button class="btn btn-sm btn-info" disabled>{{ gettext('View Bookings') }}</button>
+                            {# Future: Edit customer details #}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p>{{ gettext('No customers registered for this owner yet.') }}</p>
+        {% endif %}
+    </div>
+
+    {# Modals for editing Service and Booking #}
+    {% include "modals/edit_service_modal.html" %}
+    {% include "modals/edit_booking_modal.html" %}
+
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Service Edit Modal Logic
+        var editServiceModal = document.getElementById('editServiceModal');
+        editServiceModal.addEventListener('show.bs.modal', function (event) {
+            var button = event.relatedTarget;
+            var serviceId = button.getAttribute('data-service-id');
+            var serviceName = button.getAttribute('data-service-name');
+            var serviceDescription = button.getAttribute('data-service-description');
+            var serviceDuration = button.getAttribute('data-service-duration');
+            var servicePrice = button.getAttribute('data-service-price');
+
+            var modalTitle = editServiceModal.querySelector('.modal-title');
+            var serviceIdInput = editServiceModal.querySelector('#editServiceId');
+            var serviceNameInput = editServiceModal.querySelector('#editServiceName');
+            var serviceDescriptionInput = editServiceModal.querySelector('#editServiceDescription');
+            var serviceDurationInput = editServiceModal.querySelector('#editServiceDuration');
+            var servicePriceInput = editServiceModal.querySelector('#editServicePrice');
+            var editServiceForm = editServiceModal.querySelector('#editServiceForm');
+
+            modalTitle.textContent = `{{ gettext('Edit Service') }}: ${serviceName}`;
+            serviceIdInput.value = serviceId;
+            serviceNameInput.value = serviceName;
+            serviceDescriptionInput.value = serviceDescription;
+            serviceDurationInput.value = serviceDuration;
+            servicePriceInput.value = servicePrice;
+            editServiceForm.action = `/admin/service/${serviceId}/update`;
+        });
+
+        // Booking Edit Modal Logic
+        var editBookingModal = document.getElementById('editBookingModal');
+        editBookingModal.addEventListener('show.bs.modal', function (event) {
+            var button = event.relatedTarget;
+            var bookingId = button.getAttribute('data-booking-id');
+            var bookingStatus = button.getAttribute('data-booking-status');
+
+            var modalTitle = editBookingModal.querySelector('.modal-title');
+            var bookingIdInput = editBookingModal.querySelector('#editBookingId');
+            var bookingStatusSelect = editBookingModal.querySelector('#editBookingStatus');
+            var editBookingForm = editBookingModal.querySelector('#editBookingForm');
+
+            modalTitle.textContent = `{{ gettext('Edit Booking ID:') }} ${bookingId}`;
+            bookingIdInput.value = bookingId;
+            bookingStatusSelect.value = bookingStatus;
+            editBookingForm.action = `/admin/booking/${bookingId}/update`;
+        });
+
+        // Form submission for owner update (AJAX or regular form submit)
+        document.getElementById('ownerUpdateForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+            const data = {};
+            formData.forEach((value, key) => {
+                if (key === 'is_active') {
+                    data[key] = true; // Checkbox only submits if checked
+                } else {
+                    data[key] = value;
+                }
+            });
+            // Handle unchecked checkbox explicitly
+            if (!formData.has('is_active')) {
+                data['is_active'] = false;
+            }
+
+            fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => { throw new Error(err.detail || 'Failed to update owner'); });
+                }
+                return response.json();
+            })
+            .then(data => {
+                alert('{{ gettext('Owner updated successfully!') }}');
+                location.reload(); // Reload to reflect changes
+            })
+            .catch(error => {
+                alert(error.message);
+            });
+        });
+    });
+</script>
+{% endblock %}
