@@ -1,63 +1,31 @@
-{# templates/booking_confirmation.html #}
 <!DOCTYPE html>
-<html lang="{{ request.state.locale }}">
+<html lang="{{ lang_code }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ __("Booking Confirmed!") }}</title>
+    <title>{{ gettext("Booking Confirmed!") }}</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-        {% if request.state.locale == 'ar' %}
-        body { direction: rtl; text-align: right; }
-        {% endif %}
-    </style>
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
-    <div class="max-w-md w-full bg-white rounded-lg shadow-xl p-8 space-y-6 text-center">
-        <div class="flex justify-center mb-4">
-            <svg class="h-16 w-16 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-        </div>
-
-        <h2 class="text-2xl font-semibold text-gray-800 mb-4">{{ __("Booking Confirmed!") }}</h2>
-
-        {% if is_recurring %}
-            <p class="text-lg text-gray-600 mb-2">{{ __("Your recurring booking series has been successfully created.") }}</p>
-            <p class="text-gray-600 mb-2">{{ __("First booking on:") }} {{ booking.start_time.strftime('%A, %B %d, %Y at %I:%M %p') }}</p>
-            <p class="text-gray-600 mb-2">{{ __("Recurrence Pattern:") }} {{ recurrence_pattern | capitalize }}</p>
-            <p class="text-gray-600 mb-2">{{ __("Recurrence End Date:") }} {{ recurrence_end_date.strftime('%B %d, %Y') }}</p>
-            <p class="text-gray-600 mb-4">{{ __("You will receive email confirmations for each booking in the series.") }}</p>
-        {% else %}
-            <p class="text-lg text-gray-600 mb-2">{{ __("Your booking has been successfully confirmed.") }}</p>
-            <p class="text-gray-600 mb-4">{{ __("We look forward to seeing you on:") }}</p>
-        {% endif %}
-
-        <div class="bg-white p-6 rounded-lg shadow-md mb-6 text-left">
-            <p class="text-gray-700 mb-2"><strong class="font-medium">{{ __("Service:") }}</strong> {{ booking.service.name }}</p>
-            <p class="text-gray-700 mb-2"><strong class="font-medium">{{ __("Date & Time:") }}</strong> {{ booking.start_time.strftime('%A, %B %d, %Y at %I:%M %p') }}</p>
-            <p class="text-gray-700 mb-2"><strong class="font-medium">{{ __("Duration:") }}</strong> {{ booking.service.duration_minutes }} {{ __("minutes") }}</p>
-            <p class="text-gray-700 mb-2"><strong class="font-medium">{{ __("With:") }}</strong> {{ owner_name }}</p>
-            <p class="text-gray-700 mb-2"><strong class="font-medium">{{ __("Your Name:") }}</strong> {{ booking.customer_name }}</p>
-            <p class="text-gray-700 mb-2"><strong class="font-medium">{{ __("Your Email:") }}</strong> {{ booking.customer_email }}</p>
-            {% if booking.customer_phone %}
-                <p class="text-gray-700 mb-2"><strong class="font-medium">{{ __("Your Phone:") }}</strong> {{ booking.customer_phone }}</p>
-            {% endif %}
-        </div>
-
-        <a href="/book/{{ owner_name }}" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-            {{ __("Book Another Appointment") }}
-        </a>
-
-        <div class="text-center mt-6 text-sm text-gray-500">
-            <p>&copy; {{ current_year }} BookSlot. {{ __("All rights reserved.") }}</p>
-            <div class="mt-2 space-x-4">
-                <a href="/set-locale/en" class="hover:underline">English</a>
-                <a href="/set-locale/ar" class="hover:underline">العربية</a>
-                <a href="/set-locale/fr" class="hover:underline">Français</a>
-            </div>
+<body class="bg-gray-100 font-sans antialiased flex items-center justify-center min-h-screen">
+    <div class="bg-white rounded-lg shadow-lg p-8 max-w-md w-full text-center">
+        <h1 class="text-3xl font-bold text-green-600 mb-4">{{ gettext("Booking Confirmed!") }}</h1>
+        <p class="text-gray-700 mb-6">{{ gettext("Thank you for your booking with {owner_name}. You will receive a confirmation email shortly.").format(owner_name=owner.name) }}</p>
+        <a href="/{{ owner.name }}" class="bg-indigo-600 text-white px-6 py-3 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">{{ gettext("Back to Booking Page") }}</a>
+        <div class="mt-4">
+            <label for="language-select" class="sr-only">{{ gettext("Select Language") }}</label>
+            <select id="language-select" onchange="changeLanguage(this.value)" class="p-2 border rounded-md">
+                {% for code, name in languages.items() %}
+                    <option value="{{ code }}" {% if code == lang_code %}selected{% endif %}>{{ name }}</option>
+                {% endfor %}
+            </select>
         </div>
     </div>
+    <script>
+        function changeLanguage(lang_code) {
+            const url = new URL(window.location.href);
+            url.searchParams.set('lang', lang_code);
+            window.location.href = url.toString();
+        }
+    </script>
 </body>
 </html>

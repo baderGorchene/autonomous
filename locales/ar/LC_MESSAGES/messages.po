@@ -1,128 +1,49 @@
-msgid "Dashboard"
-msgstr "لوحة التحكم"
+msgid ""
+msgstr ""
+"Project-Id-Version: BookSlot\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-10-27 10:00+0000\n"
+"PO-Revision-Date: 2023-10-27 10:00+0000\n"
+"Last-Translator: \n"
+"Language-Team: Arabic <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: ar\n"
+"X-Generator: Poedit 3.0.1\n"
 
-msgid "Welcome"
-msgstr "أهلاً بك"
+msgid "BookSlot - Booking Page"
+msgstr "بوك سلوت - صفحة الحجز"
 
-msgid "Your shareable booking link:"
-msgstr "رابط حجزك القابل للمشاركة:"
+msgid "Welcome to my booking page!"
+msgstr "أهلاً بك في صفحة الحجز الخاصة بي!"
 
-msgid "Upcoming Bookings"
-msgstr "الحجوزات القادمة"
+msgid "Select Language"
+msgstr "اختر اللغة"
 
-msgid "at"
-msgstr "في"
-
-msgid "for"
-msgstr "لـ"
-
-msgid "No individual upcoming bookings."
-msgstr "لا توجد حجوزات فردية قادمة."
-
-msgid "View Details"
-msgstr "عرض التفاصيل"
-
-msgid "Recurring Booking Series"
-msgstr "سلاسل الحجوزات المتكررة"
-
-msgid "Starts:"
-msgstr "يبدأ:"
-
-msgid "Repeats Daily"
-msgstr "يتكرر يومياً"
-
-msgid "Repeats Weekly on"
-msgstr "يتكرر أسبوعياً في"
-
-msgid "Repeats Monthly on day"
-msgstr "يتكرر شهرياً في اليوم"
-
-msgid "until"
-msgstr "حتى"
-
-msgid "Ongoing"
-msgstr "مستمر"
-
-msgid "No active recurring booking series."
-msgstr "لا توجد سلاسل حجوزات متكررة نشطة."
-
-msgid "Manage Series"
-msgstr "إدارة السلسلة"
-
-msgid "Monthly Bookings"
-msgstr "الحجوزات الشهرية"
-
-msgid "Number of Bookings"
-msgstr "عدد الحجوزات"
-
-msgid "Bookings"
-msgstr "الحجوزات"
-
-msgid "Month"
-msgstr "الشهر"
-
-msgid "Popular Services"
-msgstr "الخدمات الأكثر شيوعاً"
-
-msgid "bookings"
-msgstr "حجوزات"
-
-msgid "No services booked yet."
-msgstr "لم يتم حجز أي خدمات بعد."
-
-msgid "Subscription Status"
-msgstr "حالة الاشتراك"
-
-msgid "Premium Plan Active!"
-msgstr "الباقة المميزة نشطة!"
-
-msgid "Your subscription is active."
-msgstr "اشتراكك نشط."
-
-msgid "Manage Subscription"
-msgstr "إدارة الاشتراك"
-
-msgid "Free Plan"
-msgstr "الباقة المجانية"
-
-msgid "Upgrade to unlock unlimited bookings and more features."
-msgstr "قم بالترقية لفتح حجوزات غير محدودة والمزيد من الميزات."
-
-msgid "Upgrade to Premium ($19/month)"
-msgstr "الترقية إلى المميز (19 دولارًا/شهريًا)"
-
-msgid "Your Services"
-msgstr "خدماتك"
-
-msgid "min"
-msgstr "دقيقة"
-
-msgid "currency"
-msgstr "ريال"
-
-msgid "No services set up yet."
-msgstr "لم يتم إعداد أي خدمات بعد."
-
-msgid "Add a service"
-msgstr "إضافة خدمة"
-
-msgid "Profile"
-msgstr "الملف الشخصي"
-
-msgid "Logout"
-msgstr "تسجيل الخروج"
-
-msgid "Book with"
-msgstr "احجز مع"
-
-msgid "with"
-msgstr "مع"
+msgid "Our Services"
+msgstr "خدماتنا"
 
 msgid "minutes"
-msgstr "دقائق"
+msgstr "دقيقة"
 
-msgid "Error!"
-msgstr "خطأ!"
+msgid "Book Now"
+msgstr "احجز الآن"
+
+msgid "Rating:"
+msgstr "التقييم:"
+
+msgid "reviews"
+msgstr "مراجعات"
+
+msgid "Customer Reviews"
+msgstr "مراجعات العملاء"
+
+msgid "Book an Appointment"
+msgstr "احجز موعداً"
+
+msgid "Select Service"
+msgstr "اختر الخدمة"
 
 msgid "Your Name"
 msgstr "اسمك"
@@ -130,74 +51,167 @@ msgstr "اسمك"
 msgid "Your Email"
 msgstr "بريدك الإلكتروني"
 
-msgid "Your Phone Number (Optional, for WhatsApp notifications)"
-msgstr "رقم هاتفك (اختياري، لإشعارات الواتساب)"
+msgid "Your Phone (Optional)"
+msgstr "رقم هاتفك (اختياري)"
 
-msgid "Select Date"
-msgstr "اختر التاريخ"
+msgid "Date"
+msgstr "التاريخ"
 
-msgid "Select Time Slot"
-msgstr "اختر الفترة الزمنية"
+msgid "Time"
+msgstr "الوقت"
 
-msgid "No available slots for this date."
-msgstr "لا توجد فترات زمنية متاحة لهذا التاريخ."
+msgid "Confirm Booking"
+msgstr "تأكيد الحجز"
 
-msgid "Make this a recurring booking"
-msgstr "اجعل هذا الحجز متكررًا"
+msgid "Email already registered"
+msgstr "البريد الإلكتروني مسجل بالفعل"
 
-msgid "Recurrence Type"
-msgstr "نوع التكرار"
+msgid "Incorrect email or password"
+msgstr "بريد إلكتروني أو كلمة مرور غير صحيحة"
 
-msgid "Select type"
-msgstr "اختر النوع"
+msgid "Email already registered by another owner"
+msgstr "البريد الإلكتروني مسجل بالفعل لمالك آخر"
 
-msgid "Daily"
-msgstr "يومي"
+msgid "Service not found"
+msgstr "الخدمة غير موجودة"
 
-msgid "Weekly"
-msgstr "أسبوعي"
-
-msgid "Monthly"
-msgstr "شهري"
-
-msgid "Recurrence Details"
-msgstr "تفاصيل التكرار"
-
-msgid "e.g., MON,TUE for weekly; 15 for monthly on 15th"
-msgstr "مثال: MON,TUE للأسبوعي؛ 15 للشهري في اليوم 15"
-
-msgid "Recurrence End Date (Optional)"
-msgstr "تاريخ انتهاء التكرار (اختياري)"
-
-msgid "Book Now"
-msgstr "احجز الآن"
+msgid "Selected time slot is not available or already booked."
+msgstr "الموعد المحدد غير متاح أو محجوز بالفعل."
 
 msgid "Booking Confirmed!"
 msgstr "تم تأكيد الحجز!"
 
-msgid "Thank you,"
-msgstr "شكراً لك،"
+msgid "Thank you for your booking with {owner_name}. You will receive a confirmation email shortly."
+msgstr "شكراً لحجزك مع {owner_name}. ستتلقى رسالة تأكيد عبر البريد الإلكتروني قريباً."
+
+msgid "Back to Booking Page"
+msgstr "العودة لصفحة الحجز"
+
+msgid "Owner Dashboard"
+msgstr "لوحة تحكم المالك"
+
+msgid "Welcome, {owner_name}!"
+msgstr "أهلاً بك، {owner_name}!"
+
+msgid "Profile"
+msgstr "الملف الشخصي"
+
+msgid "Services"
+msgstr "الخدمات"
+
+msgid "Availability"
+msgstr "التوفر"
+
+msgid "Subscription"
+msgstr "الاشتراك"
+
+msgid "Logout"
+msgstr "تسجيل الخروج"
+
+msgid "Upcoming Bookings"
+msgstr "الحجوزات القادمة"
+
+msgid "Unknown Service"
+msgstr "خدمة غير معروفة"
+
+msgid "Customer:"
+msgstr "العميل:"
+
+msgid "No upcoming bookings."
+msgstr "لا توجد حجوزات قادمة."
+
+msgid "Analytics"
+msgstr "التحليلات"
+
+msgid "Monthly Bookings"
+msgstr "الحجوزات الشهرية"
+
+msgid "Popular Services"
+msgstr "الخدمات الشائعة"
+
+msgid "Bookings"
+msgstr "الحجوزات"
+
+msgid "Number of Bookings"
+msgstr "عدد الحجوزات"
+
+msgid "Month"
+msgstr "الشهر"
+
+msgid "Popular Services by Booking Count"
+msgstr "الخدمات الشائعة حسب عدد الحجوزات"
+
+msgid "Owner is already a premium subscriber."
+msgstr "المالك مشترك بالفعل في الخطة المميزة."
+
+msgid "New Booking Confirmation for {service_name}"
+msgstr "تأكيد حجز جديد لـ {service_name}"
+
+msgid "Dear {owner_name},"
+msgstr "عزيزي {owner_name},"
+
+msgid "You have a new booking!"
+msgstr "لديك حجز جديد!"
 
 msgid "Service:"
 msgstr "الخدمة:"
 
-msgid "With:"
-msgstr "مع:"
+msgid "Date & Time:"
+msgstr "التاريخ والوقت:"
 
-msgid "Date:"
-msgstr "التاريخ:"
+msgid "Customer Name:"
+msgstr "اسم العميل:"
 
-msgid "Time:"
-msgstr "الوقت:"
+msgid "Customer Email:"
+msgstr "بريد العميل الإلكتروني:"
 
-msgid "Recurrence:"
-msgstr "التكرار:"
+msgid "Customer Phone:"
+msgstr "هاتف العميل:"
 
-msgid "A confirmation email has been sent to"
-msgstr "تم إرسال بريد إلكتروني للتأكيد إلى"
+msgid "N/A"
+msgstr "غير متوفر"
 
-msgid "Go to Homepage"
-msgstr "الذهاب إلى الصفحة الرئيسية"
+msgid "Thank you!"
+msgstr "شكراً لك!"
 
-msgid "Occurrence of a recurring booking"
-msgstr "تكرار حجز متكرر"
+msgid "New booking for {service_name} on {booking_datetime} by {customer_name}. Email: {customer_email}, Phone: {customer_phone}"
+msgstr "حجز جديد لـ {service_name} بتاريخ {booking_datetime} بواسطة {customer_name}. البريد الإلكتروني: {customer_email}, الهاتف: {customer_phone}"
+
+msgid "Your Booking Confirmation for {service_name}"
+msgstr "تأكيد حجزك لـ {service_name}"
+
+msgid "Dear {customer_name},"
+msgstr "عزيزي {customer_name},"
+
+msgid "Your booking has been confirmed!"
+msgstr "تم تأكيد حجزك!"
+
+msgid "We look forward to seeing you!"
+msgstr "نتطلع لرؤيتك!"
+
+msgid "Your booking for {service_name} on {booking_datetime} has been confirmed!"
+msgstr "تم تأكيد حجزك لـ {service_name} بتاريخ {booking_datetime}!"
+
+msgid "Recurring Booking Alert: {service_name}"
+msgstr "تنبيه حجز متكرر: {service_name}"
+
+msgid "A recurring booking for {service_name} is scheduled on {booking_datetime} with {customer_name}."
+msgstr "تم جدولة حجز متكرر لـ {service_name} بتاريخ {booking_datetime} مع {customer_name}."
+
+msgid "This is a reminder for your recurring series."
+msgstr "هذا تذكير بسلسلة حجوزاتك المتكررة."
+
+msgid "Your Upcoming Recurring Booking for {service_name}"
+msgstr "حجزك المتكرر القادم لـ {service_name}"
+
+msgid "This is a reminder for your upcoming recurring booking for {service_name} on {booking_datetime}."
+msgstr "هذا تذكير بحجزك المتكرر القادم لـ {service_name} بتاريخ {booking_datetime}."
+
+msgid "Reminder: Your recurring booking for {service_name} is on {booking_datetime}!"
+msgstr "تذكير: حجزك المتكرر لـ {service_name} بتاريخ {booking_datetime}!"
+
+msgid "You can only review services you have booked and completed."
+msgstr "يمكنك فقط مراجعة الخدمات التي قمت بحجزها وإكمالها."
+
+msgid "You have already submitted a review for this service."
+msgstr "لقد قدمت مراجعة لهذه الخدمة بالفعل."

@@ -1,36 +1,140 @@
-<!-- This is a partial content update, assuming the surrounding HTML structure exists -->
-<!-- ... (previous HTML content) ... -->
+<!DOCTYPE html>
+<html lang="{{ lang_code }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ gettext("Owner Dashboard") }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-100 font-sans antialiased">
+    <div class="container mx-auto p-4">
+        <header class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-bold text-gray-800">{{ gettext("Welcome, {owner_name}!").format(owner_name=owner.name) }}</h1>
+            <div class="flex items-center space-x-4">
+                <a href="/owner/me" class="text-indigo-600 hover:underline">{{ gettext("Profile") }}</a>
+                <a href="/owner/services/" class="text-indigo-600 hover:underline">{{ gettext("Services") }}</a>
+                <a href="/owner/availabilities/" class="text-indigo-600 hover:underline">{{ gettext("Availability") }}</a>
+                <a href="/owner/subscription" class="text-indigo-600 hover:underline">{{ gettext("Subscription") }}</a>
+                <form action="/owner/logout" method="post" class="inline">
+                    <button type="submit" class="text-indigo-600 hover:underline">{{ gettext("Logout") }}</button>
+                </form>
+                <select id="language-select" onchange="changeLanguage(this.value)" class="p-2 border rounded-md">
+                    {% for code, name in languages.items() %}
+                        <option value="{{ code }}" {% if code == lang_code %}selected{% endif %}>{{ name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </header>
 
-<tbody>
-    {% for booking in upcoming_bookings %}
-    <tr>
-        <td>{{ booking.date.strftime('%Y-%m-%d') }}</td>
-        <td>{{ booking.time.strftime('%H:%M') }}</td>
-        <td>{{ booking.service.name }}</td>
-        <td>
-            {% if booking.customer %}
-                <strong>{{ booking.customer.name }}</strong><br>
-                <small>{{ booking.customer.email }}</small><br>
-                {% if booking.customer.phone_number %}<small>{{ booking.customer.phone_number }}</small>{% endif %}
+        <section class="mb-8">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-4">{{ gettext("Upcoming Bookings") }}</h2>
+            {% if upcoming_bookings %}
+            <div class="bg-white rounded-lg shadow-md p-4">
+                <ul class="divide-y divide-gray-200">
+                    {% for booking in upcoming_bookings %}
+                    <li class="py-3 flex justify-between items-center">
+                        <div>
+                            <p class="text-lg font-semibold text-gray-800">{{ services_map[booking.service_id].name if booking.service_id in services_map else gettext("Unknown Service") }}</p>
+                            <p class="text-gray-600">{{ booking.date.strftime('%Y-%m-%d') }} at {{ booking.time.strftime('%H:%M') }}</p>
+                            <p class="text-sm text-gray-500">{{ gettext("Customer:") }} {{ booking.customer_name }} ({{ booking.customer_email }})</p>
+                        </div>
+                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">{{ booking.status.value }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
             {% else %}
-                {{ gettext("Customer details not available") }}
+            <p class="text-gray-600">{{ gettext("No upcoming bookings.") }}</p>
             {% endif %}
-        </td>
-        <td>{{ gettext("Confirmed") if booking.is_confirmed else gettext("Pending") }}</td>
-        <td>
-            {% if booking.recurrence_id %}
-                <span class="badge bg-info">{{ gettext("Recurring") }}</span>
-            {% else %}
-                <span class="badge bg-secondary">{{ gettext("One-off") }}</span>
-            {% endif %}
-        </td>
-        <!-- Add actions like cancel/reschedule later -->
-    </tr>
-    {% else %}
-    <tr>
-        <td colspan="6">{{ gettext("No upcoming bookings.") }}</td>
-    </tr>
-    {% endfor %}
-</tbody>
+        </section>
 
-<!-- ... (rest of HTML content) ... -->
+        <section class="mb-8">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-4">{{ gettext("Analytics") }}</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white rounded-lg shadow-md p-4">
+                    <h3 class="text-xl font-semibold text-gray-700 mb-2">{{ gettext("Monthly Bookings") }}</h3>
+                    <canvas id="monthlyBookingsChart"></canvas>
+                </div>
+                <div class="bg-white rounded-lg shadow-md p-4">
+                    <h3 class="text-xl font-semibold text-gray-700 mb-2">{{ gettext("Popular Services") }}</h3>
+                    <canvas id="popularServicesChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <script>
+        function changeLanguage(lang_code) {
+            const url = new URL(window.location.href);
+            url.searchParams.set('lang', lang_code);
+            window.location.href = url.toString();
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Monthly Bookings Chart
+            const monthlyBookingsCtx = document.getElementById('monthlyBookingsChart').getContext('2d');
+            new Chart(monthlyBookingsCtx, {
+                type: 'bar',
+                data: {
+                    labels: [{% for data in monthly_bookings_data %}"{{ data.month }}"{% if not loop.last %},{% endif %}{% endfor %}],
+                    datasets: [{
+                        label: '{{ gettext("Bookings") }}',
+                        data: [{% for data in monthly_bookings_data %}{{ data.count }}{% if not loop.last %},{% endif %}{% endfor %}],
+                        backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '{{ gettext("Number of Bookings") }}'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: '{{ gettext("Month") }}'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Popular Services Chart
+            const popularServicesCtx = document.getElementById('popularServicesChart').getContext('2d');
+            new Chart(popularServicesCtx, {
+                type: 'pie',
+                data: {
+                    labels: [{% for data in popular_services_data %}"{{ data.service_name }}"{% if not loop.last %},{% endif %}{% endfor %}],
+                    datasets: [{
+                        data: [{% for data in popular_services_data %}{{ data.booking_count }}{% if not loop.last %},{% endif %}{% endfor %}],
+                        backgroundColor: [
+                            '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'
+                        ],
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: '{{ gettext("Popular Services by Booking Count") }}'
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

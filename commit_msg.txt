@@ -1,1 +1,1 @@
-Fix: Resolve 'No module named pytest' by adding requirements.txt; Feat: Implement customer registration, login, and profile management API endpoints
+Fix: Add pytest to requirements.txt and implement basic review models/schemas
