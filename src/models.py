@@ -1,7 +1,7 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Date, Time, Text, Enum, Float
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Boolean, Date, Time, Enum, Text, Float
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
-from datetime import datetime, date, time
+from sqlalchemy.sql import func
 import enum
 
 Base = declarative_base()
@@ -13,107 +13,118 @@ class RecurrenceType(enum.Enum):
 
 class SubscriptionStatus(enum.Enum):
     ACTIVE = "active"
-    INACTIVE = "inactive"
-    CANCELLED = "cancelled"
-    TRIAL = "trial"
+    CANCELED = "canceled"
+    TRIALING = "trialing"
+    PAST_DUE = "past_due"
 
 class Owner(Base):
     __tablename__ = "owners"
-
     id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, unique=True, index=True)
     email = Column(String, unique=True, index=True)
     hashed_password = Column(String)
+    full_name = Column(String, nullable=True)
+    phone_number = Column(String, nullable=True)
     is_active = Column(Boolean, default=True)
-    name = Column(String)
-    phone = Column(String, nullable=True)
-    language = Column(String, default="en") # 'en', 'ar', 'fr'
-    stripe_customer_id = Column(String, nullable=True, unique=True)
-    subscription_status = Column(Enum(SubscriptionStatus), default=SubscriptionStatus.TRIAL)
-    subscription_end_date = Column(Date, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     services = relationship("Service", back_populates="owner")
-    availabilities = relationship("Availability", back_populates="owner")
     bookings = relationship("Booking", back_populates="owner")
+    availabilities = relationship("Availability", back_populates="owner")
+    subscription = relationship("Subscription", uselist=False, back_populates="owner")
     reviews = relationship("Review", back_populates="owner")
 
 class Service(Base):
     __tablename__ = "services"
-
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, index=True)
-    description = Column(Text, nullable=True)
-    duration_minutes = Column(Integer)
-    price = Column(Float, nullable=True)
     owner_id = Column(Integer, ForeignKey("owners.id"))
+    name = Column(String, index=True)
+    description = Column(String, nullable=True)
+    duration_minutes = Column(Integer)
+    price = Column(Float)
+    currency = Column(String, default="USD")
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     owner = relationship("Owner", back_populates="services")
-    availabilities = relationship("Availability", back_populates="service")
     bookings = relationship("Booking", back_populates="service")
+    availabilities = relationship("Availability", back_populates="service")
     reviews = relationship("Review", back_populates="service")
 
 class Availability(Base):
     __tablename__ = "availabilities"
-
     id = Column(Integer, primary_key=True, index=True)
     owner_id = Column(Integer, ForeignKey("owners.id"))
-    service_id = Column(Integer, ForeignKey("services.id"), nullable=True) # If None, applies to all services
-    date = Column(Date, nullable=True) # For one-off availability
+    service_id = Column(Integer, ForeignKey("services.id"), nullable=True)
+    date = Column(Date, nullable=True)
     start_time = Column(Time)
     end_time = Column(Time)
-    recurrence_type = Column(Enum(RecurrenceType), nullable=True) # 'daily', 'weekly', 'monthly'
-    recurrence_value = Column(String, nullable=True) # e.g., 'MON,WED,FRI' for weekly, '15' for monthly
+    recurrence_type = Column(Enum(RecurrenceType), nullable=True)
+    recurrence_value = Column(String, nullable=True)
     recurrence_start_date = Column(Date, nullable=True)
     recurrence_end_date = Column(Date, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     owner = relationship("Owner", back_populates="availabilities")
     service = relationship("Service", back_populates="availabilities")
 
 class Customer(Base):
     __tablename__ = "customers"
-
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True)
-    hashed_password = Column(String, nullable=True) # Optional for customers without accounts
-    name = Column(String, nullable=True)
-    phone = Column(String, nullable=True)
-    is_active = Column(Boolean, default=True)
+    hashed_password = Column(String, nullable=True)
+    full_name = Column(String, nullable=True)
+    phone_number = Column(String, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     bookings = relationship("Booking", back_populates="customer")
     reviews = relationship("Review", back_populates="customer")
 
 class Booking(Base):
     __tablename__ = "bookings"
-
     id = Column(Integer, primary_key=True, index=True)
     owner_id = Column(Integer, ForeignKey("owners.id"))
     service_id = Column(Integer, ForeignKey("services.id"))
-    customer_id = Column(Integer, ForeignKey("customers.id"), nullable=True) # Can be null for guest bookings
+    customer_id = Column(Integer, ForeignKey("customers.id"), nullable=True)
     customer_name = Column(String)
     customer_email = Column(String)
     customer_phone = Column(String, nullable=True)
     date = Column(Date)
     time = Column(Time)
     is_confirmed = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    is_recurring = Column(Boolean, default=False)
-    original_booking_id = Column(Integer, ForeignKey("bookings.id"), nullable=True) # For recurring series
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     owner = relationship("Owner", back_populates="bookings")
     service = relationship("Service", back_populates="bookings")
     customer = relationship("Customer", back_populates="bookings")
 
+class Subscription(Base):
+    __tablename__ = "subscriptions"
+    id = Column(Integer, primary_key=True, index=True)
+    owner_id = Column(Integer, ForeignKey("owners.id"), unique=True)
+    stripe_customer_id = Column(String, unique=True, index=True)
+    stripe_subscription_id = Column(String, unique=True, index=True)
+    status = Column(Enum(SubscriptionStatus), default=SubscriptionStatus.TRIALING)
+    current_period_end = Column(DateTime)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    owner = relationship("Owner", back_populates="subscription")
+
 class Review(Base):
     __tablename__ = "reviews"
-
     id = Column(Integer, primary_key=True, index=True)
-    owner_id = Column(Integer, ForeignKey("owners.id"))
     service_id = Column(Integer, ForeignKey("services.id"))
-    customer_id = Column(Integer, ForeignKey("customers.id"), nullable=True)
-    customer_name = Column(String, nullable=True) # For guest reviews
-    rating = Column(Integer, comment="Rating out of 5")
+    customer_id = Column(Integer, ForeignKey("customers.id"))
+    owner_id = Column(Integer, ForeignKey("owners.id"))
+    rating = Column(Integer, index=True)
     comment = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    owner = relationship("Owner", back_populates="reviews")
     service = relationship("Service", back_populates="reviews")
     customer = relationship("Customer", back_populates="reviews")
+    owner = relationship("Owner", back_populates="reviews")

@@ -1,1 +1,1 @@
-Fix: Add pytest to requirements.txt and implement basic review models/schemas
+Fix: Add requirements.txt to resolve 'pytest' module not found error
