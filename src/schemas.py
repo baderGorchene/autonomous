@@ -1,6 +1,6 @@
-from typing import List, Optional
+from pydantic import BaseModel, EmailStr, Field, validator
+from typing import List, Optional, Dict
 from datetime import date, time, datetime
-from pydantic import BaseModel, EmailStr
 from .models import RecurrenceType, SubscriptionStatus
 
 class Token(BaseModel):
@@ -9,150 +9,191 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     email: Optional[str] = None
-    user_type: Optional[str] = "owner" # "owner" or "customer"
 
-# Owner Schemas
 class OwnerBase(BaseModel):
     email: EmailStr
     name: Optional[str] = None
-    username: Optional[str] = None
-    phone_number: Optional[str] = None
-    description: Optional[str] = None # New field
-    city: Optional[str] = None # New field
-    country: Optional[str] = None # New field
+    phone: Optional[str] = None
+    locale: str = "en"
 
 class OwnerCreate(OwnerBase):
-    password: str
+    password: str = Field(..., min_length=8)
 
-class Owner(OwnerBase):
+class OwnerUpdate(BaseModel):
+    name: Optional[str] = None
+    phone: Optional[str] = None
+    locale: Optional[str] = None
+
+class OwnerInDB(OwnerBase):
     id: int
     is_active: bool
+    created_at: datetime
+    updated_at: Optional[datetime]
+    stripe_customer_id: Optional[str] = None
+    subscription_status: SubscriptionStatus = SubscriptionStatus.INACTIVE
+    stripe_subscription_id: Optional[str] = None
 
     class Config:
         orm_mode = True
 
-# Service Schemas
+class Owner(OwnerInDB):
+    pass
+
 class ServiceBase(BaseModel):
-    name: str
-    description: Optional[str] = None # New field
-    duration_minutes: int
-    price: float
-    currency: Optional[str] = "USD"
-    slug: Optional[str] = None
-    category: Optional[str] = None # New field
+    name: str = Field(..., min_length=1)
+    description: Optional[str] = None
+    duration_minutes: int = Field(..., gt=0)
+    price: int = Field(0, ge=0)
 
 class ServiceCreate(ServiceBase):
     pass
 
+class ServiceUpdate(ServiceBase):
+    name: Optional[str] = None
+    duration_minutes: Optional[int] = None
+    price: Optional[int] = None
+
 class Service(ServiceBase):
     id: int
     owner_id: int
-    
-    class Config:
-        orm_mode = True
-
-# Booking Schemas
-class BookingBase(BaseModel):
-    customer_name: str
-    customer_email: EmailStr
-    customer_phone: Optional[str] = None
-    date: date
-    time: time
-    is_recurring: bool = False
-    recurrence_end_date: Optional[date] = None
-
-class BookingCreate(BookingBase):
-    service_id: int
-
-class Booking(BookingBase):
-    id: int
-    owner_id: int
-    service_id: int
-    created_at: datetime
 
     class Config:
         orm_mode = True
 
-class TimeSlot(BaseModel):
-    time: time
-
-    class Config:
-        orm_mode = True
-
-# Availability Schemas
 class AvailabilityBase(BaseModel):
-    service_id: Optional[int] = None
-    date: Optional[date] = None
     start_time: time
     end_time: time
+
+class AvailabilityCreate(AvailabilityBase):
+    date: Optional[date] = None
+    service_id: Optional[int] = None
     recurrence_type: Optional[RecurrenceType] = None
     recurrence_value: Optional[str] = None
     recurrence_start_date: Optional[date] = None
     recurrence_end_date: Optional[date] = None
 
-class AvailabilityCreate(AvailabilityBase):
-    pass
+    @validator('recurrence_type', always=True)
+    def validate_recurrence_fields(cls, v, values):
+        if v:
+            if not values.get('recurrence_start_date'):
+                raise ValueError('recurrence_start_date is required for recurring availability')
+        return v
 
-class Availability(AvailabilityBase):
+class Availability(AvailabilityCreate):
     id: int
     owner_id: int
 
     class Config:
         orm_mode = True
 
-# Subscription Schemas
+class CustomerBase(BaseModel):
+    email: EmailStr
+    phone: Optional[str] = None
+    name: Optional[str] = None
+
+class CustomerCreate(CustomerBase):
+    password: str = Field(..., min_length=8)
+
+class CustomerUpdate(CustomerBase):
+    email: Optional[EmailStr] = None
+
+class CustomerInDB(CustomerBase):
+    id: int
+    created_at: datetime
+    updated_at: Optional[datetime]
+
+    class Config:
+        orm_mode = True
+
+class Customer(CustomerInDB):
+    pass
+
+class BookingBase(BaseModel):
+    service_id: int
+    customer_name: str = Field(..., min_length=1)
+    customer_email: EmailStr
+    customer_phone: Optional[str] = None
+    date: date
+    time: time
+    
+class BookingCreate(BookingBase):
+    is_recurring: bool = False
+    recurrence_id: Optional[str] = None
+    recurrence_type: Optional[RecurrenceType] = None
+    recurrence_value: Optional[str] = None
+    recurrence_end_date: Optional[date] = None
+
+    @validator('recurrence_type', 'recurrence_value', 'recurrence_end_date', always=True)
+    def validate_recurring_fields(cls, v, values):
+        if values.get('is_recurring'):
+            if not v:
+                for field_name in ['recurrence_type', 'recurrence_value', 'recurrence_end_date']:
+                    if field_name not in values or values[field_name] is None:
+                        raise ValueError(f'{field_name} is required for recurring bookings')
+        return v
+
+class Booking(BookingBase):
+    id: int
+    owner_id: int
+    customer_id: Optional[int] = None
+    is_confirmed: bool
+    created_at: datetime
+    
+    is_recurring: bool
+    recurrence_id: Optional[str]
+    parent_booking_id: Optional[int]
+
+    class Config:
+        orm_mode = True
+
+class ReviewBase(BaseModel):
+    rating: int = Field(..., ge=1, le=5)
+    comment: Optional[str] = Field(None, max_length=500)
+
+class ReviewCreate(ReviewBase):
+    customer_name: Optional[str] = None
+
+class Review(ReviewBase):
+    id: int
+    owner_id: int
+    customer_id: Optional[int]
+    created_at: datetime
+
+    class Config:
+        orm_mode = True
+
 class SubscriptionBase(BaseModel):
-    stripe_customer_id: str
     stripe_subscription_id: str
+    stripe_customer_id: str
     status: SubscriptionStatus
-    current_period_end: Optional[datetime] = None
+    current_period_end: datetime
 
 class SubscriptionCreate(SubscriptionBase):
-    owner_id: int
+    pass
 
 class Subscription(SubscriptionBase):
     id: int
     owner_id: int
     created_at: datetime
-    updated_at: datetime
+    updated_at: Optional[datetime]
 
     class Config:
         orm_mode = True
 
-# Customer Schemas
-class CustomerBase(BaseModel):
-    email: EmailStr
-    name: str
-    phone_number: Optional[str] = None
+class MonthlyBookingData(BaseModel):
+    month: str
+    count: int
 
-class CustomerCreate(CustomerBase):
-    password: str
+class PopularServiceData(BaseModel):
+    service_name: str
+    booking_count: int
 
-class CustomerUpdate(BaseModel):
-    name: Optional[str] = None
-    phone_number: Optional[str] = None
+class DashboardAnalytics(BaseModel):
+    monthly_bookings: List[MonthlyBookingData]
+    popular_services: List[PopularServiceData]
 
-class Customer(CustomerBase):
-    id: int
-    is_active: bool
-    created_at: datetime
-
-    class Config:
-        orm_mode = True
-
-# Review Schemas
-class ReviewBase(BaseModel):
-    rating: int
-    comment: Optional[str] = None
-
-class ReviewCreate(ReviewBase):
-    pass
-
-class Review(ReviewBase):
-    id: int
-    service_id: int
-    customer_id: int
-    created_at: datetime
-
-    class Config:
-        orm_mode = True
+class AdminOwnerUpdate(OwnerUpdate):
+    is_active: Optional[bool] = None
+    subscription_status: Optional[SubscriptionStatus] = None
+    stripe_subscription_id: Optional[str] = None
+    stripe_customer_id: Optional[str] = None

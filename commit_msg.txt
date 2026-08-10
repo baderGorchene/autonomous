@@ -1,1 +1,1 @@
-Feat: Implement performance optimization and caching with FastAPI-Cache2 and Redis
+Fix: Ensure pytest and core dependencies are available for testing
