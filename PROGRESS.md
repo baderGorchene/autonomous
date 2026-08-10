@@ -1,3 +1,8 @@
+## Iteration 373
+_2026-08-10 19:05 UTC_
+
+Successfully integrated UI components for customer review submission on the public booking page and review display on the owner dashboard. This includes forms, dynamic content loading via JavaScript, and basic styling. The functionality relies on previously implemented backend API endpoints for reviews.
+
 ## Iteration 372
 _2026-08-10 17:57 UTC_
 

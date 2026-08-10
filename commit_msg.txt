@@ -1,1 +1,1 @@
-Fix: Resolve 'No module named pytest' error and reconstruct core files with review system API
+Feat: Implement UI for review submission and display

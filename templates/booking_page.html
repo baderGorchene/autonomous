@@ -1,105 +1,334 @@
 <!DOCTYPE html>
-<html lang="{{ lang_code }}">
+<html lang="{{ lang }}" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ gettext("BookSlot - Booking Page") }}</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <title>{{ owner.name }} - {{ service.name }} | BookSlot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Add any custom styles here */
+        body { font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"; }
+        .dark body { background-color: #1a202c; color: #e2e8f0; }
+        .dark .bg-white { background-color: #2d3748; }
+        .dark .text-gray-900 { color: #e2e8f0; }
+        .dark .text-gray-700 { color: #cbd5e0; }
+        .dark .border-gray-300 { border-color: #4a5568; }
+        .dark .focus\:border-indigo-500:focus { border-color: #667eea; }
+        .dark .focus\:ring-indigo-500:focus { --tw-ring-color: #667eea; }
+        .dark .shadow-md { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
+        .dark .bg-gray-50 { background-color: #2d3748; }
+        .dark .bg-gray-800 { background-color: #1a202c; }
+        .dark .bg-gray-700 { background-color: #2d3748; }
+        .dark .bg-gray-600 { background-color: #4a5568; }
+        .dark .border-gray-500 { border-color: #6a7c8e; }
+        .dark .text-gray-200 { color: #cbd5e0; }
+        .dark .text-gray-400 { color: #a0aec0; }
+        .dark .hover\:bg-indigo-600:hover { background-color: #5a67d8; }
+        .dark .bg-indigo-500 { background-color: #667eea; }
+        .dark .text-white { color: #fff; }
+        .dark .text-red-600 { color: #fc8181; }
+        .dark .text-green-600 { color: #68d391; }
     </style>
 </head>
-<body class="bg-gray-100 font-sans antialiased">
-    <div class="container mx-auto p-4 max-w-lg">
-        <header class="text-center mb-6">
-            <h1 class="text-3xl font-bold text-gray-800">{{ owner.name }}</h1>
-            <p class="text-gray-600">{{ gettext("Welcome to my booking page!") }}</p>
-            <div class="mt-4">
-                <label for="language-select" class="sr-only">{{ gettext("Select Language") }}</label>
-                <select id="language-select" onchange="changeLanguage(this.value)" class="p-2 border rounded-md">
-                    {% for code, name in languages.items() %}
-                        <option value="{{ code }}" {% if code == lang_code %}selected{% endif %}>{{ name }}</option>
-                    {% endfor %}
+<body class="bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-gray-100 min-h-full flex flex-col">
+    <header class="bg-white dark:bg-gray-800 shadow-sm py-4">
+        <div class="container mx-auto px-4 flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ owner.name }}</h1>
+            <div class="flex items-center space-x-4">
+                <select id="language-toggle" onchange="changeLanguage(this.value)"
+                        class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    <option value="en" {% if lang == 'en' %}selected{% endif %}>English</option>
+                    <option value="ar" {% if lang == 'ar' %}selected{% endif %}>العربية</option>
+                    <option value="fr" {% if lang == 'fr' %}selected{% endif %}>Français</option>
                 </select>
             </div>
-        </header>
+        </div>
+    </header>
 
-        <section class="mb-8">
-            <h2 class="text-2xl font-semibold text-gray-700 mb-4">{{ gettext("Our Services") }}</h2>
-            {% for service in services %}
-            <div class="bg-white rounded-lg shadow-md p-4 mb-4">
-                <h3 class="text-xl font-bold text-gray-800">{{ service.name }}</h3>
-                <p class="text-gray-600 mt-1">{{ service.description }}</p>
-                <p class="text-indigo-600 font-semibold mt-2">{{ format_currency(service.price, service.currency, lang_code) }} - {{ service.duration_minutes }} {{ gettext("minutes") }}</p>
-                
-                {% if service.review_count > 0 %}
-                <div class="mt-2 text-sm text-gray-500">
-                    {{ gettext("Rating:") }} {{ service.average_rating | round(1) }} / 5 ({{ service.review_count }} {{ gettext("reviews") }})
-                </div>
-                {% endif %}
+    <main class="flex-grow container mx-auto px-4 py-8">
+        <section class="booking-section bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-4">{{ service.name }}</h2>
+            <p class="text-gray-700 dark:text-gray-300 mb-6">{{ service.description }}</p>
 
-                <button class="mt-4 bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">{{ gettext("Book Now") }}</button>
-            
-                {% if service.review_count > 0 %}
-                <div class="mt-4 pt-4 border-t border-gray-200">
-                    <h4 class="text-lg font-semibold text-gray-700 mb-2">{{ gettext("Customer Reviews") }}</h4>
-                    {% for review in service.reviews %}
-                    <div class="bg-gray-50 p-3 rounded-md mb-2">
-                        <p class="text-sm font-medium text-gray-800">{{ review.customer_name }} - {{ review.rating }} / 5</p>
-                        <p class="text-sm text-gray-600">{{ review.comment }}</p>
-                        <p class="text-xs text-gray-400 mt-1">{{ review.created_at.strftime('%Y-%m-%d') }}</p>
-                    </div>
-                    {% endfor %}
-                </div>
-                {% endif %}
-            </div>
-            {% endfor %}
-        </section>
+            <form id="bookingForm" class="space-y-6">
+                <input type="hidden" name="owner_id" value="{{ owner.id }}">
+                <input type="hidden" name="service_id" value="{{ service.id }}">
 
-        <section class="mb-8 p-4 bg-white rounded-lg shadow-md">
-            <h2 class="text-2xl font-semibold text-gray-700 mb-4">{{ gettext("Book an Appointment") }}</h2>
-            <form action="/book" method="POST" class="space-y-4">
                 <div>
-                    <label for="service_id" class="block text-sm font-medium text-gray-700">{{ gettext("Select Service") }}</label>
-                    <select id="service_id" name="service_id" required class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-                        {% for service in services %}
-                            <option value="{{ service.id }}">{{ service.name }} ({{ format_currency(service.price, service.currency, lang_code) }})</option>
-                        {% endfor %}
+                    <label for="booking_date" class="block text-sm font-medium text-gray-700 dark:text-gray-200">{{ _('Select Date') }}</label>
+                    <input type="date" name="booking_date" id="booking_date" required
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                </div>
+
+                <div>
+                    <label for="booking_time" class="block text-sm font-medium text-gray-700 dark:text-gray-200">{{ _('Select Time Slot') }}</label>
+                    <select name="booking_time" id="booking_time" required
+                            class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        <option value="">{{ _('Please select a date first') }}</option>
                     </select>
                 </div>
+
+                <div class="booking-recurrence-options hidden">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">{{ _('Recurring Booking (Optional)') }}</label>
+                    <div class="flex items-center space-x-4 mb-2">
+                        <input type="checkbox" id="is_recurring" name="is_recurring" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600">
+                        <label for="is_recurring" class="text-sm text-gray-700 dark:text-gray-200">{{ _('Make this a recurring booking') }}</label>
+                    </div>
+                    <div id="recurrence_details" class="space-y-4 hidden ml-6 p-4 border border-gray-200 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700">
+                        <div>
+                            <label for="recurrence_type" class="block text-sm font-medium text-gray-700 dark:text-gray-200">{{ _('Recurrence Type') }}</label>
+                            <select name="recurrence_type" id="recurrence_type"
+                                    class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md dark:bg-gray-600 dark:border-gray-500 dark:text-white">
+                                <option value="DAILY">{{ _('Daily') }}</option>
+                                <option value="WEEKLY">{{ _('Weekly') }}</option>
+                                <option value="MONTHLY">{{ _('Monthly') }}</option>
+                            </select>
+                        </div>
+                        <div id="recurrence_value_field">
+                            <label for="recurrence_value" class="block text-sm font-medium text-gray-700 dark:text-gray-200">{{ _('Recurrence Value (e.g., "MON,WED" for weekly, "15" for monthly)') }}</label>
+                            <input type="text" name="recurrence_value" id="recurrence_value"
+                                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-600 dark:border-gray-500 dark:text-white">
+                        </div>
+                        <div>
+                            <label for="recurrence_end_date" class="block text-sm font-medium text-gray-700 dark:text-gray-200">{{ _('Recurrence End Date (Optional)') }}</label>
+                            <input type="date" name="recurrence_end_date" id="recurrence_end_date"
+                                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-600 dark:border-gray-500 dark:text-white">
+                        </div>
+                    </div>
+                </div>
+
                 <div>
-                    <label for="customer_name" class="block text-sm font-medium text-gray-700">{{ gettext("Your Name") }}</label>
-                    <input type="text" id="customer_name" name="customer_name" required class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                    <label for="customer_name" class="block text-sm font-medium text-gray-700 dark:text-gray-200">{{ _('Your Name') }}</label>
+                    <input type="text" name="customer_name" id="customer_name" required
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                 </div>
                 <div>
-                    <label for="customer_email" class="block text-sm font-medium text-gray-700">{{ gettext("Your Email") }}</label>
-                    <input type="email" id="customer_email" name="customer_email" required class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                    <label for="customer_email" class="block text-sm font-medium text-gray-700 dark:text-gray-200">{{ _('Your Email') }}</label>
+                    <input type="email" name="customer_email" id="customer_email" required
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                 </div>
                 <div>
-                    <label for="customer_phone" class="block text-sm font-medium text-gray-700">{{ gettext("Your Phone (Optional)") }}</label>
-                    <input type="tel" id="customer_phone" name="customer_phone" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                    <label for="customer_phone" class="block text-sm font-medium text-gray-700 dark:text-gray-200">{{ _('Your Phone (Optional)') }}</label>
+                    <input type="tel" name="customer_phone" id="customer_phone"
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                 </div>
-                <div>
-                    <label for="date" class="block text-sm font-medium text-gray-700">{{ gettext("Date") }}</label>
-                    <input type="date" id="date" name="date" required class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-                </div>
-                <div>
-                    <label for="time" class="block text-sm font-medium text-gray-700">{{ gettext("Time") }}</label>
-                    <input type="time" id="time" name="time" required class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-                </div>
-                <div>
-                    <button type="submit" class="w-full bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">{{ gettext("Confirm Booking") }}</button>
-                </div>
+
+                <button type="submit"
+                        class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:bg-indigo-500 dark:hover:bg-indigo-600">
+                    {{ _('Book Now') }}
+                </button>
+                <div id="bookingMessage" class="mt-4 text-center text-sm font-medium"></div>
             </form>
         </section>
-    </div>
+
+        <!-- Review Submission Section -->
+        <section class="review-section py-8 bg-gray-50 dark:bg-gray-800 rounded-lg shadow-md mt-8" id="review-section">
+            <div class="container mx-auto px-4">
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6 text-center">{{ _('Leave a Review for this Service') }}</h2>
+                <div class="max-w-md mx-auto bg-white dark:bg-gray-700 p-6 rounded-lg shadow-md">
+                    <form id="reviewForm" class="space-y-4">
+                        <input type="hidden" name="service_id" value="{{ service.id }}">
+                        <div>
+                            <label for="review_customer_name" class="block text-sm font-medium text-gray-700 dark:text-gray-200">{{ _('Your Name') }}</label>
+                            <input type="text" name="customer_name" id="review_customer_name" required
+                                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-600 dark:border-gray-500 dark:text-white">
+                        </div>
+                        <div>
+                            <label for="review_customer_email" class="block text-sm font-medium text-gray-700 dark:text-gray-200">{{ _('Your Email') }}</label>
+                            <input type="email" name="customer_email" id="review_customer_email" required
+                                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-600 dark:border-gray-500 dark:text-white">
+                        </div>
+                        <div>
+                            <label for="rating" class="block text-sm font-medium text-gray-700 dark:text-gray-200">{{ _('Rating') }}</label>
+                            <select name="rating" id="rating" required
+                                    class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md dark:bg-gray-600 dark:border-gray-500 dark:text-white">
+                                <option value="">{{ _('Select a rating') }}</option>
+                                <option value="5">5 {{ _('Stars') }}</option>
+                                <option value="4">4 {{ _('Stars') }}</option>
+                                <option value="3">3 {{ _('Stars') }}</option>
+                                <option value="2">2 {{ _('Stars') }}</option>
+                                <option value="1">1 {{ _('Star') }}</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="comment" class="block text-sm font-medium text-gray-700 dark:text-gray-200">{{ _('Comment') }}</label>
+                            <textarea name="comment" id="comment" rows="4"
+                                      class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-600 dark:border-gray-500 dark:text-white"></textarea>
+                        </div>
+                        <button type="submit"
+                                class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:bg-indigo-500 dark:hover:bg-indigo-600">
+                            {{ _('Submit Review') }}
+                        </button>
+                        <div id="reviewMessage" class="mt-4 text-center text-sm font-medium"></div>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-white dark:bg-gray-800 shadow-sm py-4 mt-8">
+        <div class="container mx-auto px-4 text-center text-gray-600 dark:text-gray-400">
+            &copy; 2023 BookSlot. All rights reserved.
+        </div>
+    </footer>
 
     <script>
-        function changeLanguage(lang_code) {
+        function changeLanguage(lang) {
             const url = new URL(window.location.href);
-            url.searchParams.set('lang', lang_code);
+            url.searchParams.set('lang', lang);
             window.location.href = url.toString();
         }
+
+        const bookingDateInput = document.getElementById('booking_date');
+        const bookingTimeSelect = document.getElementById('booking_time');
+        const bookingForm = document.getElementById('bookingForm');
+        const bookingMessage = document.getElementById('bookingMessage');
+        const serviceId = document.querySelector('input[name="service_id"]').value;
+        const ownerId = document.querySelector('input[name="owner_id"]').value;
+
+        // Initialize date input to today or future
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+        const dd = String(today.getDate()).padStart(2, '0');
+        bookingDateInput.min = `${yyyy}-${mm}-${dd}`;
+
+        bookingDateInput.addEventListener('change', async () => {
+            const selectedDate = bookingDateInput.value;
+            if (!selectedDate) {
+                bookingTimeSelect.innerHTML = '<option value="">{{ _("Please select a date first") }}</option>';
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/owners/${ownerId}/services/${serviceId}/available-slots?date=${selectedDate}`);
+                const slots = await response.json();
+
+                bookingTimeSelect.innerHTML = ''; // Clear previous options
+                if (slots.length === 0) {
+                    bookingTimeSelect.innerHTML = '<option value="">{{ _("No slots available for this date") }}</option>';
+                } else {
+                    slots.forEach(slot => {
+                        const option = document.createElement('option');
+                        option.value = slot;
+                        option.textContent = slot;
+                        bookingTimeSelect.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('Error fetching available slots:', error);
+                bookingTimeSelect.innerHTML = '<option value="">{{ _("Failed to load slots") }}</option>';
+            }
+        });
+
+        // Recurring booking toggle logic
+        const isRecurringCheckbox = document.getElementById('is_recurring');
+        const recurrenceDetailsDiv = document.getElementById('recurrence_details');
+        isRecurringCheckbox.addEventListener('change', () => {
+            if (isRecurringCheckbox.checked) {
+                recurrenceDetailsDiv.classList.remove('hidden');
+                document.querySelectorAll('#recurrence_details input, #recurrence_details select').forEach(el => el.required = true);
+            } else {
+                recurrenceDetailsDiv.classList.add('hidden');
+                document.querySelectorAll('#recurrence_details input, #recurrence_details select').forEach(el => el.required = false);
+            }
+        });
+        
+        // Booking form submission
+        bookingForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const formData = new FormData(bookingForm);
+            const data = {};
+            for (let [key, value] of formData.entries()) {
+                data[key] = value;
+            }
+
+            // Convert date and time to datetime string for recurring
+            if (data.booking_date && data.booking_time) {
+                data.date = data.booking_date; // Use 'date' for schema
+                data.time = data.booking_time; // Use 'time' for schema
+            }
+            delete data.booking_date;
+            delete data.booking_time;
+
+            data.is_recurring = isRecurringCheckbox.checked;
+            if (!data.is_recurring) {
+                delete data.recurrence_type;
+                delete data.recurrence_value;
+                delete data.recurrence_end_date;
+            }
+
+            bookingMessage.textContent = ''; // Clear previous messages
+
+            try {
+                const response = await fetch('/api/bookings/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data),
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    bookingMessage.textContent = '{{ _("Booking successful! A confirmation email has been sent.") }}';
+                    bookingMessage.className = 'mt-4 text-center text-sm font-medium text-green-600';
+                    bookingForm.reset(); // Clear form
+                    bookingTimeSelect.innerHTML = '<option value="">{{ _("Please select a date first") }}</option>'; // Reset time slots
+                    recurrenceDetailsDiv.classList.add('hidden'); // Hide recurrence options
+                    isRecurringCheckbox.checked = false;
+                } else {
+                    bookingMessage.textContent = result.detail || '{{ _("Failed to create booking.") }}';
+                    bookingMessage.className = 'mt-4 text-center text-sm font-medium text-red-600';
+                }
+            } catch (error) {
+                console.error('Error submitting booking:', error);
+                bookingMessage.textContent = '{{ _("An unexpected error occurred during booking.") }}';
+                bookingMessage.className = 'mt-4 text-center text-sm font-medium text-red-600';
+            }
+        });
+
+        // Review form submission
+        document.getElementById('reviewForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const formData = new FormData(this);
+            const data = {};
+            for (let [key, value] of formData.entries()) {
+                data[key] = value;
+            }
+            data.rating = parseInt(data.rating); // Ensure rating is an integer
+
+            const reviewMessage = document.getElementById('reviewMessage');
+            reviewMessage.textContent = ''; // Clear previous messages
+
+            try {
+                const response = await fetch('/api/reviews/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data),
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    reviewMessage.textContent = '{{ _("Review submitted successfully! Thank you for your feedback.") }}';
+                    reviewMessage.className = 'mt-4 text-center text-sm font-medium text-green-600';
+                    this.reset(); // Clear form
+                } else {
+                    reviewMessage.textContent = result.detail || '{{ _("Failed to submit review.") }}';
+                    reviewMessage.className = 'mt-4 text-center text-sm font-medium text-red-600';
+                }
+            } catch (error) {
+                console.error('Error submitting review:', error);
+                reviewMessage.textContent = '{{ _("An unexpected error occurred while submitting review.") }}';
+                reviewMessage.className = 'mt-4 text-center text-sm font-medium text-red-600';
+            }
+        });
     </script>
 </body>
 </html>
