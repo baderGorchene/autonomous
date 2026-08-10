@@ -1,3 +1,8 @@
+## Iteration 375
+_2026-08-10 20:49 UTC_
+
+Implemented comprehensive SEO optimization for public booking pages by adding dynamic meta tags (title, description, keywords), Open Graph tags for social media sharing, and Schema.org JSON-LD structured data for better search engine understanding. Updated `models.py` and `schemas.py` to include new fields (`description`, `city`, `country`, `category`) for richer SEO content. Reconstructed `main.py` to pass necessary data to the template and registered a `format_currency` Jinja2 filter using Babel for i18n. Partially updated `dashboard.html` to allow owners to update these new profile fields. Ensured `requirements.txt` is comprehensive.
+
 ## Iteration 374
 _2026-08-10 19:57 UTC_
 
