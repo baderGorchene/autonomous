@@ -1,191 +1,274 @@
-{% extends "base.html" %}
-{% block title %}{{ _('Book an Appointment') }}{% endblock %}
+<!-- src/templates/booking_page.html -->
+<!DOCTYPE html>
+<html lang="{{ current_locale }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ gettext('Book an appointment with') }} {{ owner.name }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body { font-family: sans-serif; }
+        .booking-form-container { max-width: 500px; margin: 2rem auto; padding: 1.5rem; background: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .date-selector button { padding: 0.5rem 1rem; border-radius: 4px; margin: 0.25rem; }
+        .time-slot-button { padding: 0.5rem 1rem; border-radius: 4px; margin: 0.25rem; cursor: pointer; }
+        .time-slot-button.selected { background-color: #3B82F6; color: white; }
+        .time-slot-button.unavailable { background-color: #e2e8f0; color: #a0aec0; cursor: not-allowed; }
+        .language-toggle-container { position: absolute; top: 1rem; right: 1rem; }
+        .language-toggle-container select {
+            padding: 0.3rem 0.5rem;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            background-color: white;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center justify-center py-8">
+    <div class="language-toggle-container">
+        <select onchange="changeLanguage(this.value)">
+            {% for lang_code, lang_name in locales.items() %}
+                <option value="{{ lang_code }}" {% if lang_code == current_locale %}selected{% endif %}>{{ lang_name }}</option>
+            {% endfor %}
+        </select>
+    </div>
 
-{% block content %}
-<div class="container mx-auto p-4 max-w-md">
-    <div class="bg-white shadow-lg rounded-lg p-6 mb-8">
-        <h1 class="text-3xl font-bold text-gray-800 mb-4 text-center">{{ _('Book with') }} {{ owner.name }}</h1>
+    <div class="booking-form-container w-full">
+        <h1 class="text-3xl font-bold text-center mb-6 text-gray-800">{{ gettext('Book an Appointment') }}</h1>
+        <h2 class="text-xl text-center mb-4 text-gray-700">{{ service.name }} {{ gettext('with') }} {{ owner.name }}</h2>
+        <p class="text-center text-gray-600 mb-6">{{ gettext('Duration') }}: {{ ngettext('%(duration)d minute', '%(duration)d minutes', service.duration_minutes) }}</p>
 
-        {% if error %}
-        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-            <strong class="font-bold">{{ _('Error!') }}</strong>
-            <span class="block sm:inline">{{ error }}</span>
-        </div>
+        {% if error_message %}
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+                <strong class="font-bold">{{ gettext('Error!') }}</strong>
+                <span class="block sm:inline"> {{ error_message }}</span>
+            </div>
         {% endif %}
 
-        <form id="bookingForm" action="/{{ owner.name }}/book" method="POST">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-
-            <div class="mb-4">
-                <label for="service_id" class="block text-gray-700 text-sm font-bold mb-2">{{ _('Select a Service') }}:</label>
-                <select id="service_id" name="service_id" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-white" required>
-                    <option value="">{{ _('Choose a service') }}</option>
-                    {% for service in services %}
-                    <option value="{{ service.id }}" data-duration="{{ service.duration_minutes }}" data-price="{{ service.price }}">{{ service.name }} ({{ service.duration_minutes }} {{ _('mins') }}, {{ service.price / 100 }} {{ _('currency') }})</option>
+        <form action="/book/{{ owner.name }}/{{ service.id }}" method="POST" class="space-y-4">
+            <div>
+                <label for="booking_date" class="block text-sm font-medium text-gray-700 mb-2">{{ gettext('Select a Date') }}:</label>
+                <div class="flex overflow-x-auto pb-2 -mx-2 hide-scrollbar">
+                    {% for d in dates %}
+                        <button type="button" 
+                                class="date-selector flex-shrink-0 mx-1 px-4 py-2 border rounded-lg text-sm {% if d == initial_date %}bg-blue-600 text-white{% else %}bg-gray-200 text-gray-800 hover:bg-gray-300{% endif %}"
+                                data-date="{{ d.isoformat() }}"
+                                onclick="selectDate('{{ d.isoformat() }}', this)">
+                            <span class="block font-medium">{{ format_date(d, '%a') }}</span>
+                            <span class="block text-xs">{{ format_date(d, '%d %b') }}</span>
+                        </button>
                     {% endfor %}
-                </select>
-            </div>
-
-            <div class="mb-4">
-                <label for="date" class="block text-gray-700 text-sm font-bold mb-2">{{ _('Select Date') }}:</label>
-                <input type="date" id="date" name="date" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-white" required>
-            </div>
-
-            <div class="mb-4" id="timeSlotsContainer">
-                <label for="time" class="block text-gray-700 text-sm font-bold mb-2">{{ _('Select Time') }}:</label>
-                <div id="timeSlots" class="grid grid-cols-3 gap-2">
-                    <p class="text-gray-500 col-span-3">{{ _('Please select a service and date to see available slots.') }}</p>
                 </div>
-                <input type="hidden" id="selectedTime" name="time" required>
+                <input type="hidden" name="booking_date" id="booking_date" value="{{ initial_date.isoformat() }}">
             </div>
 
-            <div class="mb-4">
-                <label for="customer_name" class="block text-gray-700 text-sm font-bold mb-2">{{ _('Your Name') }}:</label>
-                <input type="text" id="customer_name" name="customer_name" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
-            </div>
-
-            <div class="mb-4">
-                <label for="customer_email" class="block text-gray-700 text-sm font-bold mb-2">{{ _('Your Email') }}:</label>
-                <input type="email" id="customer_email" name="customer_email" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
-            </div>
-
-            <div class="mb-4">
-                <label for="customer_phone_number" class="block text-gray-700 text-sm font-bold mb-2">{{ _('Your Phone Number (Optional)') }}:</label>
-                <input type="tel" id="customer_phone_number" name="customer_phone_number" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                <p class="text-xs text-gray-500 mt-1">{{ _('Providing your phone number may help with future bookings.') }}</p>
-            </div>
-
-            <div class="mb-4">
-                <label for="is_recurring" class="inline-flex items-center">
-                    <input type="checkbox" id="is_recurring" name="is_recurring" class="form-checkbox h-5 w-5 text-indigo-600">
-                    <span class="ml-2 text-gray-700">{{ _('Make this a recurring booking?') }}</span>
-                </label>
-            </div>
-
-            <div id="recurrenceOptions" class="hidden mb-4 p-4 border border-gray-200 rounded-md bg-gray-50">
-                <div class="mb-4">
-                    <label for="recurrence_type" class="block text-gray-700 text-sm font-bold mb-2">{{ _('Recurrence Type') }}:</label>
-                    <select id="recurrence_type" name="recurrence_type" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-white">
-                        <option value="none">{{ _('None') }}</option>
-                        <option value="daily">{{ _('Daily') }}</option>
-                        <option value="weekly">{{ _('Weekly') }}</option>
-                        <option value="monthly">{{ _('Monthly') }}</option>
-                    </select>
+            <div>
+                <label for="booking_time" class="block text-sm font-medium text-gray-700 mb-2">{{ gettext('Select a Time Slot') }}:</label>
+                <div id="time-slots-container" class="grid grid-cols-3 sm:grid-cols-4 gap-2">
                 </div>
-                <div id="recurrenceValueContainer" class="mb-4 hidden">
-                    <label for="recurrence_value" class="block text-gray-700 text-sm font-bold mb-2">{{ _('Recurrence Value') }}:</label>
-                    <input type="text" id="recurrence_value" name="recurrence_value" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                    <p class="text-xs text-gray-500 mt-1" id="recurrenceValueHint"></p>
+                <input type="hidden" name="booking_time" id="booking_time">
+                <p id="no-slots-message" class="text-red-500 text-sm mt-2 hidden">{{ gettext('No available slots for this date.') }}</p>
+            </div>
+
+            <div>
+                <label for="customer_name" class="block text-sm font-medium text-gray-700">{{ gettext('Your Name') }}:</label>
+                <input type="text" id="customer_name" name="customer_name" required 
+                       class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                       value="{{ customer_name if customer_name else '' }}">
+            </div>
+            <div>
+                <label for="customer_email" class="block text-sm font-medium text-gray-700">{{ gettext('Your Email') }}:</label>
+                <input type="email" id="customer_email" name="customer_email" required 
+                       class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                       value="{{ customer_email if customer_email else '' }}">
+            </div>
+            <div>
+                <label for="customer_phone" class="block text-sm font-medium text-gray-700">{{ gettext('Your Phone (Optional)') }}:</label>
+                <input type="tel" id="customer_phone" name="customer_phone"
+                       class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                       value="{{ customer_phone if customer_phone else '' }}">
+            </div>
+
+            <div class="flex items-center">
+                <input type="checkbox" id="save_customer_details" name="save_customer_details" class="h-4 w-4 text-blue-600 border-gray-300 rounded" value="true">
+                <label for="save_customer_details" class="ml-2 block text-sm text-gray-900">{{ gettext('Save my details for future bookings (optional)') }}</label>
+            </div>
+
+            <div class="mt-4">
+                <div class="flex items-center">
+                    <input type="checkbox" id="is_recurring" name="is_recurring" class="h-4 w-4 text-blue-600 border-gray-300 rounded" onchange="toggleRecurrenceOptions()" {% if is_recurring %}checked{% endif %}>
+                    <label for="is_recurring" class="ml-2 block text-sm text-gray-900">{{ gettext('Make this a recurring booking?') }}</label>
                 </div>
-                <div class="mb-4">
-                    <label for="recurrence_end_date" class="block text-gray-700 text-sm font-bold mb-2">{{ _('Recurrence End Date (Optional)') }}:</label>
-                    <input type="date" id="recurrence_end_date" name="recurrence_end_date" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                <div id="recurrence-options" class="mt-2 p-4 border rounded-md bg-gray-50 {% if not is_recurring %}hidden{% endif %}">
+                    <p class="text-sm text-gray-600 mb-2">{{ gettext('Please note: Recurring booking functionality is under development. For now, this will only book the first slot and save the pattern.') }}</p>
+                    <div>
+                        <label for="recurrence_type" class="block text-sm font-medium text-gray-700">{{ gettext('Recurrence Type') }}:</label>
+                        <select id="recurrence_type" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                            <option value="DAILY">{{ gettext('Daily') }}</option>
+                            <option value="WEEKLY">{{ gettext('Weekly') }}</option>
+                            <option value="MONTHLY">{{ gettext('Monthly') }}</option>
+                        </select>
+                    </div>
+                    <div id="recurrence_value_container" class="mt-2 hidden">
+                        <label for="recurrence_value" class="block text-sm font-medium text-gray-700">{{ gettext('Recurrence Value (e.g., "MON,WED,FRI" for weekly, "15" for monthly)') }}:</label>
+                        <input type="text" id="recurrence_value" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                    </div>
+                    <div class="mt-2">
+                        <label for="recurrence_end_date" class="block text-sm font-medium text-gray-700">{{ gettext('Recurrence End Date (Optional)') }}:</label>
+                        <input type="date" id="recurrence_end_date" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+                    </div>
+                    <input type="hidden" name="recurrence_pattern" id="recurrence_pattern">
                 </div>
             </div>
 
-            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full">
-                {{ _('Confirm Booking') }}
+            <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                {{ gettext('Confirm Booking') }}
             </button>
         </form>
     </div>
-</div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const serviceSelect = document.getElementById('service_id');
-        const dateInput = document.getElementById('date');
-        const timeSlotsDiv = document.getElementById('timeSlots');
-        const selectedTimeInput = document.getElementById('selectedTime');
-        const ownerName = "{{ owner.name }}";
-        const today = new Date().toISOString().split('T')[0];
-        dateInput.setAttribute('min', today);
+    <script>
+        const ownerId = {{ owner.id }};
+        const serviceId = {{ service.id }};
+        const initialDate = "{{ initial_date.isoformat() }}";
+        const initialAvailableSlots = {{ initial_available_slots | safe }};
 
-        const isRecurringCheckbox = document.getElementById('is_recurring');
-        const recurrenceOptionsDiv = document.getElementById('recurrenceOptions');
-        const recurrenceTypeSelect = document.getElementById('recurrence_type');
-        const recurrenceValueContainer = document.getElementById('recurrenceValueContainer');
-        const recurrenceValueInput = document.getElementById('recurrence_value');
-        const recurrenceValueHint = document.getElementById('recurrenceValueHint');
+        document.addEventListener('DOMContentLoaded', () => {
+            loadTimeSlots(initialDate, initialAvailableSlots);
+            document.querySelector('form').addEventListener('submit', function() {
+                const saveCheckbox = document.getElementById('save_customer_details');
+                if (!saveCheckbox.checked) {
+                    saveCheckbox.removeAttribute('name');
+                } else {
+                    saveCheckbox.setAttribute('name', 'save_customer_details');
+                    saveCheckbox.value = 'true';
+                }
 
-        isRecurringCheckbox.addEventListener('change', function() {
-            if (this.checked) {
-                recurrenceOptionsDiv.classList.remove('hidden');
-                recurrenceTypeSelect.setAttribute('required', 'required');
-            } else {
-                recurrenceOptionsDiv.classList.add('hidden');
-                recurrenceTypeSelect.removeAttribute('required');
-                recurrenceValueContainer.classList.add('hidden');
-                recurrenceValueInput.removeAttribute('required');
-            }
+                const isRecurringCheckbox = document.getElementById('is_recurring');
+                const recurrencePatternInput = document.getElementById('recurrence_pattern');
+                if (isRecurringCheckbox.checked) {
+                    const recurrenceType = document.getElementById('recurrence_type').value;
+                    const recurrenceValue = document.getElementById('recurrence_value').value;
+                    const recurrenceEndDate = document.getElementById('recurrence_end_date').value;
+                    const pattern = {
+                        type: recurrenceType,
+                        value: recurrenceValue,
+                        end_date: recurrenceEndDate || null
+                    };
+                    recurrencePatternInput.value = JSON.stringify(pattern);
+                } else {
+                    recurrencePatternInput.value = '';
+                }
+            });
         });
 
-        recurrenceTypeSelect.addEventListener('change', function() {
-            const type = this.value;
-            recurrenceValueContainer.classList.add('hidden');
-            recurrenceValueInput.removeAttribute('required');
-            recurrenceValueInput.value = '';
-            recurrenceValueHint.textContent = '';
+        function changeLanguage(lang_code) {
+            const url = new URL(window.location.href);
+            url.searchParams.set('lang', lang_code);
+            window.location.href = url.toString();
+        }
 
-            if (type === 'weekly') {
-                recurrenceValueContainer.classList.remove('hidden');
-                recurrenceValueInput.setAttribute('required', 'required');
-                recurrenceValueHint.textContent = "{{ _('Enter comma-separated weekdays (e.g., MON,WED,FRI)') }}";
-            } else if (type === 'monthly') {
-                recurrenceValueContainer.classList.remove('hidden');
-                recurrenceValueInput.setAttribute('required', 'required');
-                recurrenceValueHint.textContent = "{{ _('Enter day of month (e.g., 15 for 15th of every month)') }}";
+        function selectDate(dateString, buttonElement) {
+            document.getElementById('booking_date').value = dateString;
+
+            document.querySelectorAll('.date-selector').forEach(btn => {
+                btn.classList.remove('bg-blue-600', 'text-white');
+                btn.classList.add('bg-gray-200', 'text-gray-800', 'hover:bg-gray-300');
+            });
+            buttonElement.classList.add('bg-blue-600', 'text-white');
+            buttonElement.classList.remove('bg-gray-200', 'text-gray-800', 'hover:bg-gray-300');
+
+            fetchTimeSlots(dateString);
+        }
+
+        async function fetchTimeSlots(dateString) {
+            const response = await fetch(`/api/available_slots?owner_id=${ownerId}&service_id=${serviceId}&target_date=${dateString}`);
+            const slots = await response.json();
+            loadTimeSlots(dateString, slots);
+        }
+
+        function loadTimeSlots(dateString, slots) {
+            const timeSlotsContainer = document.getElementById('time-slots-container');
+            timeSlotsContainer.innerHTML = '';
+            document.getElementById('no-slots-message').classList.add('hidden');
+
+            if (slots.length === 0) {
+                document.getElementById('no-slots-message').classList.remove('hidden');
+                document.getElementById('booking_time').value = '';
+                return;
             }
-        });
 
-        function fetchAvailableSlots() {
-            const serviceId = serviceSelect.value;
-            const selectedDate = dateInput.value;
+            const now = new Date();
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
 
-            timeSlotsDiv.innerHTML = '<p class="text-gray-500 col-span-3">{{ _("Loading slots...") }}</p>';
-            selectedTimeInput.value = '';
+            const selectedDate = new Date(dateString);
+            selectedDate.setHours(0, 0, 0, 0);
 
-            if (serviceId && selectedDate) {
-                fetch(`/${ownerName}/api/available_slots?service_id=${serviceId}&selected_date=${selectedDate}`)
-                    .then(response => response.json())
-                    .then(slots => {
-                        timeSlotsDiv.innerHTML = '';
-                        if (slots.length > 0) {
-                            slots.forEach(slot => {
-                                const button = document.createElement('button');
-                                button.type = 'button';
-                                button.textContent = slot;
-                                button.className = 'time-slot-btn bg-gray-200 hover:bg-indigo-200 text-gray-800 font-semibold py-2 px-3 rounded text-sm';
-                                button.addEventListener('click', () => {
-                                    document.querySelectorAll('.time-slot-btn').forEach(btn => {
-                                        btn.classList.remove('bg-indigo-600', 'text-white');
-                                        btn.classList.add('bg-gray-200', 'text-gray-800');
-                                    });
-                                    button.classList.remove('bg-gray-200', 'text-gray-800');
-                                    button.classList.add('bg-indigo-600', 'text-white');
-                                    selectedTimeInput.value = slot;
-                                });
-                                timeSlotsDiv.appendChild(button);
-                            });
-                        } else {
-                            timeSlotsDiv.innerHTML = '<p class="text-gray-500 col-span-3">{{ _("No slots available for this date and service.") }}</p>';
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error fetching slots:', error);
-                        timeSlotsDiv.innerHTML = '<p class="text-red-500 col-span-3">{{ _("Error loading slots. Please try again.") }}</p>';
-                    });
-            } else {
-                timeSlotsDiv.innerHTML = '<p class="text-gray-500 col-span-3">{{ _("Please select a service and date to see available slots.") }}</p>';
+            slots.forEach(slot => {
+                const [hours, minutes] = slot.split(':').map(Number);
+                const slotDateTime = new Date(selectedDate);
+                slotDateTime.setHours(hours, minutes, 0, 0);
+
+                const isPast = slotDateTime <= now && selectedDate.getTime() === today.getTime();
+                
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.classList.add('time-slot-button', 'bg-gray-200', 'text-gray-800', 'hover:bg-gray-300');
+                button.textContent = slot;
+                button.setAttribute('data-time', slot);
+
+                if (isPast) {
+                    button.classList.remove('bg-gray-200', 'hover:bg-gray-300');
+                    button.classList.add('unavailable');
+                    button.disabled = true;
+                } else {
+                    button.onclick = () => selectTime(slot, button);
+                }
+                timeSlotsContainer.appendChild(button);
+            });
+
+            const currentSelectedTime = document.getElementById('booking_time').value;
+            if (currentSelectedTime) {
+                const selectedTimeButton = timeSlotsContainer.querySelector(`[data-time="${currentSelectedTime}"]`);
+                if (selectedTimeButton && !selectedTimeButton.disabled) {
+                    selectedTimeButton.classList.add('selected');
+                    selectedTimeButton.classList.remove('bg-gray-200', 'text-gray-800', 'hover:bg-gray-300');
+                }
             }
         }
 
-        serviceSelect.addEventListener('change', fetchAvailableSlots);
-        dateInput.addEventListener('change', fetchAvailableSlots);
-
-        // Initial call if a service and date are pre-selected (e.g., after an error)
-        if (serviceSelect.value && dateInput.value) {
-            fetchAvailableSlots();
+        function selectTime(timeString, buttonElement) {
+            document.querySelectorAll('.time-slot-button').forEach(btn => {
+                btn.classList.remove('selected');
+                if (!btn.disabled) {
+                    btn.classList.add('bg-gray-200', 'text-gray-800', 'hover:bg-gray-300');
+                }
+            });
+            buttonElement.classList.add('selected');
+            buttonElement.classList.remove('bg-gray-200', 'text-gray-800', 'hover:bg-gray-300');
+            document.getElementById('booking_time').value = timeString;
         }
-    });
-</script>
-{% endblock %}
+
+        function toggleRecurrenceOptions() {
+            const recurrenceOptions = document.getElementById('recurrence-options');
+            const isRecurringCheckbox = document.getElementById('is_recurring');
+            if (isRecurringCheckbox.checked) {
+                recurrenceOptions.classList.remove('hidden');
+                const recurrenceType = document.getElementById('recurrence_type').value;
+                document.getElementById('recurrence_value_container').classList.toggle('hidden', recurrenceType === 'DAILY');
+            } else {
+                recurrenceOptions.classList.add('hidden');
+            }
+        }
+
+        document.getElementById('recurrence_type').addEventListener('change', function() {
+            const recurrenceType = this.value;
+            document.getElementById('recurrence_value_container').classList.toggle('hidden', recurrenceType === 'DAILY');
+        });
+
+        loadTimeSlots(initialDate, initialAvailableSlots);
+        toggleRecurrenceOptions();
+    </script>
+</body>
+</html>

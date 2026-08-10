@@ -1,105 +1,104 @@
-from fastapi import FastAPI, Depends, HTTPException, status, Request, Response, Form
+from fastapi import FastAPI, Depends, HTTPException, status, Request, Form, Response
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.templating import Jinja2Templates
-from fastapi.staticfiles import StaticFiles
-from sqlalchemy.orm import Session
-from sqlalchemy import func
-from datetime import timedelta, date, datetime, time
-from typing import List, Dict, Any, Optional
+from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import create_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+from datetime import datetime, timedelta, date, time
+from typing import List, Optional, Dict, Any
+from urllib.parse import urlencode
+
+import os
 import uuid
 import json
-import stripe
 
-from . import models, schemas, crud, security, database, notifications, i18n, availability_utils, analytics
+from . import models, schemas, security, notifications, analytics, availability_utils, i18n
 from .config import settings
 
+import stripe
+
+stripe.api_key = settings.STRIPE_API_KEY
+stripe_webhook_secret = settings.STRIPE_WEBHOOK_SECRET
+
+SQLALCHEMY_DATABASE_URL = settings.SQLALCHEMY_DATABASE_URL
+engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
+models.Base.metadata.create_all(bind=engine)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
 app = FastAPI()
+templates = Jinja2Templates(directory="src/templates")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-# Mount static files
-app.mount("/static", StaticFiles(directory="static"), name="static")
-
-# Setup templates
-templates = Jinja2Templates(directory="templates")
-
-# Setup i18n
-i18n.setup_i18n(app, templates)
-
-# Dependency to get DB session
 def get_db():
-    db = database.SessionLocal()
+    db = SessionLocal()
     try:
         yield db
     finally:
         db.close()
 
-# Stripe configuration
-stripe.api_key = settings.STRIPE_API_KEY
-
-# --- Helper functions ---
-def get_current_owner(request: Request, db: Session = Depends(get_db)) -> models.Owner:
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
+async def get_current_owner(request: Request, db: Session = Depends(get_db)):
     token = request.cookies.get("access_token")
     if not token:
-        raise credentials_exception
-    
-    try:
-        email = security.get_email_from_token(token)
-        if email is None:
-            raise credentials_exception
-    except Exception:
-        raise credentials_exception
-    
-    owner = crud.get_owner_by_email(db, email=email)
-    if owner is None:
-        raise credentials_exception
-    return owner
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return security.get_current_owner(db, token)
 
-def get_current_owner_or_none(request: Request, db: Session = Depends(get_db)) -> Optional[models.Owner]:
+async def get_current_active_owner(current_owner: schemas.Owner = Depends(get_current_owner)):
+    if not current_owner.is_active:
+        raise HTTPException(status_code=400, detail="Inactive owner")
+    return current_owner
+
+async def get_current_owner_optional(request: Request, db: Session = Depends(get_db)):
     token = request.cookies.get("access_token")
-    if not token:
-        return None
-    try:
-        email = security.get_email_from_token(token)
-        if email is None:
-            return None
-    except Exception:
-        return None
-    owner = crud.get_owner_by_email(db, email=email)
-    return owner
+    if token:
+        try:
+            return security.get_current_owner(db, token)
+        except HTTPException:
+            pass
+    return None
 
-# --- Root and Auth Endpoints ---
+@app.middleware("http")
+async def add_i18n_middleware(request: Request, call_next):
+    owner_locale = None
+    if "/dashboard" in request.url.path or "/profile" in request.url.path or "/admin" in request.url.path:
+        token = request.cookies.get("access_token")
+        if token:
+            db = SessionLocal()
+            try:
+                owner = security.get_current_owner(db, token)
+                owner_locale = owner.locale
+            except HTTPException:
+                pass
+            finally:
+                db.close()
+    
+    locale = request.query_params.get("lang", owner_locale if owner_locale else "en")
+    i18n.set_locale(locale)
+    response = await call_next(request)
+    return response
+
+templates.env.globals['gettext'] = i18n.gettext
+templates.env.globals['ngettext'] = i18n.ngettext
+templates.env.globals['pgettext'] = i18n.pgettext
+templates.env.globals['npgettext'] = i18n.npgettext
+templates.env.globals['format_currency'] = i18n.format_currency
+templates.env.globals['format_date'] = i18n.format_date
+templates.env.globals['format_time'] = i18n.format_time
+templates.env.globals['datetime'] = datetime
+
+
 @app.get("/", response_class=HTMLResponse)
-async def read_root(request: Request, db: Session = Depends(get_db), owner: Optional[models.Owner] = Depends(get_current_owner_or_none)):
-    if owner:
-        return RedirectResponse(url="/dashboard", status_code=status.HTTP_302_FOUND)
-    return templates.TemplateResponse("index.html", {"request": request, "owner": owner})
+async def read_root(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request, "message": "Welcome to BookSlot!"})
 
-@app.get("/signup", response_class=HTMLResponse)
-async def signup_form(request: Request, owner: Optional[models.Owner] = Depends(get_current_owner_or_none)):
-    if owner:
-        return RedirectResponse(url="/dashboard", status_code=status.HTTP_302_FOUND)
-    return templates.TemplateResponse("signup.html", {"request": request})
-
-@app.post("/signup", response_class=HTMLResponse)
-async def signup(request: Request, email: str = Form(...), password: str = Form(...), name: str = Form(...), phone_number: Optional[str] = Form(None), db: Session = Depends(get_db)):
-    owner = crud.get_owner_by_email(db, email=email)
-    if owner:
-        return templates.TemplateResponse("signup.html", {"request": request, "error": "Email already registered"})
-    
-    owner_in = schemas.OwnerCreate(email=email, password=password, name=name, phone_number=phone_number)
-    crud.create_owner(db=db, owner=owner_in)
-    return templates.TemplateResponse("signup_success.html", {"request": request})
-
-@app.get("/login", response_class=HTMLResponse)
-async def login_form(request: Request, owner: Optional[models.Owner] = Depends(get_current_owner_or_none)):
-    if owner:
-        return RedirectResponse(url="/dashboard", status_code=status.HTTP_302_FOUND)
-    return templates.TemplateResponse("login.html", {"request": request})
+@app.get("/health")
+async def health_check():
+    return {"status": "ok"}
 
 @app.post("/token", response_model=schemas.Token)
 async def login_for_access_token(response: Response, form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
@@ -114,289 +113,669 @@ async def login_for_access_token(response: Response, form_data: OAuth2PasswordRe
     access_token = security.create_access_token(
         data={"sub": owner.email}, expires_delta=access_token_expires
     )
-    response.set_cookie(key="access_token", value=access_token, httponly=True, samesite="Lax", secure=True, expires=access_token_expires.total_seconds())
+    response.set_cookie(key="access_token", value=access_token, httponly=True, samesite="Lax", secure=True)
     return {"access_token": access_token, "token_type": "bearer"}
+
+@app.post("/signup", response_model=schemas.Owner)
+async def signup_owner(owner: schemas.OwnerCreate, db: Session = Depends(get_db)):
+    db_owner = db.query(models.Owner).filter(models.Owner.email == owner.email).first()
+    if db_owner:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    hashed_password = security.get_password_hash(owner.password)
+    db_owner = models.Owner(
+        email=owner.email, 
+        hashed_password=hashed_password, 
+        name=owner.name, 
+        phone=owner.phone,
+        locale=owner.locale
+    )
+    db.add(db_owner)
+    db.commit()
+    db.refresh(db_owner)
+    return db_owner
+
+@app.get("/login", response_class=HTMLResponse)
+async def login_page(request: Request):
+    return templates.TemplateResponse("login.html", {"request": request})
 
 @app.get("/logout")
 async def logout(response: Response):
-    response = RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
     response.delete_cookie(key="access_token")
-    return response
+    return RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
 
-# --- Owner Dashboard Endpoints ---
 @app.get("/dashboard", response_class=HTMLResponse)
-async def dashboard(request: Request, owner: models.Owner = Depends(get_current_owner), db: Session = Depends(get_db)):
-    services = crud.get_owner_services(db, owner_id=owner.id)
-    bookings = crud.get_owner_upcoming_bookings(db, owner_id=owner.id)
+async def owner_dashboard(request: Request, current_owner: schemas.Owner = Depends(get_current_active_owner), db: Session = Depends(get_db)):
+    bookings = db.query(models.Booking).options(joinedload(models.Booking.service)).filter(
+        models.Booking.owner_id == current_owner.id
+    ).order_by(models.Booking.date, models.Booking.time).all()
 
-    # Analytics data
-    monthly_bookings = analytics.get_monthly_bookings_data(db, owner.id)
-    popular_services = analytics.get_popular_services_data(db, owner.id)
+    services = db.query(models.Service).filter(models.Service.owner_id == current_owner.id).all()
+    availabilities = db.query(models.Availability).filter(models.Availability.owner_id == current_owner.id).all()
 
-    return templates.TemplateResponse(
-        "dashboard.html", 
-        {
-            "request": request, 
-            "owner": owner, 
-            "services": services, 
-            "bookings": bookings,
-            "monthly_bookings": monthly_bookings,
-            "popular_services": popular_services
-        }
-    )
+    monthly_bookings = analytics.get_monthly_bookings_data(db, current_owner.id)
+    popular_services = analytics.get_popular_services_data(db, current_owner.id)
+    
+    subscription_status_display = {
+        models.SubscriptionStatus.ACTIVE.value: i18n.gettext("Active"),
+        models.SubscriptionStatus.INACTIVE.value: i18n.gettext("Inactive"),
+        models.SubscriptionStatus.CANCELLED.value: i18n.gettext("Cancelled"),
+        models.SubscriptionStatus.TRIAL.value: i18n.gettext("Trial")
+    }.get(current_owner.subscription_status, i18n.gettext("Unknown"))
 
-@app.post("/owner/profile", response_class=HTMLResponse)
-async def update_owner_profile(request: Request, name: str = Form(...), phone_number: Optional[str] = Form(None), owner: models.Owner = Depends(get_current_owner), db: Session = Depends(get_db)):
-    try:
-        owner_update = schemas.OwnerUpdate(name=name, phone_number=phone_number)
-        crud.update_owner(db, owner_id=owner.id, owner_update=owner_update)
-        return RedirectResponse(url="/dashboard?success=profile_updated", status_code=status.HTTP_302_FOUND)
-    except Exception as e:
-        return templates.TemplateResponse("dashboard.html", {"request": request, "owner": owner, "error": f"Error updating profile: {e}"})
+    return templates.TemplateResponse("dashboard.html", {
+        "request": request,
+        "owner": current_owner,
+        "bookings": bookings,
+        "services": services,
+        "availabilities": availabilities,
+        "monthly_bookings": monthly_bookings,
+        "popular_services": popular_services,
+        "subscription_status_display": subscription_status_display
+    })
 
-# --- Service Endpoints ---
-@app.post("/services", response_class=HTMLResponse)
-async def create_service(request: Request, name: str = Form(...), description: Optional[str] = Form(None), duration_minutes: int = Form(...), price: int = Form(...), owner: models.Owner = Depends(get_current_owner), db: Session = Depends(get_db)):
-    try:
-        service_in = schemas.ServiceCreate(name=name, description=description, duration_minutes=duration_minutes, price=price)
-        crud.create_owner_service(db=db, service=service_in, owner_id=owner.id)
-        return RedirectResponse(url="/dashboard?success=service_added", status_code=status.HTTP_302_FOUND)
-    except Exception as e:
-        # In a real app, you'd want to render the dashboard with the error message
-        print(f"Error creating service: {e}")
-        return RedirectResponse(url="/dashboard?error=service_add_failed", status_code=status.HTTP_302_FOUND)
+@app.get("/profile", response_class=HTMLResponse)
+async def owner_profile_page(request: Request, current_owner: schemas.Owner = Depends(get_current_active_owner)):
+    return templates.TemplateResponse("profile.html", {"request": request, "owner": current_owner})
 
-@app.post("/services/{service_id}/update", response_class=HTMLResponse)
-async def update_service(request: Request, service_id: int, name: str = Form(...), description: Optional[str] = Form(None), duration_minutes: int = Form(...), price: int = Form(...), owner: models.Owner = Depends(get_current_owner), db: Session = Depends(get_db)):
-    try:
-        service_update = schemas.ServiceUpdate(name=name, description=description, duration_minutes=duration_minutes, price=price)
-        crud.update_service(db, service_id=service_id, owner_id=owner.id, service_update=service_update)
-        return RedirectResponse(url="/dashboard?success=service_updated", status_code=status.HTTP_302_FOUND)
-    except Exception as e:
-        print(f"Error updating service: {e}")
-        return RedirectResponse(url="/dashboard?error=service_update_failed", status_code=status.HTTP_302_FOUND)
-
-@app.post("/services/{service_id}/delete", response_class=HTMLResponse)
-async def delete_service(request: Request, service_id: int, owner: models.Owner = Depends(get_current_owner), db: Session = Depends(get_db)):
-    try:
-        crud.delete_service(db, service_id=service_id, owner_id=owner.id)
-        return RedirectResponse(url="/dashboard?success=service_deleted", status_code=status.HTTP_302_FOUND)
-    except Exception as e:
-        print(f"Error deleting service: {e}")
-        return RedirectResponse(url="/dashboard?error=service_delete_failed", status_code=status.HTTP_302_FOUND)
-
-# --- Availability Endpoints ---
-@app.post("/availabilities", response_class=HTMLResponse)
-async def create_availability(
+@app.post("/profile", response_class=RedirectResponse)
+async def update_owner_profile(
     request: Request,
-    start_time: time = Form(...),
-    end_time: time = Form(...),
-    service_id: Optional[int] = Form(None),
-    date: Optional[date] = Form(None),
-    recurrence_type: models.RecurrenceType = Form(models.RecurrenceType.NONE),
-    recurrence_value: Optional[str] = Form(None),
-    recurrence_start_date: Optional[date] = Form(None),
-    recurrence_end_date: Optional[date] = Form(None),
-    owner: models.Owner = Depends(get_current_owner),
+    name: str = Form(...),
+    phone: Optional[str] = Form(None),
+    locale: str = Form("en"),
+    current_owner: schemas.Owner = Depends(get_current_active_owner),
     db: Session = Depends(get_db)
 ):
     try:
-        availability_in = schemas.AvailabilityCreate(
-            start_time=start_time,
-            end_time=end_time,
-            service_id=service_id,
-            date=date,
-            recurrence_type=recurrence_type,
-            recurrence_value=recurrence_value,
-            recurrence_start_date=recurrence_start_date,
-            recurrence_end_date=recurrence_end_date
-        )
-        crud.create_owner_availability(db=db, availability=availability_in, owner_id=owner.id)
-        return RedirectResponse(url="/dashboard?success=availability_added", status_code=status.HTTP_302_FOUND)
+        owner_data = schemas.OwnerUpdate(name=name, phone=phone, locale=locale)
+        for key, value in owner_data.dict(exclude_unset=True).items():
+            setattr(current_owner, key, value)
+        
+        db.add(current_owner)
+        db.commit()
+        db.refresh(current_owner)
+        
+        i18n.set_locale(current_owner.locale)
+
+        return RedirectResponse(url="/dashboard?message=profile_updated", status_code=status.HTTP_302_FOUND)
     except Exception as e:
-        print(f"Error creating availability: {e}")
-        return RedirectResponse(url="/dashboard?error=availability_add_failed", status_code=status.HTTP_302_FOUND)
+        print(f"Error updating profile: {e}")
+        return RedirectResponse(url="/profile?error=update_failed", status_code=status.HTTP_302_FOUND)
 
-@app.post("/availabilities/{availability_id}/delete", response_class=HTMLResponse)
-async def delete_availability(request: Request, availability_id: int, owner: models.Owner = Depends(get_current_owner), db: Session = Depends(get_db)):
-    try:
-        crud.delete_availability(db, availability_id=availability_id, owner_id=owner.id)
-        return RedirectResponse(url="/dashboard?success=availability_deleted", status_code=status.HTTP_302_FOUND)
-    except Exception as e:
-        print(f"Error deleting availability: {e}")
-        return RedirectResponse(url="/dashboard?error=availability_delete_failed", status_code=status.HTTP_302_FOUND)
+@app.get("/services/new", response_class=HTMLResponse)
+async def new_service_page(request: Request, current_owner: schemas.Owner = Depends(get_current_active_owner)):
+    return templates.TemplateResponse("service_form.html", {"request": request, "owner": current_owner, "service": None})
 
-# --- Public Booking Page Endpoints ---
-@app.get("/{owner_name}", response_class=HTMLResponse)
-async def public_booking_page(request: Request, owner_name: str, db: Session = Depends(get_db)):
-    owner = crud.get_owner_by_name(db, name=owner_name)
-    if not owner:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Owner not found")
-    services = crud.get_owner_services(db, owner_id=owner.id)
-
-    # Get messages for i18n
-    _ = request.state.gettext
-
-    return templates.TemplateResponse(
-        "booking_page.html", 
-        {
-            "request": request, 
-            "owner": owner, 
-            "services": services,
-            "today": date.today(),
-            "_": _ # Pass gettext function to template
-        }
-    )
-
-@app.get("/{owner_name}/api/services", response_model=List[schemas.Service])
-async def get_owner_services_api(owner_name: str, db: Session = Depends(get_db)):
-    owner = crud.get_owner_by_name(db, name=owner_name)
-    if not owner:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Owner not found")
-    return crud.get_owner_services(db, owner_id=owner.id)
-
-@app.get("/{owner_name}/api/available_slots", response_model=List[time])
-async def get_available_slots_api(
+@app.get("/book/{owner_name}/{service_id}", response_class=HTMLResponse)
+async def public_booking_page(
     owner_name: str,
     service_id: int,
-    selected_date: date,
+    request: Request,
     db: Session = Depends(get_db)
 ):
-    owner = crud.get_owner_by_name(db, name=owner_name)
+    owner = db.query(models.Owner).filter(models.Owner.name == owner_name).first()
     if not owner:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Owner not found")
-    
-    service = crud.get_service(db, service_id=service_id, owner_id=owner.id)
+        raise HTTPException(status_code=404, detail="Owner not found")
+
+    service = db.query(models.Service).filter(
+        models.Service.id == service_id, models.Service.owner_id == owner.id
+    ).first()
     if not service:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Service not found for this owner")
-    
-    # Ensure the target_date is not in the past
-    if selected_date < date.today():
-        return [] # No slots for past dates
+        raise HTTPException(status_code=404, detail="Service not found for this owner")
 
-    return availability_utils.get_available_slots_for_day(
-        db, owner.id, service.id, selected_date, service.duration_minutes
+    i18n.set_locale(owner.locale)
+
+    today = date.today()
+    dates = [(today + timedelta(days=i)) for i in range(30)]
+
+    available_slots = availability_utils.get_available_slots_for_day(
+        db, owner.id, service.id, today, service.duration_minutes
     )
+    
+    available_slots_str = [t.strftime("%H:%M") for t in available_slots]
 
-@app.post("/{owner_name}/book", response_class=HTMLResponse)
-async def create_booking(
-    request: Request,
+    return templates.TemplateResponse("booking_page.html", {
+        "request": request,
+        "owner": owner,
+        "service": service,
+        "dates": dates,
+        "initial_date": today,
+        "initial_available_slots": json.dumps(available_slots_str),
+        "current_locale": owner.locale,
+        "locales": i18n.SUPPORTED_LOCALES
+    })
+
+@app.get("/api/available_slots", response_model=List[str])
+async def get_available_slots_api(
+    owner_id: int,
+    service_id: int,
+    target_date: date,
+    db: Session = Depends(get_db)
+):
+    owner = db.query(models.Owner).filter(models.Owner.id == owner_id).first()
+    if not owner:
+        raise HTTPException(status_code=404, detail="Owner not found")
+
+    service = db.query(models.Service).filter(
+        models.Service.id == service_id, models.Service.owner_id == owner_id
+    ).first()
+    if not service:
+        raise HTTPException(status_code=404, detail="Service not found for this owner")
+
+    slots = availability_utils.get_available_slots_for_day(
+        db, owner_id, service_id, target_date, service.duration_minutes
+    )
+    return [s.strftime("%H:%M") for s in slots]
+
+@app.post("/book/{owner_name}/{service_id}", response_class=HTMLResponse)
+async def submit_booking(
     owner_name: str,
+    service_id: int,
+    request: Request,
     customer_name: str = Form(...),
     customer_email: EmailStr = Form(...),
-    customer_phone_number: Optional[str] = Form(None),
-    service_id: int = Form(...),
-    date: date = Form(...),
-    time: time = Form(...),
+    customer_phone: Optional[str] = Form(None),
+    booking_date: date = Form(...),
+    booking_time: str = Form(...),
     is_recurring: bool = Form(False),
-    recurrence_type: models.RecurrenceType = Form(models.RecurrenceType.NONE),
-    recurrence_value: Optional[str] = Form(None),
-    recurrence_end_date: Optional[date] = Form(None),
+    recurrence_pattern: Optional[str] = Form(None),
+    save_customer_details: bool = Form(False), 
     db: Session = Depends(get_db)
 ):
-    _ = request.state.gettext # Get text for i18n
-    owner = crud.get_owner_by_name(db, name=owner_name)
+    owner = db.query(models.Owner).filter(models.Owner.name == owner_name).first()
     if not owner:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=_("Owner not found"))
+        raise HTTPException(status_code=404, detail=i18n.gettext("Owner not found."))
 
-    service = crud.get_service(db, service_id=service_id, owner_id=owner.id)
+    service = db.query(models.Service).filter(
+        models.Service.id == service_id, models.Service.owner_id == owner.id
+    ).first()
     if not service:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=_("Service not found for this owner"))
+        raise HTTPException(status_code=404, detail=i18n.gettext("Service not found for this owner."))
 
-    # Check if the requested slot is actually available
+    parsed_booking_time = datetime.strptime(booking_time, "%H:%M").time()
+
     available_slots = availability_utils.get_available_slots_for_day(
-        db, owner.id, service.id, date, service.duration_minutes
+        db, owner.id, service.id, booking_date, service.duration_minutes
     )
-    if time not in available_slots:
-        return templates.TemplateResponse(
-            "booking_page.html", 
-            {
-                "request": request, 
-                "owner": owner, 
-                "services": crud.get_owner_services(db, owner.id),
-                "today": date.today(),
-                "error": _("The selected time slot is no longer available. Please choose another."),
-                "_": _
-            }
+    if parsed_booking_time not in available_slots:
+        error_message = i18n.gettext("The selected time slot is no longer available. Please choose another.")
+        today = date.today()
+        dates = [(today + timedelta(days=i)) for i in range(30)]
+        initial_available_slots = availability_utils.get_available_slots_for_day(
+            db, owner.id, service.id, booking_date, service.duration_minutes
         )
-    
-    # Handle customer account linking/creation
-    customer_obj: Optional[models.Customer] = None
-    if customer_email:
-        customer_obj = crud.get_customer_by_email(db, email=customer_email)
-        if not customer_obj and customer_name and customer_phone_number:
-            # Create new customer if details are sufficient
-            customer_create_data = schemas.CustomerCreate(
+        initial_available_slots_str = [t.strftime("%H:%M") for t in initial_available_slots]
+
+        return templates.TemplateResponse("booking_page.html", {
+            "request": request,
+            "owner": owner,
+            "service": service,
+            "dates": dates,
+            "initial_date": booking_date,
+            "initial_available_slots": json.dumps(initial_available_slots_str),
+            "error_message": error_message,
+            "customer_name": customer_name,
+            "customer_email": customer_email,
+            "customer_phone": customer_phone,
+            "current_locale": owner.locale,
+            "locales": i18n.SUPPORTED_LOCALES
+        }, status_code=status.HTTP_400_BAD_REQUEST)
+
+    customer_id_for_booking: Optional[int] = None
+    if save_customer_details:
+        existing_customer = db.query(models.Customer).filter(
+            models.Customer.owner_id == owner.id,
+            models.Customer.email == customer_email
+        ).first()
+
+        if existing_customer:
+            existing_customer.name = customer_name
+            existing_customer.phone = customer_phone
+            db.add(existing_customer)
+            db.commit()
+            db.refresh(existing_customer)
+            customer_id_for_booking = existing_customer.id
+        else:
+            new_customer = models.Customer(
+                owner_id=owner.id,
                 name=customer_name,
                 email=customer_email,
-                phone_number=customer_phone_number
+                phone=customer_phone
             )
-            customer_obj = crud.create_customer(db, customer_create_data)
-    
-    booking_in = schemas.BookingCreate(
-        customer_name=customer_name,
-        customer_email=customer_email,
-        customer_phone_number=customer_phone_number,
-        service_id=service_id,
-        date=date,
-        time=time,
-        is_recurring=is_recurring,
-        recurrence_type=recurrence_type,
-        recurrence_value=recurrence_value,
-        recurrence_end_date=recurrence_end_date
-    )
-
-    try:
-        # Pass customer_id if a customer object was found/created
-        booking = crud.create_owner_booking(db, booking=booking_in, owner_id=owner.id, customer_id=customer_obj.id if customer_obj else None)
-        
-        # Send notifications
-        notifications.send_booking_confirmation_to_customer(owner, service, booking)
-        notifications.send_new_booking_notification_to_owner(owner, service, booking)
-
-        return templates.TemplateResponse(
-            "booking_confirmation.html", 
-            {
-                "request": request, 
-                "owner": owner, 
-                "service": service, 
-                "booking": booking,
-                "_": _
-            }
-        )
-    except Exception as e:
-        print(f"Booking creation failed: {e}")
-        return templates.TemplateResponse(
-            "booking_page.html", 
-            {
-                "request": request, 
-                "owner": owner, 
-                "services": crud.get_owner_services(db, owner.id),
-                "today": date.today(),
-                "error": _("Failed to create booking. Please try again."),
-                "_": _
-            }
-        )
-
-# --- Subscription Endpoints ---
-@app.get("/subscription", response_class=HTMLResponse)
-async def subscription_management(request: Request, owner: models.Owner = Depends(get_current_owner), db: Session = Depends(get_db)):
-    _ = request.state.gettext
-    return templates.TemplateResponse("subscription.html", {"request": request, "owner": owner, "_": _})
-
-@app.post("/create-checkout-session", response_model=schemas.CreateCheckoutSessionResponse)
-async def create_checkout_session(request: Request, owner: models.Owner = Depends(get_current_owner), db: Session = Depends(get_db)):
-    try:
-        # Create a new Stripe Customer if the owner doesn't have one
-        if not owner.stripe_customer_id:
-            stripe_customer = stripe.Customer.create(email=owner.email, name=owner.name)
-            owner.stripe_customer_id = stripe_customer.id
-            db.add(owner)
+            db.add(new_customer)
             db.commit()
-            db.refresh(owner)
+            db.refresh(new_customer)
+            customer_id_for_booking = new_customer.id
 
+    if is_recurring and recurrence_pattern:
+        try:
+            recurrence_details = json.loads(recurrence_pattern)
+            
+            recurrence_series_id = str(uuid.uuid4())
+
+            booking_data = schemas.BookingCreate(
+                service_id=service.id,
+                customer_name=customer_name,
+                customer_email=customer_email,
+                customer_phone=customer_phone,
+                date=booking_date,
+                time=parsed_booking_time,
+                is_recurring=True,
+                recurrence_pattern=recurrence_pattern,
+                customer_id=customer_id_for_booking
+            )
+            
+            db_booking = models.Booking(
+                **booking_data.dict(exclude_unset=True),
+                owner_id=owner.id,
+                recurrence_id=recurrence_series_id
+            )
+            db.add(db_booking)
+            db.commit()
+            db.refresh(db_booking)
+
+            notifications.send_booking_confirmation_email(
+                owner_email=owner.email,
+                owner_name=owner.name,
+                customer_email=customer_email,
+                customer_name=customer_name,
+                service_name=service.name,
+                booking_date=booking_date,
+                booking_time=parsed_booking_time,
+                is_recurring=True,
+                recurrence_pattern=recurrence_pattern,
+                owner_locale=owner.locale
+            )
+            if owner.phone:
+                 notifications.send_owner_booking_notification_sms(
+                    owner_phone=owner.phone,
+                    customer_name=customer_name,
+                    service_name=service.name,
+                    booking_date=booking_date,
+                    booking_time=parsed_booking_time,
+                    is_recurring=True,
+                    owner_locale=owner.locale
+                )
+            if customer_phone:
+                notifications.send_customer_booking_confirmation_sms(
+                    customer_phone=customer_phone,
+                    customer_name=customer_name,
+                    service_name=service.name,
+                    booking_date=booking_date,
+                    booking_time=parsed_booking_time,
+                    is_recurring=True,
+                    owner_locale=owner.locale
+                )
+
+            return templates.TemplateResponse("booking_confirmation.html", {
+                "request": request,
+                "owner": owner,
+                "service": service,
+                "booking": db_booking,
+                "customer_name": customer_name,
+                "customer_email": customer_email,
+                "customer_phone": customer_phone,
+                "is_recurring": True,
+                "current_locale": owner.locale,
+                "locales": i18n.SUPPORTED_LOCALES
+            })
+
+        except json.JSONDecodeError:
+            error_message = i18n.gettext("Invalid recurrence pattern provided.")
+            today = date.today()
+            dates = [(today + timedelta(days=i)) for i in range(30)]
+            initial_available_slots = availability_utils.get_available_slots_for_day(
+                db, owner.id, service.id, booking_date, service.duration_minutes
+            )
+            initial_available_slots_str = [t.strftime("%H:%M") for t in initial_available_slots]
+            return templates.TemplateResponse("booking_page.html", {
+                "request": request,
+                "owner": owner,
+                "service": service,
+                "dates": dates,
+                "initial_date": booking_date,
+                "initial_available_slots": json.dumps(initial_available_slots_str),
+                "error_message": error_message,
+                "customer_name": customer_name,
+                "customer_email": customer_email,
+                "customer_phone": customer_phone,
+                "current_locale": owner.locale,
+                "locales": i18n.SUPPORTED_LOCALES
+            }, status_code=status.HTTP_400_BAD_REQUEST)
+    else:
+        booking_data = schemas.BookingCreate(
+            service_id=service.id,
+            customer_name=customer_name,
+            customer_email=customer_email,
+            customer_phone=customer_phone,
+            date=booking_date,
+            time=parsed_booking_time,
+            customer_id=customer_id_for_booking
+        )
+        db_booking = models.Booking(**booking_data.dict(exclude_unset=True), owner_id=owner.id)
+        db.add(db_booking)
+        db.commit()
+        db.refresh(db_booking)
+
+        notifications.send_booking_confirmation_email(
+            owner_email=owner.email,
+            owner_name=owner.name,
+            customer_email=customer_email,
+            customer_name=customer_name,
+            service_name=service.name,
+            booking_date=booking_date,
+            booking_time=parsed_booking_time,
+            owner_locale=owner.locale
+        )
+        if owner.phone:
+             notifications.send_owner_booking_notification_sms(
+                owner_phone=owner.phone,
+                customer_name=customer_name,
+                service_name=service.name,
+                booking_date=booking_date,
+                booking_time=parsed_booking_time,
+                owner_locale=owner.locale
+            )
+        if customer_phone:
+            notifications.send_customer_booking_confirmation_sms(
+                customer_phone=customer_phone,
+                customer_name=customer_name,
+                service_name=service.name,
+                booking_date=booking_date,
+                booking_time=parsed_booking_time,
+                owner_locale=owner.locale
+            )
+
+        return templates.TemplateResponse("booking_confirmation.html", {
+            "request": request,
+            "owner": owner,
+            "service": service,
+            "booking": db_booking,
+            "customer_name": customer_name,
+            "customer_email": customer_email,
+            "customer_phone": customer_phone,
+            "is_recurring": False,
+            "current_locale": owner.locale,
+            "locales": i18n.SUPPORTED_LOCALES
+        })
+
+@app.get("/admin", response_class=HTMLResponse)
+async def admin_dashboard(request: Request, current_owner: schemas.Owner = Depends(get_current_active_owner), db: Session = Depends(get_db)):
+    if current_owner.email != "admin@bookslot.app":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized as admin")
+
+    owners = db.query(models.Owner).all()
+    services = db.query(models.Service).all()
+    bookings = db.query(models.Booking).all()
+
+    return templates.TemplateResponse("admin_dashboard.html", {
+        "request": request,
+        "owner": current_owner,
+        "owners": owners,
+        "services": services,
+        "bookings": bookings,
+        "current_locale": current_owner.locale
+    })
+
+@app.get("/admin/owners/{owner_id}", response_class=HTMLResponse)
+async def admin_edit_owner_page(owner_id: int, request: Request, current_owner: schemas.Owner = Depends(get_current_active_owner), db: Session = Depends(get_db)):
+    if current_owner.email != "admin@bookslot.app":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized as admin")
+    
+    target_owner = db.query(models.Owner).filter(models.Owner.id == owner_id).first()
+    if not target_owner:
+        raise HTTPException(status_code=404, detail="Owner not found")
+    
+    return templates.TemplateResponse("admin_owner_edit.html", {
+        "request": request,
+        "admin_owner": current_owner,
+        "target_owner": target_owner,
+        "subscription_statuses": [status.value for status in models.SubscriptionStatus],
+        "current_locale": current_owner.locale
+    })
+
+@app.post("/admin/owners/{owner_id}", response_class=RedirectResponse)
+async def admin_update_owner(
+    owner_id: int,
+    request: Request,
+    email: EmailStr = Form(...),
+    name: Optional[str] = Form(None),
+    phone: Optional[str] = Form(None),
+    is_active: bool = Form(False),
+    subscription_status: str = Form(...),
+    subscription_ends_at: Optional[str] = Form(None),
+    locale: str = Form("en"),
+    current_owner: schemas.Owner = Depends(get_current_active_owner),
+    db: Session = Depends(get_db)
+):
+    if current_owner.email != "admin@bookslot.app":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized as admin")
+
+    target_owner = db.query(models.Owner).filter(models.Owner.id == owner_id).first()
+    if not target_owner:
+        raise HTTPException(status_code=404, detail="Owner not found")
+
+    try:
+        if subscription_status not in [s.value for s in models.SubscriptionStatus]:
+            raise ValueError("Invalid subscription status")
+
+        target_owner.email = email
+        target_owner.name = name
+        target_owner.phone = phone
+        target_owner.is_active = is_active
+        target_owner.subscription_status = subscription_status
+        target_owner.locale = locale
+        
+        if subscription_ends_at:
+            target_owner.subscription_ends_at = datetime.strptime(subscription_ends_at, '%Y-%m-%dT%H:%M')
+        else:
+            target_owner.subscription_ends_at = None
+
+        db.add(target_owner)
+        db.commit()
+        db.refresh(target_owner)
+        return RedirectResponse(url="/admin?message=owner_updated", status_code=status.HTTP_302_FOUND)
+    except Exception as e:
+        print(f"Error updating owner: {e}")
+        return RedirectResponse(url=f"/admin/owners/{owner_id}?error=update_failed", status_code=status.HTTP_302_FOUND)
+
+@app.post("/admin/owners/{owner_id}/delete", response_class=RedirectResponse)
+async def admin_delete_owner(owner_id: int, request: Request, current_owner: schemas.Owner = Depends(get_current_active_owner), db: Session = Depends(get_db)):
+    if current_owner.email != "admin@bookslot.app":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized as admin")
+
+    target_owner = db.query(models.Owner).filter(models.Owner.id == owner_id).first()
+    if not target_owner:
+        raise HTTPException(status_code=404, detail="Owner not found")
+    
+    db.query(models.Service).filter(models.Service.owner_id == owner_id).delete()
+    db.query(models.Availability).filter(models.Availability.owner_id == owner_id).delete()
+    db.query(models.Booking).filter(models.Booking.owner_id == owner_id).delete()
+    db.query(models.Customer).filter(models.Customer.owner_id == owner_id).delete()
+    
+    db.delete(target_owner)
+    db.commit()
+    return RedirectResponse(url="/admin?message=owner_deleted", status_code=status.HTTP_302_FOUND)
+
+
+@app.get("/admin/services/{service_id}", response_class=HTMLResponse)
+async def admin_edit_service_page(service_id: int, request: Request, current_owner: schemas.Owner = Depends(get_current_active_owner), db: Session = Depends(get_db)):
+    if current_owner.email != "admin@bookslot.app":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized as admin")
+    
+    service = db.query(models.Service).filter(models.Service.id == service_id).first()
+    if not service:
+        raise HTTPException(status_code=404, detail="Service not found")
+    
+    owners = db.query(models.Owner).all()
+    
+    return templates.TemplateResponse("admin_service_edit.html", {
+        "request": request,
+        "admin_owner": current_owner,
+        "service": service,
+        "owners": owners,
+        "current_locale": current_owner.locale
+    })
+
+@app.post("/admin/services/{service_id}", response_class=RedirectResponse)
+async def admin_update_service(
+    service_id: int,
+    request: Request,
+    owner_id: int = Form(...),
+    name: str = Form(...),
+    description: Optional[str] = Form(None),
+    duration_minutes: int = Form(...),
+    price: Optional[float] = Form(None),
+    current_owner: schemas.Owner = Depends(get_current_active_owner),
+    db: Session = Depends(get_db)
+):
+    if current_owner.email != "admin@bookslot.app":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized as admin")
+
+    service = db.query(models.Service).filter(models.Service.id == service_id).first()
+    if not service:
+        raise HTTPException(status_code=404, detail="Service not found")
+
+    try:
+        service.owner_id = owner_id
+        service.name = name
+        service.description = description
+        service.duration_minutes = duration_minutes
+        service.price = price
+        
+        db.add(service)
+        db.commit()
+        db.refresh(service)
+        return RedirectResponse(url="/admin?message=service_updated", status_code=status.HTTP_302_FOUND)
+    except Exception as e:
+        print(f"Error updating service: {e}")
+        return RedirectResponse(url=f"/admin/services/{service_id}?error=update_failed", status_code=status.HTTP_302_FOUND)
+
+@app.post("/admin/services/{service_id}/delete", response_class=RedirectResponse)
+async def admin_delete_service(service_id: int, request: Request, current_owner: schemas.Owner = Depends(get_current_active_owner), db: Session = Depends(get_db)):
+    if current_owner.email != "admin@bookslot.app":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized as admin")
+
+    service = db.query(models.Service).filter(models.Service.id == service_id).first()
+    if not service:
+        raise HTTPException(status_code=404, detail="Service not found")
+    
+    db.query(models.Booking).filter(models.Booking.service_id == service_id).delete()
+    db.query(models.Availability).filter(models.Availability.service_id == service_id).delete()
+    
+    db.delete(service)
+    db.commit()
+    return RedirectResponse(url="/admin?message=service_deleted", status_code=status.HTTP_302_FOUND)
+
+@app.get("/admin/bookings/{booking_id}", response_class=HTMLResponse)
+async def admin_edit_booking_page(booking_id: int, request: Request, current_owner: schemas.Owner = Depends(get_current_active_owner), db: Session = Depends(get_db)):
+    if current_owner.email != "admin@bookslot.app":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized as admin")
+    
+    booking = db.query(models.Booking).options(joinedload(models.Booking.owner), joinedload(models.Booking.service), joinedload(models.Booking.customer)).filter(models.Booking.id == booking_id).first()
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+    
+    owners = db.query(models.Owner).all()
+    services = db.query(models.Service).all()
+    customers = db.query(models.Customer).filter(models.Customer.owner_id == booking.owner_id).all()
+    
+    return templates.TemplateResponse("admin_booking_edit.html", {
+        "request": request,
+        "admin_owner": current_owner,
+        "booking": booking,
+        "owners": owners,
+        "services": services,
+        "customers": customers,
+        "current_locale": current_owner.locale
+    })
+
+@app.post("/admin/bookings/{booking_id}", response_class=RedirectResponse)
+async def admin_update_booking(
+    booking_id: int,
+    request: Request,
+    owner_id: int = Form(...),
+    service_id: int = Form(...),
+    customer_id: Optional[int] = Form(None),
+    customer_name: str = Form(...),
+    customer_email: EmailStr = Form(...),
+    customer_phone: Optional[str] = Form(None),
+    date: date = Form(...),
+    time: str = Form(...),
+    is_confirmed: bool = Form(False),
+    is_recurring: bool = Form(False),
+    recurrence_pattern: Optional[str] = Form(None),
+    current_owner: schemas.Owner = Depends(get_current_active_owner),
+    db: Session = Depends(get_db)
+):
+    if current_owner.email != "admin@bookslot.app":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized as admin")
+
+    booking = db.query(models.Booking).filter(models.Booking.id == booking_id).first()
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+
+    try:
+        booking.owner_id = owner_id
+        booking.service_id = service_id
+        booking.customer_id = customer_id if customer_id else None
+        booking.customer_name = customer_name
+        booking.customer_email = customer_email
+        booking.customer_phone = customer_phone
+        booking.date = date
+        booking.time = datetime.strptime(time, "%H:%M").time()
+        booking.is_confirmed = is_confirmed
+        booking.is_recurring = is_recurring
+        booking.recurrence_pattern = recurrence_pattern
+        
+        db.add(booking)
+        db.commit()
+        db.refresh(booking)
+        return RedirectResponse(url="/admin?message=booking_updated", status_code=status.HTTP_302_FOUND)
+    except Exception as e:
+        print(f"Error updating booking: {e}")
+        return RedirectResponse(url=f"/admin/bookings/{booking_id}?error=update_failed", status_code=status.HTTP_302_FOUND)
+
+@app.post("/admin/bookings/{booking_id}/delete", response_class=RedirectResponse)
+async def admin_delete_booking(booking_id: int, request: Request, current_owner: schemas.Owner = Depends(get_current_active_owner), db: Session = Depends(get_db)):
+    if current_owner.email != "admin@bookslot.app":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized as admin")
+
+    booking = db.query(models.Booking).filter(models.Booking.id == booking_id).first()
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+    
+    db.delete(booking)
+    db.commit()
+    return RedirectResponse(url="/admin?message=booking_deleted", status_code=status.HTTP_302_FOUND)
+
+
+@app.get("/subscribe", response_class=HTMLResponse)
+async def subscription_page(request: Request, current_owner: schemas.Owner = Depends(get_current_active_owner)):
+    return templates.TemplateResponse("subscription.html", {
+        "request": request,
+        "owner": current_owner,
+        "stripe_publishable_key": os.environ.get("STRIPE_PUBLISHABLE_KEY", "pk_test_..."),
+        "current_locale": current_owner.locale
+    })
+
+@app.post("/create-checkout-session")
+async def create_checkout_session(current_owner: schemas.Owner = Depends(get_current_active_owner), db: Session = Depends(get_db)):
+    try:
+        if not current_owner.stripe_customer_id:
+            customer = stripe.Customer.create(
+                email=current_owner.email,
+                name=current_owner.name
+            )
+            current_owner.stripe_customer_id = customer.id
+            db.add(current_owner)
+            db.commit()
+            db.refresh(current_owner)
+        
         checkout_session = stripe.checkout.Session.create(
-            customer=owner.stripe_customer_id,
+            customer=current_owner.stripe_customer_id,
+            payment_method_types=['card'],
             line_items=[
                 {
                     'price': settings.STRIPE_PREMIUM_PRICE_ID,
@@ -404,31 +783,12 @@ async def create_checkout_session(request: Request, owner: models.Owner = Depend
                 },
             ],
             mode='subscription',
-            success_url=request.url_for('subscription_success') + "?session_id={CHECKOUT_SESSION_ID}",
-            cancel_url=request.url_for('subscription_management'),
+            success_url='http://localhost:8000/dashboard?message=subscription_success',
+            cancel_url='http://localhost:8000/subscribe?message=subscription_cancelled',
         )
-        return schemas.CreateCheckoutSessionResponse(session_id=checkout_session.id, public_key=os.environ.get("STRIPE_PUBLIC_KEY", "pk_test_..."))
+        return {"id": checkout_session.id}
     except Exception as e:
-        print(f"Error creating checkout session: {e}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
-
-@app.get("/subscription/success", response_class=HTMLResponse)
-async def subscription_success(request: Request, session_id: str, owner: models.Owner = Depends(get_current_owner), db: Session = Depends(get_db)):
-    _ = request.state.gettext
-    try:
-        checkout_session = stripe.checkout.Session.retrieve(session_id)
-        if checkout_session.payment_status == "paid":
-            # Update owner's subscription status in DB
-            owner.subscription_status = "premium"
-            db.add(owner)
-            db.commit()
-            db.refresh(owner)
-            return templates.TemplateResponse("subscription_success.html", {"request": request, "owner": owner, "_": _})
-        else:
-            return templates.TemplateResponse("subscription_failure.html", {"request": request, "owner": owner, "error": _("Payment not completed."), "_": _})
-    except Exception as e:
-        print(f"Error retrieving checkout session: {e}")
-        return templates.TemplateResponse("subscription_failure.html", {"request": request, "owner": owner, "error": str(e), "_": _})
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/stripe-webhook")
 async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
@@ -437,193 +797,130 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
 
     try:
         event = stripe.Webhook.construct_event(
-            payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
+            payload, sig_header, stripe_webhook_secret
         )
     except ValueError as e:
-        # Invalid payload
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e))
     except stripe.error.SignatureVerificationError as e:
-        # Invalid signature
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e))
 
-    # Handle the event
     if event['type'] == 'checkout.session.completed':
         session = event['data']['object']
         customer_id = session.get('customer')
-        if session.get('payment_status') == 'paid' and customer_id:
-            owner = crud.get_owner_by_stripe_customer_id(db, stripe_customer_id=customer_id)
-            if owner:
-                owner.subscription_status = "premium"
-                db.add(owner)
-                db.commit()
-                db.refresh(owner)
-                print(f"Owner {owner.email} subscription upgraded to premium.")
+        subscription_id = session.get('subscription')
+
+        owner = db.query(models.Owner).filter(models.Owner.stripe_customer_id == customer_id).first()
+        if owner:
+            owner.subscription_status = models.SubscriptionStatus.ACTIVE.value
+            if subscription_id:
+                subscription = stripe.Subscription.retrieve(subscription_id)
+                if subscription.current_period_end:
+                    owner.subscription_ends_at = datetime.fromtimestamp(subscription.current_period_end)
+            db.add(owner)
+            db.commit()
+            print(f"Owner {owner.email} subscribed successfully.")
+        else:
+            print(f"Owner with Stripe customer ID {customer_id} not found.")
+
     elif event['type'] == 'customer.subscription.deleted':
         subscription = event['data']['object']
         customer_id = subscription.get('customer')
-        owner = crud.get_owner_by_stripe_customer_id(db, stripe_customer_id=customer_id)
+        owner = db.query(models.Owner).filter(models.Owner.stripe_customer_id == customer_id).first()
         if owner:
-            owner.subscription_status = "cancelled"
+            owner.subscription_status = models.SubscriptionStatus.CANCELLED.value
             db.add(owner)
             db.commit()
-            db.refresh(owner)
-            print(f"Owner {owner.email} subscription cancelled.")
-    # ... handle other event types
+            print(f"Owner {owner.email}'s subscription cancelled.")
+
+    elif event['type'] == 'customer.subscription.updated':
+        subscription = event['data']['object']
+        customer_id = subscription.get('customer')
+        owner = db.query(models.Owner).filter(models.Owner.stripe_customer_id == customer_id).first()
+        if owner:
+            owner.subscription_status = models.SubscriptionStatus.ACTIVE.value if subscription.status == 'active' else subscription.status
+            if subscription.current_period_end:
+                owner.subscription_ends_at = datetime.fromtimestamp(subscription.current_period_end)
+            db.add(owner)
+            db.commit()
+            print(f"Owner {owner.email}'s subscription updated to {subscription.status}.")
+
 
     return {"status": "success"}
 
-# --- Admin Panel Endpoints ---
-@app.get("/admin", response_class=HTMLResponse)
-async def admin_dashboard(request: Request, db: Session = Depends(get_db), owner: models.Owner = Depends(get_current_owner)):
-    if owner.email != "admin@bookslot.app": # Simple admin check for now
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
-    
-    all_owners = crud.get_all_owners(db)
-    return templates.TemplateResponse("admin/dashboard.html", {"request": request, "owners": all_owners})
+@app.get("/api/analytics/monthly_bookings/{owner_id}", response_model=List[schemas.MonthlyBookingData])
+async def get_monthly_bookings_api(owner_id: int, db: Session = Depends(get_db), current_owner: schemas.Owner = Depends(get_current_active_owner)):
+    if owner_id != current_owner.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to view these analytics.")
+    return analytics.get_monthly_bookings_data(db, owner_id)
 
-@app.get("/admin/owners/{owner_id}", response_class=HTMLResponse)
-async def admin_view_owner(request: Request, owner_id: int, db: Session = Depends(get_db), current_owner: models.Owner = Depends(get_current_owner)):
-    if current_owner.email != "admin@bookslot.app":
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
-    
-    owner = crud.get_owner(db, owner_id)
-    if not owner:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Owner not found")
-    
-    services = crud.get_owner_services(db, owner_id)
-    bookings = crud.get_owner_all_bookings(db, owner_id)
-    availabilities = crud.get_owner_all_availabilities(db, owner_id)
+@app.get("/api/analytics/popular_services/{owner_id}", response_model=List[schemas.PopularServiceData])
+async def get_popular_services_api(owner_id: int, db: Session = Depends(get_db), current_owner: schemas.Owner = Depends(get_current_active_owner)):
+    if owner_id != current_owner.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to view these analytics.")
+    return analytics.get_popular_services_data(db, owner_id)
 
-    return templates.TemplateResponse("admin/owner_detail.html", {"request": request, "owner": owner, "services": services, "bookings": bookings, "availabilities": availabilities})
+@app.get("/customers", response_class=HTMLResponse)
+async def list_customers(request: Request, current_owner: schemas.Owner = Depends(get_current_active_owner), db: Session = Depends(get_db)):
+    customers = db.query(models.Customer).filter(models.Customer.owner_id == current_owner.id).all()
+    return templates.TemplateResponse("customer_list.html", {
+        "request": request,
+        "owner": current_owner,
+        "customers": customers,
+        "current_locale": current_owner.locale
+    })
 
-@app.post("/admin/owners/{owner_id}/update", response_class=HTMLResponse)
-async def admin_update_owner(
+@app.get("/customers/{customer_id}", response_class=HTMLResponse)
+async def view_customer(customer_id: int, request: Request, current_owner: schemas.Owner = Depends(get_current_active_owner), db: Session = Depends(get_db)):
+    customer = db.query(models.Customer).filter(models.Customer.id == customer_id, models.Customer.owner_id == current_owner.id).first()
+    if not customer:
+        raise HTTPException(status_code=404, detail=i18n.gettext("Customer not found."))
+    
+    customer_bookings = db.query(models.Booking).options(joinedload(models.Booking.service)).filter(
+        models.Booking.customer_id == customer_id,
+        models.Booking.owner_id == current_owner.id
+    ).order_by(models.Booking.date.desc(), models.Booking.time.desc()).all()
+
+    return templates.TemplateResponse("customer_detail.html", {
+        "request": request,
+        "owner": current_owner,
+        "customer": customer,
+        "bookings": customer_bookings,
+        "current_locale": current_owner.locale
+    })
+
+@app.post("/customers/{customer_id}/update", response_class=RedirectResponse)
+async def update_customer(
+    customer_id: int,
     request: Request,
-    owner_id: int,
-    email: Optional[EmailStr] = Form(None),
-    name: Optional[str] = Form(None),
-    phone_number: Optional[str] = Form(None),
-    is_active: Optional[bool] = Form(None),
-    subscription_status: Optional[str] = Form(None),
-    db: Session = Depends(get_db),
-    current_owner: models.Owner = Depends(get_current_owner)
+    name: str = Form(...),
+    email: EmailStr = Form(...),
+    phone: Optional[str] = Form(None),
+    current_owner: schemas.Owner = Depends(get_current_active_owner),
+    db: Session = Depends(get_db)
 ):
-    if current_owner.email != "admin@bookslot.app":
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
-    
-    owner_update = schemas.AdminOwnerUpdate(
-        email=email,
-        name=name,
-        phone_number=phone_number,
-        is_active=is_active if is_active is not None else None,
-        subscription_status=subscription_status
-    )
+    customer = db.query(models.Customer).filter(models.Customer.id == customer_id, models.Customer.owner_id == current_owner.id).first()
+    if not customer:
+        raise HTTPException(status_code=404, detail=i18n.gettext("Customer not found."))
     
     try:
-        crud.update_owner(db, owner_id, owner_update)
-        return RedirectResponse(url=f"/admin/owners/{owner_id}?success=owner_updated", status_code=status.HTTP_302_FOUND)
+        customer.name = name
+        customer.email = email
+        customer.phone = phone
+        db.add(customer)
+        db.commit()
+        db.refresh(customer)
+        return RedirectResponse(url=f"/customers/{customer_id}?message=customer_updated", status_code=status.HTTP_302_FOUND)
     except Exception as e:
-        print(f"Error updating owner: {e}")
-        return RedirectResponse(url=f"/admin/owners/{owner_id}?error=owner_update_failed", status_code=status.HTTP_302_FOUND)
+        print(f"Error updating customer {customer_id}: {e}")
+        return RedirectResponse(url=f"/customers/{customer_id}?error=update_failed", status_code=status.HTTP_302_FOUND)
 
-@app.post("/admin/owners/{owner_id}/delete", response_class=HTMLResponse)
-async def admin_delete_owner(request: Request, owner_id: int, db: Session = Depends(get_db), current_owner: models.Owner = Depends(get_current_owner)):
-    if current_owner.email != "admin@bookslot.app":
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
+@app.post("/customers/{customer_id}/delete", response_class=RedirectResponse)
+async def delete_customer(customer_id: int, request: Request, current_owner: schemas.Owner = Depends(get_current_active_owner), db: Session = Depends(get_db)):
+    customer = db.query(models.Customer).filter(models.Customer.id == customer_id, models.Customer.owner_id == current_owner.id).first()
+    if not customer:
+        raise HTTPException(status_code=404, detail=i18n.gettext("Customer not found."))
     
-    try:
-        crud.delete_owner(db, owner_id)
-        return RedirectResponse(url="/admin?success=owner_deleted", status_code=status.HTTP_302_FOUND)
-    except Exception as e:
-        print(f"Error deleting owner: {e}")
-        return RedirectResponse(url=f"/admin/owners/{owner_id}?error=owner_delete_failed", status_code=status.HTTP_302_FOUND)
-
-@app.post("/admin/services/{service_id}/update", response_class=HTMLResponse)
-async def admin_update_service(
-    request: Request,
-    service_id: int,
-    owner_id: int = Form(...),
-    name: Optional[str] = Form(None),
-    description: Optional[str] = Form(None),
-    duration_minutes: Optional[int] = Form(None),
-    price: Optional[int] = Form(None),
-    db: Session = Depends(get_db),
-    current_owner: models.Owner = Depends(get_current_owner)
-):
-    if current_owner.email != "admin@bookslot.app":
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
-    
-    service_update = schemas.AdminServiceUpdate(
-        name=name,
-        description=description,
-        duration_minutes=duration_minutes,
-        price=price
-    )
-    try:
-        crud.update_service(db, service_id, owner_id, service_update)
-        return RedirectResponse(url=f"/admin/owners/{owner_id}?success=service_updated", status_code=status.HTTP_302_FOUND)
-    except Exception as e:
-        print(f"Error updating service: {e}")
-        return RedirectResponse(url=f"/admin/owners/{owner_id}?error=service_update_failed", status_code=status.HTTP_302_FOUND)
-
-@app.post("/admin/services/{service_id}/delete", response_class=HTMLResponse)
-async def admin_delete_service(request: Request, service_id: int, owner_id: int = Form(...), db: Session = Depends(get_db), current_owner: models.Owner = Depends(get_current_owner)):
-    if current_owner.email != "admin@bookslot.app":
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
-    
-    try:
-        crud.delete_service(db, service_id, owner_id) # Need owner_id to verify ownership
-        return RedirectResponse(url=f"/admin/owners/{owner_id}?success=service_deleted", status_code=status.HTTP_302_FOUND)
-    except Exception as e:
-        print(f"Error deleting service: {e}")
-        return RedirectResponse(url=f"/admin/owners/{owner_id}?error=service_delete_failed", status_code=status.HTTP_302_FOUND)
-
-@app.post("/admin/bookings/{booking_id}/update", response_class=HTMLResponse)
-async def admin_update_booking(
-    request: Request,
-    booking_id: int,
-    owner_id: int = Form(...),
-    customer_name: Optional[str] = Form(None),
-    customer_email: Optional[EmailStr] = Form(None),
-    customer_phone_number: Optional[str] = Form(None),
-    date: Optional[date] = Form(None),
-    time: Optional[time] = Form(None),
-    is_recurring: Optional[bool] = Form(None),
-    recurrence_type: Optional[models.RecurrenceType] = Form(None),
-    recurrence_value: Optional[str] = Form(None),
-    recurrence_end_date: Optional[date] = Form(None),
-    db: Session = Depends(get_db),
-    current_owner: models.Owner = Depends(get_current_owner)
-):
-    if current_owner.email != "admin@bookslot.app":
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
-    
-    booking_update = schemas.AdminBookingUpdate(
-        customer_name=customer_name,
-        customer_email=customer_email,
-        customer_phone_number=customer_phone_number,
-        date=date,
-        time=time,
-        is_recurring=is_recurring,
-        recurrence_type=recurrence_type,
-        recurrence_value=recurrence_value,
-        recurrence_end_date=recurrence_end_date
-    )
-    try:
-        crud.update_booking(db, booking_id, owner_id, booking_update)
-        return RedirectResponse(url=f"/admin/owners/{owner_id}?success=booking_updated", status_code=status.HTTP_302_FOUND)
-    except Exception as e:
-        print(f"Error updating booking: {e}")
-        return RedirectResponse(url=f"/admin/owners/{owner_id}?error=booking_update_failed", status_code=status.HTTP_302_FOUND)
-
-@app.post("/admin/bookings/{booking_id}/delete", response_class=HTMLResponse)
-async def admin_delete_booking(request: Request, booking_id: int, owner_id: int = Form(...), db: Session = Depends(get_db), current_owner: models.Owner = Depends(get_current_owner)):
-    if current_owner.email != "admin@bookslot.app":
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
-    
-    try:
-        crud.delete_booking(db, booking_id, owner_id) # Need owner_id to verify ownership
-        return RedirectResponse(url=f"/admin/owners/{owner_id}?success=booking_deleted", status_code=status.HTTP_302_FOUND)
-    except Exception as e:
-        print(f"Error deleting booking: {e}")
-        return RedirectResponse(url=f"/admin/owners/{owner_id}?error=booking_delete_failed", status_code=status.HTTP_302_FOUND)
+    db.query(models.Booking).filter(models.Booking.customer_id == customer_id).update({"customer_id": None})
+    db.delete(customer)
+    db.commit()
+    return RedirectResponse(url="/customers?message=customer_deleted", status_code=status.HTTP_302_FOUND)

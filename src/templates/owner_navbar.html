@@ -1,0 +1,20 @@
+<!-- src/templates/owner_navbar.html -->
+<nav class="bg-gray-800 p-4 shadow-md">
+    <div class="container mx-auto flex justify-between items-center">
+        <a href="/dashboard" class="text-white text-xl font-bold">{{ gettext('BookSlot Dashboard') }}</a>
+        <div class="flex items-center space-x-4">
+            <a href="/dashboard" class="text-gray-300 hover:text-white">{{ gettext('Dashboard') }}</a>
+            <a href="/profile" class="text-gray-300 hover:text-white">{{ gettext('Profile') }}</a>
+            <a href="/customers" class="text-gray-300 hover:text-white">{{ gettext('Customers') }}</a>
+            <a href="/subscribe" class="text-gray-300 hover:text-white">{{ gettext('Subscription') }}</a>
+            <a href="/logout" class="text-red-400 hover:text-red-300">{{ gettext('Logout') }}</a>
+            <div class="language-toggle-container">
+                <select onchange="changeLanguage(this.value)">
+                    {% for lang_code, lang_name in locales.items() %}
+                        <option value="{{ lang_code }}" {% if lang_code == current_locale %}selected{% endif %}>{{ lang_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </div>
+</nav>

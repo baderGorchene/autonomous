@@ -1,138 +1,205 @@
+# src/locales/ar/LC_MESSAGES/messages.po
 msgid ""
 msgstr ""
-"Project-Id-Version: BookSlot\n"
+"Project-Id-Version: BookSlot 1.0\n"
+"Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2023-10-27 10:00+0000\n"
 "PO-Revision-Date: 2023-10-27 10:00+0000\n"
-"Last-Translator: \n"
-"Language-Team: Arabic\n"
+"Last-Translator: Your Name <you@example.com>\n"
+"Language-Team: Arabic <your_email@example.com>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=utf-8\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Language: ar\n"
-"X-Generator: Babel 2.15.0\n"
+"X-Generator: Babel 2.9.1\n"
 
-msgid "Book your slot with"
-msgstr "احجز موعدك مع"
+msgid "Welcome to BookSlot!"
+msgstr "مرحبًا بك في BookSlot!"
 
-msgid "Providing services by"
-msgstr "تقديم الخدمات بواسطة"
+msgid "Dashboard"
+msgstr "لوحة التحكم"
 
-msgid "Your Name:"
-msgstr "اسمك:"
-
-msgid "Your Email:"
-msgstr "بريدك الإلكتروني:"
-
-msgid "Your Phone (for WhatsApp notifications):"
-msgstr "رقم هاتفك (لإشعارات الواتساب):"
-
-msgid "Select Service:"
-msgstr "اختر الخدمة:"
-
-msgid "Choose a service"
-msgstr "اختر خدمة"
-
-msgid "Select Date:"
-msgstr "اختر التاريخ:"
-
-msgid "Select Time:"
-msgstr "اختر الوقت:"
-
-msgid "Choose a time"
-msgstr "اختر وقتاً"
-
-msgid "Notes (optional):"
-msgstr "ملاحظات (اختياري):"
-
-msgid "Book Now"
-msgstr "احجز الآن"
-
-msgid "Booking Confirmed!"
-msgstr "تم تأكيد الحجز!"
-
-msgid "Thank you,"
-msgstr "شكراً لك،"
-
-msgid "! Your booking with"
-msgstr "! تم تأكيد حجزك مع"
-
-msgid "has been successfully confirmed."
-msgstr "بنجاح."
-
-msgid "You will receive a confirmation email and WhatsApp message shortly."
-msgstr "ستتلقى رسالة تأكيد عبر البريد الإلكتروني والواتساب قريباً."
-
-msgid "Booking Details:"
-msgstr "تفاصيل الحجز:"
-
-msgid "Service:"
-msgstr "الخدمة:"
-
-msgid "Date:"
-msgstr "التاريخ:"
-
-msgid "Time:"
-msgstr "الوقت:"
-
-msgid "Business:"
-msgstr "العمل:"
-
-msgid "Owner Contact:"
-msgstr "جهة اتصال المالك:"
-
-msgid "Book another slot"
-msgstr "احجز موعداً آخر"
-
-msgid "Go to Homepage"
-msgstr "اذهب إلى الصفحة الرئيسية"
-
-msgid "BookSlot Dashboard"
-msgstr "لوحة تحكم BookSlot"
-
-msgid "Welcome,"
-msgstr "أهلاً بك،"
+msgid "Profile"
+msgstr "الملف الشخصي"
 
 msgid "Logout"
 msgstr "تسجيل الخروج"
 
-msgid "Your Profile"
-msgstr "ملفك الشخصي"
+msgid "BookSlot Dashboard"
+msgstr "لوحة تحكم BookSlot"
 
-msgid "Your Public Booking Page Link:"
-msgstr "رابط صفحة الحجز العامة الخاصة بك:"
+msgid "Your Bookings"
+msgstr "حجوزاتك"
 
-msgid "Email:"
-msgstr "البريد الإلكتروني:"
+msgid "Your Services"
+msgstr "خدماتك"
 
-msgid "Business Name:"
-msgstr "اسم العمل:"
+msgid "Your Availabilities"
+msgstr "مواعيد توافرك"
 
-msgid "Phone Number:"
-msgstr "رقم الهاتف:"
+msgid "Add New Service"
+msgstr "إضافة خدمة جديدة"
 
-msgid "Update Profile"
-msgstr "تحديث الملف الشخصي"
+msgid "Add New Availability"
+msgstr "إضافة موعد توافر جديد"
 
-msgid "Upcoming Bookings"
-msgstr "الحجوزات القادمة"
+msgid "Service Name"
+msgstr "اسم الخدمة"
 
-msgid "for"
-msgstr "لـ"
+msgid "Description"
+msgstr "الوصف"
 
-msgid "Customer Email:"
-msgstr "بريد العميل الإلكتروني:"
+msgid "Duration (minutes)"
+msgstr "المدة (بالدقائق)"
 
-msgid "Customer Phone:"
-msgstr "هاتف العميل:"
+msgid "Price (Optional)"
+msgstr "السعر (اختياري)"
 
-msgid "No upcoming bookings."
-msgstr "لا توجد حجوزات قادمة."
+msgid "Save Service"
+msgstr "حفظ الخدمة"
+
+msgid "Edit Service"
+msgstr "تعديل الخدمة"
+
+msgid "Delete Service"
+msgstr "حذف الخدمة"
+
+msgid "Are you sure you want to delete this service?"
+msgstr "هل أنت متأكد أنك تريد حذف هذه الخدمة؟"
+
+msgid "Date"
+msgstr "التاريخ"
+
+msgid "Start Time"
+msgstr "وقت البدء"
+
+msgid "End Time"
+msgstr "وقت الانتهاء"
+
+msgid "Service (Optional)"
+msgstr "الخدمة (اختياري)"
+
+msgid "Recurrence Type"
+msgstr "نوع التكرار"
+
+msgid "Recurrence Value (e.g., \"MON,WED,FRI\" for weekly, \"15\" for monthly)"
+msgstr "قيمة التكرار (مثال: \"MON,WED,FRI\" للأسبوعي، \"15\" للشهري)"
+
+msgid "Recurrence Start Date"
+msgstr "تاريخ بدء التكرار"
+
+msgid "Recurrence End Date (Optional)"
+msgstr "تاريخ انتهاء التكرار (اختياري)"
+
+msgid "Save Availability"
+msgstr "حفظ التوافر"
+
+msgid "Edit Availability"
+msgstr "تعديل التوافر"
+
+msgid "Delete Availability"
+msgstr "حذف التوافر"
+
+msgid "Are you sure you want to delete this availability?"
+msgstr "هل أنت متأكد أنك تريد حذف هذا التوافر؟"
+
+msgid "Book an Appointment"
+msgstr "حجز موعد"
+
+msgid "with"
+msgstr "مع"
+
+msgid "Duration"
+msgstr "المدة"
+
+msgid "%d minute"
+msgid_plural "%d minutes"
+msgstr[0] "دقيقة %d"
+msgstr[1] "دقائق %d"
+
+msgid "Error!"
+msgstr "خطأ!"
+
+msgid "Select a Date"
+msgstr "اختر تاريخًا"
+
+msgid "Select a Time Slot"
+msgstr "اختر فترة زمنية"
+
+msgid "No available slots for this date."
+msgstr "لا توجد فترات متاحة لهذا التاريخ."
+
+msgid "Your Name"
+msgstr "اسمك"
+
+msgid "Your Email"
+msgstr "بريدك الإلكتروني"
+
+msgid "Your Phone (Optional)"
+msgstr "رقم هاتفك (اختياري)"
+
+msgid "Confirm Booking"
+msgstr "تأكيد الحجز"
+
+msgid "Booking Confirmation"
+msgstr "تأكيد الحجز"
+
+msgid "Thank you for your booking!"
+msgstr "شكرا لحجزك!"
+
+msgid "Your booking details:"
+msgstr "تفاصيل حجزك:"
+
+msgid "Service"
+msgstr "الخدمة"
+
+msgid "Booking Date"
+msgstr "تاريخ الحجز"
+
+msgid "Booking Time"
+msgstr "وقت الحجز"
+
+msgid "Customer Name"
+msgstr "اسم العميل"
+
+msgid "Customer Email"
+msgstr "بريد العميل الإلكتروني"
+
+msgid "Customer Phone"
+msgstr "رقم هاتف العميل"
+
+msgid "Owner not found."
+msgstr "لم يتم العثور على المالك."
+
+msgid "Service not found for this owner."
+msgstr "لم يتم العثور على الخدمة لهذا المالك."
+
+msgid "The selected time slot is no longer available. Please choose another."
+msgstr "الفترة الزمنية المختارة لم تعد متاحة. يرجى اختيار فترة أخرى."
+
+msgid "Make this a recurring booking?"
+msgstr "هل هذا حجز متكرر؟"
+
+msgid "Please note: Recurring booking functionality is under development. For now, this will only book the first slot and save the pattern."
+msgstr "يرجى ملاحظة: وظيفة الحجز المتكرر قيد التطوير. في الوقت الحالي، سيتم حجز الفترة الأولى فقط وحفظ النمط."
+
+msgid "Invalid recurrence pattern provided."
+msgstr "تم تقديم نمط تكرار غير صالح."
+
+msgid "Yes"
+msgstr "نعم"
+
+msgid "No"
+msgstr "لا"
 
 msgid "BookSlot Login"
 msgstr "تسجيل الدخول إلى BookSlot"
 
-msgid "Password:"
-msgstr "كلمة المرور:"
+msgid "Email"
+msgstr "البريد الإلكتروني"
+
+msgid "Password"
+msgstr "كلمة المرور"
 
 msgid "Login"
 msgstr "تسجيل الدخول"
@@ -140,115 +207,140 @@ msgstr "تسجيل الدخول"
 msgid "Don't have an account?"
 msgstr "ليس لديك حساب؟"
 
+msgid "Sign up"
+msgstr "التسجيل"
+
+msgid "BookSlot Signup"
+msgstr "التسجيل في BookSlot"
+
+msgid "Name"
+msgstr "الاسم"
+
+msgid "Phone (Optional)"
+msgstr "الهاتف (اختياري)"
+
+msgid "Your Locale"
+msgstr "لغتك"
+
 msgid "Sign Up"
-msgstr "سجل الآن"
-
-msgid "Sign Up for BookSlot"
-msgstr "سجل في BookSlot"
-
-msgid "Desired Booking Page URL (e.g., your-business-name):"
-msgstr "رابط صفحة الحجز المطلوب (مثال: اسم_عملك):"
-
-msgid "Create Account"
-msgstr "إنشاء حساب"
+msgstr "التسجيل"
 
 msgid "Already have an account?"
 msgstr "هل لديك حساب بالفعل؟"
 
-msgid "All fields are required."
-msgstr "جميع الحقول مطلوبة."
+msgid "Subscription"
+msgstr "الاشتراك"
 
-msgid "Email already registered."
-msgstr "البريد الإلكتروني مسجل بالفعل."
+msgid "Current Plan"
+msgstr "الخطة الحالية"
 
-msgid "Business URL slug already taken."
-msgstr "عنوان URL للعمل مأخوذ بالفعل."
+msgid "Status"
+msgstr "الحالة"
 
-msgid "An unexpected error occurred. Please try again."
-msgstr "حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى."
+msgid "Active"
+msgstr "نشط"
 
-msgid "Incorrect email or password."
-msgstr "البريد الإلكتروني أو كلمة المرور غير صحيحة."
+msgid "Inactive"
+msgstr "غير نشط"
 
-msgid "All profile fields are required."
-msgstr "جميع حقول الملف الشخصي مطلوبة."
+msgid "Cancelled"
+msgstr "ملغى"
 
-msgid "Profile updated successfully!"
-msgstr "تم تحديث الملف الشخصي بنجاح!"
+msgid "Trial"
+msgstr "تجريبي"
 
-msgid "Booking page not found."
-msgstr "صفحة الحجز غير موجودة."
+msgid "Ends At"
+msgstr "ينتهي في"
 
-msgid "Haircut"
-msgstr "قص شعر"
+msgid "N/A"
+msgstr "غير متوفر"
 
-msgid "Coloring"
-msgstr "صبغة"
+msgid "Upgrade to Premium"
+msgstr "الترقية إلى بريميوم"
 
-msgid "Please fill in all required booking details correctly."
-msgstr "يرجى ملء جميع تفاصيل الحجز المطلوبة بشكل صحيح."
+msgid "Manage Subscription"
+msgstr "إدارة الاشتراك"
 
-msgid "An unexpected error occurred during booking. Please try again."
-msgstr "حدث خطأ غير متوقع أثناء الحجز. يرجى المحاولة مرة أخرى."
+msgid "Analytics"
+msgstr "التحليلات"
 
-msgid "New Booking Received for {service_name}"
-msgstr "تم استلام حجز جديد لـ {service_name}"
+msgid "Monthly Bookings"
+msgstr "الحجوزات الشهرية"
 
-msgid """
-        <p>Dear {owner_name},</p>
-        <p>You have received a new booking!</p>
-        <ul>
-            <li><strong>Customer:</strong> {customer_name}</li>
-            <li><strong>Service:</strong> {service_name}</li>
-            <li><strong>Date:</strong> {booking_date}</li>
-            <li><strong>Time:</strong> {booking_time}</li>
-        </ul>
-        <p>Please check your dashboard for more details.</p>
-        <p>Thank you,<br>BookSlot Team</p>
-    """
-msgstr """
-        <p>عزيزي {owner_name}،</p>
-        <p>لقد تلقيت حجزًا جديدًا!</p>
-        <ul>
-            <li><strong>العميل:</strong> {customer_name}</li>
-            <li><strong>الخدمة:</strong> {service_name}</li>
-            <li><strong>التاريخ:</strong> {booking_date}</li>
-            <li><strong>الوقت:</strong> {booking_time}</li>
-        </ul>
-        <p>يرجى التحقق من لوحة التحكم الخاصة بك لمزيد من التفاصيل.</p>
-        <p>شكراً لك،<br>فريق BookSlot</p>
-    """
+msgid "Popular Services"
+msgstr "الخدمات الأكثر شعبية"
 
-msgid "New booking: {customer_name} for {service_name} on {booking_date} at {booking_time}."
-msgstr "حجز جديد: {customer_name} لـ {service_name} في {booking_date} الساعة {booking_time}."
+msgid "Edit Profile"
+msgstr "تعديل الملف الشخصي"
 
-msgid "Your Booking Confirmation with {business_name}"
-msgstr "تأكيد حجزك مع {business_name}"
+msgid "Update Profile"
+msgstr "تحديث الملف الشخصي"
 
-msgid """
-        <p>Dear {customer_name},</p>
-        <p>Your booking with {business_name} has been confirmed!</p>
-        <ul>
-            <li><strong>Service:</strong> {service_name}</li>
-            <li><strong>Date:</strong> {booking_date}</li>
-            <li><strong>Time:</strong> {booking_time}</li>
-            <li><strong>Business:</strong> {business_name} ({owner_name})</li>
-        </ul>
-        <p>We look forward to seeing you!</p>
-        <p>Thank you,<br>{business_name}</p>
-    """
-msgstr """
-        <p>عزيزي {customer_name}،</p>
-        <p>تم تأكيد حجزك مع {business_name}!</p>
-        <ul>
-            <li><strong>الخدمة:</strong> {service_name}</li>
-            <li><strong>التاريخ:</strong> {booking_date}</li>
-            <li><strong>الوقت:</strong> {booking_time}</li>
-            <li><strong>العمل:</strong> {business_name} ({owner_name})</li>
-        </ul>
-        <p>نتطلع لرؤيتك!</p>
-        <p>شكراً لك،<br>فريق BookSlot</p>
-    """
+msgid "profile_updated"
+msgstr "تم تحديث الملف الشخصي"
 
-msgid "Your booking with {business_name} for {service_name} on {booking_date} at {booking_time} is confirmed!"
-msgstr "تم تأكيد حجزك مع {business_name} لـ {service_name} في {booking_date} الساعة {booking_time}!"
+msgid "update_failed"
+msgstr "فشل التحديث"
+
+msgid "Confirmed"
+msgstr "مؤكد"
+
+msgid "Pending"
+msgstr "معلق"
+
+msgid "Unknown"
+msgstr "غير معروف"
+
+msgid "Customers"
+msgstr "العملاء"
+
+msgid "Save my details for future bookings (optional)"
+msgstr "احفظ تفاصيلي للحجوزات المستقبلية (اختياري)"
+
+msgid "Your Customers"
+msgstr "عملاؤك"
+
+msgid "Actions"
+msgstr "الإجراءات"
+
+msgid "View"
+msgstr "عرض"
+
+msgid "Are you sure you want to delete this customer? This will NOT delete their past bookings, but will unlink them from this customer record."
+msgstr "هل أنت متأكد أنك تريد حذف هذا العميل؟ هذا لن يحذف حجوزاته السابقة، ولكنه سيزيل ربطها بسجل هذا العميل."
+
+msgid "You have no customers yet."
+msgstr "ليس لديك عملاء بعد."
+
+msgid "Customer Details"
+msgstr "تفاصيل العميل"
+
+msgid "Back to Customers"
+msgstr "العودة إلى العملاء"
+
+msgid "Customer not found."
+msgstr "لم يتم العثور على العميل."
+
+msgid "Success!"
+msgstr "نجاح!"
+
+msgid "Customer details updated."
+msgstr "تم تحديث تفاصيل العميل."
+
+msgid "Failed to update customer details. Please try again."
+msgstr "فشل تحديث تفاصيل العميل. يرجى المحاولة مرة أخرى."
+
+msgid "Edit Customer Information"
+msgstr "تعديل معلومات العميل"
+
+msgid "Update Customer"
+msgstr "تحديث العميل"
+
+msgid "Past Bookings"
+msgstr "الحجوزات السابقة"
+
+msgid "This customer has no past bookings."
+msgstr "ليس لهذا العميل حجوزات سابقة."
+
+msgid "Delete"
+msgstr "حذف"
