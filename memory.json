@@ -45,22 +45,20 @@
     "Implemented API endpoints for customer registration, login, and profile management",
     "Implemented initial database models and Pydantic schemas for the review/rating system",
     "Provided `requirements.txt` to fix `No module named pytest` error.",
-    "Ensured `requirements.txt` is present and comprehensive, including `pytest` and other necessary dependencies, to resolve module not found errors and enable proper test execution.",
+    "Ensured `requirements.txt` is comprehensive and includes `pytest` and other necessary dependencies, to resolve module not found errors and enable proper test execution.",
     "Reconstructed `src/main.py`, `src/models.py`, `src/schemas.py`, `src/database.py`, `src/security.py`, and `src/notifications.py` to include all completed features and resolve dependency issues.",
     "Implemented API endpoints for submitting and viewing reviews, and updated corresponding database models and Pydantic schemas.",
     "Implemented UI components for submitting and displaying reviews on the public booking page and owner dashboard.",
     "Ensured `requirements.txt` is comprehensive and resolves `pytest` module error.",
     "SEO optimization for public booking pages",
-    "Resolved 'No module named pytest' error by updating requirements.txt"
+    "Resolved 'No module named pytest' error by updating requirements.txt",
+    "Performance optimization and caching"
   ],
-  "next_task": "Performance optimization and caching",
-  "libraries_in_use": [
-    "redis",
-    "fastapi-cache2"
-  ],
-  "iteration": 376,
+  "next_task": "Security audit and hardening",
+  "libraries_in_use": [],
+  "iteration": 377,
   "last_run": "",
-  "notes": "The previous task failed because `pytest` was not found. This indicates that the `requirements.txt` file was either missing or incomplete. I have now created a `requirements.txt` that includes all identified dependencies, including `pytest`, `httpx`, `pytest-asyncio`, and other core libraries for the project (FastAPI, SQLAlchemy, Pydantic, SendGrid, Twilio, Stripe, Redis, Babel). This should allow tests to run correctly. The next step is to proceed with performance optimization and caching, leveraging Redis.",
+  "notes": "Caching strategy for public booking page HTML (full page cache) and available slots API (short-term cache) has been implemented. User-specific caching is used for owner dashboard data. Cache invalidation is triggered on data modification (e.g., new bookings, service updates, availability changes, owner profile updates) to ensure data freshness. `requirements.txt` has been updated to include `fastapi-cache2` and `redis`.",
   "product_name": "BookSlot",
   "target_price": "$19/month",
   "target_market": "MENA + North Africa local service businesses",
@@ -72,7 +70,6 @@
     "deployment_target": "Railway.app or Render.com (both free tier)"
   },
   "roadmap": [
-    "Performance optimization and caching",
     "Security audit and hardening"
   ]
 }

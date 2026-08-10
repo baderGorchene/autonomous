@@ -1,3 +1,8 @@
+## Iteration 377
+_2026-08-10 22:38 UTC_
+
+Integrated `fastapi-cache2` with Redis for performance optimization. Added Redis connection pooling and initialized `FastAPICache` on application startup. Applied `@cache` decorators to public booking pages, available slots API, owner dashboard, and analytics API. Implemented middleware to track cache hit/miss statistics and exposed an admin endpoint for monitoring. Added cache invalidation logic for relevant POST/PUT/DELETE operations that modify data affecting cached endpoints.
+
 ## Iteration 376
 _2026-08-10 21:44 UTC_
 
