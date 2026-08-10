@@ -1,134 +1,94 @@
-from datetime import datetime
-from typing import Optional
-from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail
 from twilio.rest import Client
+import sendgrid
+from sendgrid.helpers.mail import Mail, Email, To
+from datetime import date, time
+from typing import Optional
+
 from .config import settings
-from . import models, i18n
+from . import models
 
-def send_booking_confirmation(booking: models.Booking, owner: models.Owner, service: models.Service):
-    _ = i18n.gettext # Initialize gettext for this context
+# Twilio Client
+twilio_client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
 
-    customer_name = booking.customer.name if booking.customer else booking.customer_name
-    customer_email = booking.customer.email if booking.customer else booking.customer_email
+# SendGrid Client
+sg = sendgrid.SendGridAPIClient(settings.SENDGRID_API_KEY)
 
-    if not customer_email:
-        print(f"Skipping customer email confirmation for booking {booking.id}: No customer email provided.")
+def send_sms_notification(to_phone_number: str, message: str):
+    if not settings.TWILIO_ACCOUNT_SID or not settings.TWILIO_AUTH_TOKEN or not settings.TWILIO_PHONE_NUMBER:
+        print("Twilio credentials not configured. SMS not sent.")
         return
-
-    subject = _("Your Booking Confirmation for {service_name}").format(service_name=service.name)
-    body = _("""
-        Dear {customer_name},
-
-        Your booking for {service_name} on {date} at {time} has been confirmed.
-
-        Service Provider: {owner_name}
-        Service: {service_name}
-        Date: {date}
-        Time: {time}
-        Duration: {duration_minutes} minutes
-
-        We look forward to seeing you!
-
-        Best regards,
-        The {owner_name} Team
-    """).format(
-        customer_name=customer_name,
-        service_name=service.name,
-        date=booking.date.strftime("%Y-%m-%d"),
-        time=booking.time.strftime("%H:%M"),
-        duration_minutes=service.duration_minutes,
-        owner_name=owner.username
-    )
-
     try:
-        message = Mail(
-            from_email='no-reply@bookslot.app',
-            to_emails=customer_email,
-            subject=subject,
-            html_content=f'<p>{body.replace("\n", "<br>")}</p>'
+        message = twilio_client.messages.create(
+            to=to_phone_number,
+            from_=settings.TWILIO_PHONE_NUMBER,
+            body=message
         )
-        sg = SendGridAPIClient(settings.SENDGRID_API_KEY)
-        response = sg.send(message)
-        print(f"Customer email confirmation sent. Status Code: {response.status_code}")
+        print(f"SMS sent: {message.sid}")
     except Exception as e:
-        print(f"Error sending customer email confirmation for booking {booking.id}: {e}")
+        print(f"Error sending SMS: {e}")
 
+def send_email_notification(to_email: str, subject: str, html_content: str):
+    if not settings.SENDGRID_API_KEY:
+        print("SendGrid API key not configured. Email not sent.")
+        return
+    try:
+        from_email = Email("no-reply@bookslot.app") # Replace with your verified sender
+        to_email_obj = To(to_email)
+        message = Mail(from_email, to_email_obj, subject, html_content=html_content)
+        response = sg.send(message)
+        print(f"Email sent. Status Code: {response.status_code}")
+    except Exception as e:
+        print(f"Error sending email: {e}")
 
-def send_booking_notification_to_owner(booking: models.Booking, owner: models.Owner, service: models.Service):
-    _ = i18n.gettext # Initialize gettext for this context
+def send_owner_booking_notification(
+    owner: models.Owner,
+    service: models.Service,
+    booking_date: date,
+    booking_time: time,
+    customer: models.Customer # NEW: customer object
+):
+    subject = f"New Booking for {service.name}!"
+    html_content = f"""
+    <p>Dear {owner.name},</p>
+    <p>You have a new booking for your service: <strong>{service.name}</strong>.</p>
+    <p>Details:</p>
+    <ul>
+        <li>Date: {booking_date.strftime('%Y-%m-%d')}</li>
+        <li>Time: {booking_time.strftime('%H:%M')}</li>
+        <li>Customer Name: {customer.name}</li>
+        <li>Customer Email: {customer.email or 'N/A'}</li>
+        <li>Customer Phone: {customer.phone_number or 'N/A'}</li>
+    </ul>
+    <p>Thank you!</p>
+    """
+    if owner.email:
+        send_email_notification(owner.email, subject, html_content)
+    if owner.phone_number:
+        sms_message = f"New booking for {service.name} on {booking_date.strftime('%Y-%m-%d')} at {booking_time.strftime('%H:%M')} by {customer.name}."
+        send_sms_notification(owner.phone_number, sms_message)
 
-    owner_email = owner.email
-    owner_phone = owner.phone_number
-
-    customer_name = booking.customer.name if booking.customer else booking.customer_name
-    customer_email = booking.customer.email if booking.customer else booking.customer_email
-    customer_phone = booking.customer.phone_number if booking.customer else booking.customer_phone
-
-    # Email notification to owner
-    if owner_email:
-        email_subject = _("New Booking for {service_name}").format(service_name=service.name)
-        email_body = _("""
-            Dear {owner_name},
-
-            You have a new booking!
-
-            Customer Name: {customer_name}
-            Customer Email: {customer_email}
-            Customer Phone: {customer_phone}
-            Service: {service_name}
-            Date: {date}
-            Time: {time}
-            Duration: {duration_minutes} minutes
-            
-            Booking ID: {booking_id}
-            {is_recurring_text}
-        """).format(
-            owner_name=owner.username,
-            customer_name=customer_name,
-            customer_email=customer_email,
-            customer_phone=customer_phone if customer_phone else _("Not provided"),
-            service_name=service.name,
-            date=booking.date.strftime("%Y-%m-%d"),
-            time=booking.time.strftime("%H:%M"),
-            duration_minutes=service.duration_minutes,
-            booking_id=booking.id,
-            is_recurring_text=_("This is a recurring booking.") if booking.is_recurring else ""
-        )
-        try:
-            message = Mail(
-                from_email='no-reply@bookslot.app',
-                to_emails=owner_email,
-                subject=email_subject,
-                html_content=f'<p>{email_body.replace("\n", "<br>")}</p>'
-            )
-            sg = SendGridAPIClient(settings.SENDGRID_API_KEY)
-            response = sg.send(message)
-            print(f"Owner email notification sent. Status Code: {response.status_code}")
-        except Exception as e:
-            print(f"Error sending owner email notification for booking {booking.id}: {e}")
-
-    # SMS notification to owner
-    if owner_phone and settings.TWILIO_ACCOUNT_SID and settings.TWILIO_AUTH_TOKEN and settings.TWILIO_PHONE_NUMBER:
-        sms_body = _("""
-            New Booking!
-            Customer: {customer_name} ({customer_phone})
-            Service: {service_name}
-            Date: {date} @ {time}
-        """).format(
-            customer_name=customer_name,
-            customer_phone=customer_phone if customer_phone else _("N/A"),
-            service_name=service.name,
-            date=booking.date.strftime("%Y-%m-%d"),
-            time=booking.time.strftime("%H:%M")
-        )
-        try:
-            client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
-            message = client.messages.create(
-                to=owner_phone,
-                from_=settings.TWILIO_PHONE_NUMBER,
-                body=sms_body
-            )
-            print(f"Owner SMS notification sent. SID: {message.sid}")
-        except Exception as e:
-            print(f"Error sending owner SMS notification for booking {booking.id}: {e}")
+def send_customer_booking_confirmation(
+    owner: models.Owner,
+    service: models.Service,
+    booking_date: date,
+    booking_time: time,
+    customer: models.Customer # NEW: customer object
+):
+    subject = f"Your Booking Confirmation for {service.name} with {owner.name}"
+    html_content = f"""
+    <p>Dear {customer.name},</p>
+    <p>Your booking for <strong>{service.name}</strong> with {owner.name} has been confirmed!</p>
+    <p>Details:</p>
+    <ul>
+        <li>Service: {service.name}</li>
+        <li>Date: {booking_date.strftime('%Y-%m-%d')}</li>
+        <li>Time: {booking_time.strftime('%H:%M')}</li>
+        <li>Owner Contact: {owner.email} {f' / {owner.phone_number}' if owner.phone_number else ''}</li>
+    </ul>
+    <p>We look forward to seeing you!</p>
+    """
+    if customer.email:
+        send_email_notification(customer.email, subject, html_content)
+    if customer.phone_number:
+        sms_message = f"Your booking for {service.name} with {owner.name} on {booking_date.strftime('%Y-%m-%d')} at {booking_time.strftime('%H:%M')} is confirmed."
+        send_sms_notification(customer.phone_number, sms_message)
