@@ -1,1 +1,1 @@
-feat: Implement SEO optimization for public booking pages
+Fix: Resolve 'No module named pytest' error by updating requirements.txt

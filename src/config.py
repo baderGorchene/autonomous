@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     TWILIO_PHONE_NUMBER: str = "+1234567890"
 
     SQLALCHEMY_DATABASE_URL: str = "sqlite:///./sql_app.db"
+    REDIS_URL: str = "redis://localhost:6379/0"
 
     class Config:
         env_file = ".env"
