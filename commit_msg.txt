@@ -1,1 +1,1 @@
-Implement security hardening measures: rate limiting and HTTP headers
+Fix: Ensure pytest and all dependencies are available via requirements.txt
