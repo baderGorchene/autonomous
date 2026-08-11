@@ -1,315 +1,251 @@
-import logging
-from fastapi import FastAPI, Depends, HTTPException, status, Request
-from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi import FastAPI, Depends, HTTPException, status, Request, Response
+from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
-from datetime import date, datetime, time, timedelta
-from typing import List, Optional
-import os
-import secrets
-from gettext import gettext as _
-from gettext import ngettext
-
-from . import models, schemas, crud, security, notifications, analytics, availability_utils, config
-from .database import engine, get_db
-from .config import settings
-from .security import get_current_owner, get_current_customer, create_access_token, verify_password, hash_password
-from .notifications import send_booking_confirmation_email, send_owner_notification_email, send_customer_welcome_email
-from .schemas import OwnerCreate, OwnerLogin, ServiceCreate, ServiceUpdate, BookingCreate, OwnerProfileUpdate, CustomerCreate, CustomerLogin, CustomerProfileUpdate, ReviewCreate, ReviewUpdate, BookingRecurringCreate
-from .models import Owner, Service, Booking, Customer, Review, Availability, RecurrenceType, Subscription, SubscriptionStatus
-from .i18n import get_locale, setup_i18n_middleware
-import pytz
+from typing import List, Annotated, Optional, Dict, Any
+from datetime import timedelta, date, datetime, time
+from babel import dates, numbers
 import stripe
+import os
+import logging
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler("bookslot_security.log"), # Log to a file
-        logging.StreamHandler() # Also print to console
-    ]
-)
-logger = logging.getLogger(__name__)
+from . import models, schemas, crud, security, database, notifications, analytics, availability_utils
+from .database import SessionLocal, engine, get_db
+from .security import get_current_owner, create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES, get_password_hash, verify_password, get_current_customer, create_customer_access_token, CUSTOMER_ACCESS_TOKEN_EXPIRE_MINUTES
+from .notifications import send_booking_confirmation_email, send_owner_booking_notification, send_customer_registration_email
+from .i18n import get_locale, gettext as _, init_i18n, get_available_languages
+from .logging_config import security_logger
+
+models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
-# Setup i18n middleware
-setup_i18n_middleware(app)
+# Initialize i18n
+init_i18n(app)
 
+# Templates setup
 templates = Jinja2Templates(directory="templates")
 
+# OAuth2 for owner authentication
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="owner/token")
+
+# OAuth2 for customer authentication
+oauth2_customer_scheme = OAuth2PasswordBearer(tokenUrl="customer/token")
+
 # Stripe configuration
-stripe.api_key = settings.STRIPE_SECRET_KEY
+stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
+WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET")
 
-@app.on_event("startup")
-def on_startup():
-    models.Base.metadata.create_all(bind=engine)
+@app.middleware("http")
+async def add_language_cookie(request: Request, call_next):
+    if "lang" not in request.cookies:
+        response = RedirectResponse(url=f"/?lang={get_locale(request)}")
+        response.set_cookie(key="lang", value=get_locale(request), httponly=False, expires=3600*24*30)
+        return response
+    response = await call_next(request)
+    return response
 
-@app.get("/health", status_code=status.HTTP_200_OK)
-async def health_check():
-    return {"status": "ok"}
+@app.get("/health", response_class=HTMLResponse)
+async def health_check(request: Request):
+    return "OK"
 
-@app.post("/token", response_model=schemas.Token)
-async def login_for_access_token(
-    form_data: OAuth2PasswordRequestForm = Depends(),
-    db: Session = Depends(get_db)
-):
-    owner = crud.get_owner_by_email(db, email=form_data.username)
-    if not owner or not verify_password(form_data.password, owner.hashed_password):
-        logger.warning(f"Failed login attempt for email: {form_data.username} from IP: {app.request.client.host if app.request else 'N/A'}")
+# --- Owner Authentication and Dashboard ---
+
+@app.post("/owner/token", response_model=schemas.Token)
+async def login_for_access_token(db: Annotated[Session, Depends(get_db)], form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
+    owner = crud.authenticate_owner(db, form_data.username, form_data.password)
+    if not owner:
+        security_logger.warning(f"Failed owner login attempt for username: {form_data.username}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=_("Incorrect username or password"),
             headers={"WWW-Authenticate": "Bearer"},
         )
-    access_token = create_access_token(data={"sub": owner.email, "scope": "owner"})
-    logger.info(f"Owner {owner.email} logged in successfully from IP: {app.request.client.host if app.request else 'N/A'}")
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": owner.email, "user_type": "owner"}, expires_delta=access_token_expires
+    )
+    security_logger.info(f"Owner {owner.email} logged in successfully.")
     return {"access_token": access_token, "token_type": "bearer"}
 
-@app.post("/customer/token", response_model=schemas.Token)
-async def login_for_customer_access_token(
-    form_data: OAuth2PasswordRequestForm = Depends(),
-    db: Session = Depends(get_db)
-):
-    customer = crud.get_customer_by_email(db, email=form_data.username)
-    if not customer or not verify_password(form_data.password, customer.hashed_password):
-        logger.warning(f"Failed customer login attempt for email: {form_data.username} from IP: {app.request.client.host if app.request else 'N/A'}")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=_("Incorrect email or password"),
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    access_token = create_access_token(data={"sub": customer.email, "scope": "customer"})
-    logger.info(f"Customer {customer.email} logged in successfully from IP: {app.request.client.host if app.request else 'N/A'}")
-    return {"access_token": access_token, "token_type": "bearer"}
-
-@app.post("/owner/register", response_model=schemas.Owner)
-async def register_owner(owner: schemas.OwnerCreate, request: Request, db: Session = Depends(get_db)):
+@app.post("/owner/register", response_model=schemas.OwnerOut)
+def register_owner(owner: schemas.OwnerCreate, db: Session = Depends(get_db)):
     db_owner = crud.get_owner_by_email(db, email=owner.email)
     if db_owner:
-        logger.warning(f"Registration attempt with existing email: {owner.email} from IP: {request.client.host}")
         raise HTTPException(status_code=400, detail=_("Email already registered"))
-    try:
-        new_owner = crud.create_owner(db=db, owner=owner)
-        # notifications.send_welcome_email(new_owner.email, new_owner.name) # Optional
-        logger.info(f"New owner registered: {new_owner.email} (ID: {new_owner.id}) from IP: {request.client.host}")
-        return new_owner
-    except Exception as e:
-        logger.exception(f"Error during owner registration for email {owner.email}: {e}")
-        raise HTTPException(status_code=500, detail=_("An unexpected error occurred during registration."))
+    hashed_password = get_password_hash(owner.password)
+    db_owner = models.Owner(email=owner.email, hashed_password=hashed_password, phone=owner.phone, name=owner.name)
+    db.add(db_owner)
+    db.commit()
+    db.refresh(db_owner)
+    security_logger.info(f"New owner registered: {owner.email}")
+    return db_owner
 
-@app.post("/customer/register", response_model=schemas.Customer)
-async def register_customer(customer: schemas.CustomerCreate, request: Request, db: Session = Depends(get_db)):
-    db_customer = crud.get_customer_by_email(db, email=customer.email)
-    if db_customer:
-        logger.warning(f"Customer registration attempt with existing email: {customer.email} from IP: {request.client.host}")
-        raise HTTPException(status_code=400, detail=_("Email already registered"))
-    try:
-        new_customer = crud.create_customer(db=db, customer=customer)
-        # notifications.send_customer_welcome_email(new_customer.email, new_customer.name) # Optional
-        logger.info(f"New customer registered: {new_customer.email} (ID: {new_customer.id}) from IP: {request.client.host}")
-        return new_customer
-    except Exception as e:
-        logger.exception(f"Error during customer registration for email {customer.email}: {e}")
-        raise HTTPException(status_code=500, detail=_("An unexpected error occurred during registration."))
+@app.get("/owner/me", response_model=schemas.OwnerOut)
+async def read_owners_me(current_owner: Annotated[models.Owner, Depends(get_current_owner)]):
+    return current_owner
 
 @app.get("/owner/dashboard", response_class=HTMLResponse)
-async def owner_dashboard(
-    request: Request,
-    db: Session = Depends(get_db),
-    current_owner: schemas.Owner = Depends(get_current_owner)
-):
+async def owner_dashboard(request: Request, db: Annotated[Session, Depends(get_db)], current_owner: Annotated[models.Owner, Depends(get_current_owner)]):
     bookings = crud.get_owner_bookings(db, owner_id=current_owner.id)
-    # Fetch services for the current owner
     services = crud.get_owner_services(db, owner_id=current_owner.id)
 
     # Analytics data
-    monthly_bookings = analytics.get_monthly_bookings_data(db, current_owner.id)
-    popular_services = analytics.get_popular_services_data(db, current_owner.id)
+    monthly_bookings_data = analytics.get_monthly_bookings_data(db, current_owner.id)
+    popular_services_data = analytics.get_popular_services_data(db, current_owner.id)
 
     # Subscription status
     subscription = crud.get_owner_subscription(db, current_owner.id)
-    subscription_status = subscription.status.value if subscription else "none"
-    
-    # Reviews
-    reviews = crud.get_reviews_for_owner(db, current_owner.id)
-
-    # Adjust dates and times for display in owner's timezone
-    owner_timezone = pytz.timezone(current_owner.timezone)
-    adjusted_bookings = []
-    for booking in bookings:
-        booking_datetime_utc = datetime.combine(booking.date, booking.time).replace(tzinfo=pytz.utc)
-        booking_datetime_owner_tz = booking_datetime_utc.astimezone(owner_timezone)
-        adjusted_bookings.append({
-            "id": booking.id,
-            "customer_name": booking.customer_name,
-            "customer_email": booking.customer_email,
-            "customer_phone": booking.customer_phone,
-            "service_name": booking.service.name,
-            "date": booking_datetime_owner_tz.date(),
-            "time": booking_datetime_owner_tz.time(),
-            "status": booking.status.value,
-            "is_recurring": booking.recurrence_type != RecurrenceType.NONE,
-            "original_booking_id": booking.original_booking_id
-        })
+    is_premium = subscription and subscription.status == "active"
 
     return templates.TemplateResponse(
         "dashboard.html",
         {
             "request": request,
             "owner": current_owner,
-            "bookings": adjusted_bookings,
+            "bookings": bookings,
             "services": services,
             "current_locale": get_locale(request),
-            "_": _,
-            "ngettext": ngettext,
-            "monthly_bookings_data": monthly_bookings,
-            "popular_services_data": popular_services,
-            "subscription_status": subscription_status,
-            "reviews": reviews
-        }
+            "gettext": _,
+            "dates": dates,
+            "numbers": numbers,
+            "monthly_bookings_data": monthly_bookings_data,
+            "popular_services_data": popular_services_data,
+            "is_premium": is_premium,
+            "subscription": subscription
+        },
     )
 
-@app.get("/customer/profile", response_class=HTMLResponse)
-async def customer_profile(
-    request: Request,
-    db: Session = Depends(get_db),
-    current_customer: schemas.Customer = Depends(get_current_customer)
-):
-    bookings = crud.get_customer_bookings(db, current_customer.id)
-    reviews = crud.get_reviews_by_customer(db, current_customer.id)
-
-    return templates.TemplateResponse(
-        "customer_dashboard.html", # Assuming a customer dashboard template
-        {
-            "request": request,
-            "customer": current_customer,
-            "bookings": bookings,
-            "reviews": reviews,
-            "current_locale": get_locale(request),
-            "_": _,
-            "ngettext": ngettext
-        }
-    )
-
-@app.put("/owner/profile", response_model=schemas.Owner)
+@app.post("/owner/profile", response_model=schemas.OwnerOut)
 async def update_owner_profile(
-    owner_update: schemas.OwnerProfileUpdate,
-    request: Request,
-    db: Session = Depends(get_db),
-    current_owner: schemas.Owner = Depends(get_current_owner)
+    owner_update: schemas.OwnerUpdate,
+    db: Annotated[Session, Depends(get_db)],
+    current_owner: Annotated[models.Owner, Depends(get_current_owner)]
 ):
     try:
-        updated_owner = crud.update_owner_profile(db, current_owner.id, owner_update)
-        logger.info(f"Owner profile updated for {current_owner.email} by IP: {request.client.host}")
+        updated_owner = crud.update_owner_profile(db, current_owner, owner_update)
+        security_logger.info(f"Owner profile updated for {current_owner.email}")
         return updated_owner
     except Exception as e:
-        logger.exception(f"Error updating owner profile for {current_owner.email}: {e}")
-        raise HTTPException(status_code=500, detail=_("An unexpected error occurred while updating profile."))
+        security_logger.error(f"Error updating owner profile for {current_owner.email}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
-@app.put("/customer/profile", response_model=schemas.Customer)
-async def update_customer_profile(
-    customer_update: schemas.CustomerProfileUpdate,
-    request: Request,
-    db: Session = Depends(get_db),
-    current_customer: schemas.Customer = Depends(get_current_customer)
-):
-    try:
-        updated_customer = crud.update_customer_profile(db, current_customer.id, customer_update)
-        logger.info(f"Customer profile updated for {current_customer.email} by IP: {request.client.host}")
-        return updated_customer
-    except Exception as e:
-        logger.exception(f"Error updating customer profile for {current_customer.email}: {e}")
-        raise HTTPException(status_code=500, detail=_("An unexpected error occurred while updating profile."))
-
-@app.get("/owner/services", response_model=List[schemas.Service])
-async def get_owner_services(
-    db: Session = Depends(get_db),
-    current_owner: schemas.Owner = Depends(get_current_owner)
-):
-    return crud.get_owner_services(db, owner_id=current_owner.id)
-
-@app.post("/owner/services", response_model=schemas.Service)
-async def create_owner_service(
+@app.post("/owner/services", response_model=schemas.ServiceOut)
+async def create_service(
     service: schemas.ServiceCreate,
-    request: Request,
-    db: Session = Depends(get_db),
-    current_owner: schemas.Owner = Depends(get_current_owner)
+    db: Annotated[Session, Depends(get_db)],
+    current_owner: Annotated[models.Owner, Depends(get_current_owner)]
 ):
-    try:
-        new_service = crud.create_owner_service(db=db, service=service, owner_id=current_owner.id)
-        logger.info(f"Service '{service.name}' created by owner {current_owner.email} (ID: {new_service.id}) from IP: {request.client.host}")
-        return new_service
-    except Exception as e:
-        logger.exception(f"Error creating service for owner {current_owner.email}: {e}")
-        raise HTTPException(status_code=500, detail=_("An unexpected error occurred while creating the service."))
+    db_service = models.Service(**service.model_dump(), owner_id=current_owner.id)
+    db.add(db_service)
+    db.commit()
+    db.refresh(db_service)
+    return db_service
 
-@app.get("/owner/services/{service_id}", response_model=schemas.Service)
-async def get_owner_service(
-    service_id: int,
-    db: Session = Depends(get_db),
-    current_owner: schemas.Owner = Depends(get_current_owner)
-):
-    service = crud.get_service(db, service_id=service_id)
-    if not service or service.owner_id != current_owner.id:
-        logger.warning(f"Unauthorized access attempt to service_id: {service_id} by owner {current_owner.email} from IP: {app.request.client.host if app.request else 'N/A'}")
-        raise HTTPException(status_code=404, detail=_("Service not found"))
-    return service
-
-@app.put("/owner/services/{service_id}", response_model=schemas.Service)
-async def update_owner_service(
+@app.put("/owner/services/{service_id}", response_model=schemas.ServiceOut)
+async def update_service(
     service_id: int,
     service_update: schemas.ServiceUpdate,
-    request: Request,
-    db: Session = Depends(get_db),
-    current_owner: schemas.Owner = Depends(get_current_owner)
+    db: Annotated[Session, Depends(get_db)],
+    current_owner: Annotated[models.Owner, Depends(get_current_owner)]
 ):
     db_service = crud.get_service(db, service_id=service_id)
     if not db_service or db_service.owner_id != current_owner.id:
-        logger.warning(f"Unauthorized update attempt to service_id: {service_id} by owner {current_owner.email} from IP: {request.client.host}")
-        raise HTTPException(status_code=404, detail=_("Service not found"))
-    try:
-        updated_service = crud.update_service(db, db_service, service_update)
-        logger.info(f"Service '{updated_service.name}' (ID: {service_id}) updated by owner {current_owner.email} from IP: {request.client.host}")
-        return updated_service
-    except Exception as e:
-        logger.exception(f"Error updating service {service_id} for owner {current_owner.email}: {e}")
-        raise HTTPException(status_code=500, detail=_("An unexpected error occurred while updating the service."))
+        raise HTTPException(status_code=404, detail=_("Service not found or not owned by current owner"))
+    
+    for key, value in service_update.model_dump(exclude_unset=True).items():
+        setattr(db_service, key, value)
+    db.commit()
+    db.refresh(db_service)
+    return db_service
 
 @app.delete("/owner/services/{service_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_owner_service(
+async def delete_service(
     service_id: int,
-    request: Request,
-    db: Session = Depends(get_db),
-    current_owner: schemas.Owner = Depends(get_current_owner)
+    db: Annotated[Session, Depends(get_db)],
+    current_owner: Annotated[models.Owner, Depends(get_current_owner)]
 ):
     db_service = crud.get_service(db, service_id=service_id)
     if not db_service or db_service.owner_id != current_owner.id:
-        logger.warning(f"Unauthorized delete attempt to service_id: {service_id} by owner {current_owner.email} from IP: {request.client.host}")
-        raise HTTPException(status_code=404, detail=_("Service not found"))
-    try:
-        crud.delete_service(db, service_id=service_id)
-        logger.info(f"Service (ID: {service_id}) deleted by owner {current_owner.email} from IP: {request.client.host}")
-    except Exception as e:
-        logger.exception(f"Error deleting service {service_id} for owner {current_owner.email}: {e}")
-        raise HTTPException(status_code=500, detail=_("An unexpected error occurred while deleting the service."))
+        raise HTTPException(status_code=404, detail=_("Service not found or not owned by current owner"))
+    
+    db.delete(db_service)
+    db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
-@app.get("/{owner_username}", response_class=HTMLResponse)
-async def public_booking_page(
-    owner_username: str,
-    request: Request,
-    db: Session = Depends(get_db)
+@app.post("/owner/availability", response_model=schemas.AvailabilityOut)
+async def create_availability(
+    availability: schemas.AvailabilityCreate,
+    db: Annotated[Session, Depends(get_db)],
+    current_owner: Annotated[models.Owner, Depends(get_current_owner)]
 ):
-    owner = crud.get_owner_by_username(db, username=owner_username)
+    db_availability = models.Availability(**availability.model_dump(), owner_id=current_owner.id)
+    db.add(db_availability)
+    db.commit()
+    db.refresh(db_availability)
+    return db_availability
+
+@app.put("/owner/availability/{availability_id}", response_model=schemas.AvailabilityOut)
+async def update_availability(
+    availability_id: int,
+    availability_update: schemas.AvailabilityUpdate,
+    db: Annotated[Session, Depends(get_db)],
+    current_owner: Annotated[models.Owner, Depends(get_current_owner)]
+):
+    db_availability = crud.get_availability(db, availability_id=availability_id)
+    if not db_availability or db_availability.owner_id != current_owner.id:
+        raise HTTPException(status_code=404, detail=_("Availability not found or not owned by current owner"))
+    
+    for key, value in availability_update.model_dump(exclude_unset=True).items():
+        setattr(db_availability, key, value)
+    db.commit()
+    db.refresh(db_availability)
+    return db_availability
+
+@app.delete("/owner/availability/{availability_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_availability(
+    availability_id: int,
+    db: Annotated[Session, Depends(get_db)],
+    current_owner: Annotated[models.Owner, Depends(get_current_owner)]
+):
+    db_availability = crud.get_availability(db, availability_id=availability_id)
+    if not db_availability or db_availability.owner_id != current_owner.id:
+        raise HTTPException(status_code=404, detail=_("Availability not found or not owned by current owner"))
+    
+    db.delete(db_availability)
+    db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+@app.get("/owner/analytics/monthly-bookings")
+async def get_monthly_bookings(db: Annotated[Session, Depends(get_db)], current_owner: Annotated[models.Owner, Depends(get_current_owner)]):
+    return analytics.get_monthly_bookings_data(db, current_owner.id)
+
+@app.get("/owner/analytics/popular-services")
+async def get_popular_services(db: Annotated[Session, Depends(get_db)], current_owner: Annotated[models.Owner, Depends(get_current_owner)]):
+    return analytics.get_popular_services_data(db, current_owner.id)
+
+@app.get("/owner/subscription", response_model=schemas.SubscriptionOut)
+async def get_owner_subscription(
+    db: Annotated[Session, Depends(get_db)],
+    current_owner: Annotated[models.Owner, Depends(get_current_owner)]
+):
+    subscription = crud.get_owner_subscription(db, current_owner.id)
+    if not subscription:
+        raise HTTPException(status_code=404, detail=_("Subscription not found"))
+    return subscription
+
+# --- Public Booking Page ---
+
+@app.get("/{owner_name}", response_class=HTMLResponse)
+async def public_booking_page(request: Request, owner_name: str, db: Annotated[Session, Depends(get_db)]):
+    owner = crud.get_owner_by_name(db, owner_name=owner_name)
     if not owner:
-        raise HTTPException(status_code=404, detail=_("Owner not found."))
-
+        raise HTTPException(status_code=404, detail=_("Owner not found"))
     services = crud.get_owner_services(db, owner_id=owner.id)
-
-    # Reviews for this owner
-    reviews = crud.get_reviews_for_owner(db, owner.id)
+    
+    # Get reviews for the owner
+    reviews = crud.get_reviews_for_owner(db, owner_id=owner.id)
 
     return templates.TemplateResponse(
         "booking_page.html",
@@ -318,373 +254,344 @@ async def public_booking_page(
             "owner": owner,
             "services": services,
             "current_locale": get_locale(request),
-            "_": _,
-            "ngettext": ngettext,
+            "gettext": _,
+            "dates": dates,
+            "available_languages": get_available_languages()
+            ,
             "reviews": reviews
-        }
+        },
     )
 
-@app.get("/{owner_username}/service/{service_id}/available-slots")
-async def get_available_slots_api(
-    owner_username: str,
+@app.get("/{owner_name}/available-slots")
+async def get_slots(
+    owner_name: str,
     service_id: int,
-    target_date: date,
-    db: Session = Depends(get_db)
+    selected_date: date,
+    db: Annotated[Session, Depends(get_db)]
 ):
-    owner = crud.get_owner_by_username(db, username=owner_username)
+    owner = crud.get_owner_by_name(db, owner_name=owner_name)
     if not owner:
-        raise HTTPException(status_code=404, detail=_("Owner not found."))
-
+        raise HTTPException(status_code=404, detail=_("Owner not found"))
     service = crud.get_service(db, service_id=service_id)
     if not service or service.owner_id != owner.id:
-        raise HTTPException(status_code=404, detail=_("Service not found for this owner."))
-
-    # Ensure target_date is not in the past
-    if target_date < date.today():
-        return [] # No slots available in the past
+        raise HTTPException(status_code=404, detail=_("Service not found for this owner"))
 
     available_slots = availability_utils.get_available_slots_for_day(
-        db, owner.id, service.id, target_date, service.duration_minutes
+        db, owner.id, service.id, selected_date, service.duration_minutes
     )
-    return [slot.isoformat() for slot in available_slots]
+    return {"available_slots": [s.isoformat() for s in available_slots]}
 
-@app.post("/book/{owner_username}/{service_id}", response_model=schemas.Booking)
+@app.post("/{owner_name}/book", response_class=HTMLResponse)
 async def create_booking(
-    owner_username: str,
-    service_id: int,
+    request: Request,
+    owner_name: str,
     booking_data: schemas.BookingCreate,
-    request: Request,
-    db: Session = Depends(get_db)
+    db: Annotated[Session, Depends(get_db)]
 ):
-    owner = crud.get_owner_by_username(db, username=owner_username)
+    owner = crud.get_owner_by_name(db, owner_name=owner_name)
     if not owner:
-        logger.warning(f"Booking attempt for non-existent owner username: {owner_username} from IP: {request.client.host}")
-        raise HTTPException(status_code=404, detail=_("Owner not found."))
-
-    service = crud.get_service(db, service_id=service_id)
+        raise HTTPException(status_code=404, detail=_("Owner not found"))
+    service = crud.get_service(db, service_id=booking_data.service_id)
     if not service or service.owner_id != owner.id:
-        logger.warning(f"Booking attempt for non-existent or unauthorized service_id: {service_id} for owner: {owner_username} from IP: {request.client.host}")
-        raise HTTPException(status_code=404, detail=_("Service not found for this owner."))
+        raise HTTPException(status_code=404, detail=_("Service not found for this owner"))
 
-    if booking_data.date < date.today():
-        logger.warning(f"Attempt to book in the past for service_id: {service_id}, owner: {owner_username}, date: {booking_data.date} from IP: {request.client.host}")
-        raise HTTPException(status_code=422, detail=_("Cannot book a service in the past."))
-
-    slot_duration = service.duration_minutes
+    # Basic availability check (more detailed check happens in availability_utils)
     available_slots = availability_utils.get_available_slots_for_day(
-        db, owner.id, service.id, booking_data.date, slot_duration
+        db, owner.id, service.id, booking_data.date, service.duration_minutes
     )
-
-    # Convert booking_data.time (datetime.time) to ISO format string for comparison if available_slots are strings
-    # Assuming available_slots are datetime.time objects for direct comparison
     if booking_data.time not in available_slots:
-        logger.warning(f"Attempt to book unavailable slot for service_id: {service_id}, owner: {owner_username}, date: {booking_data.date}, time: {booking_data.time} from IP: {request.client.host}")
-        raise HTTPException(status_code=409, detail=_("The selected time slot is not available."))
-
-    try:
-        booking = crud.create_booking(db, booking_data, owner.id, service.id)
-        
-        if booking_data.recurrence_type != RecurrenceType.NONE:
-            crud.create_recurring_bookings(db, booking, booking_data.recurrence_type, booking_data.recurrence_value, booking_data.recurrence_end_date, service.duration_minutes)
-
-        # Notifications
-        send_booking_confirmation_email(booking, owner, service, get_locale(request))
-        send_owner_notification_email(booking, owner, service, get_locale(request))
-        logger.info(f"Booking created successfully by customer {booking_data.customer_email} for owner {owner.email}, service {service.name} on {booking_data.date} at {booking_data.time} from IP: {request.client.host}")
-        return booking
-    except Exception as e:
-        logger.exception(f"Error creating booking for owner {owner.email}, service {service.name}: {e}")
-        raise HTTPException(status_code=500, detail=_("An unexpected error occurred during booking."))
-
-@app.get("/booking-confirmation/{booking_id}", response_class=HTMLResponse)
-async def booking_confirmation_page(
-    booking_id: int,
-    request: Request,
-    db: Session = Depends(get_db)
-):
-    booking = crud.get_booking(db, booking_id)
-    if not booking:
-        raise HTTPException(status_code=404, detail=_("Booking not found."))
-
-    # Fetch owner and service details for the confirmation page
-    owner = crud.get_owner(db, owner_id=booking.owner_id)
-    service = crud.get_service(db, service_id=booking.service_id)
-
-    return templates.TemplateResponse(
-        "booking_confirmation.html",
-        {
-            "request": request,
-            "booking": booking,
-            "owner": owner,
-            "service": service,
-            "current_locale": get_locale(request),
-            "_": _,
-            "ngettext": ngettext
-        }
-    )
-
-@app.get("/owner/analytics", response_model=schemas.AnalyticsData)
-async def get_owner_analytics(
-    db: Session = Depends(get_db),
-    current_owner: schemas.Owner = Depends(get_current_owner)
-):
-    monthly_bookings = analytics.get_monthly_bookings_data(db, current_owner.id)
-    popular_services = analytics.get_popular_services_data(db, current_owner.id)
+        security_logger.warning(f"Attempt to book unavailable slot for owner {owner.email}, service {service.name} at {booking_data.date} {booking_data.time}")
+        return templates.TemplateResponse(
+            "booking_confirmation.html",
+            {"request": request, "message": _("The selected time slot is no longer available. Please choose another time."), "success": False, "gettext": _}
+        )
     
-    return schemas.AnalyticsData(
-        monthly_bookings=monthly_bookings,
-        popular_services=popular_services
+    try:
+        db_booking = crud.create_booking(db=db, booking=booking_data, owner_id=owner.id)
+        
+        # Send notifications
+        await send_booking_confirmation_email(owner, service, db_booking, booking_data.customer_email)
+        await send_owner_booking_notification(owner, service, db_booking, booking_data.customer_name, booking_data.customer_email, booking_data.customer_phone)
+        
+        security_logger.info(f"New booking created for owner {owner.email} by {booking_data.customer_email} for service {service.name} at {booking_data.date} {booking_data.time}")
+        return templates.TemplateResponse(
+            "booking_confirmation.html",
+            {"request": request, "message": _("Booking confirmed successfully!"), "success": True, "gettext": _}
+        )
+    except Exception as e:
+        security_logger.error(f"Error creating booking for owner {owner.email}, service {service.name}: {e}")
+        return templates.TemplateResponse(
+            "booking_confirmation.html",
+            {"request": request, "message": f"{_('An error occurred during booking:')} {e}", "success": False, "gettext": _}
+        )
+
+# --- Customer Authentication and Profile Management ---
+
+@app.post("/customer/register", response_model=schemas.CustomerOut)
+async def register_customer(customer: schemas.CustomerCreate, db: Session = Depends(get_db)):
+    db_customer = crud.get_customer_by_email(db, email=customer.email)
+    if db_customer:
+        raise HTTPException(status_code=400, detail=_("Email already registered"))
+    hashed_password = get_password_hash(customer.password)
+    db_customer = models.Customer(email=customer.email, hashed_password=hashed_password, phone=customer.phone, name=customer.name)
+    db.add(db_customer)
+    db.commit()
+    db.refresh(db_customer)
+    await send_customer_registration_email(db_customer.email, db_customer.name)
+    security_logger.info(f"New customer registered: {customer.email}")
+    return db_customer
+
+@app.post("/customer/token", response_model=schemas.Token)
+async def customer_login_for_access_token(db: Annotated[Session, Depends(get_db)], form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
+    customer = crud.authenticate_customer(db, form_data.username, form_data.password)
+    if not customer:
+        security_logger.warning(f"Failed customer login attempt for username: {form_data.username}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=_("Incorrect username or password"),
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    access_token_expires = timedelta(minutes=CUSTOMER_ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_customer_access_token(
+        data={"sub": customer.email, "user_type": "customer"}, expires_delta=access_token_expires
     )
+    security_logger.info(f"Customer {customer.email} logged in successfully.")
+    return {"access_token": access_token, "token_type": "bearer"}
+
+@app.get("/customer/me", response_model=schemas.CustomerOut)
+async def read_customers_me(current_customer: Annotated[models.Customer, Depends(get_current_customer)]):
+    return current_customer
+
+@app.post("/customer/profile", response_model=schemas.CustomerOut)
+async def update_customer_profile(
+    customer_update: schemas.CustomerUpdate,
+    db: Annotated[Session, Depends(get_db)],
+    current_customer: Annotated[models.Customer, Depends(get_current_customer)]
+):
+    try:
+        updated_customer = crud.update_customer_profile(db, current_customer, customer_update)
+        security_logger.info(f"Customer profile updated for {current_customer.email}")
+        return updated_customer
+    except Exception as e:
+        security_logger.error(f"Error updating customer profile for {current_customer.email}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# --- Reviews and Ratings ---
+
+@app.post("/reviews", response_model=schemas.ReviewOut, status_code=status.HTTP_201_CREATED)
+async def submit_review(
+    review: schemas.ReviewCreate,
+    db: Annotated[Session, Depends(get_db)],
+    current_customer: Annotated[models.Customer, Depends(get_current_customer)]
+):
+    # Ensure the customer has a booking with the owner they are reviewing
+    booking = db.query(models.Booking).filter(
+        models.Booking.customer_id == current_customer.id,
+        models.Booking.owner_id == review.owner_id
+    ).first()
+
+    if not booking:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=_("You can only review businesses you have booked with."))
+
+    db_review = crud.create_review(db, review, customer_id=current_customer.id)
+    security_logger.info(f"Customer {current_customer.email} submitted a review for owner {review.owner_id}")
+    return db_review
+
+@app.get("/owners/{owner_id}/reviews", response_model=List[schemas.ReviewOut])
+async def get_owner_reviews(owner_id: int, db: Annotated[Session, Depends(get_db)]):
+    reviews = crud.get_reviews_for_owner(db, owner_id)
+    return reviews
+
+
+# --- Subscription Management (Stripe) ---
 
 @app.post("/create-checkout-session")
-async def create_checkout_session(request: Request, db: Session = Depends(get_db), current_owner: schemas.Owner = Depends(get_current_owner)):
+async def create_checkout_session(db: Annotated[Session, Depends(get_db)], current_owner: Annotated[models.Owner, Depends(get_current_owner)]):
     try:
-        # For now, a fixed price for premium subscription ($19/month)
+        # Check if owner already has an active subscription
+        existing_subscription = crud.get_owner_subscription(db, current_owner.id)
+        if existing_subscription and existing_subscription.status == "active":
+            raise HTTPException(status_code=400, detail=_("You already have an active subscription."))
+
         checkout_session = stripe.checkout.Session.create(
             line_items=[
                 {
-                    'price_data': {
-                        'currency': 'usd',
-                        'product_data': {
-                            'name': 'BookSlot Premium Subscription',
-                            'description': 'Unlimited bookings per month'
-                        },
-                        'unit_amount': 1900, # $19.00
-                        'recurring': {'interval': 'month'},
-                    },
-                    'quantity': 1,
+                    "price": os.getenv("STRIPE_PREMIUM_PRICE_ID"), # Price ID from Stripe Dashboard
+                    "quantity": 1,
                 },
             ],
-            mode='subscription',
-            success_url=request.url_for('subscription_success').__str__() + "?session_id={CHECKOUT_SESSION_ID}",
-            cancel_url=request.url_for('subscription_cancel').__str__(),
+            mode="subscription",
+            success_url=os.getenv("STRIPE_SUCCESS_URL") + "?session_id={CHECKOUT_SESSION_ID}",
+            cancel_url=os.getenv("STRIPE_CANCEL_URL"),
             client_reference_id=str(current_owner.id),
-            metadata={
-                "owner_id": str(current_owner.id)
-            }
+            customer_email=current_owner.email,
         )
-        return RedirectResponse(checkout_session.url, status_code=status.HTTP_303_SEE_OTHER)
+        security_logger.info(f"Stripe checkout session created for owner {current_owner.email}")
+        return {"id": checkout_session.id, "url": checkout_session.url}
     except Exception as e:
-        logger.exception(f"Error creating Stripe checkout session for owner {current_owner.email}: {e}")
-        raise HTTPException(status_code=500, detail=_("Could not create checkout session."))
-
-@app.get("/subscription-success", response_class=HTMLResponse)
-async def subscription_success(request: Request, session_id: str, db: Session = Depends(get_db)):
-    try:
-        checkout_session = stripe.checkout.Session.retrieve(session_id)
-        owner_id = int(checkout_session.metadata.get("owner_id"))
-
-        # Retrieve or create subscription in your DB
-        subscription = crud.get_owner_subscription(db, owner_id)
-        if not subscription:
-            subscription = models.Subscription(
-                owner_id=owner_id,
-                stripe_customer_id=checkout_session.customer,
-                stripe_subscription_id=checkout_session.subscription,
-                status=SubscriptionStatus.ACTIVE
-            )
-            db.add(subscription)
-        else:
-            subscription.stripe_customer_id = checkout_session.customer
-            subscription.stripe_subscription_id = checkout_session.subscription
-            subscription.status = SubscriptionStatus.ACTIVE
-        db.commit()
-        db.refresh(subscription)
-        logger.info(f"Owner {owner_id} successfully subscribed. Stripe Session ID: {session_id}")
-        return templates.TemplateResponse("subscription_success.html", {"request": request, "session_id": session_id, "_": _})
-    except Exception as e:
-        logger.exception(f"Error processing subscription success for session ID {session_id}: {e}")
-        raise HTTPException(status_code=500, detail=_("Error processing subscription."))
-
-@app.get("/subscription-cancel", response_class=HTMLResponse)
-async def subscription_cancel(request: Request):
-    return templates.TemplateResponse("subscription_cancel.html", {"request": request, "_": _})
+        security_logger.error(f"Error creating Stripe checkout session for owner {current_owner.email}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/stripe-webhook")
-async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
+async def stripe_webhook(request: Request, db: Annotated[Session, Depends(get_db)]):
     payload = await request.body()
     sig_header = request.headers.get('stripe-signature')
 
     try:
         event = stripe.Webhook.construct_event(
-            payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
+            payload, sig_header, WEBHOOK_SECRET
         )
     except ValueError as e:
-        logger.error(f"Invalid payload for Stripe webhook: {e}")
-        raise HTTPException(status_code=400, detail="Invalid payload")
+        # Invalid payload
+        security_logger.warning(f"Stripe webhook invalid payload: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
     except stripe.error.SignatureVerificationError as e:
-        logger.error(f"Invalid signature for Stripe webhook: {e}")
-        raise HTTPException(status_code=400, detail="Invalid signature")
+        # Invalid signature
+        security_logger.warning(f"Stripe webhook invalid signature: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
 
-    event_type = event['type']
-    data = event['data']
-    object = data['object']
+    # Handle the event
+    if event['type'] == 'checkout.session.completed':
+        session = event['data']['object']
+        owner_id = session.get('client_reference_id')
+        customer_email = session.get('customer_details', {}).get('email')
+        subscription_id = session.get('subscription')
 
+        if owner_id and subscription_id:
+            crud.create_or_update_subscription(
+                db,
+                owner_id=int(owner_id),
+                stripe_customer_id=session.get('customer'),
+                stripe_subscription_id=subscription_id,
+                status="active",
+                current_period_end=datetime.fromtimestamp(session.get('expires_at') or session.get('current_period_end', 0))
+            )
+            security_logger.info(f"Stripe checkout session completed for owner {owner_id}, subscription {subscription_id}")
+        else:
+            security_logger.error(f"Stripe checkout.session.completed event missing owner_id or subscription_id. Session ID: {session.get('id')}")
+
+    elif event['type'] == 'customer.subscription.updated':
+        subscription = event['data']['object']
+        # Update subscription status in your DB
+        owner_id = crud.get_owner_id_by_stripe_customer_id(db, subscription.get('customer'))
+        if owner_id:
+            crud.create_or_update_subscription(
+                db,
+                owner_id=owner_id,
+                stripe_customer_id=subscription.get('customer'),
+                stripe_subscription_id=subscription.get('id'),
+                status=subscription.get('status'),
+                current_period_end=datetime.fromtimestamp(subscription.get('current_period_end', 0))
+            )
+            security_logger.info(f"Stripe subscription updated for owner {owner_id}, subscription {subscription.get('id')}. New status: {subscription.get('status')}")
+        else:
+            security_logger.error(f"Stripe customer.subscription.updated event could not find owner for customer ID: {subscription.get('customer')}")
+
+    elif event['type'] == 'customer.subscription.deleted':
+        subscription = event['data']['object']
+        owner_id = crud.get_owner_id_by_stripe_customer_id(db, subscription.get('customer'))
+        if owner_id:
+            crud.create_or_update_subscription(
+                db,
+                owner_id=owner_id,
+                stripe_customer_id=subscription.get('customer'),
+                stripe_subscription_id=subscription.get('id'),
+                status="cancelled", # Or 'inactive', depending on your model
+                current_period_end=datetime.fromtimestamp(subscription.get('current_period_end', 0))
+            )
+            security_logger.info(f"Stripe subscription deleted for owner {owner_id}, subscription {subscription.get('id')}")
+        else:
+            security_logger.error(f"Stripe customer.subscription.deleted event could not find owner for customer ID: {subscription.get('customer')}")
+
+    return {"status": "success"}
+
+@app.get("/subscription-success", response_class=HTMLResponse)
+async def subscription_success(request: Request, session_id: str, db: Annotated[Session, Depends(get_db)]):
     try:
-        if event_type == 'checkout.session.completed':
-            owner_id = int(object.get('metadata', {}).get('owner_id'))
-            customer_id = object.get('customer')
-            subscription_id = object.get('subscription')
-            
-            subscription = crud.get_owner_subscription(db, owner_id)
-            if not subscription:
-                subscription = models.Subscription(
-                    owner_id=owner_id,
-                    stripe_customer_id=customer_id,
-                    stripe_subscription_id=subscription_id,
-                    status=SubscriptionStatus.ACTIVE
-                )
-                db.add(subscription)
-            else:
-                subscription.stripe_customer_id = customer_id
-                subscription.stripe_subscription_id = subscription_id
-                subscription.status = SubscriptionStatus.ACTIVE
-            db.commit()
-            db.refresh(subscription)
-            logger.info(f"Stripe Webhook: Checkout session completed for owner {owner_id}")
+        checkout_session = stripe.checkout.Session.retrieve(session_id)
+        owner_id = checkout_session.client_reference_id
+        subscription_id = checkout_session.subscription
 
-        elif event_type == 'customer.subscription.deleted':
-            subscription_id = object.get('id')
-            db_subscription = crud.get_subscription_by_stripe_id(db, subscription_id)
-            if db_subscription:
-                db_subscription.status = SubscriptionStatus.CANCELED
-                db.commit()
-                logger.info(f"Stripe Webhook: Subscription {subscription_id} deleted for owner {db_subscription.owner_id}")
+        # Retrieve subscription details from Stripe
+        stripe_subscription = stripe.Subscription.retrieve(subscription_id)
+        current_period_end = datetime.fromtimestamp(stripe_subscription.current_period_end)
 
-        elif event_type == 'customer.subscription.updated':
-            subscription_id = object.get('id')
-            status = object.get('status') # active, past_due, canceled, unpaid, incomplete, incomplete_expired
-            db_subscription = crud.get_subscription_by_stripe_id(db, subscription_id)
-            if db_subscription:
-                db_subscription.status = SubscriptionStatus(status)
-                db.commit()
-                logger.info(f"Stripe Webhook: Subscription {subscription_id} updated to status {status} for owner {db_subscription.owner_id}")
-
-        # Handle other events like 'invoice.payment_succeeded', 'invoice.payment_failed'
-
+        if owner_id:
+            crud.create_or_update_subscription(
+                db,
+                owner_id=int(owner_id),
+                stripe_customer_id=checkout_session.customer,
+                stripe_subscription_id=subscription_id,
+                status="active",
+                current_period_end=current_period_end
+            )
+            security_logger.info(f"Subscription success page accessed for owner {owner_id}, session {session_id}")
+            return templates.TemplateResponse(
+                "subscription_status.html",
+                {"request": request, "message": _("Your subscription is now active!"), "success": True, "gettext": _}
+            )
     except Exception as e:
-        logger.exception(f"Error processing Stripe webhook event {event_type}: {e}")
-        raise HTTPException(status_code=500, detail="Webhook handler failed")
+        security_logger.error(f"Error processing subscription success for session {session_id}: {e}")
+        pass # Fall through to generic error message
 
-    return JSONResponse(status_code=200, content={"success": True})
-
-# Admin Panel Endpoints (Basic CRUD for Owners, Services, Bookings, Subscriptions)
-# These should be protected by a dedicated admin role
-
-@app.get("/admin", response_class=HTMLResponse)
-async def admin_dashboard(request: Request, db: Session = Depends(get_db)): # Needs admin authentication
-    owners = crud.get_all_owners(db)
     return templates.TemplateResponse(
-        "admin_dashboard.html",
-        {"request": request, "owners": owners, "current_locale": get_locale(request), "_": _}
+        "subscription_status.html",
+        {"request": request, "message": _("There was an issue activating your subscription."), "success": False, "gettext": _}
     )
 
-@app.get("/admin/owners/{owner_id}", response_class=HTMLResponse)
-async def admin_owner_detail(owner_id: int, request: Request, db: Session = Depends(get_db)): # Needs admin authentication
+@app.get("/subscription-cancel", response_class=HTMLResponse)
+async def subscription_cancel(request: Request):
+    security_logger.info(f"Subscription cancel page accessed.")
+    return templates.TemplateResponse(
+        "subscription_status.html",
+        {"request": request, "message": _("Your subscription was not activated."), "success": False, "gettext": _}
+    )
+
+# --- Admin Panel ---
+
+@app.get("/admin", response_class=HTMLResponse)
+async def admin_dashboard(request: Request):
+    # This is a placeholder. In a real app, this would require admin authentication.
+    return templates.TemplateResponse(
+        "admin_dashboard.html",
+        {"request": request, "gettext": _}
+    )
+
+@app.get("/admin/owners", response_model=List[schemas.OwnerOut])
+async def get_all_owners(db: Annotated[Session, Depends(get_db)]):
+    # Requires admin authentication
+    owners = crud.get_all_owners(db)
+    return owners
+
+@app.get("/admin/owners/{owner_id}", response_model=schemas.OwnerOut)
+async def get_owner_by_id(owner_id: int, db: Annotated[Session, Depends(get_db)]):
     owner = crud.get_owner(db, owner_id)
     if not owner:
         raise HTTPException(status_code=404, detail=_("Owner not found"))
+    return owner
+
+@app.put("/admin/owners/{owner_id}", response_model=schemas.OwnerOut)
+async def update_owner_by_admin(owner_id: int, owner_update: schemas.OwnerUpdate, db: Annotated[Session, Depends(get_db)]):
+    owner = crud.get_owner(db, owner_id)
+    if not owner:
+        raise HTTPException(status_code=404, detail=_("Owner not found"))
+    updated_owner = crud.update_owner_profile(db, owner, owner_update)
+    return updated_owner
+
+@app.delete("/admin/owners/{owner_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_owner_by_admin(owner_id: int, db: Annotated[Session, Depends(get_db)]):
+    owner = crud.get_owner(db, owner_id)
+    if not owner:
+        raise HTTPException(status_code=404, detail=_("Owner not found"))
+    crud.delete_owner(db, owner_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+@app.get("/admin/owners/{owner_id}/services", response_model=List[schemas.ServiceOut])
+async def get_owner_services_admin(owner_id: int, db: Annotated[Session, Depends(get_db)]):
     services = crud.get_owner_services(db, owner_id)
+    return services
+
+@app.get("/admin/owners/{owner_id}/bookings", response_model=List[schemas.BookingOut])
+async def get_owner_bookings_admin(owner_id: int, db: Annotated[Session, Depends(get_db)]):
     bookings = crud.get_owner_bookings(db, owner_id)
-    subscription = crud.get_owner_subscription(db, owner_id)
-    return templates.TemplateResponse(
-        "admin_owner_detail.html",
-        {
-            "request": request,
-            "owner": owner,
-            "services": services,
-            "bookings": bookings,
-            "subscription": subscription,
-            "current_locale": get_locale(request),
-            "_": _
-        }
-    )
-
-# API endpoints for customer reviews/ratings
-@app.post("/reviews", response_model=schemas.Review)
-async def create_review(
-    review: schemas.ReviewCreate,
-    request: Request,
-    db: Session = Depends(get_db),
-    current_customer: schemas.Customer = Depends(get_current_customer)
-):
-    try:
-        # Check if customer already reviewed this owner or booking (optional logic)
-        db_review = crud.create_review(db, review, current_customer.id)
-        logger.info(f"Review created by customer {current_customer.email} for owner {review.owner_id} with rating {review.rating} from IP: {request.client.host}")
-        return db_review
-    except Exception as e:
-        logger.exception(f"Error creating review by customer {current_customer.email}: {e}")
-        raise HTTPException(status_code=500, detail=_("An unexpected error occurred while submitting the review."))
-
-@app.get("/reviews/owner/{owner_id}", response_model=List[schemas.Review])
-async def get_owner_reviews(
-    owner_id: int,
-    db: Session = Depends(get_db)
-):
-    return crud.get_reviews_for_owner(db, owner_id)
-
-@app.get("/reviews/customer/{customer_id}", response_model=List[schemas.Review])
-async def get_customer_reviews(
-    customer_id: int,
-    db: Session = Depends(get_db),
-    current_customer: schemas.Customer = Depends(get_current_customer)
-):
-    if customer_id != current_customer.id:
-        logger.warning(f"Unauthorized attempt by customer {current_customer.email} to view reviews of customer {customer_id} from IP: {app.request.client.host if app.request else 'N/A'}")
-        raise HTTPException(status_code=403, detail=_("Not authorized to view other customer's reviews"))
-    return crud.get_reviews_by_customer(db, customer_id)
-
-@app.put("/reviews/{review_id}", response_model=schemas.Review)
-async def update_review(
-    review_id: int,
-    review_update: schemas.ReviewUpdate,
-    request: Request,
-    db: Session = Depends(get_db),
-    current_customer: schemas.Customer = Depends(get_current_customer)
-):
-    db_review = crud.get_review(db, review_id)
-    if not db_review or db_review.customer_id != current_customer.id:
-        logger.warning(f"Unauthorized update attempt to review_id: {review_id} by customer {current_customer.email} from IP: {request.client.host}")
-        raise HTTPException(status_code=404, detail=_("Review not found or not authorized to update"))
-    try:
-        updated_review = crud.update_review(db, db_review, review_update)
-        logger.info(f"Review (ID: {review_id}) updated by customer {current_customer.email} from IP: {request.client.host}")
-        return updated_review
-    except Exception as e:
-        logger.exception(f"Error updating review {review_id} by customer {current_customer.email}: {e}")
-        raise HTTPException(status_code=500, detail=_("An unexpected error occurred while updating the review."))
-
-@app.delete("/reviews/{review_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_review(
-    review_id: int,
-    request: Request,
-    db: Session = Depends(get_db),
-    current_customer: schemas.Customer = Depends(get_current_customer)
-):
-    db_review = crud.get_review(db, review_id)
-    if not db_review or db_review.customer_id != current_customer.id:
-        logger.warning(f"Unauthorized delete attempt to review_id: {review_id} by customer {current_customer.email} from IP: {request.client.host}")
-        raise HTTPException(status_code=404, detail=_("Review not found or not authorized to delete"))
-    try:
-        crud.delete_review(db, review_id)
-        logger.info(f"Review (ID: {review_id}) deleted by customer {current_customer.email} from IP: {request.client.host}")
-    except Exception as e:
-        logger.exception(f"Error deleting review {review_id} by customer {current_customer.email}: {e}")
-        raise HTTPException(status_code=500, detail=_("An unexpected error occurred while deleting the review."))
-
-@app.exception_handler(HTTPException)
-async def http_exception_handler(request: Request, exc: HTTPException):
-    logger.error(f"HTTPException: {exc.status_code} - {exc.detail} for path: {request.url.path} from IP: {request.client.host}")
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={"detail": exc.detail},
-    )
-
-@app.exception_handler(Exception)
-async def generic_exception_handler(request: Request, exc: Exception):
-    logger.critical(f"Unhandled exception: {exc} for path: {request.url.path} from IP: {request.client.host}", exc_info=True)
-    return JSONResponse(
-        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content={"detail": _("An unexpected server error occurred.")},
-    )
+    return bookings
