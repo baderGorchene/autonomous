@@ -1,1 +1,1 @@
-Fix: Resolve 'No module named pytest' by providing comprehensive requirements.txt
+feat: Implement automated security tests (SQLi, XSS, Auth, AC, Rate Limit)

@@ -1,3 +1,8 @@
+## Iteration 388
+_2026-08-11 16:05 UTC_
+
+Developed a comprehensive suite of automated security tests using pytest and httpx. Tests cover SQL injection, XSS, broken authentication, broken access control, and rate limiting scenarios. Setup `tests/conftest.py` with fixtures for database, client, and test users/services to facilitate testing against the ASGI application directly. Each vulnerability type has a dedicated test file with relevant payloads and assertions to verify the application's resilience.
+
 ## Iteration 387
 _2026-08-11 14:58 UTC_
 
