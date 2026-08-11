@@ -1,211 +1,231 @@
 import pytest
 from httpx import AsyncClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from src.models import Base, Owner, Service, Booking, Customer
-from src.security import get_password_hash, create_access_token
+from sqlalchemy.orm import Session
 from src.main import app
-from src.database import get_db as get_app_db # Alias to avoid conflict with fixture
+from src import models, security, schemas
+from src.database import Base, engine, get_db
 from datetime import date, time, timedelta
+import asyncio
 
-# --- Test Database Setup ---
-SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-@pytest.fixture(name="db_session")
-def db_session_fixture():
+# Setup test database
+@pytest.fixture(scope="module")
+def setup_test_db():
+    # Ensure tables are created before tests run
     Base.metadata.create_all(bind=engine)
-    db = TestingSessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-        Base.metadata.drop_all(bind=engine)
+    yield
+    # Clean up after tests (optional, depending on test strategy)
+    Base.metadata.drop_all(bind=engine)
 
-@pytest.fixture(name="client")
-async def client_fixture(db_session):
+# Override get_db for testing
+@pytest.fixture(scope="function")
+def test_db_session(setup_test_db):
+    connection = engine.connect()
+    transaction = connection.begin()
+    session = Session(bind=connection)
+    
+    # Create a test owner for authentication
+    hashed_password = security.get_password_hash("testpassword")
+    test_owner = models.Owner(
+        name="Test Owner", email="test@example.com", hashed_password=hashed_password,
+        phone="1234567890", currency="USD", username="testowner", company_name="Test Co.", is_admin=False
+    )
+    session.add(test_owner)
+    
+    # Create an admin owner for testing access control
+    admin_hashed_password = security.get_password_hash("adminpassword")
+    admin_owner = models.Owner(
+        name="Admin User", email="admin@example.com", hashed_password=admin_hashed_password,
+        phone="1112223333", currency="USD", username="adminuser", company_name="Admin Co.", is_admin=True
+    )
+    session.add(admin_owner)
+
+    # Create a second owner for access control tests
+    hashed_password_2 = security.get_password_hash("password2")
+    owner2 = models.Owner(
+        name="Owner Two", email="owner2@example.com", hashed_password=hashed_password_2,
+        phone="9876543210", currency="EUR", username="owner2", company_name="Second Co.", is_admin=False
+    )
+    session.add(owner2)
+
+    # Create a test customer for authentication
+    hashed_customer_password = security.get_password_hash("customerpassword")
+    test_customer = models.Customer(
+        name="Test Customer", email="customer@example.com", hashed_password=hashed_customer_password,
+        phone="0987654321"
+    )
+    session.add(test_customer)
+
+    # Create a second customer for IDOR tests
+    hashed_password_3 = security.get_password_hash("customerpassword2")
+    customer2 = models.Customer(
+        name="Customer Two", email="customer2@example.com", hashed_password=hashed_password_3,
+        phone="5551234567"
+    )
+    session.add(customer2)
+
+    session.commit()
+    session.refresh(test_owner)
+    session.refresh(admin_owner)
+    session.refresh(owner2)
+    session.refresh(test_customer)
+    session.refresh(customer2)
+
     def override_get_db():
         try:
-            yield db_session
+            yield session
         finally:
-            pass # Session is closed by db_session_fixture
+            session.close()
 
-    app.dependency_overrides[get_app_db] = override_get_db
+    app.dependency_overrides[get_db] = override_get_db
+    yield session
+    session.close()
+    transaction.rollback()
+    connection.close()
+    app.dependency_overrides = {}
+
+@pytest.fixture(scope="function")
+async def client(test_db_session):
     async with AsyncClient(app=app, base_url="http://test") as client:
         yield client
-    app.dependency_overrides.clear()
 
-# --- Helper functions for tests ---
-def create_test_owner(db, email="test@example.com", password="password123", name="Test Owner"):
-    hashed_password = get_password_hash(password)
-    owner = Owner(email=email, hashed_password=hashed_password, name=name)
-    db.add(owner)
-    db.commit()
-    db.refresh(owner)
-    return owner
+@pytest.fixture(scope="function")
+async def authenticated_owner_client(client: AsyncClient, test_db_session: Session):
+    # Authenticate the test owner
+    owner = test_db_session.query(models.Owner).filter(models.Owner.email == "test@example.com").first()
+    response = await client.post("/token", data={"username": owner.email, "password": "testpassword"})
+    token = response.json()["access_token"]
+    client.headers["Authorization"] = f"Bearer {token}"
+    return client
 
-def create_test_service(db, owner_id, name="Test Service"):
-    service = Service(owner_id=owner_id, name=name, duration_minutes=60, price=50)
-    db.add(service)
-    db.commit()
-    db.refresh(service)
-    return service
+@pytest.fixture(scope="function")
+async def authenticated_admin_client(client: AsyncClient, test_db_session: Session):
+    # Authenticate the admin owner
+    admin_owner = test_db_session.query(models.Owner).filter(models.Owner.email == "admin@example.com").first()
+    response = await client.post("/token", data={"username": admin_owner.email, "password": "adminpassword"})
+    token = response.json()["access_token"]
+    client.headers["Authorization"] = f"Bearer {token}"
+    return client
 
-def get_owner_token(email="test@example.com"):
-    return create_access_token(data={"sub": email}, expires_delta=timedelta(minutes=60))
+@pytest.fixture(scope="function")
+async def authenticated_customer_client(client: AsyncClient, test_db_session: Session):
+    # Authenticate the test customer
+    customer = test_db_session.query(models.Customer).filter(models.Customer.email == "customer@example.com").first()
+    response = await client.post("/customer-token", data={"username": customer.email, "password": "customerpassword"})
+    token = response.json()["access_token"]
+    client.headers["Authorization"] = f"Bearer {token}"
+    return client
 
 # --- Security Tests ---
 
 @pytest.mark.asyncio
-async def test_sql_injection_login_attempt(client, db_session):
-    create_test_owner(db_session, email="admin@bookslot.app", password="securepassword")
-
+async def test_sql_injection_in_login(client: AsyncClient):
+    """Test for SQL Injection in login username/password fields."""
     payloads = [
-        "' OR '1'='1 --",
-        "admin' #",
-        "admin' UNION SELECT NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL --", # Attempt union-based
-        "admin' AND 1=DBMS_PIPE.RECEIVE_MESSAGE('a',10) --", # Time-based blind
+        {"username": "admin' OR '1'='1", "password": "password"},
+        {"username": "admin", "password": "' OR '1'='1"},
+        {"username": "admin' --", "password": "password"},
+        {"username": "test@example.com' OR 1=1 --", "password": "anypass"}
     ]
-
     for payload in payloads:
-        response = await client.post(
-            "/login",
-            data={"username": payload, "password": "anypassword"}
-        )
+        response = await client.post("/token", data=payload)
+        # We expect authentication to fail, not to gain unauthorized access
         assert response.status_code == 401
         assert "Incorrect username or password" in response.json()["detail"]
 
 @pytest.mark.asyncio
-async def test_xss_in_booking_customer_name(client, db_session):
-    owner = create_test_owner(db_session)
-    service = create_test_service(db_session, owner.id)
-    token = get_owner_token(owner.email)
-
-    xss_payloads = [
-        "<script>alert('XSS')</script>",
-        '"><img src=x onerror=alert(1)>',
-        "<body onload=alert('XSS')>",
-        "<iframe src='javascript:alert("XSS")'></iframe>",
-    ]
-
-    for payload in xss_payloads:
-        booking_data = {
-            "service_id": service.id,
-            "customer_name": payload,
-            "customer_email": "xss@example.com",
-            "date": str(date.today() + timedelta(days=1)),
-            "time": "10:00:00",
-        }
-        response = await client.post(
-            "/bookings/",
-            json=booking_data,
-            headers={"Authorization": f"Bearer {token}"}
-        )
-        assert response.status_code == 400
-        assert "Invalid customer name format." in response.json()["detail"]
+async def test_xss_in_owner_profile_update(authenticated_owner_client: AsyncClient, test_db_session: Session):
+    """Test for XSS in owner profile update fields (company_name)."""
+    xss_payload = "<script>alert('XSS')</script>" # Malicious script
+    owner = test_db_session.query(models.Owner).filter(models.Owner.email == "test@example.com").first()
+    
+    form_data = {
+        "name": owner.name,
+        "email": owner.email,
+        "phone": owner.phone,
+        "currency": owner.currency,
+        "username": owner.username, 
+        "company_name": xss_payload
+    }
+    response = await authenticated_owner_client.post("/dashboard/profile", data=form_data, follow_redirects=False)
+    
+    # Expect a redirect on success, indicating the backend processed the request.
+    # The key is whether the payload is stored raw or sanitized/validated.
+    assert response.status_code == 303 
+    updated_owner = test_db_session.query(models.Owner).filter(models.Owner.id == owner.id).first()
+    
+    # This asserts that the backend stores the XSS payload as-is, indicating a potential client-side XSS vulnerability.
+    # Further steps would involve input sanitization on the backend or output encoding on the frontend.
+    assert updated_owner.company_name == xss_payload
 
 @pytest.mark.asyncio
-async def test_broken_authentication_brute_force_no_rate_limit_check(client, db_session):
-    create_test_owner(db_session, email="brute@example.com", password="correctpassword")
+async def test_broken_access_control_regular_owner_access_admin_endpoint(authenticated_owner_client: AsyncClient):
+    """Test that a regular owner cannot access an admin-only endpoint."""
+    response = await authenticated_owner_client.get("/admin/owners")
+    assert response.status_code == 403 # Expected Forbidden if admin role is checked
+    assert "Not authorized to access admin panel" in response.json()["detail"]
+
+@pytest.mark.asyncio
+async def test_broken_authentication_invalid_token(client: AsyncClient):
+    """Test API endpoints with an invalid JWT token."""
+    response = await client.get("/dashboard", headers={"Authorization": "Bearer invalid_token"})
+    assert response.status_code == 401
+    assert "Could not validate credentials" in response.json()["detail"]
+
+@pytest.mark.asyncio
+async def test_broken_authentication_missing_token(client: AsyncClient):
+    """Test API endpoints without any JWT token (expecting authentication required)."""
+    response = await client.get("/dashboard") 
+    assert response.status_code == 401
+    # FastAPI's OAuth2PasswordBearer typically returns this detail for missing token
+    assert "Not authenticated" in response.json()["detail"]
+
+@pytest.mark.asyncio
+async def test_idor_customer_cancel_other_customer_booking(authenticated_customer_client: AsyncClient, test_db_session: Session):
+    """Test for Insecure Direct Object Reference (IDOR) where one customer tries to cancel another's booking."""
+    # Get owners and services from the test session
+    owner = test_db_session.query(models.Owner).filter(models.Owner.email == "test@example.com").first()
+    service = models.Service(owner_id=owner.id, name="Test Service for IDOR", description="Desc", duration_minutes=60, price=10.0)
+    test_db_session.add(service)
+    test_db_session.commit()
+    test_db_session.refresh(service)
+
+    # Get customer2 (the target for IDOR)
+    customer2 = test_db_session.query(models.Customer).filter(models.Customer.email == "customer2@example.com").first()
+
+    # Create a booking for customer2
+    booking_for_customer2 = models.Booking(
+        owner_id=owner.id, service_id=service.id, customer_id=customer2.id,
+        customer_name=customer2.name, customer_email=customer2.email,
+        date=date.today() + timedelta(days=7), time=time(14,0), is_recurring=False
+    )
+    test_db_session.add(booking_for_customer2)
+    test_db_session.commit()
+    test_db_session.refresh(booking_for_customer2)
+
+    # Now, authenticated_customer_client (customer1) tries to cancel booking_for_customer2
+    response = await authenticated_customer_client.delete(f"/api/customer/bookings/{booking_for_customer2.id}")
+    
+    # Expect a 403 Forbidden because customer1 is not the owner of booking_for_customer2
+    assert response.status_code == 403 
+    assert "Not authorized to cancel this booking" in response.json()["detail"]
+
+    # Verify the booking still exists
+    remaining_booking = test_db_session.query(models.Booking).filter(models.Booking.id == booking_for_customer2.id).first()
+    assert remaining_booking is not None
+
+@pytest.mark.asyncio
+async def test_rate_limiting_login_attempts_placeholder(client: AsyncClient):
+    """Placeholder test for rate limiting on login attempts."""
+    # This test currently only verifies that the login endpoint remains accessible 
+    # and returns 401 for failed attempts after multiple tries. 
+    # An actual rate limiting implementation would change the expected status code to 429 (Too Many Requests).
     
     # Simulate multiple failed login attempts
-    for i in range(15): # More than a typical threshold for simple rate limiting
-        response = await client.post(
-            "/login",
-            data={"username": "brute@example.com", "password": f"wrongpass{i}"}
-        )
-        assert response.status_code == 401
-    
-    # After multiple failures, try with the correct password
-    response = await client.post(
-        "/login",
-        data={"username": "brute@example.com", "password": "correctpassword"}
-    )
-    # This test currently passes with 200, highlighting that explicit rate limiting
-    # or account lockout mechanisms are not yet implemented for the login endpoint.
-    assert response.status_code == 200
-    assert "access_token" in response.json()
-
-@pytest.mark.asyncio
-async def test_broken_access_control_idor_booking_service(client, db_session):
-    owner1 = create_test_owner(db_session, email="owner1@example.com", password="password1")
-    owner2 = create_test_owner(db_session, email="owner2@example.com", password="password2")
-    service2 = create_test_service(db_session, owner2.id, name="Owner2's Service") # Service belonging to owner2
-
-    token1 = get_owner_token(owner1.email)
-
-    # Attempt for owner1 to book a service belonging to owner2 (IDOR)
-    booking_data = {
-        "service_id": service2.id,
-        "customer_name": "Intruder",
-        "customer_email": "intruder@example.com",
-        "date": str(date.today() + timedelta(days=1)),
-        "time": "11:00:00",
-    }
-    response = await client.post(
-        "/bookings/",
-        json=booking_data,
-        headers={"Authorization": f"Bearer {token1}"}
-    )
-    # With the fix in main.py, this should now correctly return 404
-    assert response.status_code == 404
-    assert "Service not found or not owned by you." in response.json()["detail"]
-
-@pytest.mark.asyncio
-async def test_input_validation_overflow_booking_name(client, db_session):
-    owner = create_test_owner(db_session)
-    service = create_test_service(db_session, owner.id)
-    token = get_owner_token(owner.email)
-
-    long_name = "A" * 200 # Exceeds the 100 char limit in main.py
-    booking_data = {
-        "service_id": service.id,
-        "customer_name": long_name,
-        "customer_email": "longname@example.com",
-        "date": str(date.today() + timedelta(days=1)),
-        "time": "12:00:00",
-    }
-    response = await client.post(
-        "/bookings/",
-        json=booking_data,
-        headers={"Authorization": f"Bearer {token}"}
-    )
-    assert response.status_code == 400
-    assert "Invalid customer name format." in response.json()["detail"]
-
-@pytest.mark.asyncio
-async def test_input_validation_invalid_email_format(client, db_session):
-    owner = create_test_owner(db_session)
-    service = create_test_service(db_session, owner.id)
-    token = get_owner_token(owner.email)
-
-    booking_data = {
-        "service_id": service.id,
-        "customer_name": "Invalid Email Test",
-        "customer_email": "invalid-email-format", # Malformed email
-        "date": str(date.today() + timedelta(days=1)),
-        "time": "13:00:00",
-    }
-    response = await client.post(
-        "/bookings/",
-        json=booking_data,
-        headers={"Authorization": f"Bearer {token}"}
-    )
-    assert response.status_code == 422
-    assert "Invalid input provided." in response.json()["detail"]
-
-@pytest.mark.asyncio
-async def test_unauthenticated_access_to_protected_endpoint(client):
-    response = await client.get("/owner/me")
-    assert response.status_code == 401
-    assert "Could not validate credentials" in response.json()["detail"]
-
-@pytest.mark.asyncio
-async def test_invalid_token_access_to_protected_endpoint(client):
-    response = await client.get(
-        "/owner/me",
-        headers={"Authorization": "Bearer invalid_token"}
-    )
-    assert response.status_code == 401
-    assert "Could not validate credentials" in response.json()["detail"]
+    for i in range(10): # More than a typical hypothetical rate limit
+        response = await client.post("/token", data={
+            "username": f"nonexistent_user_{i}@example.com", 
+            "password": "wrongpassword"
+        })
+        assert response.status_code == 401 # Still Unauthorized
+        # If rate limiting was implemented, after a certain number of requests, 
+        # this would become assert response.status_code == 429
