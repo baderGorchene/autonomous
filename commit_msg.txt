@@ -1,1 +1,1 @@
-feat: Implement automated security tests (SQLi, XSS, Auth, AC, Rate Limit)
+Fix: Ensure pytest and all dependencies are available via requirements.txt

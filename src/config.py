@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings
 from typing import Optional
+import logging
 
 class Settings(BaseSettings):
     SECRET_KEY: str
@@ -14,9 +15,15 @@ class Settings(BaseSettings):
     STRIPE_WEBHOOK_SECRET: Optional[str] = None
     APP_BASE_URL: str = "http://localhost:8000"
     REDIS_URL: str = "redis://localhost:6379/0"
+    LOG_LEVEL: str = "INFO"
 
     class Config:
         env_file = ".env"
         case_sensitive = True
+        
+    def __init__(self, **values):
+        super().__init__(**values)
+        if self.LOG_LEVEL.upper() not in logging._nameToLevel:
+            raise ValueError(f"Invalid LOG_LEVEL: {self.LOG_LEVEL}. Must be one of {list(logging._nameToLevel.keys())}")
 
 settings = Settings()
