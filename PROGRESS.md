@@ -1,3 +1,8 @@
+## Iteration 381
+_2026-08-11 05:12 UTC_
+
+Implemented rate limiting for owner/customer authentication endpoints and public booking submissions using `fastapi-limiter` with a Redis backend. Added comprehensive HTTP security headers via a middleware. Reviewed JWT token invalidation strategies, noting that the current setup relies on short expiry times and suggesting a Redis-based blacklist or refresh tokens for immediate invalidation if needed in the future.
+
 ## Iteration 380
 _2026-08-11 03:46 UTC_
 

@@ -1,1 +1,1 @@
-Conduct security audit and prepare for hardening
+Implement security hardening measures: rate limiting and HTTP headers
