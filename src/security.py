@@ -1,49 +1,24 @@
-# Minimal imports needed for the logging context
+from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 from typing import Optional
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from sqlalchemy.orm import Session
+from fastapi import Depends, HTTPException, status, Request
+from fastapi.security import OAuth2PasswordBearer
 
-# Placeholder for database, models, schemas
-# In a real scenario, these would be properly imported from .database, .models, .schemas
-class MockOwner:
-    def __init__(self, id: int, email: str):
-        self.id = id
-        self.email = email
-class MockCustomer:
-    def __init__(self, id: int, email: str):
-        self.id = id
-        self.email = email
-class MockAdmin:
-    def __init__(self, id: int, username: str):
-        self.id = id
-        self.username = username
-
-# Dummy function for get_db
-def get_db():
-    try:
-        yield None # In a real app, this would yield a Session
-    finally:
-        pass
+from . import models, schemas, crud
+from .database import get_db
+from .config import settings
 
 # Import the security logger
-from .logger_config import security_logger
-
-# Configuration for security
-SECRET_KEY = "YOUR_SUPER_SECRET_KEY" # Placeholder - IMPORTANT: Use a strong, environment-variable-based key in production
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+from .main import security_logger
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 def verify_password(plain_password, hashed_password):
-    # This is a mock implementation for demonstration.
-    # In a real app, it would compare hashes.
-    return plain_password == "password" # Simplified for mock
+    return pwd_context.verify(plain_password, hashed_password)
 
 def get_password_hash(password):
     return pwd_context.hash(password)
@@ -53,76 +28,97 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        expire = datetime.utcnow() + timedelta(minutes=15)
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
 
-def verify_token(token: str, credentials_exception):
-    try:
-        # Mock token verification for demonstration
-        if token == "mock_owner_token":
-            return {"sub": "owner@example.com", "owner_id": 1}
-        elif token == "mock_customer_token":
-            return {"sub": "customer@example.com", "customer_id": 1}
-        elif token == "mock_admin_token":
-            return {"sub": "admin_user", "admin_id": 1}
-        else:
-            raise JWTError("Invalid mock token")
-    except JWTError:
-        security_logger.error("Token verification failed: Invalid JWT token or mock token.", exc_info=True)
-        raise credentials_exception
+def authenticate_owner(db: Session, email: str, password: str, client_ip: str) -> Optional[models.Owner]:
+    owner = crud.get_owner_by_email(db, email)
+    if not owner or not verify_password(password, owner.hashed_password):
+        security_logger.warning(
+            "OWNER_AUTH_FAILED",
+            extra={"client_ip": client_ip, "username": email}
+        )
+        return None
+    security_logger.info(
+        "OWNER_AUTH_SUCCESS",
+        extra={"client_ip": client_ip, "username": email}
+    )
+    return owner
 
-async def get_current_owner(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+async def get_current_owner(request: Request, token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
-    payload = verify_token(token, credentials_exception)
-    owner_id = payload.get("owner_id")
-    if owner_id is None:
-        security_logger.warning(f"Access denied: owner_id missing in token payload for token starting with {token[:10]}...")
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        owner_id: str = payload.get("sub")
+        if owner_id is None:
+            security_logger.warning(
+                "OWNER_TOKEN_INVALID: No owner_id in token payload",
+                extra={"client_ip": request.client.host, "username": "N/A"}
+            )
+            raise credentials_exception
+        token_data = schemas.TokenData(owner_id=owner_id)
+    except JWTError:
+        security_logger.warning(
+            "OWNER_TOKEN_INVALID: JWTError",
+            extra={"client_ip": request.client.host, "username": "N/A"}
+        )
         raise credentials_exception
-    # In a real app, fetch owner from DB: owner = db.query(models.Owner).filter(models.Owner.id == owner_id).first()
-    owner = MockOwner(id=owner_id, email=payload.get("sub")) # Mock owner
+    owner = crud.get_owner(db, owner_id=token_data.owner_id)
     if owner is None:
-        security_logger.warning(f"Access denied: Owner with ID {owner_id} not found for token starting with {token[:10]}...")
+        security_logger.warning(
+            "OWNER_NOT_FOUND_FOR_TOKEN",
+            extra={"client_ip": request.client.host, "username": token_data.owner_id}
+        )
         raise credentials_exception
     return owner
 
-async def get_current_customer(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
+def authenticate_customer(db: Session, email: str, password: str, client_ip: str) -> Optional[models.Customer]:
+    customer = crud.get_customer_by_email(db, email)
+    if not customer or not verify_password(password, customer.hashed_password):
+        security_logger.warning(
+            "CUSTOMER_AUTH_FAILED",
+            extra={"client_ip": client_ip, "username": email}
+        )
+        return None
+    security_logger.info(
+        "CUSTOMER_AUTH_SUCCESS",
+        extra={"client_ip": client_ip, "username": email}
     )
-    payload = verify_token(token, credentials_exception)
-    customer_id = payload.get("customer_id")
-    if customer_id is None:
-        security_logger.warning(f"Access denied: customer_id missing in token payload for token starting with {token[:10]}...")
-        raise credentials_exception
-    # In a real app, fetch customer from DB
-    customer = MockCustomer(id=customer_id, email=payload.get("sub")) # Mock customer
-    if customer is None:
-        security_logger.warning(f"Access denied: Customer with ID {customer_id} not found for token starting with {token[:10]}...")
-        raise credentials_exception
     return customer
 
-async def get_current_admin(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+async def get_current_customer(request: Request, token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
-    payload = verify_token(token, credentials_exception)
-    admin_id = payload.get("admin_id")
-    if admin_id is None:
-        security_logger.warning(f"Access denied: admin_id missing in token payload for token starting with {token[:10]}...")
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        customer_id: str = payload.get("sub")
+        if customer_id is None:
+            security_logger.warning(
+                "CUSTOMER_TOKEN_INVALID: No customer_id in token payload",
+                extra={"client_ip": request.client.host, "username": "N/A"}
+            )
+            raise credentials_exception
+        token_data = schemas.TokenData(owner_id=customer_id) # Assuming TokenData is generic enough, or adjust schema
+    except JWTError:
+        security_logger.warning(
+            "CUSTOMER_TOKEN_INVALID: JWTError",
+            extra={"client_ip": request.client.host, "username": "N/A"}
+        )
         raise credentials_exception
-    # In a real app, fetch admin from DB
-    admin = MockAdmin(id=admin_id, username=payload.get("sub")) # Mock admin
-    if admin is None:
-        security_logger.warning(f"Access denied: Admin with ID {admin_id} not found for token starting with {token[:10]}...")
+    customer = crud.get_customer(db, customer_id=token_data.owner_id) # Using owner_id as generic user_id
+    if customer is None:
+        security_logger.warning(
+            "CUSTOMER_NOT_FOUND_FOR_TOKEN",
+            extra={"client_ip": request.client.host, "username": token_data.owner_id}
+        )
         raise credentials_exception
-    return admin
+    return customer

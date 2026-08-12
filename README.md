@@ -1,111 +1,200 @@
-# BookSlot
+# BookSlot - Dead-Simple Booking Page for Local Service Businesses
 
-BookSlot is a dead-simple booking page solution for local service businesses, designed to replace chaotic WhatsApp appointment management. It offers a shareable booking link, customer self-booking, and instant notifications for business owners. It is built with bilingual support (English + Arabic/French) to serve the MENA and North Africa markets.
+BookSlot is a web application designed to provide a dead-simple booking page for local service businesses (salons, clinics, tutors, mechanics, coaches) who currently manage appointments via WhatsApp chaos. It aims to simplify appointment management by offering a shareable booking link, self-service booking for customers, and automated notifications for business owners.
 
-## Features
+## Features (MVP):
 
-- Owner signup and service setup
-- Public, mobile-first booking page
-- Time slot availability management (one-off and recurring)
-- Email confirmation to both parties
-- Simple dashboard for upcoming bookings and analytics
-- Bilingual support (English, Arabic, French)
-- Comprehensive error handling
-- Stripe payment gateway for premium subscriptions
-- Basic analytics (booking counts, popular services)
-- Subscription management UI for owners
-- Admin panel for managing owners, services, and bookings
-- Customer accounts for managing their bookings and profiles
-- Review and rating system for services
-- SEO optimization for booking pages
-- Performance optimization and caching
-- Robust security measures
+1.  **Owner Signup & Service Setup Page**: Business owners can register and configure their services.
+2.  **Public Booking Page**: A mobile-first, beautiful, and shareable booking page (`bookslot.app/their-name`) where customers can book services without needing an account.
+3.  **Time Slot Availability**: Owners can define their availability, supporting one-off and recurring schedules. The system calculates and displays available slots.
+4.  **Email & WhatsApp Notifications**: Owners receive WhatsApp/email notifications with booking details. Customers receive email confirmations.
+5.  **Simple Dashboard**: Owners get a dashboard to view upcoming bookings, manage services and availability, and update their profile.
+6.  **Bilingual Support**: Fully bilingual from day one (English + Arabic/French) to target underserved MENA and North Africa markets.
+7.  **Customer Accounts**: Customers can register, login, and manage their profiles.
+8.  **Review/Rating System**: Customers can submit reviews and ratings for services, displayed on the public booking page and owner dashboard.
+9.  **Subscription Management**: Integrated Stripe payment gateway for premium subscriptions, allowing owners to upgrade and manage their plans.
+10. **Analytics**: Basic analytics on the owner dashboard (monthly booking counts, popular services).
+11. **Admin Panel**: Initial admin panel for managing owners and subscriptions with basic CRUD operations.
+12. **Recurring Bookings**: Support for customers to book recurring appointments.
+13. **SEO Optimization**: Basic SEO measures for public booking pages.
+14. **Performance Optimization**: Basic caching and performance improvements.
+15. **Security Hardening & Testing**: Thorough security audit, hardening measures, and automated security tests.
+16. **Comprehensive Logging**: Detailed logging for application and security events.
 
-## Getting Started
+## Monetization:
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
+*   **Free Tier**: Up to 20 bookings/month.
+*   **Premium Tier**: $19/month for unlimited bookings.
+
+## Target Audience:
+
+Solo service providers who have 10-50 clients/week and are overwhelmed by manual appointment management via WhatsApp.
+
+## Technologies Used:
+
+*   **Backend**: FastAPI (Python)
+*   **Database**: PostgreSQL (via SQLAlchemy ORM)
+*   **Frontend**: Jinja2 Templates, HTML, CSS (TailwindCSS/custom for mobile-first design), JavaScript
+*   **Authentication**: JWT (JSON Web Tokens)
+*   **Notifications**: SendGrid (Email), Twilio (WhatsApp)
+*   **Payments**: Stripe (for subscriptions)
+*   **Internationalization**: `gettext` for translations, `babel` for locale-aware formatting.
+*   **Testing**: Pytest
+*   **Deployment**: Docker
+
+## Project Setup (Development)
 
 ### Prerequisites
 
-- Python 3.9+
-- pip (Python package installer)
-- PostgreSQL database
-- Redis server
+*   Python 3.8+
+*   Poetry (recommended for dependency management) or pip
+*   Docker (for PostgreSQL, optional but recommended)
 
-### Installation
+### 1. Clone the repository:
 
-1.  **Clone the repository:**
-    ```bash
-    git clone <repository_url>
-    cd bookslot
-    ```
+```bash
+git clone https://github.com/your-username/bookslot.git
+cd bookslot
+```
 
-2.  **Create and activate a virtual environment:**
-    ```bash
-    python -m venv venv
-    source venv/bin/activate # On Windows use `venv\Scripts\activate`
-    ```
+### 2. Set up a virtual environment and install dependencies:
 
-3.  **Install dependencies:**
-    ```bash
-    pip install -r requirements.txt
-    ```
+Using Poetry:
 
-4.  **Set up environment variables:**
-    Create a `.env` file in the project root based on `.env.example`. Replace placeholder values with your actual credentials and settings.
-    ```dotenv
-    # .env example
-    SECRET_KEY="your_super_secret_key_for_jwt_signing"
-    DATABASE_URL="postgresql://user:password@host:port/database_name"
-    SENDGRID_API_KEY="your_sendgrid_api_key"
-    TWILIO_ACCOUNT_SID="your_twilio_account_sid"
-    TWILIO_AUTH_TOKEN="your_twilio_auth_token"
-    TWILIO_PHONE_NUMBER="+1234567890" # Your Twilio phone number
-    STRIPE_SECRET_KEY="sk_test_your_stripe_secret_key"
-    STRIPE_WEBHOOK_SECRET="whsec_your_stripe_webhook_secret"
-    APP_BASE_URL="http://localhost:8000"
-    REDIS_URL="redis://localhost:6379/0"
-    ```
+```bash
+poetry install
+poetry shell
+```
 
-5.  **Run database migrations:**
-    ```bash
-    alembic upgrade head
-    ```
+Using pip:
 
-6.  **Run the application:**
-    ```bash
-    uvicorn src.main:app --reload
-    ```
-    The application will be accessible at `http://localhost:8000`.
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: .\venv\Scripts\activate
+pip install -r requirements.txt
+```
 
-### Running Tests
+### 3. Database Setup (using Docker Compose for PostgreSQL):
 
-To run the automated test suite:
+Create a `docker-compose.yml` file in the project root:
+
+```yaml
+version: '3.8'
+services:
+  db:
+    image: postgres:13-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: bookslot_db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+volumes:
+  pg_data:
+```
+
+Start the database:
+
+```bash
+docker-compose up -d
+```
+
+### 4. Environment Variables:
+
+Create a `.env` file in the project root (or copy `.env.example` and fill it out):
+
+```ini
+DATABASE_URL="postgresql://user:password@localhost/bookslot_db"
+SECRET_KEY="YOUR_SUPER_SECRET_KEY_FOR_JWT"
+ALGORITHM="HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+
+# SendGrid (Email Notifications)
+SENDGRID_API_KEY="YOUR_SENDGRID_API_KEY"
+SENDGRID_SENDER_EMAIL="your_verified_sender_email@example.com"
+
+# Twilio (WhatsApp Notifications)
+TWILIO_ACCOUNT_SID="YOUR_TWILIO_ACCOUNT_SID"
+TWILIO_AUTH_TOKEN="YOUR_TWILIO_AUTH_TOKEN"
+TWILIO_WHATSAPP_NUMBER="+1XXXXXXXXXX" # Your Twilio WhatsApp enabled number
+
+# Stripe (Payments)
+STRIPE_SECRET_KEY="sk_test_YOUR_STRIPE_SECRET_KEY"
+STRIPE_PUBLIC_KEY="pk_test_YOUR_STRIPE_PUBLIC_KEY"
+STRIPE_WEBHOOK_SECRET="whsec_YOUR_STRIPE_WEBHOOK_SECRET"
+STRIPE_PREMIUM_PRICE_ID="price_YOUR_STRIPE_PRICE_ID" # e.g., price_12345ABCDEF
+
+# Base URL for public booking pages
+BASE_URL="http://localhost:8000" # Or your deployed domain
+```
+
+### 5. Run Database Migrations (using Alembic - if implemented, otherwise create tables directly):
+
+If Alembic is configured, run:
+
+```bash
+alembic upgrade head
+```
+
+Otherwise, ensure `src/database.py`'s `Base.metadata.create_all(engine)` is called (e.g., by importing `models` in `main.py` and running it once).
+
+### 6. Run the application:
+
+```bash
+uvicorn src.main:app --reload
+```
+
+The application will be available at `http://localhost:8000`.
+
+## Running Tests
 
 ```bash
 pytest
 ```
 
-### Security Scans
+## Internationalization (i18n)
 
-To perform automated security scans for dependency vulnerabilities and static code analysis:
+Translation files are located in the `locales/` directory. To update translations:
 
-1.  **Ensure security tools are installed:** They are included in `requirements.txt`.
+1.  **Extract strings**: `pybabel extract -F babel.cfg -o locales/messages.pot .`
+2.  **Initialize new language (e.g., 'ar' for Arabic)**: `pybabel init -i locales/messages.pot -d locales -l ar`
+3.  **Update existing language**: `pybabel update -i locales/messages.pot -d locales -l ar`
+4.  **Compile translations**: `pybabel compile -d locales`
 
-2.  **Run the security scanning script:**
-    ```bash
-    chmod +x scripts/run_security_scans.sh
-    ./scripts/run_security_scans.sh
-    ```
+## Logging
 
-    This script will execute:
-    -   `pip-audit`: Scans `requirements.txt` for known vulnerabilities in your dependencies.
-    -   `Bandit`: Performs static analysis on the `src` directory to find common security issues in Python code (e.g., hardcoded passwords, SQL injection risks, insecure use of standard library modules).
+The application uses Python's standard `logging` module to capture application and security events.
+Logs are stored in the `logs/` directory at the project root.
+- `logs/app.log`: Contains general application information, errors, and warnings.
+- `logs/security.log`: Contains security-related events such as successful/failed login attempts, registration, and unauthorized access.
 
-    Review the output of these scans and address any reported vulnerabilities or warnings.
-
-    **Note:** Automated scans are a crucial part of security, but they do not replace comprehensive penetration testing or manual security audits by experts. For a complete security assessment, consider using Dynamic Application Security Testing (DAST) tools like OWASP ZAP or Burp Suite against the running application, and engaging in professional penetration testing services.
+Both log files implement log rotation, keeping up to 5 backup files of 10MB each.
 
 ## Deployment
 
-Deployment instructions will be detailed here, including Docker setup and environment configuration for production.
+### Docker
+
+A `Dockerfile` is provided for containerization. Build and run with Docker:
+
+```bash
+docker build -t bookslot .
+docker run -p 8000:8000 --env-file ./.env bookslot
+```
+
+For production, consider using Docker Compose for multiple services (app, db, nginx) and a process manager like Gunicorn.
+
+### Gunicorn (for production)
+
+```bash
+gunicorn src.main:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000
+```
+
+Ensure you configure environment variables appropriately for your production environment.
+
+## Contributing
+
+Contributions are welcome! Please open an issue or submit a pull request.
