@@ -1,1 +1,1 @@
-feat: Implement comprehensive logging and monitoring for security events
+Set up continuous integration for security tests and ensure requirements.txt includes pytest
