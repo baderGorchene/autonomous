@@ -255,6 +255,8 @@ ROADMAP: {json.dumps(memory.get('roadmap', []))}
 === CURRENT FILES ===
 {json.dumps(src_files)}
 
+IMPORTANT: DO NOT modify or create any files in the `.github/workflows` directory.
+
 Output a JSON object with these exact keys:
 "files" (list of objects containing "path" and "content"), 
 "next_task" (string), 
@@ -291,6 +293,8 @@ ROADMAP: {json.dumps(memory.get('roadmap', []))}
 
 === CURRENT FILES ===
 {json.dumps(src_files)}
+
+IMPORTANT: DO NOT modify or create any files in the `.github/workflows` directory.
 
 The previous code changes caused test failures. Analyze the error output above, inspect the current files, and fix the bugs.
 Rewrite or modify only the necessary files. Do not break unrelated functionality.
@@ -330,6 +334,10 @@ Output a JSON object with these exact keys:
             files_data = files_dict
 
         for filepath, content in files_data.items():
+            if ".github/workflows" in filepath:
+                print(f"⚠️ Skipping restricted file path: {filepath}")
+                continue
+
             p = Path(filepath)
             p.parent.mkdir(parents=True, exist_ok=True)
             p.write_text(str(content), encoding="utf-8")
