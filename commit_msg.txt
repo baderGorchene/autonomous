@@ -1,1 +1,1 @@
-Fix pytest not found error by ensuring requirements.txt contains pytest
+Ensure pytest is included in requirements.txt for test execution
