@@ -1,1 +1,1 @@
-Ensure requirements.txt contains pytest to resolve test execution failure
+Fix pytest module not found error by updating requirements.txt
