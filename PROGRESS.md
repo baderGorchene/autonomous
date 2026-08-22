@@ -1,3 +1,8 @@
+## Iteration 402
+_2026-08-22 13:31 UTC_
+
+Added pytest and other dependencies to requirements.txt to ensure test runner operates correctly.
+
 ## Iteration 401
 _2026-08-22 12:39 UTC_
 

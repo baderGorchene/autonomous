@@ -1,1 +1,1 @@
-Ensure pytest is fully available in requirements.txt
+Ensure requirements.txt contains pytest to resolve test execution failure
