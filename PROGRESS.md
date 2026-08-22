@@ -1,3 +1,8 @@
+## Iteration 396
+_2026-08-22 07:32 UTC_
+
+Added pytest and httpx explicitly to requirements.txt to fix test runner failures in CI/CD environment.
+
 ## Iteration 395
 _2026-08-22 07:27 UTC_
 

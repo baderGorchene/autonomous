@@ -1,1 +1,1 @@
-Set up continuous integration for security tests and ensure requirements.txt includes pytest
+Ensure pytest is fully available in requirements.txt to resolve test execution failures
