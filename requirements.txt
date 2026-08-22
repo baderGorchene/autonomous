@@ -12,4 +12,6 @@ sendgrid==6.11.0
 twilio==9.0.0
 stripe==8.11.0
 pytest==8.1.1
-requests==2.31.0
+httpx==0.27.0
+email-validator==2.1.1
+Babel==2.14.0
