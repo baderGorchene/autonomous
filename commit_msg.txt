@@ -1,1 +1,1 @@
-Fix pytest module missing error by ensuring requirements.txt has pytest
+Add pytest and httpx to requirements.txt to fix No module named pytest error

@@ -1,3 +1,8 @@
+## Iteration 409
+_2026-08-22 20:22 UTC_
+
+Ensured pytest is fully specified in requirements.txt so that CI and test verification successfully execute.
+
 ## Iteration 408
 _2026-08-22 19:22 UTC_
 
