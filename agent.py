@@ -31,7 +31,7 @@ except ImportError:
 # ── Config ────────────────────────────────────────────────────────────────────
 GEMINI_API_KEY   = os.environ.get("GEMINI_API_KEY", "")
 CONTEXT7_API_KEY = os.environ.get("CONTEXT7_API_KEY", "")
-GEMINI_MODEL     = "gemini-2.5-flash-lite" 
+GEMINI_MODEL     = "gemini-3.5-flash-lite" 
 
 MEMORY_FILE      = Path("memory.json")
 PROGRESS_FILE    = Path("PROGRESS.md")
