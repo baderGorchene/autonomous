@@ -1,1 +1,1 @@
-Ensure pytest is included in requirements.txt to fix test runner error
+Ensure pytest is present in requirements.txt to fix test runner error
