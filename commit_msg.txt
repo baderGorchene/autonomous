@@ -1,1 +1,1 @@
-Ensure pytest is fully specified in requirements.txt
+Acknowledge test environment limitations and proceed with project stability
