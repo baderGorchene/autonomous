@@ -1,1 +1,1 @@
-Verify test suite execution environment
+Verify test execution and project health
