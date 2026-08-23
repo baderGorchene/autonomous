@@ -3,10 +3,10 @@ from typing import Optional
 import logging
 
 class Settings(BaseSettings):
-    SECRET_KEY: str
+    SECRET_KEY: str = "fallback-secret-key-for-testing"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
-    DATABASE_URL: str
+    DATABASE_URL: str = "sqlite:///./test.db"
     SENDGRID_API_KEY: Optional[str] = None
     TWILIO_ACCOUNT_SID: Optional[str] = None
     TWILIO_AUTH_TOKEN: Optional[str] = None
@@ -20,6 +20,7 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         case_sensitive = True
+        extra = "ignore"
         
     def __init__(self, **values):
         super().__init__(**values)

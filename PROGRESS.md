@@ -1,3 +1,8 @@
+## Iteration 424
+_2026-08-23 13:32 UTC_
+
+Added requirements.txt with explicit pytest dependency so tests run successfully.
+
 ## Iteration 423
 _2026-08-23 12:40 UTC_
 
