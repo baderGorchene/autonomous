@@ -1,1 +1,1 @@
-Verify test execution and project health
+Ensure robust availability utilities and project health verification

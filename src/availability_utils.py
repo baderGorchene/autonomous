@@ -50,25 +50,21 @@ def get_available_slots_for_day(
                         if target_date.day == day_of_month:
                             applicable_availabilities.append(avail)
                     except ValueError:
-                        # Handle more complex monthly rules if needed, e.g., "first_monday"
                         pass
 
     if not applicable_availabilities:
-        return [] # No availability defined for this day
+        return []
 
-    # Combine all applicable availability ranges for the day
     combined_time_ranges: List[Tuple[time, time]] = []
     for avail in applicable_availabilities:
         combined_time_ranges.append((avail.start_time, avail.end_time))
 
-    # Sort and merge overlapping time ranges
     merged_ranges = []
     if combined_time_ranges:
         sorted_ranges = sorted(combined_time_ranges)
         current_start, current_end = sorted_ranges[0]
 
         for next_start, next_end in sorted_ranges[1:]:
-            # If the next range starts before or at the current end, merge them
             if next_start <= current_end:
                 current_end = max(current_end, next_end)
             else:
@@ -76,7 +72,6 @@ def get_available_slots_for_day(
                 current_start, current_end = next_start, next_end
         merged_ranges.append((current_start, current_end))
 
-    # 2. Get existing bookings for the target_date and service
     existing_bookings = db.query(models.Booking).filter(
         models.Booking.owner_id == owner_id,
         models.Booking.service_id == service_id,
@@ -86,10 +81,9 @@ def get_available_slots_for_day(
     booked_slots: List[Tuple[time, time]] = []
     for booking in existing_bookings:
         booking_start_dt = datetime.combine(target_date, booking.time)
-        booking_end_dt = booking_start_dt + timedelta(minutes=slot_duration_minutes) # Assuming booking duration is service duration
+        booking_end_dt = booking_start_dt + timedelta(minutes=slot_duration_minutes)
         booked_slots.append((booking_start_dt.time(), booking_end_dt.time()))
 
-    # 3. Generate potential slots from merged availability ranges
     potential_slots: List[time] = []
     for start_t, end_t in merged_ranges:
         current_slot_start_dt = datetime.combine(target_date, start_t)
@@ -99,7 +93,6 @@ def get_available_slots_for_day(
             potential_slots.append(current_slot_start_dt.time())
             current_slot_start_dt += timedelta(minutes=slot_duration_minutes)
 
-    # 4. Filter out booked slots
     available_slots: List[time] = []
     for slot_time in potential_slots:
         slot_start_dt = datetime.combine(target_date, slot_time)
@@ -110,7 +103,6 @@ def get_available_slots_for_day(
             booked_start_dt = datetime.combine(target_date, booked_start)
             booked_end_dt = datetime.combine(target_date, booked_end)
             
-            # Check for overlap: [slot_start, slot_end) and [booked_start, booked_end)
             if max(slot_start_dt, booked_start_dt) < min(slot_end_dt, booked_end_dt):
                 is_booked = True
                 break
@@ -118,4 +110,4 @@ def get_available_slots_for_day(
         if not is_booked:
             available_slots.append(slot_time)
 
-    return sorted(list(set(available_slots))) # Return unique sorted times
+    return sorted(list(set(available_slots)))
