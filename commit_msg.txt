@@ -1,1 +1,1 @@
-Add requirements.txt with pytest for successful test runs
+Verify and finalize deployment package
