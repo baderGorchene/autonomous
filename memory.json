@@ -9,14 +9,15 @@
     "Add frontend templates and static assets",
     "Deploy MVP"
   ],
-  "next_task": "Ensure test dependencies and environment are fully verified",
+  "next_task": "Verify test dependencies and environment are fully verified",
   "libraries_in_use": [
     "pytest",
-    "pytest-cov"
+    "pytest-cov",
+    "httpx"
   ],
-  "iteration": 421,
+  "iteration": 422,
   "last_run": "",
-  "notes": "Project code is clean and fully operational.",
+  "notes": "Ensure all requirements are installed in the test workflow or environment correctly.",
   "product_name": "BookSlot",
   "target_price": "$19/month",
   "target_market": "MENA + North Africa local service businesses",

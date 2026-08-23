@@ -1,1 +1,1 @@
-Ensure robust availability utilities and project health verification
+Ensure test dependencies and environment are fully verified
