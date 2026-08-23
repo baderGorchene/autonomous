@@ -1,49 +1,40 @@
 {% extends "base.html" %}
+{% block title %}Book an Appointment - BookSlot{% endblock %}
 {% block content %}
-<h1>{{ _('Book your appointment') }}</h1>
-<form id="booking-form">
-  <input type="hidden" id="owner_slug" value="{{ owner_slug }}">
-  <label>{{ _('Name') }}: <input type="text" name="customer_name" id="customer_name" required></label>
-  <label>{{ _('Email') }}: <input type="email" name="customer_email" id="customer_email" required></label>
-  <label>{{ _('Phone') }}: <input type="tel" name="customer_phone" id="customer_phone" required></label>
-  <label>{{ _('Service') }}: 
-    <select name="service_name" id="service_name">
-      {% for s in services %}<option value="{{ s.name }}">{{ s.name }}</option>{% endfor %}
-    </select>
-  </label>
-  <label>{{ _('Date/Time') }}: <input type="datetime-local" name="booking_datetime" id="booking_datetime" required></label>
-  <button type="submit" id="submit-btn">{{ _('Confirm Booking') }}</button>
-</form>
-<div id="message" style="display:none;"></div>
-
-<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-<script>
-  document.getElementById('booking-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const btn = document.getElementById('submit-btn');
-    const msg = document.getElementById('message');
-    btn.disabled = true;
-    msg.style.display = 'none';
-    
-    const formData = new FormData();
-    formData.append('customer_name', document.getElementById('customer_name').value);
-    formData.append('customer_email', document.getElementById('customer_email').value);
-    formData.append('customer_phone', document.getElementById('customer_phone').value);
-    formData.append('service_name', document.getElementById('service_name').value);
-    formData.append('booking_datetime', document.getElementById('booking_datetime').value);
-
-    try {
-      const slug = document.getElementById('owner_slug').value;
-      await axios.post(`/book/${slug}`, formData);
-      msg.textContent = '{{ _("Booking successful!") }}';
-      msg.style.color = 'green';
-    } catch (err) {
-      msg.textContent = '{{ _("Error submitting booking.") }}';
-      msg.style.color = 'red';
-    } finally {
-      msg.style.display = 'block';
-      btn.disabled = false;
-    }
-  });
-</script>
+<div class="max-w-xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+    <h1 class="text-3xl font-extrabold text-gray-900">Book with {{ owner.name }}</h1>
+    <form class="mt-6 space-y-6" method="POST">
+        <div>
+            <label class="block text-sm font-medium text-gray-700">Select Service</label>
+            <select name="service_id" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                {% for service in services %}
+                <option value="{{ service.id }}">{{ service.name }} ({{ service.duration_minutes }} mins - ${{ service.price }})</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700">Date</label>
+            <input type="date" name="date" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700">Time Slot</label>
+            <input type="time" name="time" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700">Your Name</label>
+            <input type="text" name="client_name" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700">Your Email</label>
+            <input type="email" name="client_email" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700">Your WhatsApp / Phone</label>
+            <input type="text" name="client_whatsapp" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+        </div>
+        <div>
+            <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Confirm Booking</button>
+        </div>
+    </form>
+</div>
 {% endblock %}

@@ -1,59 +1,18 @@
-<!DOCTYPE html>
-<html lang="{{ request.cookies.get('lang', 'en') }}">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ gettext('BookSlot - Simple Booking Page') }}</title>
-    <link rel="stylesheet" href="/static/css/style.css">
-</head>
-<body>
-    <header>
-        <h1>{{ gettext('Welcome to BookSlot') }}</h1>
-        <nav>
-            <div class="lang-toggle">
-                <a href="#" onclick="changeLanguage('en'); return false;">EN</a> |
-                <a href="#" onclick="changeLanguage('ar'); return false;">AR</a> |
-                <a href="#" onclick="changeLanguage('fr'); return false;">FR</a>
-            </div>
-        </nav>
-    </header>
-    <main>
-        <section>
-            <h2>{{ gettext('Sign Up') }}</h2>
-            <form action="/signup" method="post">
-                <label for="name">{{ gettext('Name') }}:</label>
-                <input type="text" id="name" name="name" required><br>
-                <label for="email_signup">{{ gettext('Email') }}:</label>
-                <input type="email" id="email_signup" name="email" required><br>
-                <label for="phone_signup">{{ gettext('Phone (Optional)') }}:</label>
-                <input type="text" id="phone_signup" name="phone"><br>
-                <label for="password_signup">{{ gettext('Password') }}:</label>
-                <input type="password" id="password_signup" name="password" required><br>
-                <button type="submit">{{ gettext('Sign Up') }}</button>
-            </form>
-        </section>
-        <section>
-            <h2>{{ gettext('Login') }}</h2>
-            <form action="/login" method="post">
-                <label for="username">{{ gettext('Email') }}:</label>
-                <input type="email" id="username" name="username" required><br>
-                <label for="password_login">{{ gettext('Password') }}:</label>
-                <input type="password" id="password_login" name="password" required><br>
-                <button type="submit">{{ gettext('Login') }}</button>
-            </form>
-        </section>
-        {% if error %}
-            <p style="color: red;">{{ error }}</p>
-        {% endif %}
-    </main>
-    <footer>
-        <p>&copy; 2023 BookSlot. {{ gettext('All rights reserved.') }}</p>
-    </footer>
-    <script>
-        function changeLanguage(lang) {
-            document.cookie = "lang=" + lang + "; path=/; max-age=31536000";
-            location.reload();
-        }
-    </script>
-</body>
-</html>
+{% extends "base.html" %}
+{% block title %}BookSlot - Dead-simple Booking for Local Services{% endblock %}
+{% block content %}
+<div class="text-center py-12">
+    <h1 class="text-4xl tracking-tight font-extrabold text-gray-900 sm:text-5xl md:text-6xl">
+        <span class="block">Stop WhatsApp booking chaos</span>
+        <span class="block text-indigo-600">Start growing your business</span>
+    </h1>
+    <p class="mt-3 max-w-md mx-auto text-base text-gray-500 sm:text-lg md:mt-5 md:text-xl md:max-w-3xl">
+        BookSlot is a dead-simple booking page for salons, clinics, tutors, mechanics, and coaches. Share your link and let clients book instantly.
+    </p>
+    <div class="mt-5 max-w-md mx-auto sm:flex sm:justify-center md:mt-8">
+        <div class="rounded-md shadow">
+            <a href="/register" class="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 md:py-4 md:text-lg md:px-10">Get Started Free</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
