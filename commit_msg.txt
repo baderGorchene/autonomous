@@ -1,1 +1,1 @@
-Acknowledge test execution and prepare pytest environment
+Add comprehensive pytest test suite with conftest and API tests

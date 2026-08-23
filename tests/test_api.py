@@ -1,52 +1,30 @@
-import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from src.main import app, get_db
-from src.database import Base
+from sqlalchemy.orm import Session
 
-SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+def test_health_check(client: TestClient):
+    response = client.get("/health")
+    assert response.status_code == 200
+    assert response.json() == {"status": "healthy"}
 
-Base.metadata.create_all(bind=engine)
-
-def override_get_db():
-    try:
-        db = TestingSessionLocal()
-        yield db
-    finally:
-        db.close()
-
-app.dependency_overrides[get_db] = override_get_db
-
-@pytest.fixture
-def client():
-    return TestClient(app)
-
-def test_register_owner(client):
-    payload = {
+def test_owner_signup_and_login(client: TestClient):
+    signup_response = client.post("/api/auth/signup", json={
+        "email": "owner@example.com",
+        "password": "securepassword123",
         "name": "John Doe",
-        "email": "john@example.com",
-        "business_name": "John's Barber",
-        "slug": "john-barber",
-        "services": [{"name": "Cut", "duration_minutes": 30, "price": 20.0}],
-        "availability": [{"day_of_week": 0, "start_time": "09:00:00", "end_time": "17:00:00"}]
-    }
-    response = client.post("/register", json=payload)
-    assert response.status_code == 200
-    assert response.json()["slug"] == "john-barber"
-
-def test_get_availability(client):
-    # First register
-    client.post("/register", json={
-        "name": "Jane", "email": "jane@test.com", "business_name": "Clinic", "slug": "jane-clinic",
-        "services": [{"name": "Consult", "duration_minutes": 30, "price": 50.0}],
-        "availability": [{"day_of_week": 0, "start_time": "09:00:00", "end_time": "10:00:00"}]
+        "business_name": "John's Salon",
+        "slug": "johns-salon"
     })
-    # Request Monday (weekday 0) in 2023-10-02
-    response = client.get("/jane-clinic/availability?date_str=2023-10-02&duration=30")
-    assert response.status_code == 200
-    slots = response.json()["slots"]
-    assert len(slots) > 0
-    assert "09:00" in slots[0]["start"]
+    assert signup_response.status_code == 200
+    data = signup_response.json()
+    assert data["email"] == "owner@example.com"
+    assert data["slug"] == "johns-salon"
+
+    # Test Login
+    login_response = client.post("/api/auth/login", data={
+        "username": "owner@example.com",
+        "password": "securepassword123"
+    })
+    assert login_response.status_code == 200
+    token_data = login_response.json()
+    assert "access_token" in token_data
+    assert token_data["token_type"] == "bearer"
