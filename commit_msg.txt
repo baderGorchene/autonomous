@@ -1,1 +1,1 @@
-Finalize project and verification
+Verify test suite execution environment
