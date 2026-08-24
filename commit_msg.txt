@@ -1,1 +1,1 @@
-Finalize deployment package and configuration
+Fix test execution and deployment environment verification
