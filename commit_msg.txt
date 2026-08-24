@@ -1,1 +1,1 @@
-Finalize deployment package and ensure configuration validity
+Finalize verification and deployment package
