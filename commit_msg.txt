@@ -1,1 +1,1 @@
-Verify and finalize deployment package with pytest
+Finalize deployment and verification package
