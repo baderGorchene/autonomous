@@ -1,1 +1,1 @@
-Fix verification and configuration checks
+Finalize verification and deployment package
