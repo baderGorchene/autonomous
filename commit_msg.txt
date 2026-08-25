@@ -1,1 +1,1 @@
-Verify test environment setup
+Verify and check deployment package and environment readiness
