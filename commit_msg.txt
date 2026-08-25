@@ -1,1 +1,1 @@
-Finalize deployment and config checks
+Verify and ensure deployment package correctness
