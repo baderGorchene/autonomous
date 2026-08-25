@@ -1,1 +1,1 @@
-Fix deployment configuration and verify setup
+Finalize deployment configuration and verify setup
