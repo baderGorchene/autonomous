@@ -1,1 +1,1 @@
-Verify and check deployment package and environment readiness
+Finalize deployment verification
