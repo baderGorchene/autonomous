@@ -1,1 +1,1 @@
-Verify pytest environment and deployment package
+Verify and finalize deployment package configuration
