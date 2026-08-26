@@ -1,1 +1,1 @@
-Finalize verification package settings
+Finalize verification and deployment prep
