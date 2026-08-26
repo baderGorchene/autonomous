@@ -1,1 +1,1 @@
-Finalize project and verify configuration
+Finalize deployment and verification steps
