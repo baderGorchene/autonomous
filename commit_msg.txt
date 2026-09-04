@@ -1,1 +1,1 @@
-Finalize and verify deployment package
+Fix verification status and project state
