@@ -1,1 +1,1 @@
-Verify and finalize deployment package
+Finalize and verify deployment package
