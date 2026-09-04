@@ -1,1 +1,1 @@
-Fix verification status and wrap up
+Complete MVP verification
