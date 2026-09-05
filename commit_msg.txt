@@ -1,1 +1,1 @@
-Verify and ensure test dependencies and environment are correctly validated
+Ensure pytest dependency and config sanity
