@@ -1,1 +1,1 @@
-Complete MVP verification
+Add pytest and test dependencies to requirements.txt
