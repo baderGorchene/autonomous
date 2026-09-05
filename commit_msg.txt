@@ -1,1 +1,1 @@
-Finalize verification and documentation
+Finalize verification and environment checks
