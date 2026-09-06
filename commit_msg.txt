@@ -1,1 +1,1 @@
-Finalize project and verify setup
+Verify environment setup and tests
