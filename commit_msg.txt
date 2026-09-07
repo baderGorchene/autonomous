@@ -1,1 +1,1 @@
-Ensure testing framework dependencies are installed
+Ensure testing framework and dependencies are fully operational
