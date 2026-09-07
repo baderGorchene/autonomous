@@ -1,1 +1,1 @@
-Ensure testing framework dependencies are fully verified
+Ensure testing dependencies are verified
