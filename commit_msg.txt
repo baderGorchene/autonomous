@@ -1,1 +1,1 @@
-Ensure all requirements and test frameworks are operational
+Verify test environment setup
