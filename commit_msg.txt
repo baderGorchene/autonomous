@@ -1,1 +1,1 @@
-Finalize MVP and verification
+Finalize and verify deployment package
