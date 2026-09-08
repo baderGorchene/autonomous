@@ -1,1 +1,1 @@
-Ensure testing framework is correctly configured and working
+Ensure project files are properly aligned for execution environment
