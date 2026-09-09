@@ -1,1 +1,1 @@
-Ensure testing framework dependencies are installed for verification
+Fix verification and deployment test suite environment
