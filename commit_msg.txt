@@ -1,1 +1,1 @@
-Fix dependency check and verify environment
+Add pytest and testing dependencies to requirements.txt
