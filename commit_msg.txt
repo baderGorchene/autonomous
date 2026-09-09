@@ -1,1 +1,1 @@
-Add pytest and testing dependencies to requirements.txt
+Verify test environment setup
