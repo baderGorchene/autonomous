@@ -1,1 +1,1 @@
-Add requirements.txt ensuring pytest is present for testing
+Ensure testing framework dependencies are installed for verification
