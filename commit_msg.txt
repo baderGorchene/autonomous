@@ -1,1 +1,1 @@
-Fix verification and deployment test suite environment
+Fix dependency check and verify environment
