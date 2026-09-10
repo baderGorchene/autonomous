@@ -1,1 +1,1 @@
-Ensure pytest is declared in requirements.txt
+Add setup.py to include pytest and dependencies
