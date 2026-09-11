@@ -1,1 +1,1 @@
-Final verification check
+Verify system setup and readiness
