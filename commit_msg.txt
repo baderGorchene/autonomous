@@ -1,1 +1,1 @@
-Final system checks and verification
+Final system verification and configuration check
