@@ -1,1 +1,1 @@
-Verify system and tests configuration
+Finalize verification and check configuration
