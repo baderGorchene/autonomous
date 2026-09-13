@@ -1,1 +1,1 @@
-Final system ready verification and configuration check
+Verify and check system ready status
