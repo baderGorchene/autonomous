@@ -1,1 +1,1 @@
-Finalize system verification and configuration
+Verify and finalize system status
