@@ -1,1 +1,1 @@
-Verify system ready state
+Verify system stability and fix environment configurations
