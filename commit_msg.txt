@@ -1,1 +1,1 @@
-Verify and finalize system status
+Verify system ready state
