@@ -1,1 +1,1 @@
-Verify project and state readiness for production
+Ensure pytest is included in requirements.txt
