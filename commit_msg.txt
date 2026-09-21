@@ -1,1 +1,1 @@
-Verify project state and ensure readiness
+Verify MVP and project setup
