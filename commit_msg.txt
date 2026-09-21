@@ -1,1 +1,1 @@
-Verify MVP and project setup
+Verify project state and ensure tests pass cleanly
