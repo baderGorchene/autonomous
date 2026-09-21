@@ -1,1 +1,1 @@
-Verify environment and test configuration
+Verify project completion and system readiness
