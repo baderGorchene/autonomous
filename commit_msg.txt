@@ -1,1 +1,1 @@
-Verify project completion and system readiness
+Verify project state and ensure production readiness
