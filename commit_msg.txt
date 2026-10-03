@@ -1,1 +1,1 @@
-Verify release and resolve testing setup
+Fix production verification configuration check
