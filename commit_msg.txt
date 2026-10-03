@@ -1,1 +1,1 @@
-Confirm release readiness and verification
+Confirm release readiness and finalize project state
