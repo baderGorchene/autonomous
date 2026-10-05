@@ -1,1 +1,1 @@
-Ensure pytest is installed and verify tests pass successfully
+Add pytest to requirements and ensure test verification works
