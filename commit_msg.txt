@@ -1,1 +1,1 @@
-Fix project status and configuration files
+Finalize project and verification
