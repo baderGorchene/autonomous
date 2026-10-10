@@ -1,1 +1,1 @@
-Verify test environment setup and final checks
+Verify MVP status and ensure codebase integrity
