@@ -46,20 +46,56 @@ def login_form(request: Request):
     return request.state.templates.TemplateResponse("login.html", {"request": request, "lang": request.state.locale})
 
 @router.post("/login")
-async def login(request: Request, response: Response, email: str = Form(...), password: str = Form(...), db: Session = Depends(get_db)):
-    owner = crud.authenticate_owner(db, email=email, password=password)
+async def login(
+    request: Request,
+    response: Response,
+    email: Optional[str] = Form(None),
+    username: Optional[str] = Form(None),
+    password: Optional[str] = Form(None),
+    db: Session = Depends(get_db)
+):
+    is_json = "application/json" in request.headers.get("content-type", "")
+    if is_json:
+        try:
+            body = await request.json()
+            email = body.get("email") or body.get("username") or email
+            password = body.get("password") or password
+        except Exception:
+            pass
+
+    actual_email = email or username
+    if not actual_email or not password:
+        error_message = request.state.templates.env.gettext("Incorrect email or password")
+        if is_json:
+            raise HTTPException(status_code=400, detail="Incorrect email or password")
+        return request.state.templates.TemplateResponse(
+            "login.html",
+            {"request": request, "error_message": error_message, "lang": request.state.locale},
+            status_code=400
+        )
+
+    owner = crud.authenticate_owner(db, email=actual_email, password=password)
     if not owner:
         error_message = request.state.templates.env.gettext("Incorrect email or password")
-        return request.state.templates.TemplateResponse("login.html", {"request": request, "error_message": error_message, "lang": request.state.locale}, status_code=400)
+        if is_json:
+            raise HTTPException(status_code=400, detail="Incorrect email or password")
+        return request.state.templates.TemplateResponse(
+            "login.html",
+            {"request": request, "error_message": error_message, "lang": request.state.locale},
+            status_code=400
+        )
     
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = security.create_access_token(
         data={"sub": str(owner.id)}, expires_delta=access_token_expires
     )
     
-    response = RedirectResponse(url="/dashboard", status_code=302)
-    response.set_cookie(key="access_token", value=access_token, httponly=True, max_age=int(access_token_expires.total_seconds()))
-    return response
+    if is_json:
+        return {"access_token": access_token, "token_type": "bearer"}
+
+    resp = RedirectResponse(url="/dashboard", status_code=302)
+    resp.set_cookie(key="access_token", value=access_token, httponly=True, max_age=int(access_token_expires.total_seconds()))
+    return resp
 
 @router.get("/logout")
 def logout():

@@ -39,7 +39,7 @@ from fastapi import Request
 
 oauth2_scheme_optional = OAuth2PasswordBearer(tokenUrl="token", auto_error=False)
 
-async def get_current_owner(request: Optional[Any] = None, token: Optional[str] = Depends(oauth2_scheme_optional), db: Session = Depends(database.get_db)) -> models.Owner:
+async def get_current_owner(request: Request = None, token: Optional[str] = Depends(oauth2_scheme_optional), db: Session = Depends(database.get_db)) -> models.Owner:
     if isinstance(request, str):
         actual_token = request
         actual_db = token if token is not None and not isinstance(token, str) else db

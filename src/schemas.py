@@ -1,6 +1,9 @@
 from pydantic import BaseModel, EmailStr, Field
 from typing import List, Optional, Dict, Any
-from datetime import date, time, datetime
+from datetime import date as dt_date, time as dt_time, datetime as dt_datetime
+date = dt_date
+time = dt_time
+datetime = dt_datetime
 from enum import Enum
 
 class RecurrenceType(str, Enum):
@@ -78,16 +81,16 @@ class BookingBase(BaseModel):
     customer_name: str = Field(..., min_length=1, max_length=100)
     customer_email: EmailStr
     customer_phone: Optional[str] = Field(None, min_length=1, max_length=30)
-    date: Optional[date] = None
-    time: Optional[time] = None
-    booking_time: Optional[datetime] = None
+    date: Optional[dt_date] = None
+    time: Optional[dt_time] = None
+    booking_time: Optional[dt_datetime] = None
     notes: Optional[str] = Field(None, max_length=500)
     owner_id: Optional[int] = None
     
     # For recurring bookings
     recurrence_type: Optional[RecurrenceType] = None
     recurrence_value: Optional[str] = Field(None, max_length=50) # e.g., "MON,WED,FRI" for weekly, "15" for monthly
-    recurrence_end_date: Optional[date] = None
+    recurrence_end_date: Optional[dt_date] = None
 
 class BookingCreate(BookingBase):
     pass
@@ -95,7 +98,7 @@ class BookingCreate(BookingBase):
 class Booking(BookingBase):
     id: int
     owner_id: int
-    created_at: datetime
+    created_at: dt_datetime
     customer_id: Optional[int] # Link to customer account if they booked while logged in
 
     class Config:
@@ -103,15 +106,15 @@ class Booking(BookingBase):
 
 class AvailabilityBase(BaseModel):
     service_id: Optional[int] = None # If None, applies to all services for the owner
-    date: Optional[date] = None # Specific date for one-off availability
-    start_time: time
-    end_time: time
+    date: Optional[dt_date] = None # Specific date for one-off availability
+    start_time: dt_time
+    end_time: dt_time
     
     # For recurring availability
     recurrence_type: Optional[RecurrenceType] = None
     recurrence_value: Optional[str] = Field(None, max_length=50) # e.g., "MON,TUE" or "15"
-    recurrence_start_date: Optional[date] = None
-    recurrence_end_date: Optional[date] = None
+    recurrence_start_date: Optional[dt_date] = None
+    recurrence_end_date: Optional[dt_date] = None
 
 class AvailabilityCreate(AvailabilityBase):
     pass

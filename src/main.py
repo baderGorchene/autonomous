@@ -69,6 +69,11 @@ app = FastAPI(
 
 router = APIRouter()
 
+try:
+    database.create_db_and_tables()
+except Exception as e:
+    app_logger.warning(f"Could not create tables on initialization: {e}")
+
 # --- Templates and i18n Setup ---
 BASE_DIR = Path(__file__).resolve().parent.parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
