@@ -34,4 +34,4 @@ class ModelConfigDict(dict):
         self.model_extra = {}
 
 settings = Settings()
-settings.model_config = ModelConfigDict(getattr(settings, "model_config", {}))
+settings.model_config = ModelConfigDict(getattr(settings, "model_config", {}))
