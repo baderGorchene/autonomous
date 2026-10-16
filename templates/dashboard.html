@@ -1,32 +1,194 @@
-<!-- ... existing dashboard.html content ... -->
+<!DOCTYPE html>
+<html lang="{{ locale or 'en' }}" {% if locale == 'ar' %}dir="rtl"{% else %}dir="ltr"{% endif %}>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ _('Dashboard') }} - {{ owner.business_name or owner.name }} | BookSlot</title>
+    <meta name="description" content="Manage appointments, services, availability, and business settings.">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="bg-gray-50 min-h-screen text-gray-900 antialiased flex flex-col">
+    <!-- Navbar -->
+    <header class="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-3">
+                    <a href="/owner/dashboard" class="text-2xl font-bold text-indigo-600 tracking-tight flex items-center">
+                        <span>Book<span class="text-gray-900">Slot</span></span>
+                    </a>
+                    <span class="text-xs bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-full font-medium">Business Portal</span>
+                </div>
+                
+                <div class="flex items-center space-x-4 text-sm">
+                    <a href="/{{ owner.slug }}" target="_blank" class="text-indigo-600 hover:text-indigo-800 font-medium flex items-center">
+                        <span>bookslot.app/{{ owner.slug }}</span>
+                        <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                    </a>
+                    <div class="border-l border-gray-200 h-6"></div>
+                    <div class="flex items-center space-x-2 text-xs">
+                        <a href="/set_language/en" class="text-gray-600 hover:text-indigo-600 {% if locale == 'en' %}font-bold text-indigo-600 underline{% endif %}">EN</a>
+                        <span class="text-gray-300">|</span>
+                        <a href="/set_language/ar" class="text-gray-600 hover:text-indigo-600 {% if locale == 'ar' %}font-bold text-indigo-600 underline{% endif %}">العربية</a>
+                        <span class="text-gray-300">|</span>
+                        <a href="/set_language/fr" class="text-gray-600 hover:text-indigo-600 {% if locale == 'fr' %}font-bold text-indigo-600 underline{% endif %}">FR</a>
+                    </div>
+                    <div class="border-l border-gray-200 h-6"></div>
+                    <a href="/logout" class="text-gray-600 hover:text-red-600 font-medium">{{ _('Sign Out') }}</a>
+                </div>
+            </div>
+        </div>
+    </header>
 
-<div class="p-6 bg-white rounded-lg shadow-md mb-8">
-    <h2 class="text-2xl font-semibold text-gray-800 mb-4">{{ _('Update Profile') }}</h2>
-    <form action="/dashboard/profile" method="POST">
-        <div class="mb-4">
-            <label for="name" class="block text-gray-700 text-sm font-bold mb-2">{{ _('Name') }}:</label>
-            <input type="text" id="name" name="name" value="{{ owner.name }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+    <!-- Main Content -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+        <!-- Welcome Hero -->
+        <div class="mb-8 bg-gradient-to-r from-indigo-700 via-indigo-800 to-purple-800 rounded-2xl p-6 sm:p-8 text-white shadow-md flex flex-wrap items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-extrabold tracking-tight">{{ _("Welcome") }}, {{ owner.name }}!</h1>
+                <p class="mt-2 text-indigo-100 text-base">
+                    Managing <span class="font-semibold">{{ owner.business_name or owner.name }}</span> &bull; 
+                    Public Link: <a href="/{{ owner.slug }}" target="_blank" class="underline hover:text-white font-mono">bookslot.app/{{ owner.slug }}</a>
+                </p>
+            </div>
+            <div class="mt-4 sm:mt-0 flex space-x-3">
+                <a href="/{{ owner.slug }}" target="_blank" class="inline-flex items-center px-4 py-2 bg-white text-indigo-700 font-semibold rounded-lg shadow-sm hover:bg-indigo-50 transition">
+                    View Live Page
+                </a>
+            </div>
         </div>
-        <div class="mb-4">
-            <label for="phone_number" class="block text-gray-700 text-sm font-bold mb-2">{{ _('Phone Number') }}:</label>
-            <input type="tel" id="phone_number" name="phone_number" value="{{ owner.phone_number }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
-        </div>
-        <div class="mb-4">
-            <label for="description" class="block text-gray-700 text-sm font-bold mb-2">{{ _('Description/Bio') }}:</label>
-            <textarea id="description" name="description" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">{{ owner.description }}</textarea>
-        </div>
-        <div class="mb-4">
-            <label for="city" class="block text-gray-700 text-sm font-bold mb-2">{{ _('City') }}:</label>
-            <input type="text" id="city" name="city" value="{{ owner.city }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-        </div>
-        <div class="mb-6">
-            <label for="country" class="block text-gray-700 text-sm font-bold mb-2">{{ _('Country') }}:</label>
-            <input type="text" id="country" name="country" value="{{ owner.country }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-        </div>
-        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-            {{ _('Update Profile') }}
-        </button>
-    </form>
-</div>
 
-<!-- ... rest of dashboard.html content ... -->
+        {% if error_message %}
+        <div class="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm font-medium">
+            {{ error_message }}
+        </div>
+        {% endif %}
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Left Column: Profile Settings & Quick Info -->
+            <div class="lg:col-span-1 space-y-6">
+                <!-- Profile Settings Card -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h2 class="text-xl font-bold text-gray-900 mb-4">{{ _('Update Profile') }}</h2>
+                    <form action="/owner/profile" method="POST" class="space-y-4">
+                        <div>
+                            <label for="name" class="block text-sm font-medium text-gray-700 mb-1">{{ _('Your Name') }}</label>
+                            <input type="text" id="name" name="name" value="{{ owner.name }}" required
+                                class="w-full rounded-lg border border-gray-300 p-2.5 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label for="business_name" class="block text-sm font-medium text-gray-700 mb-1">{{ _('Business Name') }}</label>
+                            <input type="text" id="business_name" name="business_name" value="{{ owner.business_name }}" required
+                                class="w-full rounded-lg border border-gray-300 p-2.5 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">{{ _('Phone Number') }}</label>
+                            <input type="tel" id="phone" name="phone" value="{{ owner.phone or '' }}"
+                                class="w-full rounded-lg border border-gray-300 p-2.5 text-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="+1234567890">
+                        </div>
+                        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 px-4 rounded-lg shadow-sm transition">
+                            {{ _('Update Profile') }}
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Live Booking URL Card -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h3 class="text-base font-semibold text-gray-900 mb-2">{{ _('Booking Link') }}</h3>
+                    <p class="text-sm text-gray-600 mb-3">Share this direct link with clients on your social channels or website:</p>
+                    <div class="bg-gray-100 p-3 rounded-lg text-xs font-mono text-indigo-700 break-all select-all border border-gray-200">
+                        bookslot.app/{{ owner.slug }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Bookings & Services -->
+            <div class="lg:col-span-2 space-y-8">
+                <!-- Upcoming Appointments -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold text-gray-900">{{ _('Upcoming Bookings') }}</h2>
+                        <span class="text-xs bg-gray-100 text-gray-700 font-semibold px-2.5 py-1 rounded-full">
+                            {{ upcoming_bookings|length if upcoming_bookings else 0 }} scheduled
+                        </span>
+                    </div>
+
+                    {% if upcoming_bookings and upcoming_bookings|length > 0 %}
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200 text-sm">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Date & Time</th>
+                                    <th class="px-4 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                                    <th class="px-4 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Service</th>
+                                    <th class="px-4 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                {% for b in upcoming_bookings %}
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-4 py-3 whitespace-nowrap font-medium text-gray-900">{{ b.date }} at {{ b.time }}</td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-gray-700">{{ b.customer_name }} <span class="text-xs text-gray-400 block">{{ b.customer_email }}</span></td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-gray-700">{{ b.service_name or 'Haircut' }}</td>
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                            {{ b.status }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-10 text-gray-500">
+                        <svg class="mx-auto h-10 w-10 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        <p class="text-sm">No upcoming appointments yet.</p>
+                        <p class="text-xs text-gray-400 mt-1">Bookings from clients will appear here automatically.</p>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Services List -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold text-gray-900">{{ _('Services Offered') }}</h2>
+                    </div>
+
+                    {% if services and services|length > 0 %}
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {% for svc in services %}
+                        <div class="border border-gray-200 rounded-lg p-4 hover:border-indigo-400 transition">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h3 class="font-semibold text-gray-900">{{ svc.name }}</h3>
+                                    <p class="text-xs text-gray-500 mt-1">{{ svc.description or 'No description provided' }}</p>
+                                </div>
+                                <span class="text-base font-bold text-indigo-600">${{ svc.price }}</span>
+                            </div>
+                            <div class="mt-3 flex items-center text-xs text-gray-500">
+                                <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <span>{{ svc.duration_minutes }} minutes</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-sm text-gray-500">No services configured.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-200 mt-12 py-6">
+        <div class="max-w-7xl mx-auto px-4 text-center text-xs text-gray-500">
+            &copy; 2026 BookSlot. All rights reserved.
+        </div>
+    </footer>
+</body>
+</html>

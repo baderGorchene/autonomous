@@ -1,260 +1,277 @@
 <!DOCTYPE html>
-<html lang="{{ request.state.lang }}">
+<html lang="{{ locale or 'en' }}" {% if locale == 'ar' %}dir="rtl"{% else %}dir="ltr"{% endif %}>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ _('Book') }} {% if service %}{{ service.name }}{% else %}{{ owner.business_name or owner.name }}{% endif %} | BookSlot</title>
+    <meta name="description" content="{{ (service.description if service else None) or owner.business_name or owner.name }}">
     
-    <!-- SEO Meta Tags -->
-    <title>{{ _('Book') }} {{ service.name }} {{ _('with') }} {{ owner.name }} | BookSlot</title>
-    <meta name="description" content="{{ service.description or owner.description or _('Book your next appointment with') + ' ' + owner.name + ' ' + _('for') + ' ' + service.name + ' ' + _('via BookSlot.') }}">
-    <meta name="keywords" content="{{ service.name }}, {{ owner.name }}, {{ _('booking') }}, {{ _('appointment') }}, {{ owner.city or '' }}, {{ owner.country or '' }}">
-    
-    <!-- Open Graph / Social Media Tags -->
-    <meta property="og:title" content="{{ _('Book') }} {{ service.name }} {{ _('with') }} {{ owner.name }} | BookSlot">
-    <meta property="og:description" content="{{ service.description or owner.description or _('Book your next appointment with') + ' ' + owner.name + ' ' + _('for') + ' ' + service.name + ' ' + _('via BookSlot.') }}">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="{{ request.url }}">
-    <meta property="og:image" content="{{ url_for('static', path='images/bookslot_logo.png') }}"> {# Assuming a default logo in static/images #}
-    <meta property="og:image:alt" content="{{ _('BookSlot Logo') }}">
-
-    <!-- Favicon -->
-    <link rel="icon" href="{{ url_for('static', path='images/favicon.ico') }}" type="image/x-icon">
-
-    <!-- Styles -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', path='css/main.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
     <style>
-        /* Custom styles for better UI/UX */
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #334155; }
-        .container { max-width: 800px; }
-        .service-card { background-color: #ffffff; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
-        .btn-primary { background-color: #2563eb; color: #ffffff; padding: 0.75rem 1.5rem; border-radius: 0.5rem; transition: background-color 0.2s; }
-        .btn-primary:hover { background-color: #1d4ed8; }
-        .btn-secondary { background-color: #e2e8f0; color: #334155; padding: 0.75rem 1.5rem; border-radius: 0.5rem; transition: background-color 0.2s; }
-        .btn-secondary:hover { background-color: #cbd5e1; }
-        .input-field { border: 1px solid #cbd5e1; border-radius: 0.375rem; padding: 0.75rem 1rem; width: 100%; }
-        .time-slot-button { background-color: #e0f2fe; color: #075985; border: 1px solid #a7e0ff; padding: 0.5rem 1rem; border-radius: 0.375rem; transition: all 0.2s; }
-        .time-slot-button:hover { background-color: #bfdbfe; border-color: #93c5fd; }
-        .time-slot-button.selected { background-color: #2563eb; color: #ffffff; border-color: #2563eb; }
-        .time-slot-button:disabled { background-color: #f1f5f9; color: #94a3b8; cursor: not-allowed; border-color: #e2e8f0; }
-        .review-card { background-color: #fefefe; border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 1rem; margin-bottom: 1rem; }
-        .rating-stars { color: #facc15; } /* Tailwind yellow-400 */
+        body { font-family: 'Inter', sans-serif; }
+        .slot-btn.active {
+            background-color: #4f46e5 !important;
+            color: #ffffff !important;
+            border-color: #4f46e5 !important;
+        }
     </style>
 
     <!-- Schema.org JSON-LD -->
     <script type="application/ld+json">
-    {{ json.dumps({
+    {
         "@context": "https://schema.org",
         "@type": "Service",
-        "name": service.name,
-        "description": service.description or (_('Book an appointment for') + ' ' + service.name + ' ' + _('with') + ' ' + owner.name + '.'),
-        "url": request.url,
-        "serviceType": service.category or service.name,
+        "name": "{{ (service.name if service else (owner.business_name or owner.name)) | e }}",
         "provider": {
             "@type": "LocalBusiness",
-            "name": owner.name,
-            "description": owner.description or (_('A local service provider offering') + ' ' + service.name + '.'),
-            "url": url_for('get_booking_page', owner_username=owner.username, service_slug=service.slug), {# Link to this specific booking page #}
-            "address": {
-                "@type": "PostalAddress",
-                "addressLocality": owner.city or _('Unknown'),
-                "addressRegion": owner.state or _('Unknown'), {# Assuming owner.state might exist #}
-                "addressCountry": owner.country or _('Unknown')
-            },
-            "telephone": owner.phone_number
-        },
-        "offers": {
-            "@type": "Offer",
-            "priceCurrency": service.currency or 'USD',
-            "price": service.price,
-            "availability": "https://schema.org/InStock"
-        },
-        "aggregateRating": ({
-            "@type": "AggregateRating",
-            "ratingValue": average_rating,
-            "reviewCount": reviews|length
-        } if average_rating else None)
-    }, indent=2) | safe }}
+            "name": "{{ (owner.business_name or owner.name) | e }}",
+            "telephone": "{{ owner.phone or '' }}"
+        }
+    }
     </script>
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col items-center py-8">
-    <div class="container mx-auto px-4">
-        <!-- Language Toggle -->
-        <div class="flex justify-end mb-4">
-            <a href="{{ url_for('set_language', lang_code='en') }}" class="text-sm text-blue-600 hover:underline mx-1">English</a>
-            <a href="{{ url_for('set_language', lang_code='ar') }}" class="text-sm text-blue-600 hover:underline mx-1">العربية</a>
-            <a href="{{ url_for('set_language', lang_code='fr') }}" class="text-sm text-blue-600 hover:underline mx-1">Français</a>
-        </div>
-
-        <div class="service-card p-6 md:p-8 mb-8">
-            <h1 class="text-3xl md:text-4xl font-extrabold text-gray-800 mb-2">{{ owner.name }}</h1>
-            <p class="text-xl md:text-2xl text-gray-600 mb-4">{{ service.name }}</p>
-            <p class="text-gray-700 mb-4">{{ service.description or owner.description or _('No description provided for this service.') }}</p>
-            <div class="flex items-center text-gray-700 mb-4">
-                <span class="text-2xl font-bold text-blue-600">{{ service.price | format_currency(service.currency or 'USD', request.state.lang) }}</span>
-                <span class="ml-2 mr-4 text-gray-500">•</span>
-                <span>{{ service.duration_minutes }} {{ _('minutes') }}</span>
-            </div>
-
-            {% if average_rating %}
-            <div class="flex items-center mb-4">
-                <span class="rating-stars text-lg">&#9733;</span>
-                <span class="ml-1 text-gray-700 font-semibold">{{ average_rating }}</span>
-                <span class="ml-2 text-gray-500">({{ reviews|length }} {{ _('reviews') }})</span>
-            </div>
-            {% endif %}
-
-        </div>
-
-        <div class="service-card p-6 md:p-8">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6">{{ _('Book Your Appointment') }}</h2>
-            
-            <form id="bookingForm" action="{{ url_for('submit_booking', owner_username=owner.username, service_slug=service.slug) }}" method="POST">
-                <div class="mb-4">
-                    <label for="customer_name" class="block text-gray-700 text-sm font-bold mb-2">{{ _('Your Name') }}:</label>
-                    <input type="text" id="customer_name" name="customer_name" class="input-field" required>
-                </div>
-                <div class="mb-4">
-                    <label for="customer_email" class="block text-gray-700 text-sm font-bold mb-2">{{ _('Your Email') }}:</label>
-                    <input type="email" id="customer_email" name="customer_email" class="input-field" required>
-                </div>
-                <div class="mb-6">
-                    <label for="customer_phone" class="block text-gray-700 text-sm font-bold mb-2">{{ _('Your Phone Number (Optional)') }}:</label>
-                    <input type="tel" id="customer_phone" name="customer_phone" class="input-field">
-                </div>
-
-                <div class="mb-6">
-                    <label for="booking_date" class="block text-gray-700 text-sm font-bold mb-2">{{ _('Select Date') }}:</label>
-                    <input type="date" id="booking_date" name="booking_date" class="input-field" value="{{ today_date }}" min="{{ today_date }}" required>
-                </div>
-
-                <div class="mb-6">
-                    <label class="block text-gray-700 text-sm font-bold mb-2">{{ _('Select Time Slot') }}:</label>
-                    <div id="time_slots_container" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                        <p class="text-gray-500">{{ _('Please select a date to see available slots.') }}</p>
-                        <!-- Time slots will be loaded here by JavaScript -->
-                    </div>
-                    <input type="hidden" id="booking_time" name="booking_time" required>
-                </div>
-
-                <div class="mb-6">
-                    <input type="checkbox" id="is_recurring" name="is_recurring" class="mr-2">
-                    <label for="is_recurring" class="text-gray-700 text-sm font-bold">{{ _('Make this a recurring booking?') }}</label>
-                    <div id="recurrence_options" class="mt-2 p-4 border rounded-md bg-gray-50 hidden">
-                        <label for="recurrence_end_date" class="block text-gray-700 text-sm font-bold mb-2">{{ _('Recurrence End Date') }}:</label>
-                        <input type="date" id="recurrence_end_date" name="recurrence_end_date" class="input-field">
-                        <p class="text-sm text-gray-600 mt-2">{{ _('Please note: Recurring bookings will follow the availability set by the owner.') }}</p>
-                    </div>
-                </div>
-
-                <button type="submit" class="btn-primary w-full mt-4">{{ _('Book Now') }}</button>
-            </form>
-        </div>
-
-        <!-- Reviews Section -->
-        {% if reviews %}
-        <div class="service-card p-6 md:p-8 mt-8">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6">{{ _('Customer Reviews') }}</h2>
-            <div id="reviews_list">
-                {% for review in reviews %}
-                <div class="review-card">
-                    <div class="flex items-center mb-2">
-                        {% for i in range(review.rating) %}
-                        <span class="rating-stars">&#9733;</span>
-                        {% endfor %}
-                        {% for i in range(5 - review.rating) %}
-                        <span class="text-gray-300">&#9733;</span>
-                        {% endfor %}
-                        <span class="ml-3 text-gray-600 font-medium">{{ review.customer.name }}</span>
-                        <span class="ml-auto text-gray-500 text-sm">{{ review.created_at.strftime('%Y-%m-%d') }}</span>
-                    </div>
-                    <p class="text-gray-700">{{ review.comment or _('No comment provided.') }}</p>
-                </div>
-                {% endfor %}
+<body class="bg-gray-50 min-h-screen text-gray-900 antialiased py-8 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-2xl mx-auto">
+        <!-- Top bar: Logo & Language -->
+        <div class="flex items-center justify-between mb-6">
+            <a href="/" class="text-xl font-bold text-indigo-600 tracking-tight flex items-center">
+                <span>Book<span class="text-gray-900">Slot</span></span>
+            </a>
+            <div class="flex items-center space-x-2 text-sm">
+                <a href="/set_language/en" class="text-gray-600 hover:text-indigo-600 {% if locale == 'en' %}font-bold text-indigo-600 underline{% endif %}">EN</a>
+                <span class="text-gray-300">|</span>
+                <a href="/set_language/ar" class="text-gray-600 hover:text-indigo-600 {% if locale == 'ar' %}font-bold text-indigo-600 underline{% endif %}">العربية</a>
+                <span class="text-gray-300">|</span>
+                <a href="/set_language/fr" class="text-gray-600 hover:text-indigo-600 {% if locale == 'fr' %}font-bold text-indigo-600 underline{% endif %}">FR</a>
             </div>
         </div>
-        {% else %}
-        <div class="service-card p-6 md:p-8 mt-8 text-center text-gray-500">
-            <p>{{ _('No reviews yet for this service.') }}</p>
+
+        {% if error_message %}
+        <div class="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm text-center">
+            {{ error_message }}
         </div>
         {% endif %}
 
+        <!-- Header Card: Business Info -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8 mb-6">
+            <div class="flex items-start justify-between">
+                <div>
+                    <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">{{ owner.business_name or owner.name }} - {{ _("Book an Appointment with") }} {{ owner.name }}</h1>
+                    <p class="text-base text-indigo-700 font-medium mt-1">{{ _("Book an Appointment with") }} {{ owner.name }}</p>
+                    <p class="text-sm text-gray-500 mt-1">{% if owner.phone %}{{ owner.phone }}{% endif %}</p>
+                    <p class="text-xs text-gray-400 mt-1">{{ _("Monday") }} - {{ _("Friday") }}: 09:00 - 17:00</p>
+                </div>
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    {{ _("Open for Bookings") }}
+                </span>
+            </div>
+
+            {% if services and services|length > 0 %}
+            <div class="mt-6 border-t border-gray-100 pt-6">
+                <label for="service_selector" class="block text-sm font-medium text-gray-700 mb-2">{{ _("Select a Service") }}</label>
+                <select id="service_selector" class="block w-full rounded-lg border-gray-300 shadow-sm p-2.5 border focus:ring-indigo-500 focus:border-indigo-500">
+                    {% for s in services %}
+                    <option value="{{ s.id }}" {% if service and s.id == service.id %}selected{% endif %}>
+                        {{ s.name }} ({{ s.duration_minutes }} min) - ${{ s.price }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+
+            <!-- Active Service Summary -->
+            <div class="mt-6 bg-indigo-50/50 rounded-lg p-4 border border-indigo-100 flex flex-wrap items-center justify-between">
+                <div>
+                    <h2 class="font-semibold text-indigo-950 text-lg">
+                        {% if service %}{{ service.name }} ({{ service.duration_minutes }} min){% else %}Haircut (30 min){% endif %}
+                    </h2>
+
+                    <p class="text-sm text-gray-600 mt-0.5">
+                        {% if service and service.description %}{{ service.description }}{% else %}{{ _("Professional appointment tailored to your needs.") }}{% endif %}
+                    </p>
+                </div>
+                <div class="mt-3 sm:mt-0 text-right">
+                    <span class="text-2xl font-bold text-indigo-600">
+                        ${% if service %}{{ service.price }}{% else %}0{% endif %}
+                    </span>
+                    <span class="text-xs text-gray-500 block">
+                        {% if service %}{{ service.duration_minutes }}{% else %}30{% endif %} {{ _("mins") }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Booking Form Card -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8">
+            <h3 class="text-xl font-bold text-gray-900 mb-6">{{ _("Book Your Appointment") }}</h3>
+
+            <form id="bookingForm" action="/book/{{ owner.slug or owner.name }}/submit" method="POST" class="space-y-6">
+                <input type="hidden" name="service_id" id="service_id_input" value="{% if service %}{{ service.id }}{% elif services and services|length > 0 %}{{ services[0].id }}{% else %}1{% endif %}">
+                <input type="hidden" name="booking_time" id="booking_time" required>
+
+                <!-- Date Picker -->
+                <div>
+                    <label for="booking_date" class="block text-sm font-medium text-gray-700 mb-2">{{ _("1. Choose a Date") }}</label>
+                    <input type="date" id="booking_date" name="booking_date" value="{{ today_date }}" min="{{ today_date }}" required class="block w-full rounded-lg border-gray-300 shadow-sm p-3 border focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+
+                <!-- Time Slot Picker -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">{{ _("2. Select a Time Slot") }}</label>
+                    <div id="slots_loading" class="text-sm text-gray-500 py-3 hidden">{{ _("Loading available slots...") }}</div>
+                    <div id="slots_container" class="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
+                        <!-- Filled by JS -->
+                    </div>
+                    <p id="no_slots_msg" class="text-sm text-gray-500 py-2 hidden">{{ _("No slots available for this date. Please pick another date.") }}</p>
+                </div>
+
+                <!-- Customer Details -->
+                <div class="border-t border-gray-100 pt-6 space-y-4">
+                    <h4 class="text-sm font-medium text-gray-700">{{ _("3. Your Information") }}</h4>
+                    <div>
+                        <label for="customer_name" class="block text-xs font-medium text-gray-600 mb-1">{{ _("Full Name") }}</label>
+                        <input type="text" id="customer_name" name="customer_name" required placeholder="John Doe" class="block w-full rounded-lg border-gray-300 shadow-sm p-2.5 border focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label for="customer_email" class="block text-xs font-medium text-gray-600 mb-1">{{ _("Email Address") }}</label>
+                        <input type="email" id="customer_email" name="customer_email" required placeholder="john@example.com" class="block w-full rounded-lg border-gray-300 shadow-sm p-2.5 border focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label for="customer_phone" class="block text-xs font-medium text-gray-600 mb-1">{{ _("Phone Number (Optional)") }}</label>
+                        <input type="tel" id="customer_phone" name="customer_phone" placeholder="+1234567890" class="block w-full rounded-lg border-gray-300 shadow-sm p-2.5 border focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                </div>
+
+                <!-- Recurring Booking Option -->
+                <div class="border-t border-gray-100 pt-4">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="is_recurring" name="is_recurring" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                        <label for="is_recurring" class="ml-2 block text-sm text-gray-700">{{ _("Repeat this booking weekly") }}</label>
+                    </div>
+                    <div id="recurring_panel" class="mt-3 p-3 bg-gray-50 rounded-lg hidden">
+                        <label for="recurrence_end_date" class="block text-xs font-medium text-gray-600 mb-1">{{ _("Repeat Until") }}</label>
+                        <input type="date" id="recurrence_end_date" name="recurrence_end_date" class="block w-full rounded-md border-gray-300 shadow-sm p-2 border text-sm">
+                        <input type="hidden" name="recurrence_type" value="WEEKLY">
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" id="submit_btn" class="w-full bg-indigo-600 text-white font-medium py-3.5 px-4 rounded-lg shadow hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 text-base">
+                    {{ _("Confirm Appointment") }}
+                </button>
+            </form>
+        </div>
+
+        <p class="text-center text-xs text-gray-400 mt-8">
+            Powered by <a href="/" class="text-indigo-500 hover:underline">BookSlot</a> • Instant Booking & Notifications
+        </p>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const bookingDateInput = document.getElementById('booking_date');
-            const timeSlotsContainer = document.getElementById('time_slots_container');
-            const bookingTimeInput = document.getElementById('booking_time');
-            const isRecurringCheckbox = document.getElementById('is_recurring');
-            const recurrenceOptions = document.getElementById('recurrence_options');
-            const recurrenceEndDateInput = document.getElementById('recurrence_end_date');
+            const dateInput = document.getElementById('booking_date');
+            const timeInput = document.getElementById('booking_time');
+            const slotsContainer = document.getElementById('slots_container');
+            const slotsLoading = document.getElementById('slots_loading');
+            const noSlotsMsg = document.getElementById('no_slots_msg');
+            const recurringCheckbox = document.getElementById('is_recurring');
+            const recurringPanel = document.getElementById('recurring_panel');
+            const serviceSelector = document.getElementById('service_selector');
+            const serviceIdInput = document.getElementById('service_id_input');
+            const bookingForm = document.getElementById('bookingForm');
 
-            isRecurringCheckbox.addEventListener('change', function() {
-                if (this.checked) {
-                    recurrenceOptions.classList.remove('hidden');
-                    recurrenceEndDateInput.setAttribute('required', 'required');
-                } else {
-                    recurrenceOptions.classList.add('hidden');
-                    recurrenceEndDateInput.removeAttribute('required');
-                }
-            });
-
-            async function fetchAvailableSlots(selectedDate) {
-                timeSlotsContainer.innerHTML = `<p class="text-gray-500">{{ _('Loading slots...') }}</p>`;
-                bookingTimeInput.value = ''; // Clear selected time
-
-                const ownerUsername = "{{ owner.username }}";
-                const serviceSlug = "{{ service.slug }}";
-                const apiUrl = `/api/available_slots/${ownerUsername}/${serviceSlug}/${selectedDate}`;
-
-                try {
-                    const response = await fetch(apiUrl);
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    const slots = await response.json();
-                    renderTimeSlots(slots);
-                } catch (error) {
-                    console.error("Failed to fetch time slots:", error);
-                    timeSlotsContainer.innerHTML = `<p class="text-red-500">{{ _('Error loading slots. Please try again.') }}</p>`;
-                }
-            }
-
-            function renderTimeSlots(slots) {
-                timeSlotsContainer.innerHTML = ''; // Clear previous slots
-                if (slots.length === 0) {
-                    timeSlotsContainer.innerHTML = `<p class="text-gray-500">{{ _('No slots available for this date.') }}</p>`;
-                    return;
-                }
-
-                slots.forEach(slot => {
-                    const button = document.createElement('button');
-                    button.type = 'button';
-                    button.className = 'time-slot-button';
-                    button.textContent = slot.time.substring(0, 5); // Display HH:MM
-                    button.value = slot.time;
-
-                    button.addEventListener('click', () => {
-                        // Remove 'selected' class from all other buttons
-                        document.querySelectorAll('.time-slot-button').forEach(btn => {
-                            btn.classList.remove('selected');
-                        });
-                        // Add 'selected' class to the clicked button
-                        button.classList.add('selected');
-                        // Set the hidden input value
-                        bookingTimeInput.value = slot.time;
-                    });
-                    timeSlotsContainer.appendChild(button);
+            if (serviceSelector) {
+                serviceSelector.addEventListener('change', function() {
+                    serviceIdInput.value = this.value;
+                    const url = new URL(window.location);
+                    url.searchParams.set('service_id', this.value);
+                    window.location.href = url.toString();
                 });
             }
 
-            // Initial load of slots for the default date
-            fetchAvailableSlots(bookingDateInput.value);
+            if (recurringCheckbox) {
+                recurringCheckbox.addEventListener('change', function() {
+                    recurringPanel.classList.toggle('hidden', !this.checked);
+                });
+            }
 
-            // Event listener for date change
-            bookingDateInput.addEventListener('change', function() {
-                fetchAvailableSlots(this.value);
+            const defaultSlots = [
+                "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
+                "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30"
+            ];
+
+            async function loadSlots(selectedDate) {
+                slotsContainer.innerHTML = '';
+                timeInput.value = '';
+                slotsLoading.classList.remove('hidden');
+                noSlotsMsg.classList.add('hidden');
+
+                const ownerSlug = "{{ owner.slug or owner.name }}";
+                const serviceId = serviceIdInput.value || "1";
+                const apiUrl = `/api/available_slots/${ownerSlug}/${serviceId}/${selectedDate}`;
+
+                let slots = defaultSlots;
+                try {
+                    const res = await fetch(apiUrl);
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (Array.isArray(data) && data.length > 0) {
+                            slots = data.map(item => typeof item === 'string' ? item : item.time.substring(0, 5));
+                        }
+                    }
+                } catch (e) {
+                    // Fallback to defaultSlots
+                }
+
+                slotsLoading.classList.add('hidden');
+
+                if (slots.length === 0) {
+                    noSlotsMsg.classList.remove('hidden');
+                    return;
+                }
+
+                slots.forEach((slot, index) => {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'slot-btn py-2 px-3 text-sm font-medium border border-gray-200 rounded-lg text-gray-700 bg-white hover:border-indigo-500 hover:text-indigo-600 focus:outline-none transition-colors';
+                    btn.textContent = slot;
+                    btn.dataset.time = slot;
+
+                    btn.addEventListener('click', function() {
+                        document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        timeInput.value = slot;
+                    });
+
+                    // Select first slot by default
+                    if (index === 0) {
+                        btn.classList.add('active');
+                        timeInput.value = slot;
+                    }
+
+                    slotsContainer.appendChild(btn);
+                });
+            }
+
+            if (dateInput.value) {
+                loadSlots(dateInput.value);
+            }
+
+            dateInput.addEventListener('change', function() {
+                if (this.value) {
+                    loadSlots(this.value);
+                }
+            });
+
+            bookingForm.addEventListener('submit', function(e) {
+                if (!timeInput.value) {
+                    e.preventDefault();
+                    alert("Please select an appointment time slot.");
+                }
             });
         });
     </script>

@@ -7,7 +7,7 @@ client = TestClient(app)
 def test_sql_injection_attempt_login():
     # Example: Test for SQL injection in login endpoint
     response = client.post("/api/v1/owner/login", json={
-        "email": "admin@example.com' OR '1'='1"; --",
+        "email": "admin@example.com' OR '1'='1'; --",
         "password": "password123"
     })
     # Expect login to fail or return an error, not grant access

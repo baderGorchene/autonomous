@@ -16,15 +16,22 @@ class Settings(BaseSettings):
     APP_BASE_URL: str = "http://localhost:8000"
     REDIS_URL: str = "redis://localhost:6379/0"
     LOG_LEVEL: str = "INFO"
+    TESTING: bool = False
 
     class Config:
         env_file = ".env"
         case_sensitive = True
-        extra = "ignore"
+        extra = "allow"
         
     def __init__(self, **values):
         super().__init__(**values)
         if self.LOG_LEVEL.upper() not in logging._nameToLevel:
             raise ValueError(f"Invalid LOG_LEVEL: {self.LOG_LEVEL}. Must be one of {list(logging._nameToLevel.keys())}")
 
+class ModelConfigDict(dict):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.model_extra = {}
+
 settings = Settings()
+settings.model_config = ModelConfigDict(getattr(settings, "model_config", {}))

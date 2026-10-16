@@ -14,6 +14,13 @@ dist/
 wheels/
 *.egg-info/
 
+#cache
+cache/
+__pycache__/
+.pytest_cache/
+temp/
+*.pyc/
+
 # Environments
 .env
 .venv
@@ -34,6 +41,7 @@ logs/
 # Database
 *.sqlite
 *.sqlite3
+*.db
 
 # Testing
 .pytest_cache/

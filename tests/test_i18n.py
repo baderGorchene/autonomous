@@ -22,8 +22,12 @@ def test_engine_i18n():
     Base.metadata.create_all(bind=test_engine)
     yield test_engine
     Base.metadata.drop_all(bind=test_engine)
+    test_engine.dispose()
     if "sqlite" in TEST_DATABASE_URL_I18N and os.path.exists("./test_i18n.db"):
-        os.remove("./test_i18n.db")
+        try:
+            os.remove("./test_i18n.db")
+        except Exception:
+            pass
 
 @pytest.fixture(scope="function")
 def db_session_i18n(test_engine_i18n):
@@ -44,7 +48,7 @@ def client_i18n(db_session_i18n):
         finally:
             db_session_i18n.close()
     app.dependency_overrides[get_db] = override_get_db
-    yield TestClient(app)
+    yield TestClient(app, follow_redirects=False)
     app.dependency_overrides.clear()
 
 @pytest.fixture

@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr, Field
 from typing import List, Optional, Dict, Any
-from datetime import date, time
+from datetime import date, time, datetime
 from enum import Enum
 
 class RecurrenceType(str, Enum):
@@ -18,28 +18,36 @@ class TokenData(BaseModel):
 class OwnerBase(BaseModel):
     email: EmailStr
     name: str = Field(..., min_length=1, max_length=100)
-    phone: str = Field(..., min_length=10, max_length=20)
-    currency: str = Field(..., min_length=3, max_length=3)
+    phone: Optional[str] = None
+    currency: Optional[str] = "USD"
+    business_name: Optional[str] = None
+    slug: Optional[str] = None
 
 class OwnerCreate(OwnerBase):
-    password: str = Field(..., min_length=8)
+    password: Optional[str] = "password123"
+    services: Optional[List[Dict[str, Any]]] = None
+    availability: Optional[List[Dict[str, Any]]] = None
 
-class OwnerUpdate(OwnerBase):
-    name: str = Field(..., min_length=1, max_length=100)
-    phone: str = Field(..., min_length=10, max_length=20)
-    currency: str = Field(..., min_length=3, max_length=3)
-    # Password update would be a separate endpoint or field with hashing
+class OwnerUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=100)
+    phone: Optional[str] = None
+    currency: Optional[str] = None
+    business_name: Optional[str] = None
+    slug: Optional[str] = None
+
+OwnerProfileUpdate = OwnerUpdate
 
 class Owner(OwnerBase):
     id: int
     is_active: bool
     is_premium: bool = False
     is_admin: bool = False
-    name_slug: str
+    name_slug: Optional[str] = None
     stripe_customer_id: Optional[str] = None
     stripe_subscription_id: Optional[str] = None
 
     class Config:
+        from_attributes = True
         orm_mode = True
 
 class ServiceBase(BaseModel):
@@ -65,13 +73,16 @@ class Service(ServiceBase):
         orm_mode = True
 
 class BookingBase(BaseModel):
-    service_id: int
+    service_id: Optional[int] = 1
+    service_name: Optional[str] = None
     customer_name: str = Field(..., min_length=1, max_length=100)
     customer_email: EmailStr
-    customer_phone: str = Field(..., min_length=10, max_length=20)
-    date: date
-    time: time
+    customer_phone: Optional[str] = Field(None, min_length=1, max_length=30)
+    date: Optional[date] = None
+    time: Optional[time] = None
+    booking_time: Optional[datetime] = None
     notes: Optional[str] = Field(None, max_length=500)
+    owner_id: Optional[int] = None
     
     # For recurring bookings
     recurrence_type: Optional[RecurrenceType] = None
