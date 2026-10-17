@@ -1,1 +1,1 @@
-Verify test suite execution
+Add pytest to requirements.txt to fix missing module error
