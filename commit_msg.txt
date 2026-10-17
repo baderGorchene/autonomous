@@ -1,1 +1,1 @@
-Ensure all files are intact and verification is complete
+Ensure pytest is available and verify environment
