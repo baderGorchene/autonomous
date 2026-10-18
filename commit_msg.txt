@@ -1,1 +1,1 @@
-Verify test execution environment
+Verify test suite execution environment

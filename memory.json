@@ -11,10 +11,13 @@
     "Run pytest successfully and finalize verification"
   ],
   "next_task": "Verify test execution with pytest environment check",
-  "libraries_in_use": [],
-  "iteration": 768,
+  "libraries_in_use": [
+    "pytest",
+    "pytest-cov"
+  ],
+  "iteration": 769,
   "last_run": "",
-  "notes": "No changes needed to existing files; environment ready for tests.",
+  "notes": "Ensure python -m pytest is used or pytest is globally installed in the execution environment.",
   "product_name": "BookSlot",
   "target_price": "$19/month",
   "target_market": "MENA + North Africa local service businesses",
