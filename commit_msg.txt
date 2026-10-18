@@ -1,1 +1,1 @@
-Fix environment setup for pytest
+Verify test execution and readiness
