@@ -1,1 +1,1 @@
-Verify test execution and readiness
+Ensure pytest is available and verified
