@@ -1,1 +1,1 @@
-Ensure pytest is available and verified
+Ensure test environment dependencies and verification
