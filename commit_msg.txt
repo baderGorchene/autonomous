@@ -1,1 +1,1 @@
-Verify test runner environment and dependencies
+Verify test environment and dependencies
