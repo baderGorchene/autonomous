@@ -1,1 +1,1 @@
-Verify test execution and finish verification
+Fix environment setup for running pytest successfully
