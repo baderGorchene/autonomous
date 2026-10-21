@@ -1,1 +1,1 @@
-Ensure pytest dependency is listed in requirements.txt
+Verify environment setup
