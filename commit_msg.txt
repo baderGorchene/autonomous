@@ -1,1 +1,1 @@
-Verify environment setup
+Run pytest successfully and finalize verification
