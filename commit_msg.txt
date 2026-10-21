@@ -1,1 +1,1 @@
-Add pytest to requirements.txt to fix missing module error
+Ensure pytest dependency is listed in requirements.txt
