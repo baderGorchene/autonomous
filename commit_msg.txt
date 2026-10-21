@@ -1,1 +1,1 @@
-Verify test execution and ensure green test suite
+Verify test execution and ensure test environment requirements
