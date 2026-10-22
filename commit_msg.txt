@@ -1,1 +1,1 @@
-Ensure test dependencies and environment configured correctly
+Ensure pytest is installed and verify tests execution
