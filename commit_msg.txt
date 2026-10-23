@@ -1,1 +1,1 @@
-Confirm pytest environment and verify setup
+Confirm pytest environment
