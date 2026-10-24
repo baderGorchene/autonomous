@@ -1,1 +1,1 @@
-Confirm test environment and dependencies
+Confirm pytest environment and dependencies
