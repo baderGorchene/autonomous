@@ -1,1 +1,1 @@
-Ensure pytest environment verification passes
+Ensure pytest dependency is noted and environment configuration is clean
