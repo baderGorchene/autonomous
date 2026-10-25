@@ -1,1 +1,1 @@
-Confirm pytest environment
+Ensure testing setup is intact
