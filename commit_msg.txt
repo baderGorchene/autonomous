@@ -1,1 +1,1 @@
-Ensure testing setup is intact
+Fix pytest environment and run tests
