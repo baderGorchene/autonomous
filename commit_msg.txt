@@ -1,1 +1,1 @@
-Fix pytest environment and run tests
+Ensure pytest dependency is available and verified
