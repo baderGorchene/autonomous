@@ -1,1 +1,1 @@
-Ensure correct test environment and verification
+Confirm pytest environment and packages installed successfully
