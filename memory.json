@@ -8,17 +8,16 @@
     "Add comprehensive tests and conftest",
     "Add frontend templates and static assets",
     "Deploy MVP",
-    "Run pytest successfully and finalize verification"
+    "Ensure testing requirements and pytest package are available"
   ],
-  "next_task": "Ensure testing requirements and pytest package are available",
+  "next_task": "Run pytest successfully and finalize verification",
   "libraries_in_use": [
     "pytest",
-    "pytest-cov",
     "httpx"
   ],
-  "iteration": 824,
+  "iteration": 825,
   "last_run": "",
-  "notes": "Pytest environment verified and configuration intact.",
+  "notes": "Added pytest and httpx to requirements.txt.",
   "product_name": "BookSlot",
   "target_price": "$19/month",
   "target_market": "MENA + North Africa local service businesses",
