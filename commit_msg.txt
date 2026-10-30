@@ -1,1 +1,1 @@
-Ensure pytest package check and configurations correct
+Add pytest to requirements.txt
