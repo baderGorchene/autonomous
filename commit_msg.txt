@@ -1,1 +1,1 @@
-Add pytest to requirements.txt to ensure test suite execution
+Ensure pytest package check and test execution verification
