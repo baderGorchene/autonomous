@@ -1,1 +1,1 @@
-Ensure testing requirements are met
+Verify test suite and ensure pytest is installed and executed successfully
