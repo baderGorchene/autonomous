@@ -1,1 +1,1 @@
-Add pytest and testing requirements to requirements.txt
+Finalized verification
