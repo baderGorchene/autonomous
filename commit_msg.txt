@@ -1,1 +1,1 @@
-Ensure pytest package check and test execution verification
+Verify environment setup for testing
