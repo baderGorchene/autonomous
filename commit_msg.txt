@@ -1,1 +1,1 @@
-Finalized verification
+Ensure pytest is installed and verify tests pass
