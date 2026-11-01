@@ -1,3 +1,8 @@
+## Iteration 839
+_2026-11-01 08:49 UTC_
+
+Ensured pytest dependency is declared in requirements.txt so that test runs succeed.
+
 ## Iteration 838
 _2026-11-01 01:55 UTC_
 

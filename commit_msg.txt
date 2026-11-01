@@ -1,1 +1,1 @@
-Verify environment setup for testing
+Add pytest and testing requirements to requirements.txt
