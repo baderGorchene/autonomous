@@ -1,1 +1,1 @@
-Ensure testing requirements are satisfied
+Ensure verification and config integrity
