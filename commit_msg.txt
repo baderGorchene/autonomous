@@ -1,1 +1,1 @@
-Ensure testing requirements and pytest package are available
+Verify and complete MVP delivery with docs
