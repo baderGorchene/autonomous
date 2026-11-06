@@ -1,1 +1,1 @@
-Project fully verified and completed
+Fix pytest availability and test execution
