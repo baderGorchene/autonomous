@@ -1,1 +1,1 @@
-Add requirements.txt with pytest to fix module not found error
+Add pytest to requirements.txt to resolve missing package error
