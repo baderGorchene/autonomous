@@ -1,1 +1,1 @@
-Ensure test requirements and verification status
+Verify and complete MVP setup
