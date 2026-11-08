@@ -1,1 +1,1 @@
-Confirm verification status
+Ensure all requirements and test verification pass
