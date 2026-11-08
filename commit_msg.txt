@@ -1,1 +1,1 @@
-Ensure all requirements and test verification pass
+Ensure all requirements and test setup are complete
