@@ -1,1 +1,1 @@
-Ensure pytest package is installed/configured
+Ensure all requirements and test execution are finalized
