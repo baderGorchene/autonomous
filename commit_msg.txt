@@ -1,1 +1,1 @@
-Verify project state and complete documentation
+Ensure testing requirements and pytest package are available
