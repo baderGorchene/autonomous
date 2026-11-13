@@ -1,1 +1,1 @@
-Ensure testing requirements and pytest package are available
+Finalize verification
