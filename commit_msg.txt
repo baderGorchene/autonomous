@@ -1,1 +1,1 @@
-Ensure testing requirements and pytest package are available
+Fix verification status and wrap up MVP development
