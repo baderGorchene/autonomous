@@ -1,1 +1,1 @@
-Ensure testing setup and requirements are fully verified
+Fix verification status and tests configuration
