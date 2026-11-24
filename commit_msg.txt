@@ -1,1 +1,1 @@
-Fix requirements and pytest environment setup
+Finalize BookSlot MVP project status and roadmap
