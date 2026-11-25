@@ -1,1 +1,1 @@
-Acknowledge test failure and prepare verification
+Add pytest to requirements.txt
