@@ -1,1 +1,1 @@
-Ensure pytest dependencies and configuration are verified
+Complete project verification and ensure pytest execution
